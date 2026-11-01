@@ -50,7 +50,7 @@ user's original or exported file. UI removal follows a successful history commit
 | `FileSharingItem` | Creates transfers, promotes files, hashes, publishes, sends HEAD, decides automatic downloads. Parented to the manager and never destroyed. | Unbounded growth, and a UI object that owns shared operations. |
 | `FileShareDownloader` | Contains a good private strategy hierarchy, `AbstractFileShareDownloader`, wrapped by a class that adds source fallback, temporary disk writes and promotion. | Transport is coupled to storage. |
 | `FileSharingChunkSource` | A namespace hiding per-item `Sources` and `SequentialDownload` QObjects behind object names. | Session state with no visible owner. |
-| `FileSourceSelector`, `MediaChunkStore::configure` | The source is chosen per chunk with no record of who sent what. A whole-file mismatch discards everything, and a second source's different range hash sets a file-level "Conflicting checksums" error. | A bad source cannot be identified, retries can fail the same way, and one peer can block a file. |
+| `FileSourceSelector`, `MediaChunkStore::configure` | Chunks come from several sources, which is intended, to get past a slow sender. But nothing records which source sent what. A whole-file mismatch discards everything, and a second source's different range hash sets a file-level "Conflicting checksums" error. | A bad source cannot be identified, retries can fail the same way, and one peer can block a file. |
 | `FileSharingStore`, `fillMessageView`, `appendEvent` | Merge descriptors per hash and write them on display and on log, regardless of `opt_log`. | A deleted URL or peer stays forever, and history-disabled accounts still get a message log. |
 | `FileSharingDeviceOpener`, `FileSharingProxy`, `saveTo` | Independently pick cached paths, chunk readers or raw downloaders. | Three read paths and no shared session. |
 | `ITEMediaOpener` in `3rdparty/qite` | `close()` is called only for devices, and only after the player is destroyed. | No release for paths. A waiting device would hang the GUI on Qt 6 (see [measurements](#measured-backend-behaviour)); builds with the web server never take that path, which is why playback on master works. |
@@ -495,14 +495,15 @@ sequenceDiagram
     D->>D: No demand and no attempts, session ends
 ```
 
-A session holds at most one **bulk attempt**, for whole-file demand, plus a bounded number
-of **window attempts** for interactive readers. Single flight works on the existing chunk
+Whole-file demand runs as **bulk attempts** and interactive readers as a bounded number of
+**window attempts**. `FileSourceSelector` spreads both across sources by estimated completion,
+so one slow sender does not limit the transfer. Single flight works on the existing chunk
 grid, so a span is fetched once. Cancelling removes one reader's demand; it does not stop
 work another reader needs. An aborted attempt keeps its scheduler slot until completion
 acknowledges it. Disk hits consume no network slots.
 
-If the server ignores Range, the bulk attempt is the only attempt, and a seek past it waits
-for it. If the file is below the destination threshold, the save job waits for the
+If the only source ignores Range, one sequential attempt is all there is, and a seek past it
+waits for it. If the file is below the destination threshold, the save job waits for the
 completion barrier and then copies; above it, the file is written directly to the
 destination (see [large files](#large-files)).
 
@@ -546,22 +547,25 @@ assembled nothing ties a range to the announced digest. The design does not pret
 | Whole-file digest matches | Every byte is right, whoever sent it | At completion |
 | Whole-file digest fails | At least one contributing source is wrong | At completion |
 
-1. **One source at a time.** `FileDownload` picks a source for the file, and its window and
-   bulk attempts use it. It moves on only when that source fails or stalls, not per chunk as
-   today. Ordinarily a file then has one origin, and a mismatch names the culprit.
-2. **Coverage records its origin.** `file_ranges.origin` is an opaque number to the cache and
-   a source row to the download. Bytes kept across a switch stay attributed, which keeps
-   progress in the common case of honest sources.
+1. **Chunks may come from several sources at once.** That is what gets a transfer past a slow
+   sender, so `FileSourceSelector` keeps spreading chunks by estimated completion. No source is
+   trusted more than another: the next message may announce several sources at once, and any of
+   them may hold a wrong copy. Downloading from only one would not help, as it could be that one.
+2. **Coverage records its origin.** `file_ranges.origin` is an opaque number to the cache and a
+   source row to the download. Without it, a mismatch can only discard the whole file.
 3. **Range checksums apply to their own origin.** A failure withdraws that origin's span and
-   counts against the source. When two sources disagree, the current one continues and the
-   other is not used for this file. This is not a file-level error, so one peer cannot block
-   a file for everyone.
-4. **A whole-file mismatch is resolved by elimination.** With one origin, exclude it, withdraw
-   its ranges and try the next source. With several, take candidates in order, the announcer's
-   sources first: keep only the candidate's ranges, fetch the rest from it alone, and verify.
-   Success finishes the file; failure excludes the candidate. Each source gets one pass, so the
-   extra download is bounded and there is no retry loop. With no source left the file is retired
-   and its publications report an integrity error. Only a user retry starts over.
+   counts against the source. A disagreement between sources is not a file-level error, so one
+   peer cannot block a file for everyone. It is recorded, and it sets the order in the next rule.
+4. **A whole-file mismatch is resolved by refetching from other senders.** With one origin, exclude
+   it and refetch everything from the others. With several, test origins one at a time, those with
+   recorded disagreements first, then the smallest contribution. Fetch that origin's chunks from
+   other sources into temporary managed storage and compare. Chunks that match need nothing. If some
+   differ, substitute them and verify the whole file. A match finishes the file and excludes that
+   origin; otherwise its chunks go back and the next origin is tested. Each origin is tested once,
+   so the extra download is at most about one more copy of the file, and there is no retry loop.
+   If no single substitution helps, more than one source is wrong. The file is then retired and
+   its publications report an integrity error. A user retry starts over, assembling from one source
+   at a time, which finds a correct copy if any source has one.
 5. **`Stream` readers accept this risk explicitly.** Their bytes are unproven, and a wrong span
    can reach the decoder, as with any single bad source. On a mismatch they fail, and ranges of
    an excluded origin are withdrawn at once so that later readers do not get them. `WholeFile`
@@ -582,7 +586,7 @@ assembled nothing ties a range to the announced digest. The design does not pret
 | Sequential transfer reaches a requested span early | Readers wake on availability. `WholeFile` still waits for completion. |
 | Empty file | Explicit zero size and successful protocol and hash checks. |
 | Source failure | Retry unsatisfied work only with compatible identity; on integrity failure withdraw the span. |
-| Two sources disagree | One source at a time, attributed coverage, elimination at completion (see above). |
+| Two sources disagree | Attributed coverage, then refetching from other senders at completion (see above). |
 | Publish original, paste an image, forward | Originals stay external. Generated payloads are managed from creation and held by their publication. A forward creates a new publication. |
 | Account removal, view close, decoder failure | Callbacks settle once and account capabilities are revoked. Closing a view cancels its demand, not another reader's work. |
 | One file in two messages or accounts | Deleting removes that publication and its sources. Bytes stay while any publication, hold or lease needs them. |
@@ -870,7 +874,7 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `AbstractFileShareDownloader` and its three subclasses | Become `FileShareTransport`. This hierarchy is the correct boundary: one interface, one client. |
 | `FileShareDownloader` | Removed. Source fallback moves to `FileDownload`, temporary files disappear, and nothing is left to wrap. |
 | `FileSharingChunkSource` | Removed: typed members of `FileDownload`, catalog lookups and cache state. |
-| `FileSourceSelector` | Stays in `FileDownload`, choosing a source for the file instead of per chunk. |
+| `FileSourceSelector` | Stays in `FileDownload`, spreading chunks across sources. |
 | `FileSharingJingleSession` | Stays, used by the Jingle transport. |
 | `FileSharingHashJob` | Used by the worker at finalize. |
 | `FileSharingStore` | Becomes `FileSharingCatalog`. `shared_files` and `url_content` are replaced by publication tables. |
@@ -880,7 +884,7 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `FileSharingDeviceOpener` | qite adapter and playback source choice. |
 | `FileSharingProxy` | Thin adapter over `FileReader`. Raw download paths go away. |
 | `FileSharingMediaSave` | Save job on a `WholeFile` reader. |
-| `BoBFileCache` | One per account. |
+| `BoBFileCache` | One view per account over one shared cache. |
 
 ## Migration
 
@@ -923,8 +927,8 @@ flowchart LR
 ```
 
 0. **Close inbound doors.** Serve only hashes this account published or joined, with a small
-   persistent table that stage 2 absorbs. Stop BoB answers crossing accounts with one
-   `BoBFileCache` per account. *Test:* two accounts with one cached hash; published versus merely
+   persistent table that stage 2 absorbs. Stop BoB answers crossing accounts with a per-account
+   `BoBFileCache` view over one shared cache. *Test:* two accounts with one cached hash; published versus merely
    cached; joined; unknown and not-shared answers identical.
 1. **SQLite foundation.** Write characterization tests for `FileCache` first, as it has none. Add
    `FileDatabase`, move persistence and payload roots under the profile, and import `cache.xml`.
@@ -953,9 +957,9 @@ flowchart LR
    default, and the device path comes last. *Test:* audio and video with seek and stop during a
    stall, before and after; player plus save on one file; independent cancellation; early delivery
    from a sequential transfer; HTTP without Range; real Jingle completion; account removal; reuse by
-   strong digest across accounts; a weak claim fetched, then one payload; a wrong source identified
-   with one and with several origins; conflicting range checksums not blocking a file; bounded
-   recovery. The device probe runs on every CI platform, and its result enables the device path per
+   strong digest across accounts; a weak claim fetched, then one payload; chunks from two sources at
+   once; a wrong source identified with one and with several origins; conflicting range checksums
+   not blocking a file; bounded recovery; a user retry with two wrong sources. The device probe runs on every CI platform, and its result enables the device path per
    platform, including `abort()` before teardown.
 6. **Reclamation and share management.** Optional byte removal at deletion, result reporting,
    settings view for publishing, joining and unsharing. *Test:* shared files across accounts,
@@ -986,9 +990,9 @@ Two things Iris constrains rather than changes:
   would need that fixed first.
 - **JET excludes ranges and streaming mode,** so a JET source can only be a whole-file attempt.
 
-One optional change: `JT_BoBServer` answers from everything cached, including data this account
-merely received. One `BoBFileCache` per account closes the leak between accounts without touching
-Iris. Answering only what this account itself published requires `BoBManager` and `BoBCache` to
+One optional change, deferred: `JT_BoBServer` answers from everything cached, including data this
+account merely received. A per-account `BoBFileCache` view closes the leak between accounts without
+touching Iris. Answering only what this account itself published requires `BoBManager` and `BoBCache` to
 tell the two apart, which is a small API change.
 
 Any Iris commit means a gitlink bump, and Linux CI builds the bundled Iris until that commit is a
