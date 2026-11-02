@@ -3,11 +3,6 @@ name: Windows MSVC Qt6 profile
 on:
   workflow_call:
     inputs:
-      chat_type:
-        description: Chat renderer (BASIC default, WEBENGINE opt-in)
-        required: false
-        default: BASIC
-        type: string
       package:
         description: Assemble all-in-one ZIP and NSIS (false for ordinary CI)
         required: false
@@ -35,7 +30,7 @@ permissions:
 
 jobs:
   build:
-    name: ${{ inputs.chat_type }} MSVC Qt 6.12 x64
+    name: BASIC MSVC Qt 6.12 x64
     runs-on: windows-2022
     timeout-minutes: 120
     defaults:
@@ -94,14 +89,14 @@ jobs:
           restore-keys: |
             windows-msvc-qt6-ccache-
 
-      - name: Install Qt 6.12 (WebEngine only for WEBENGINE profile)
+      - name: Install Qt 6.12
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ steps.deps.outputs.qt6_version }}
           arch: win64_msvc2022_64
           # Pin the merged aqtinstall#1000 Qt 6.11+ Windows repository fix.
           aqtsource: git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b
-          modules: ${{ inputs.chat_type == 'WEBENGINE' && 'qtmultimedia qtwebchannel qtpositioning qtwebengine qtimageformats' || 'qtmultimedia qtimageformats' }}
+          modules: qtmultimedia qtimageformats
           cache: true
 
       - name: Set up MSVC environment
@@ -263,7 +258,6 @@ jobs:
 
       - name: Build Psi (package only when explicitly requested)
         env:
-          CHAT_TYPE: ${{ inputs.chat_type }}
           RELEASE_VERSION: ${{ inputs.release_version }}
           PACKAGE_BUILD: ${{ inputs.package }}
         run: |
@@ -275,7 +269,6 @@ jobs:
             $arguments = @{
               SdkDir = "$pwd\sdk"
               OutputDir = "$pwd\artifacts"
-              ChatType = $env:CHAT_TYPE
             }
             if ($env:PACKAGE_BUILD -eq 'true') {
               if (-not $env:RELEASE_VERSION) { throw 'All-in-one packaging requires an explicit release version' }

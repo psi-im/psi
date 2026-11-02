@@ -6,14 +6,9 @@ sdk_dir=$(cd "${2:?SDK_DIR is required}" && pwd)
 output_dir=$(mkdir -p "${3:?OUTPUT_DIR is required}" && cd "$3" && pwd)
 source_dir=$(pwd)
 
-chat_type=${CHAT_TYPE:-WEBKIT}
 build_testing=${BUILD_TESTING:-OFF}
 package_enabled=${PACKAGE_ENABLED:-ON}
 
-case "$chat_type" in
-    BASIC|WEBKIT|WEBENGINE) ;;
-    *) echo "Unsupported CHAT_TYPE: $chat_type" >&2; exit 2 ;;
-esac
 case "$build_testing" in
     ON|OFF) ;;
     *) echo "BUILD_TESTING must be ON or OFF" >&2; exit 2 ;;
@@ -76,7 +71,6 @@ cmake -S . -B "$build_dir" -G Ninja \
     -DUSE_QT6=OFF \
     -DUSE_MXE=OFF \
     -DUSE_CCACHE=ON \
-    -DCHAT_TYPE="$chat_type" \
     -DBUNDLED_IRIS=ON \
     -DBUNDLED_IRIS_ALL=OFF \
     -DIRIS_BUNDLED_QCA=OFF \
@@ -98,11 +92,6 @@ cmake -S . -B "$build_dir" -G Ninja \
     2>&1 | tee "$output_dir/configure-$profile.log"
 
 configure_log="$output_dir/configure-$profile.log"
-case "$chat_type" in
-    BASIC)     grep -F 'Chatlog type - Basic' "$configure_log" ;;
-    WEBKIT)    grep -F 'Chatlog type - QtWebKit' "$configure_log" ;;
-    WEBENGINE) grep -F 'Chatlog type - QtWebEngine' "$configure_log" ;;
-esac
 grep -F 'QCA: selected system QCA 3' "$configure_log"
 grep -F 'Found UsrSCTP' "$configure_log"
 grep -Eq 'Found (PkgConfig::)?OmemoC|libomemo-c' "$configure_log"

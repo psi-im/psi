@@ -8,14 +8,6 @@ on:
     branches:
       - '*'
   workflow_dispatch:
-    inputs:
-      chat_type:
-        description: Chat rendering backend (default BASIC)
-        type: choice
-        options:
-          - BASIC
-          - WEBENGINE
-        default: BASIC
 
 permissions:
   contents: read

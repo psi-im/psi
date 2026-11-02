@@ -1,5 +1,4 @@
-name: Fedora latest Qt6 WebEngine CI
-
+name: Fedora latest Qt6 BASIC CI
 on:
   push:
     branches: [master]
@@ -15,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: Fedora latest / Qt6 / GCC / WEBENGINE
+    name: Fedora latest / Qt6 / GCC / BASIC
     runs-on: ubuntu-24.04
     container: fedora:latest
     timeout-minutes: 85
@@ -27,10 +26,10 @@ jobs:
           dnf install -y git-core gcc gcc-c++ cmake ninja-build ccache \
             pkgconf-pkg-config openssl-devel zlib-devel \
             qt6-qtbase-devel qt6-qtmultimedia-devel qt6-qtsvg-devel \
-            qt6-qttools-devel qt6-qtwebengine-devel \
+            qt6-qttools-devel \
             glib2-devel gstreamer1-devel hunspell-devel \
-            libXScrnSaver-devel libgcrypt-devel libidn-devel \
-            libomemo-c-devel libotr-devel libsrtp-devel libtidy-devel \
+            libXScrnSaver-devel libidn-devel \
+            libomemo-c-devel libsrtp-devel \
             protobuf-c-devel usrsctp-devel
       - uses: actions/checkout@v4
         with:
@@ -45,9 +44,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .ccache
-          key: psi-fedora-qt6-webengine-gcc-${{ github.sha }}
+          key: psi-fedora-qt6-basic-gcc-${{ github.sha }}
           restore-keys: |
-            psi-fedora-qt6-webengine-gcc-
+            psi-fedora-qt6-basic-gcc-
       - name: Resolve locked QCA source
         uses: ./.github/actions/load-dependencies
         with:
@@ -84,7 +83,6 @@ jobs:
             -DBUNDLED_IRIS="$IRIS_BUNDLED" \
             -DIRIS_BUNDLED_QCA=OFF -DIRIS_SYSTEM_QCA=3 \
             -DIRIS_BUNDLED_USRSCTP=OFF -DIRIS_BUNDLED_OMEMO_C=OFF \
-            -DCHAT_TYPE=WEBENGINE \
             -DENABLE_PLUGINS=OFF -DBUILD_PSIMEDIA=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=ON \
             -DBUILD_TESTING=ON
