@@ -45,7 +45,11 @@ public:
     void doFlash(bool on);
 
 #ifdef Q_OS_WIN
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     bool nativeEvent(const QByteArray &eventType, MSG *msg, long *result);
+#else
+    bool nativeEvent(const QByteArray &eventType, MSG *msg, qintptr *result);
+#endif
 #endif
 
     void moveEvent(QMoveEvent *e);
@@ -123,10 +127,14 @@ public:
     }
 
 #ifdef Q_OS_WIN
-    bool nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    bool nativeEvent(const QByteArray &eventType, void *msg, long *result) override
+#else
+    bool nativeEvent(const QByteArray &eventType, void *msg, qintptr *result) override
+#endif
     {
-        if (gAdvWidget)
-            return gAdvWidget->nativeEvent(eventType, msg, result);
+        if (gAdvWidget && gAdvWidget->nativeEvent(eventType, static_cast<MSG *>(msg), result))
+            return true;
         return BaseClass::nativeEvent(eventType, msg, result);
     }
 #endif

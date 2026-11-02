@@ -15,10 +15,10 @@ QList<NativeChatTheme> NativeChatThemes::themes() const
     // Bubble is laid out by NativeChatRenderers::bubble(); the description is
     // what plugins and settings see. Its bubbles already set each message
     // apart, so it does not tint the message under the pointer.
-    NativeChatTheme bubble { QStringLiteral("bubble"), tr("Bubble"), NativeChatTheme::Modern, 40, 6, {}, {} };
+    NativeChatTheme bubble { QStringLiteral("bubble"), tr("Bubble"), NativeChatTheme::Modern, 40, 6, {}, {}, true, {}, {} };
     bubble.hoverHighlight = false;
-    QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {}, {} },
-                                    { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {}, {} },
+    QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {}, {}, true, {}, {} },
+                                    { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {}, {}, true, {}, {} },
                                     bubble };
     for (const auto &plugin : plugins_)
         result.append(plugin.themes);

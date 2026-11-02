@@ -74,12 +74,12 @@ protected:
     void setPlainText(const QString &) { }
 
     // reimplemented
-    void       contextMenuEvent(QContextMenuEvent *e);
-    void       mouseMoveEvent(QMouseEvent *e);
-    void       mousePressEvent(QMouseEvent *e);
-    void       mouseReleaseEvent(QMouseEvent *e);
-    QMimeData *createMimeDataFromSelection() const;
-    void       resizeEvent(QResizeEvent *);
+    void       contextMenuEvent(QContextMenuEvent *e) override;
+    void       mouseMoveEvent(QMouseEvent *e) override;
+    void       mousePressEvent(QMouseEvent *e) override;
+    void       mouseReleaseEvent(QMouseEvent *e) override;
+    QMimeData *createMimeDataFromSelection() const override;
+    void       resizeEvent(QResizeEvent *) override;
     void       paintEvent(QPaintEvent *event) override;
     void       clearQuoteFormatting();
 
