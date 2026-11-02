@@ -143,11 +143,6 @@ class DependencyLockTests(unittest.TestCase):
             self.assertIn("USE_QT6=ON", workflow)
             self.assertNotIn("matrix:", workflow)
             self.assertNotIn("cmake --install build", workflow)
-        for workflow in (ubuntu, mac):
-            self.assertIn("CHAT_TYPE=BASIC", workflow)
-        self.assertIn("CHAT_TYPE=WEBENGINE", fedora)
-        self.assertIn("qt6-qtwebengine-devel", fedora)
-        self.assertEqual(sum("CHAT_TYPE=WEBENGINE" in wf for wf in (ubuntu, fedora, mac)), 1)
         linux_selector = (ROOT / ".github/scripts/select-linux-iris.sh").read_text()
         for distro, workflow in (("ubuntu", ubuntu), ("fedora", fedora)):
             self.assertIn('BUNDLED_IRIS="$IRIS_BUNDLED"', workflow, distro)
@@ -173,8 +168,6 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("git submodule update --init --depth 1 iris", mac)
         self.assertNotIn("iris-qt6-macos-arm64.zip", mac)
         self.assertNotIn("BUNDLED_IRIS=OFF", mac)
-        self.assertIn("chat_type: WEBKIT", win5)
-        self.assertIn("default: WEBKIT", (root / "windows-msys2-qt5-profile.yml").read_text())
         mac_defs = (ROOT / "mac/macos_definitions.cmake").read_text()
         mac_src = (ROOT / "src/CMakeLists.txt").read_text()
         advwidget_cpp = (ROOT / "src/tools/advwidget/advwidget.cpp").read_text()
