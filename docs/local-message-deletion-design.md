@@ -745,6 +745,10 @@ messages that need it: rows and `MessageView` hold strong references, the manage
 map. Dropping an item is always safe, because it owns no source of truth, and any active
 reader, download or publication job holds its own reference.
 
+This comes with stage 5. Until then an item owns its transfers and media state as hidden
+children, so dropping one could stop a player, and it is the only record of the sources of a
+message that is not stored.
+
 ## Publishing and serving
 
 ```mermaid
@@ -961,15 +965,13 @@ flowchart LR
    as it has none. Add `FileDatabase`, move persistence and payload roots under the profile, and
    import `cache.xml`. Behaviour is unchanged. *Test:* avatars and BoB across restart, TTL,
    undeletable items, interrupted import, two profiles running at once.
-2. **Publications.** In three steps:
+2. **Publications.** In two steps:
    1. *In #1100.* Catalog and tables, media refs written with the history row, backfill, the sync
       between the two, retiring `shared_files`, no descriptors in sidecars and `cache.xml`. *Test:* a message
       not stored leaves nothing, MAM duplicate, restart, lost `files.sqlite` heals, sibling source
       union, deleted source gone, nothing served without an explicit decision.
-   2. SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS through
-      history and catalog, and the no-hash and `disposition='attachment'` rules.
-   3. Bounded `FileSharingItem` lifetime, restoring from the catalog on demand. *Test:* an item goes
-      with the last message showing it, and comes back for a later read.
+   2. *In #1101.* SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS
+      through history and catalog, and the no-hash and `disposition='attachment'` rules.
 3. **Local deletion.** Suppression, ingress checks, suppressed `HistorySync` entries, the delete
    transaction, outbox release of publications, and the *Delete locally* action keeping bytes.
    *Test:* correction before original, future corrections, new archive UIDs, ambiguous IDs, restart,
@@ -985,7 +987,9 @@ flowchart LR
    destinations; qite contract; playback source choice; external player tracking. Remove
    `FileSharingChunkSource`, `MediaChunkCache` and `FileShareDownloader`. Playback on master is the
    regression baseline: the proxies move onto `FileReader` first, with loopback HTTP still the
-   default, and the device path comes last. *Test:* audio and video with seek and stop during a
+   default, and the device path comes last. Items become observers with a bounded lifetime.
+   *Test:* an item goes with the last message showing it and comes back for a later read; audio and
+   video with seek and stop during a
    stall, before and after; player plus save on one file; independent cancellation; early delivery
    from a sequential transfer; HTTP without Range; real Jingle completion; account removal; reuse by
    strong digest across accounts; a weak claim fetched, then one payload; chunks from two sources at
