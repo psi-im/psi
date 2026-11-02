@@ -1,7 +1,8 @@
 # Shared files, publications and local message deletion
 
-Status: **design**. The only delivered part is `HistoryArchive::scrubStoredMessage`,
-a storage primitive for stage 3. Names below are proposed unless marked *existing*.
+Status: **in delivery**. Stages 0 and 1 are in master, stage 2 is under way. On this branch
+there is also `HistoryArchive::scrubStoredMessage`, a storage primitive for stage 3. Names
+below are proposed unless marked *existing* or described as delivered.
 Local deletion initially covers direct conversations backed by SQLite/MAM. The file
 architecture covers every chat type, playback, downloads, publishing and serving.
 
@@ -39,6 +40,9 @@ user's original or exported file. UI removal follows a successful history commit
 
 ## What is wrong today
 
+This is the starting point. Stage 0 dealt with the first two rows, stage 1 with the next two,
+and stage 2 deals with `FileSharingStore`.
+
 | Existing code | Observed behaviour | Consequence |
 | --- | --- | --- |
 | `FileSharingManager::acceptIncomingDownloadContents` | Looks a requested hash up in the global cache and global item map. `setRemoteJidChecker` is never called, so `isAllowedParty` is always true. | Anyone with a full JID and a hash receives any cached file, including one downloaded by another account. Reads use a raw `QFile`, outside any lifetime control. |
@@ -61,8 +65,8 @@ user's original or exported file. UI removal follows a successful history commit
 | Term | Meaning |
 | --- | --- |
 | **File** | One record in `FileCache`: payload location and facts about it. Identified by an opaque `FileId`. Knows nothing about messages or accounts. |
-| **Publication** | Someone's announcement that a file can be obtained: descriptor plus sources. *Own* publications are ours; *remote* ones arrived in a message. Identified by an opaque `PublicationId`, scoped to one account. |
-| **Serving** | A flag on a publication: this account answers remote requests for it. Set by publishing or joining. |
+| **Publication** | An announcement that a file can be obtained: descriptor plus sources. It is either one attachment of one stored message, or a file this account shares. Identified by an opaque `PublicationId`, scoped to one account. |
+| **Serving** | A flag on a publication: this account answers remote requests for it. Set by publishing or joining, on a publication no message links to, so that deleting a message does not unshare. |
 | **Message media ref** | A history row linking one attachment of one stored event to a publication. |
 | **Download** | `FileDownload`, the shared runtime session filling one file. |
 | **Attempt** | One `FileShareTransport` talking to one selected source. |
@@ -80,7 +84,8 @@ user's original or exported file. UI removal follows a successful history commit
 | --- | --- | --- |
 | Where are the bytes? Are they complete and verified? | `FileCache` | Accounts, JIDs, URLs, messages, Jingle, retries, playback |
 | What was announced, by whom, from which sources? Does this account serve it? | `FileSharingCatalog` | Bytes, attempts |
-| Which message refers to which publication? Which messages are hidden? | History: `EDBSqLite`, `HistoryArchive` | Paths, file state, sources beyond its own message snapshot |
+| Which message refers to which publication? Which messages are hidden? | History: `EDBSqLite`, `HistoryArchive`, `HistoryMediaRefs` | Paths, file state, sources beyond its own message snapshot |
+| Do history and the catalog agree? | `FileSharingPublicationSync`, the one place that talks to both | Bytes, transfers, protocols |
 | What does this stanza attach? | `MessageAttachments`, pure functions over SIMS, SFS and OOB | Storage, policy |
 | How do bytes arrive from one source? | `FileShareTransport`: HTTP, Jingle or BoB | Disk, other sources, whole-file completion |
 | Who is filling this file right now? | `FileDownload` with the shared scheduler | Messages, players, cache internals |
@@ -145,8 +150,10 @@ flowchart TB
 
     history[("history.db: events, message media refs, suppression, cleanup outbox")]
     attachments["MessageAttachments: SIMS, SFS, OOB"]
-    attachments -- "descriptors" --> catalog
-    history -. "PublicationId link only" .-> catalog
+    sync["FileSharingPublicationSync"]
+    attachments -- "what a stored message attaches" --> history
+    history -- "links and stored messages" --> sync
+    sync -- "add and remove publications" --> catalog
 ```
 
 `FileCache` never fetches, and a complete file needs no download. A reader of a complete
@@ -201,20 +208,28 @@ erDiagram
     publications {
         blob id PK "PublicationId, random"
         text account
-        int origin "own or remote"
-        text announcer "JID"
+        text announcer "JID, empty for a message this account sent"
         int serving "this account answers requests"
-        blob file_id FK "NULL until bound"
+        blob file_id FK "NULL until bound, from stage 4"
         text url_key "hashless OOB identity"
-        text name
-        text media_type
-        int size
-        text descriptor "description, thumbnail, disposition"
+        text descriptor "the file element: name, type, size, description, thumbnail"
+        text local_path "with size and time, until external placement in stage 4"
+    }
+    publication_hashes {
+        blob publication_id FK
+        text algorithm
+        blob digest
     }
     publication_sources {
         blob publication_id FK
-        int kind "url, jingle pub, peer, bob, encrypted"
-        text value "may hold a cipher key"
+        int position
+        text uri "may hold a cipher key"
+    }
+    url_content {
+        text account
+        text url_key
+        text content_hash "verified, until file_id takes over in stage 5"
+        int updated
     }
     events {
         int id PK "existing, immutable"
@@ -240,7 +255,7 @@ erDiagram
 migrates the schema. `FileCache` owns the `file*` tables and `FileSharingCatalog` owns
 the `publication*` tables; foreign keys point from publications to files, never back.
 `publications.file_id` uses `ON DELETE SET NULL`. If the database cannot be opened, the
-cache runs without persistence for the session, as `FileSharingStore` already does.
+cache runs without persistence for the session, and the catalog knows and serves nothing.
 
 **Everything moves under the profile.** Two profiles may run at once, and each gets its own
 database and payload roots, so neither can break the other's cache. The store assumes one
@@ -277,60 +292,69 @@ which is what makes the catalog rebuildable.
 
 ### Consistency across the two databases
 
-There is no cross-database transaction, and none is needed:
+There is no cross-database transaction, and none is needed, because the publications of
+stored messages follow from history. `FileSharingPublicationSync` goes through links and
+publications in small steps on the GUI thread: at every start, after new links, and after
+history lost some.
 
-- **A link without a publication** (database lost, write failed) is healed when read: the
-  event's `extra_data` recreates the row under the same ID.
-- **A remote publication without a link and not serving** (crash before the history
-  commit, erased contact) is removed by the start-up sweep.
-- **A deletion** is committed in history with its outbox rows, then released in
-  `files.sqlite`. The outbox replays at start before networking.
+- **A link without a publication** (database lost, write failed, a row from before links
+  existed) gets one from the event's `extra_data`, under the same ID.
+- **A publication without a link and not serving** (erased contact, rolled back batch) is
+  removed. If history cannot answer, nothing is.
+- **A serving publication** is an explicit decision that history cannot make for anyone, so a
+  lost `files.sqlite` stops serving, which is the safe way to fail.
+- **A deletion** is committed in history with its outbox rows. The publication goes with its
+  link; the outbox carries what only the deletion knows, the request to remove cached bytes,
+  and replays at start before networking.
 
 ## From message to publication
 
-The answer to "what can be read before history has the row" is to name the attachment on
-the GUI thread *before* handing the message to history. Nothing is written to disk at
-that point, so caching cannot become a second message log.
+What a message attaches can be read before history has the row, because the message itself
+says so: the view builds its `FileSharingItem` from the message. Nothing is written to disk at
+that point, so caching cannot become a second message log. A publication exists only once
+history keeps the message, and history alone decides that.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant X as XMPP client
     participant A as PsiAccount, GUI thread
-    participant H as History, EDBSqLite
-    participant C as FileSharingCatalog
     participant V as Chat view
+    participant H as History, EDBSqLite
+    participant S as FileSharingPublicationSync
+    participant C as FileSharingCatalog
 
     X->>A: Message with SIMS, SFS or OOB
     A->>H: Is this identity suppressed?
     H-->>A: No
-    A->>C: announce(account, sender, descriptors)
-    C-->>A: Transient PublicationIds, in memory only
-    A->>H: logEvent(event with ids), if policy allows
-    A->>V: Show message with ids
-    V->>C: item(id), optional automatic download
+    A->>V: Show the message
+    V->>V: Item from the message, optional automatic download
+    V->>C: find(account, hash), what stored messages told
+    A->>H: logEvent(event), if policy allows
     Note over H: Later, still on the GUI thread
-    H->>H: One batch: event, revisions, states, media refs
-    H-->>C: attachmentsStored(ids) signal
-    C->>C: Persist publication rows in files.sqlite
+    H->>H: One batch: event, revisions, states, media refs with new IDs
+    H-->>S: mediaLinksAdded
+    S->>H: Links since the last step, and the stored message of each new one
+    S->>C: add(id, account, announcer, attachment)
 ```
 
-- **History-disabled or no-store policy:** publications stay transient. A file bound only
-  to transient publications uses the existing `Session` retention.
-- **Live group chat:** not logged, so transient until MAM stores the message. MAM creates
-  its own publication; both resolve to one file by digest.
-- **MAM:** `HistorySync` announces in `parseResults` through its `Context`, once a message
-  is decoded. `storePage` writes refs for rows it really inserted. Rows it reuses keep
-  their refs, and live deliveries matched by `matchingDelivery` persist nothing.
-- **Transient entries** live while an item or a queued event uses them; the rest are bounded
-  by an LRU. An evicted one is announced again from the message, so no information is lost.
-- **Stored messages** get their IDs from media refs, not by announcing again.
-- **Display never persists anything.** The writes in `fillMessageView` and `appendEvent`
-  disappear, and with them history's upward call into the manager: history only emits a
-  signal.
+- **History-disabled or no-store policy:** no row, no link, no publication, and nothing but the
+  item in memory. A file bound only to such a message uses the existing `Session` retention
+  once stage 4 binds files to publications.
+- **Live group chat:** not logged, so nothing until MAM stores the message.
+- **MAM:** `storePage` links what it stores inside its own transaction, through a callback, so
+  that `HistoryArchive` stays free of Iris. Rows it reuses keep their refs, live deliveries
+  matched by `matchingDelivery` persist nothing, and a row that could not be decoded gets its
+  refs when a replay decodes it.
+- **Display never persists anything.** The writes in `fillMessageView` and `appendEvent` are gone,
+  and with them history's upward call into the manager: history only emits a signal.
+- **Own files** are the exception, as an explicit user action: publishing records a serving
+  publication at once, and the message that announces the file gets its own one, like any other.
 
-`<share>` markup, `share:` URLs and proxy paths carry a `PublicationId` instead of a hash.
-Deleting a publication therefore revokes its URLs.
+`<share>` markup, `share:` URLs and proxy paths keep addressing a file by account and hash.
+Moving them to `PublicationId` would touch every view and pre-assign IDs to messages that may
+never be stored, for little in return: a caption stays first-come per item, as it always was,
+and a file stops resolving once its last publication is gone and no message shows it.
 
 `MessageAttachments::collect` stays pure and grows SFS support (iris already parses it).
 Its display policy needs one audit: an OOB URL inside other text is an ordinary link, not
@@ -354,7 +378,7 @@ public:
 signals:
     void failed();
 };
-FileReader *FileSharingManager::openReader(PublicationId, FileReader::Policy, QObject *parent);
+FileReader *FileSharingManager::openReader(PsiAccount *, const XMPP::Hash &, FileReader::Policy, QObject *parent);
 ```
 
 Spans, gaps and tickets stay private between reader, download and cache. A consumer never
@@ -748,13 +772,14 @@ sequenceDiagram
 ```
 
 - **Publishing own files.** `FileSharingPublication` gathers sources (HTTP upload, Jingle
-  publication) and the catalog records an own publication with `serving = 1`, persisted at once
-  because it is an explicit user action. In-place files get external placement. Generated
-  payloads are managed and held.
+  publication) and the catalog records a publication with `serving = 1`, persisted at once
+  because it is an explicit user action. Publishing again replaces it. Earlier uploads are found
+  through this account's publications only, so one account never reuses another's URL. In-place
+  files get external placement. Generated payloads are managed and held.
 - **Joining.** The user agrees to serve an already downloaded remote file. This requires a
   complete file with all announced hashes verified: XEP-0447 forbids announcing oneself before
-  that, and advises against it without hashes. Joining sets `serving = 1`, adds a hold and
-  registers a Jingle publication. With SFS it may also send a source attachment; with SIMS
+  that, and advises against it without hashes. Joining records a publication with `serving = 1`,
+  adds a hold and registers a Jingle publication. With SFS it may also send a source attachment; with SIMS
   it only answers hash requests.
 - **Serving.** XEP-0234 hash requests and XEP-0358 publications both go through
   `FileSharingResponder`, and each opens a `FileReader`. Partial files are never served.
@@ -797,7 +822,7 @@ logic lives in `HistoryArchive` functions shared by live append, MAM storage and
 Reused or conflicting IDs must not authorize deleting unrelated messages; `scrubStoredMessage`
 already refuses ambiguous components.
 
-Check suppression before announcing, durable append and decryption when identity is already
+Check suppression before display, durable append and decryption when identity is already
 known, and again before persistence or display for aliases learned after decrypting; discard
 the decoded payload then. XEP-0308 makes every correction reference the original `id`, so a
 correction joins by its target. When a correction adds an alias, rows already stored under that
@@ -877,7 +902,8 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `FileSourceSelector` | Stays in `FileDownload`, spreading chunks across sources. |
 | `FileSharingJingleSession` | Stays, used by the Jingle transport. |
 | `FileSharingHashJob` | Used by the worker at finalize. |
-| `FileSharingStore` | Becomes `FileSharingCatalog`. `shared_files` and `url_content` are replaced by publication tables. |
+| `FileSharingStore` | Became `FileSharingCatalog`. `shared_files` is replaced by publication tables, and `url_content` moves along until `file_id` takes over. |
+| New | `HistoryMediaRefs` owns the links in history, `FileSharingPublicationSync` keeps publications in line with them. |
 | `FileSharingItem` | An observer per publication. Loses download, promotion and publishing. The HEAD probe moves to `FileDownload`, and automatic download decisions to caller policy. |
 | `FileSharingManager` | Composition root with runtime maps. `fillMessageView` moves to a view helper, serving to `FileSharingResponder`, outgoing item creation next to `FileSharingPublication`. |
 | `FileSharingPublication` | Stays, recording own publications through the catalog. |
@@ -888,15 +914,16 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 
 ## Migration
 
-- **History refs** run in the existing upgrade pass: `HistoryUpgrade::upgradeDatabase` already
-  runs `HistoryArchive::migrate` on a worker with progress, including `backfillMessageStates`.
-  Each event with attachments in `extra_data` gets publications and refs. Rows not yet decoded
-  get theirs when `HistorySync` stores the decoded message. Being one pass, it leaves no
-  partially covered state at run time.
-- **`shared-files.sqlite`** may hold the only record of a publication or local path. Own
-  publications (the account's own JID among the peers) are imported with `serving = 1`.
-  Everything else is dropped in favour of history refs. A remote descriptor never becomes
-  serving by migration.
+- **History refs** run in the existing upgrade pass, after `HistoryArchive::migrate` and on the
+  same worker with progress. Each event with attachments in `extra_data` gets its refs in one
+  transaction, so no partially covered state exists at run time. This touches history only, and
+  decodes no JID, because Iris prepares JIDs through a cache without locks. The publications
+  follow from `FileSharingPublicationSync` after the start, as for a lost `files.sqlite`.
+- **`shared-files.sqlite`** may hold the only record of a local path or of what was shared. What
+  an account published is imported with `serving = 1`, recognized by `served_files` or, for an
+  account from before that list, by its own JID among the peers plus a local copy. `url_content`
+  moves as it is. Everything else is dropped in favour of history refs. A remote descriptor never
+  becomes serving by migration. The import runs once per profile, after the accounts are loaded.
 - **Payloads from `shares/` and `media-files-v2`** are adopted by the first profile that opens
   them, using validated paths, sizes, ranges and hashes and renaming rather than copying.
   Adoption is recorded before old metadata is dropped, so the import is idempotent. Published
@@ -926,19 +953,23 @@ flowchart LR
     s5 --> s6
 ```
 
-0. **Close inbound doors.** Serve only hashes this account published or joined, with a small
-   persistent table that stage 2 absorbs. Stop BoB answers crossing accounts with a per-account
-   `BoBFileCache` view over one shared cache. *Test:* two accounts with one cached hash; published versus merely
-   cached; joined; unknown and not-shared answers identical.
-1. **SQLite foundation.** Write characterization tests for `FileCache` first, as it has none. Add
-   `FileDatabase`, move persistence and payload roots under the profile, and import `cache.xml`.
-   Behaviour is unchanged. *Test:* avatars and BoB across restart, TTL, undeletable items,
-   interrupted import, two profiles running at once.
-2. **Publications.** Catalog and tables, the GUI-thread announce, media refs, backfill, retiring
-   `shared_files` and `url_content`, views addressed by `PublicationId`, SFS descriptors, bounded
-   `FileSharingItem` lifetime. Stop writing descriptors into sidecars and `cache.xml`. *Test:*
-   `opt_log` off persists nothing, message displayed before its row exists, MAM duplicate, restart,
-   lost `files.sqlite` heals, sibling source union, deleted source gone.
+0. **Close inbound doors.** *Delivered (#1096).* Serve only hashes this account published or
+   joined, with a small persistent table that stage 2 absorbs. Stop BoB answers crossing accounts
+   with a per-account `BoBFileCache` view over one shared cache. *Test:* two accounts with one cached
+   hash; published versus merely cached; joined; unknown and not-shared answers identical.
+1. **SQLite foundation.** *Delivered (#1099).* Write characterization tests for `FileCache` first,
+   as it has none. Add `FileDatabase`, move persistence and payload roots under the profile, and
+   import `cache.xml`. Behaviour is unchanged. *Test:* avatars and BoB across restart, TTL,
+   undeletable items, interrupted import, two profiles running at once.
+2. **Publications.** In three steps:
+   1. *In #1100.* Catalog and tables, media refs written with the history row, backfill, the sync
+      between the two, retiring `shared_files`, no descriptors in sidecars and `cache.xml`. *Test:* a message
+      not stored leaves nothing, MAM duplicate, restart, lost `files.sqlite` heals, sibling source
+      union, deleted source gone, nothing served without an explicit decision.
+   2. SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS through
+      history and catalog, and the no-hash and `disposition='attachment'` rules.
+   3. Bounded `FileSharingItem` lifetime, restoring from the catalog on demand. *Test:* an item goes
+      with the last message showing it, and comes back for a later read.
 3. **Local deletion.** Suppression, ingress checks, suppressed `HistorySync` entries, the delete
    transaction, outbox release of publications, and the *Delete locally* action keeping bytes.
    *Test:* correction before original, future corrections, new archive UIDs, ambiguous IDs, restart,
@@ -1009,6 +1040,9 @@ Iris, so such a change waits for an Iris release.
 3. **Early detection of bad sources.** Comparing a small span already held against a new source at
    a switch would catch most disagreements before completion. The rules above are correct without it.
 4. **Verified streaming.** It needs a tree hash, which XEP-0300 does not define.
+5. **Views addressed by publication.** Per-message captions and revocation of one message's URL
+   would need it. The links in history are already there; see
+   [from message to publication](#from-message-to-publication).
 
 ## Protocol references
 
