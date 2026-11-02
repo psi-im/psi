@@ -9,6 +9,15 @@ if(WIN32)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(D "d")
     endif()
+    set(IS_MSYS_CLANG64 FALSE)
+    # Check if compiler is Clang
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Check if compiler path contains msys64/clang64 case insensetive
+        if(CMAKE_CXX_COMPILER MATCHES "([Mm][Ss][Yy][Ss]64/[Cc][Ll][Aa][Nn][Gg]64)")
+            message(STATUS "MSYS2 CLANG64 compiler found")
+            set(IS_MSYS_CLANG64 TRUE)
+        endif()
+    endif()
     # Get Qt installation path
     string(REGEX REPLACE "([^ ]+)[/\\].*" "\\1" QT_BIN_DIR_TMP "${QT_MOC_EXECUTABLE}")
     string(REGEX REPLACE "\\\\" "/" QT_BIN_DIR "${QT_BIN_DIR_TMP}")
@@ -84,7 +93,7 @@ if(WIN32)
         ${Qca_DIR}lib/qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         ${Qca_DIR}lib/Qca3-qt${QT_DEFAULT_MAJOR_VERSION}/crypto
         )
-    if(USE_MXE)
+    if(USE_MXE OR IS_MSYS_CLANG64)
         list(APPEND PATHES
             ${CMAKE_PREFIX_PATH}/bin
             ${CMAKE_PREFIX_PATH}/lib
@@ -304,6 +313,8 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gio-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}glib-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gmodule-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gmp-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gnutls-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gobject-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstapp-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstaudio-*.dll
@@ -324,30 +335,38 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstsctp-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstsdp-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gsttag-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideo-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtc-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwebrtcnice-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinrt-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gthread-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}harfbuzz.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}hogweed-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}idn2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}intl-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg8.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jpeg8.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}nettle-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}nice-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbis-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbisenc-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}x264-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}ogg-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}opus-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}orc-[0-9]*-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}p11-kit-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}png16.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}srtp2*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}tasn1-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}unistring-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbis-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}vorbisenc-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}vpx-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}webrtc-audio-processing*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}x264-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}xml2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}z-*.dll
         )
@@ -371,11 +390,11 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtp.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstrtpmanager.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gsttypefindfunctions.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvertscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvert.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoconvertscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoparsersbad.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideorate.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}gstvideoscale.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvolume.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvorbis.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstvpx.dll
@@ -385,13 +404,18 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinks.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}gstwinscreencap.dll
         )
+        set(GST_PLUGINS_PATH_PREFIX "lib")
         if(MSVC)
             set(PSIMEDIA_DEPS_DIR "${GST_SDK}/bin")
-            set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/lib/gstreamer-1.0")
+            set(GSTREAMER_PLUGINS_DIR "${GST_SDK}/${GST_PLUGINS_PATH_PREFIX}/gstreamer-1.0")
         endif()
-        if(USE_MXE)
+
+        if(USE_MXE OR IS_MSYS_CLANG64)
+            if(USE_MXE)
+                set(GST_PLUGINS_PATH_PREFIX "bin")
+            endif()
             set(PSIMEDIA_DEPS_DIR "${CMAKE_PREFIX_PATH}/bin")
-            set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/bin/gstreamer-1.0")
+            set(GSTREAMER_PLUGINS_DIR "${CMAKE_PREFIX_PATH}/${GST_PLUGINS_PATH_PREFIX}/gstreamer-1.0")
         endif()
         set(GST_PLUGINS_OUTPUT "${PSIMEDIA_LIBS_OUTPUT}/gstreamer-1.0/")
         find_psi_lib("${PSIMEDIA_DEPS}" "${PSIMEDIA_DEPS_DIR}" "${PSIMEDIA_LIBS_OUTPUT}/")
@@ -409,7 +433,7 @@ if(WIN32)
         *crypto-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}eay32.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}gcc_s_*.dll
-        ${CMAKE_SHARED_LIBRARY_PREFIX}omemo-c.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}omemo-c*.dll
         *ssl-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}stdc++-*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}winpthread-*.dll
@@ -417,15 +441,16 @@ if(WIN32)
         *zlib*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
         legacy.dll
-        ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}.dll
+        ${CMAKE_SHARED_LIBRARY_PREFIX}protobuf-c${D}*.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}ssleay32.dll
         ${CMAKE_SHARED_LIBRARY_PREFIX}z${D}.dll
         )
-    if(USE_MXE)
+    if(USE_MXE OR IS_MSYS_CLANG64)
         list(APPEND LIBRARIES_LIST
             ${CMAKE_SHARED_LIBRARY_PREFIX}brotlicommon.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}brotlidec.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}bz2.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}brotlienc.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}bz2*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}dl.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}ffi-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}freetype-*.dll
@@ -441,8 +466,8 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}lzo2-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}minizip.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}mng-*.dll
-            ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}pcre16-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}pcre2-[0-9]*-[0-9].dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}png16-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}sharpyuv-*.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}sqlite3-*.dll
@@ -457,13 +482,29 @@ if(WIN32)
             ${CMAKE_SHARED_LIBRARY_PREFIX}zstd.dll
             )
     endif()
+    if(IS_MSYS_CLANG64)
+        list(APPEND LIBRARIES_LIST
+            ${CMAKE_SHARED_LIBRARY_PREFIX}icudt*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}icuin*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}icuuc*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}b2-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}c++.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}deflate.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}double-conversion.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}graphite2.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}jbig-*.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}Lerc.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}md4c.dll
+            ${CMAKE_SHARED_LIBRARY_PREFIX}qt${QT_DEFAULT_MAJOR_VERSION}keychain${D}.dll
+        )
+    endif()
     if(SEPARATE_QJDNS)
         list(APPEND LIBRARIES_LIST
             ${CMAKE_SHARED_LIBRARY_PREFIX}jdns.dll
             ${CMAKE_SHARED_LIBRARY_PREFIX}qjdns.dll
             )
     endif()
-    find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
+    find_psi_lib("${LIBRARIES_LIST}" "${PATHES}" "${PSI_LIBS_OUTPUT}")
     if(NOT IRIS_BUNDLED_QCA)
         set(QCA_LIB
             ${CMAKE_SHARED_LIBRARY_PREFIX}qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}.dll
@@ -490,7 +531,7 @@ if(WIN32)
             VERBATIM)
     endif()
     if (NOT IRIS_BUNDLED_USRSCTP)
-        set(USRSCTP_LIB *usrsctp${D}.dll)
+        set(USRSCTP_LIB *usrsctp${D}*.dll)
         find_psi_lib("${USRSCTP_LIB}" "${PATHES}" "${PSI_LIBS_OUTPUT}/")
     endif()
     unset(LIBRARIES_LIST)

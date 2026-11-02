@@ -74,10 +74,11 @@ public:
         int subgroup_idx = 0;
         int emoji_idx    = 0;
 
-        inline bool operator!=(const iterator &other) const
+        inline bool operator==(const iterator &other) const
         {
-            return other.group_idx != group_idx || other.subgroup_idx != subgroup_idx || other.emoji_idx != emoji_idx;
+            return group_idx == other.group_idx && subgroup_idx == other.subgroup_idx && emoji_idx == other.emoji_idx;
         }
+        inline bool operator!=(const iterator &other) const { return !(*this == other); }
 
         iterator                   &operator++();
         const EmojiRegistry::Emoji &operator*() const
@@ -89,7 +90,7 @@ public:
         const SubGroup &subGroup() const { return EmojiRegistry::instance().groups[group_idx].subGroups[subgroup_idx]; }
     };
 
-    inline iterator begin() const { return {}; }
+    inline iterator begin() const { return { }; }
     inline iterator end() const { return { int(EmojiRegistry::instance().groups.size()), 0, 0 }; }
 
 private:
