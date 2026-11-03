@@ -18,6 +18,7 @@
  */
 
 #include "typeaheadfind.h"
+#include "MamChatWidget.h"
 
 #include "iconaction.h"
 #include "psioptions.h"
@@ -50,6 +51,10 @@ public:
     // setup search and react to search results
     void doFind(bool backward = false)
     {
+        if (native) {
+            updateFoundStyle(native->findText(text, backward, caseSensitive));
+            return;
+        }
         QTextDocument::FindFlags options;
 
         if (caseSensitive)
@@ -89,7 +94,8 @@ public:
     QString                text;
     bool                   caseSensitive;
 
-    QTextEdit *te;
+    QTextEdit *te = nullptr;
+    MamChatWidget *native = nullptr;
     QLineEdit *le_find;
     QAction   *act_prev;
     QAction   *act_next;
@@ -106,6 +112,14 @@ TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QW
 {
     d             = new Private();
     d->te         = textedit;
+    init();
+}
+
+TypeAheadFindBar::TypeAheadFindBar(MamChatWidget *timeline, const QString &title, QWidget *parent)
+    : QToolBar(title, parent)
+{
+    d = new Private();
+    d->native = timeline;
     init();
 }
 
@@ -138,10 +152,22 @@ void TypeAheadFindBar::init()
     d->cb_case = new QCheckBox(tr("&Case sensitive"), this);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(d->cb_case, &QCheckBox::stateChanged, this,
-            [this](int state) { d->caseSensitive = (state == Qt::Checked); });
+            [this](int state) {
+                d->caseSensitive = (state == Qt::Checked);
+                if (d->native && !d->text.isEmpty()) {
+                    d->native->clearTextSearch();
+                    d->doFind();
+                }
+            });
 #else
     connect(d->cb_case, &QCheckBox::checkStateChanged, this,
-            [this](Qt::CheckState state) { d->caseSensitive = (state == Qt::Checked); });
+            [this](Qt::CheckState state) {
+                d->caseSensitive = (state == Qt::Checked);
+                if (d->native && !d->text.isEmpty()) {
+                    d->native->clearTextSearch();
+                    d->doFind();
+                }
+            });
 #endif
     addWidget(d->cb_case);
 
@@ -187,6 +213,8 @@ void TypeAheadFindBar::open()
  */
 void TypeAheadFindBar::close()
 {
+    if (d->native)
+        d->native->clearTextSearch();
     hide();
     emit visibilityChanged(false);
 }
@@ -197,9 +225,8 @@ void TypeAheadFindBar::close()
 void TypeAheadFindBar::toggleVisibility()
 {
     if (isVisible())
-        hide();
+        close();
     else
-        // show();
         open();
 }
 
@@ -208,6 +235,16 @@ void TypeAheadFindBar::toggleVisibility()
  */
 void TypeAheadFindBar::textChanged(const QString &str)
 {
+    if (d->native) {
+        d->text = str;
+        d->native->clearTextSearch();
+        d->act_prev->setEnabled(!str.isEmpty());
+        d->act_next->setEnabled(!str.isEmpty());
+        d->le_find->setStyleSheet("");
+        if (!str.isEmpty())
+            d->doFind();
+        return;
+    }
     QTextCursor cursor;
     cursor = d->te->textCursor();
 

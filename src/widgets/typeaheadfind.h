@@ -24,11 +24,13 @@
 
 class QString;
 class QTextEdit;
+class MamChatWidget;
 
 class TypeAheadFindBar : public QToolBar {
     Q_OBJECT
 public:
     TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent = nullptr);
+    TypeAheadFindBar(MamChatWidget *timeline, const QString &title, QWidget *parent = nullptr);
     ~TypeAheadFindBar();
     void init();
 

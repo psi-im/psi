@@ -1084,7 +1084,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 
     // typeahead find bar
     QHBoxLayout *hb3a = new QHBoxLayout();
-    d->typeahead      = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
+    d->typeahead      = new TypeAheadFindBar(nativeTimeline_, tr("Find toolbar"), nullptr);
     hb3a->addWidget(d->typeahead);
     ui_.vboxLayout1->addLayout(hb3a);
 

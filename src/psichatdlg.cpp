@@ -927,7 +927,7 @@ void PsiChatDlg::initToolButtons()
 {
     // typeahead find
     QHBoxLayout *hb3a = new QHBoxLayout();
-    typeahead_        = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), nullptr);
+    typeahead_        = new TypeAheadFindBar(nativeTimeline_, tr("Find toolbar"), nullptr);
     hb3a->addWidget(typeahead_);
     ui_.vboxLayout1->addLayout(hb3a);
     // -- typeahead
