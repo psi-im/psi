@@ -17,6 +17,7 @@ then
                              libhttp-parser-dev \
                              libhunspell-dev \
                              libminizip-dev \
+                             libotr5-dev \
                              libqca-qt5-2-dev \
                              libqt5svg5-dev \
                              libqt5x11extras5-dev \
@@ -38,6 +39,8 @@ then
                      qtkeychain \
                      minizip \
                      hunspell \
+                     libgpg-error \
+                     libotr \
                      libomemo-c \
                     "
     brew install ${PACKAGES}
@@ -54,6 +57,7 @@ then
     sudo apt-get install -qq cmake \
                              ${PREFIX}-hunspell \
                              ${PREFIX}-minizip \
+                             ${PREFIX}-libotr \
                              ${PREFIX}-qtbase \
                              ${PREFIX}-qttools \
                              ${PREFIX}-qttranslations \

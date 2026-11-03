@@ -290,7 +290,7 @@ jobs:
         run: |
           $installer = Get-ChildItem artifacts -Filter '*-setup.exe' -File | Select-Object -First 1
           if (-not $installer) { throw 'Missing built NSIS installer' }
-          & packaging\windows\smoke_installer.ps1 -Installer $installer.FullName 
+          & packaging\windows\smoke_installer.ps1 -Installer $installer.FullName
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Show compiler cache statistics

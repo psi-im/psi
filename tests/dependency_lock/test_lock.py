@@ -292,6 +292,8 @@ class DependencyLockTests(unittest.TestCase):
         self.assertFalse((ROOT / "tests/filesharing/media-actions.js").exists())
         self.assertNotIn("media-actions.js", (ROOT / "tests/filesharing/CMakeLists.txt").read_text())
         self.assertNotIn("CHAT_TYPE", (ROOT / "CMakeLists.txt").read_text())
+        self.assertIn("PSI_SDK_MINGW_x86_64",
+                      (ROOT / "cmake/modules/win32_definitions.cmake").read_text())
         profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
         packaging = (ROOT / ".github/workflows/windows-msvc-qt6-packaging.yml").read_text()
         builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
