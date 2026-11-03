@@ -29,7 +29,6 @@
 #include "tabbablewidget.h"
 #include "tabdlg.h"
 #include "userlist.h"
-#include "webkitaccessinghost.h"
 
 #include <QDomElement>
 #include <QMultiMap>
@@ -63,14 +62,12 @@ class PluginHost : public QObject,
                    public SoundAccessingHost,
                    public EncryptionMethodAccessingHost,
                    public PluginAccessingHost,
-                   public WebkitAccessingHost,
                    public PsiMediaHost {
     Q_OBJECT
     Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost ShortcutAccessingHost IconFactoryAccessingHost
                      ActiveTabAccessingHost ApplicationInfoAccessingHost AccountInfoAccessingHost PopupAccessingHost
                          ContactStateAccessingHost PsiAccountControllingHost EventCreatingHost ContactInfoAccessingHost
-                             SoundAccessingHost EncryptionMethodAccessingHost PluginAccessingHost WebkitAccessingHost
-                                 PsiMediaHost)
+                             SoundAccessingHost EncryptionMethodAccessingHost PluginAccessingHost PsiMediaHost)
 
 public:
     PluginHost(PluginManager *manager, const QString &pluginFile);
@@ -262,13 +259,6 @@ public:
 
     QObject    *getPlugin(const QString &name) override;
     QVariantMap selfMetadata() const override;
-
-    // WebkitAccessingHost
-    RenderType chatLogRenderType() const override;
-    QString    installChatLogJSDataFilter(const QString      &js,
-                                          PsiPlugin::Priority priority = PsiPlugin::PriorityNormal) override;
-    void       uninstallChatLogJSDataFilter(const QString &id) override;
-    void       executeChatLogJavaScript(QWidget *log, const QString &js) override;
 
     // PsiMediaHost (calls from plugin to psi)
     void selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput) override;

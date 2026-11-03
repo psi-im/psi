@@ -50,7 +50,6 @@
 #include "textutil.h"
 #include "toolbariconaccessor.h"
 #include "translationmanager.h"
-#include "webkitaccessor.h"
 #include "widgets/iconaction.h"
 // #include "xmpp_message.h"
 
@@ -518,10 +517,6 @@ bool PluginHost::enable()
                 qDebug("connecting plugin accessor");
 #endif
                 pla->setPluginAccessingHost(this);
-            }
-            auto wka = qobject_cast<WebkitAccessor *>(plugin_);
-            if (wka) {
-                wka->setWebkitAccessingHost(this);
             }
             auto pma = qobject_cast<PsiMediaAccessor *>(plugin_);
             if (pma) {
@@ -1405,24 +1400,6 @@ QVariantMap PluginHost::selfMetadata() const
     md.insert(QLatin1String("rawIcon"), rawIcon_);
     md.insert(QLatin1String("description"), description_);
     return md;
-}
-
-WebkitAccessingHost::RenderType PluginHost::chatLogRenderType() const
-{
-    return WebkitAccessingHost::RT_TextEdit;
-}
-
-QString PluginHost::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
-{
-    return manager_->installChatLogJSDataFilter(js, priority);
-}
-
-void PluginHost::uninstallChatLogJSDataFilter(const QString &id) { manager_->uninstallChatLogJSDataFilter(id); }
-
-void PluginHost::executeChatLogJavaScript(QWidget *log, const QString &js)
-{
-    Q_UNUSED(log);
-    Q_UNUSED(js)
 }
 
 void PluginHost::selectMediaDevices(const QString &audioInput, const QString &audioOutput, const QString &videoInput)

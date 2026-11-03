@@ -52,8 +52,6 @@ list(APPEND PLUGINS_INCLUDES
     ${CMAKE_CURRENT_LIST_DIR}/include/stanzasender.h
     ${CMAKE_CURRENT_LIST_DIR}/include/stanzasendinghost.h
     ${CMAKE_CURRENT_LIST_DIR}/include/toolbariconaccessor.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/webkitaccessor.h
-    ${CMAKE_CURRENT_LIST_DIR}/include/webkitaccessinghost.h
 )
 list(APPEND HEADERS
     ${PLUGINS_INCLUDES}

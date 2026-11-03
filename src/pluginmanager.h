@@ -110,15 +110,12 @@ public:
     QIcon       icon(const QString &plugin) const;
     QStringList pluginFeatures() const;
 
-    QStringList messageViewJSFilters() const;
-
     QList<QAction *> globalAboutMenuActions() const;
 
     static const QString loadOptionPrefix;
     static const QString pluginOptionPrefix;
 
 signals:
-    void jsFiltersUpdated();
     void accountBeforeLogin(int account_id);
     void accountLoggedOut(int account_id);
     void pluginEnabled(const QString &shortName);
@@ -164,9 +161,6 @@ private:
     // Options widget provides by plugin on opt_plugins
     QPointer<QWidget>             optionsWidget_;
     QList<OAH_PluginOptionsTab *> settingsTabs_; // to be inserted into global list
-
-    QMultiMap<PsiPlugin::Priority, std::pair<QString, QString>> _messageViewJSFilters; // priority -> <js, uuid>
-    QTimer                                                     *_messageViewJSFiltersTimer = nullptr;
 
     class StreamWatcher;
     bool    incomingXml(int account, const QDomElement &eventXml);
@@ -225,9 +219,6 @@ private:
     void createNewMessageEvent(int account, QDomElement const &element);
 
     void updateFeatures();
-
-    QString installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority = PsiPlugin::PriorityNormal);
-    void    uninstallChatLogJSDataFilter(const QString &id);
 
     friend class PluginHost;
 

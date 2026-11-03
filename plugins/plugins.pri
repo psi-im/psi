@@ -44,8 +44,6 @@ HEADERS += \
     $$psi_plugins_include_dir/contactinfoaccessinghost.h \
     $$psi_plugins_include_dir/soundaccessor.h \
     $$psi_plugins_include_dir/soundaccessinghost.h \
-    $$psi_plugins_include_dir/chattabaccessor.h \
-    $$psi_plugins_include_dir/webkitaccessor.h \
-    $$psi_plugins_include_dir/webkitaccessinghost.h
+    $psi_plugins_include_dir/chattabaccessor.h
 
 OTHER_FILES += $$PWD/psiplugin.pri
