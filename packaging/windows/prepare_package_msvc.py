@@ -181,8 +181,8 @@ def main() -> int:
     qtplugins.mkdir(parents=True, exist_ok=True)
     translations.mkdir(parents=True, exist_ok=True)
 
-    # Official Qt/MSVC deployment is authoritative for Qt, WebEngine,
-    # QtWebEngineProcess and resources/locales. Compiler runtime deployment is
+    # Official Qt/MSVC deployment is authoritative for Qt and its runtime
+    # resources/locales. Compiler runtime deployment is
     # disabled here because the dependency closure below handles app-local DLLs
     # explicitly and the NSIS path can install the official VC redistributable.
     subprocess.run(

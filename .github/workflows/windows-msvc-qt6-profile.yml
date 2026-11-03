@@ -265,7 +265,7 @@ jobs:
           try {
             # PowerShell script parameters must be splatted by *name*. An
             # array of strings passes positional arguments and misbinds
-            # -OutputDir as the ChatType value.
+            # -OutputDir as an unrelated positional argument.
             $arguments = @{
               SdkDir = "$pwd\sdk"
               OutputDir = "$pwd\artifacts"
@@ -285,12 +285,12 @@ jobs:
             throw
           }
 
-      - name: Smoke test installed ${{ inputs.chat_type }} NSIS package
+      - name: Smoke test installed BASIC NSIS package
         if: inputs.package
         run: |
           $installer = Get-ChildItem artifacts -Filter '*-setup.exe' -File | Select-Object -First 1
           if (-not $installer) { throw 'Missing built NSIS installer' }
-          & packaging\windows\smoke_installer.ps1 -Installer $installer.FullName -ChatType '${{ inputs.chat_type }}'
+          & packaging\windows\smoke_installer.ps1 -Installer $installer.FullName 
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Show compiler cache statistics
@@ -302,7 +302,7 @@ jobs:
         if: inputs.package
         uses: actions/upload-artifact@v4
         with:
-          name: psi-windows-msvc-qt612-${{ inputs.chat_type }}-x64
+          name: psi-windows-msvc-qt612-BASIC-x64
           path: |
             artifacts/*.zip
             artifacts/*-setup.exe
@@ -315,7 +315,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: psi-windows-msvc-qt612-${{ inputs.chat_type }}-diagnostics
+          name: psi-windows-msvc-qt612-BASIC-diagnostics
           path: |
             artifacts/*.log
             artifacts/*.txt

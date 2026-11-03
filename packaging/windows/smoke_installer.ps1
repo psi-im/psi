@@ -1,9 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$Installer,
-
-    [ValidateSet('BASIC', 'WEBENGINE')]
-    [string]$ChatType = 'BASIC'
+    [string]$Installer
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,9 +31,6 @@ try {
 
     $exe = Join-Path $installDir 'psi.exe'
     $required = @('psi.exe', 'Qt6Core.dll')
-    if ($ChatType -eq 'WEBENGINE') {
-        $required += @('Qt6WebEngineCore.dll', 'Qt6WebEngineWidgets.dll')
-    }
     foreach ($name in $required) {
         $path = Join-Path $installDir $name
         if (-not (Test-Path $path -PathType Leaf)) {
@@ -46,15 +40,21 @@ try {
             [System.Diagnostics.FileVersionInfo]::GetVersionInfo($path).FileVersion)
     }
 
+    foreach ($obsolete in @('Qt6WebEngineCore.dll', 'Qt6WebEngineWidgets.dll')) {
+        if (Test-Path (Join-Path $installDir $obsolete)) {
+            throw "BASIC installer unexpectedly contains $obsolete"
+        }
+    }
+
     $buildInfo = Join-Path $installDir 'BUILD-INFO.txt'
     if (-not (Test-Path $buildInfo)) {
         throw 'Installed package is missing BUILD-INFO.txt'
     }
-    if ((Get-Content $buildInfo -Raw) -notmatch "(?m)^Chat rendering: $ChatType\r?$") {
-        throw "Installed package does not report Chat rendering: $ChatType"
+    if ((Get-Content $buildInfo -Raw) -notmatch "(?m)^Chat rendering: BASIC\r?$") {
+        throw "Installed package does not report Chat rendering: BASIC"
     }
 
-    Write-Host "Launching installed $ChatType Psi (without SDK or build-tree DLLs)"
+    Write-Host "Launching installed BASIC Psi (without SDK or build-tree DLLs)"
     $oldPath = $env:PATH
     try {
         # Avoid accidentally resolving DLLs against the runner's Qt and SDK paths.
