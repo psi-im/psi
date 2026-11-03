@@ -6117,6 +6117,63 @@ private slots:
         wheel(120);
         QCOMPARE(requests.count(), 2);
     }
+
+    void nativeSearchNavigatesLoadedModelRows()
+    {
+        MamChatWidget list;
+        list.resize(400, 200);
+        list.setHistoryLoading(true);
+        list.appendMessage(message(QStringLiteral("one"), QStringLiteral("needle one needle"), 1));
+        list.appendMessage(message(QStringLiteral("two"), QStringLiteral("unrelated"), 2));
+        list.appendMessage(message(QStringLiteral("three"), QStringLiteral("Needle three"), 3));
+        list.show();
+        list.setHistoryLoading(false);
+        list.scrollToIndex(0);
+        QCoreApplication::processEvents();
+
+        QVERIFY(list.findText(QStringLiteral("needle"), false, false, true));
+        QCOMPARE(list.currentSearchIndex(), 0);
+        QVERIFY(list.findText(QStringLiteral("needle")));
+        QCOMPARE(list.currentSearchIndex(), 0); // Second occurrence in the first row.
+        QVERIFY(list.findText(QStringLiteral("needle")));
+        QCOMPARE(list.currentSearchIndex(), 2);
+        QVERIFY(list.findText(QStringLiteral("needle")));
+        QCOMPARE(list.currentSearchIndex(), 0); // Wrap forward.
+        QVERIFY(list.findText(QStringLiteral("needle"), true));
+        QCOMPARE(list.currentSearchIndex(), 2); // Wrap backward.
+
+        QVERIFY(list.findText(QStringLiteral("needle"), false, true, true));
+        QCOMPARE(list.currentSearchIndex(), 0);
+        QVERIFY(list.findText(QStringLiteral("needle"), false, true));
+        QCOMPARE(list.currentSearchIndex(), 0);
+        QVERIFY(list.findText(QStringLiteral("needle"), false, true));
+        QCOMPARE(list.currentSearchIndex(), 0); // Uppercase occurrence is not a match.
+        QVERIFY(!list.findText(QStringLiteral("absent"), false, false, true));
+        QCOMPARE(list.currentSearchIndex(), -1);
+        list.clearTextSearch();
+        QCOMPARE(list.currentSearchIndex(), -1);
+    }
+
+    void nativeSearchFindsEvictedRowsWithoutRenderingAllMessages()
+    {
+        MamChatWidget list;
+        list.resize(380, 190);
+        list.setHistoryLoading(true);
+        for (int i = 0; i < 80; ++i) {
+            const QString body = i == 3 ? QStringLiteral("unique early match") : QStringLiteral("Ordinary message");
+            list.appendMessage(message(QString::number(i), body, i));
+        }
+        list.show();
+        list.setHistoryLoading(false);
+        list.scrollToIndex(79);
+        QCoreApplication::processEvents();
+
+        QVERIFY(list.findText(QStringLiteral("unique early match"), false, false, true));
+        QCOMPARE(list.currentSearchIndex(), 3);
+        list.clearMessages();
+        QCOMPARE(list.currentSearchIndex(), -1);
+    }
+
 };
 
 QTEST_MAIN(MamChatWidgetTest)
