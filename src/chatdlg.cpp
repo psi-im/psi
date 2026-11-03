@@ -1022,7 +1022,6 @@ void ChatDlg::displayMessage(const MessageView &mv)
     }
     if (mv.type() == MessageView::DeliveryReceipt) {
         displayNativeMessage(mv);
-        chatView()->markReceived(mv.messageId());
         return;
     }
     // The legacy view is hidden but still owns message receipts, reactions,

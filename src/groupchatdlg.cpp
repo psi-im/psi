@@ -231,6 +231,7 @@ public:
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
     QString                                lastTopic;
+    QDateTime                              lastMsgTime;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList                            *actions;
     IconAction                            *act_bookmark, *act_pastesend;
@@ -2526,7 +2527,7 @@ void GCMainDlg::setPassword(const QString &p) { d->password = p; }
 
 const QString &GCMainDlg::nick() const { return d->self; }
 
-const QDateTime &GCMainDlg::lastMsgTime() const { return d->te_log()->lastMsgTime(); }
+const QDateTime &GCMainDlg::lastMsgTime() const { return d->lastMsgTime; }
 
 bool GCMainDlg::isLastMessageAlert() const { return d->alert; }
 
@@ -2542,9 +2543,14 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
     if (mv.type() == MessageView::DeliveryReceipt) {
         if (nativeTimeline_)
             nativeTimeline_->appendMessage(mv);
-        ui_.log->markReceived(mv.messageId());
         return;
     }
+    // MUC history synchronization uses this timestamp. Do not depend on the
+    // hidden QTextEdit's rendering to maintain it.
+    if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
+        && (!d->lastMsgTime.isValid() || mv.dateTime() > d->lastMsgTime))
+        d->lastMsgTime = mv.dateTime();
+
     if (d->trackBar && !mv.isLocal() && !mv.isSpooled() && mv.reactionsId().isEmpty())
         d->doTrackBar();
 
