@@ -17,9 +17,6 @@ LDFLAGS="$(dpkg-buildflags --get LDFLAGS) -Wl,--as-needed"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ -z "${CHAT_TYPE}" ] && \
-    CHAT_TYPE="basic"
-
 [ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
     ENABLE_DEV_PLUGINS="OFF"
 
@@ -28,8 +25,7 @@ LDFLAGS="$(dpkg-buildflags --get LDFLAGS) -Wl,--as-needed"
 
 BUILD_OPTIONS="-DCMAKE_INSTALL_PREFIX=/usr \
                -DCMAKE_BUILD_TYPE=Release \
-               -DCHAT_TYPE=${CHAT_TYPE} \
-               -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
+                              -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
                -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_HUNSPELL=ON \

@@ -46,9 +46,6 @@ TOOLCHAIN_FILE="${CUR_DIR}/homebrew-toolchain.cmake"
     ENABLE_PLUGINS="ON" || \
     ENABLE_PLUGINS="OFF"
 
-[ -z "${CHAT_TYPE}" ] && \
-    CHAT_TYPE="basic"
-
 [ "${ENABLE_DEV_PLUGINS}" != "ON" ] && \
     ENABLE_DEV_PLUGINS="OFF"
 
@@ -59,8 +56,7 @@ BUILD_OPTIONS="-DCMAKE_BUILD_TYPE=Release \
                -DUSE_QT6=ON \
                -DQT_DEFAULT_MAJOR_VERSION=6 \
                -DBUNDLED_IRIS=ON \
-               -DCHAT_TYPE=${CHAT_TYPE} \
-               -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
+                              -DBUILD_DEV_PLUGINS=${ENABLE_DEV_PLUGINS} \
                -DBUILD_PSIMEDIA=${ENABLE_PSIMEDIA} \
                -DENABLE_PLUGINS=${ENABLE_PLUGINS} \
                -DUSE_SPARKLE=OFF \

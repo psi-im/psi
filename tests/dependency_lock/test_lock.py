@@ -286,5 +286,21 @@ class DependencyLockTests(unittest.TestCase):
             self.assertIn(needle, (ROOT / ".github/workflows" / path).read_text(), path)
 
 
+    def test_native_only_chat_and_windows_packaging(self):
+        self.assertFalse((ROOT / "src/chatview_webkit.cpp").exists())
+        self.assertFalse((ROOT / "src/webview.cpp").exists())
+        self.assertNotIn("CHAT_TYPE", (ROOT / "CMakeLists.txt").read_text())
+        profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
+        packaging = (ROOT / ".github/workflows/windows-msvc-qt6-packaging.yml").read_text()
+        builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
+        smoke = (ROOT / "packaging/windows/smoke_installer.ps1").read_text()
+        self.assertNotIn("inputs.chat_type", profile)
+        self.assertNotIn("chat_type:", packaging)
+        self.assertNotIn("-DCHAT_TYPE", builder)
+        self.assertNotIn("Chatlog type - Basic", builder)
+        self.assertIn("Chat rendering: BASIC", builder)
+        self.assertIn("BASIC installer unexpectedly contains", smoke)
+
+
 if __name__ == "__main__":
     unittest.main()
