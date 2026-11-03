@@ -46,6 +46,16 @@ public:
     // the visible fence lines, and end is the exclusive end of the close fence.
     struct CodeBlock { int begin; int end; QString language; QString code; };
     static QList<CodeBlock> codeBlocks(const QTextDocument *doc);
+    // A document as alternating prose (HTML) and fenced code (raw source).
+    // Empty means the document must stay whole: no complete fence, or an inline
+    // object that would not survive being split. Only images that the caller
+    // reinstalls into every prose part are allowed, by their resource name.
+    struct ContentPart {
+        enum Kind { Prose, Code } kind = Prose;
+        QString text;
+        QString language;
+    };
+    static QList<ContentPart> splitCodeBlocks(const QTextDocument *doc, const QStringList &allowedInlineImages = {});
     // Apply syntax colors to fenced code within an existing shared QTextDocument.
     static void highlightCodeBlocks(QTextDocument *doc);
     static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft,

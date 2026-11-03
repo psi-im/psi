@@ -79,6 +79,7 @@ add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/NativeChatRenderers.cpp ${PSI_WIDGETS}/NativeChatRenderers.h
     ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
+    ${PSI_WIDGETS}/ChatMessageBody.cpp ${PSI_WIDGETS}/ChatMessageBody.h
     ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
     ${PSI_WIDGETS}/CodeBlockWidget.cpp ${PSI_WIDGETS}/CodeBlockWidget.h
     ${PSI_WIDGETS}/OverlayScrollBarManager.cpp ${PSI_WIDGETS}/OverlayScrollBarManager.h

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/MamImageViewer.h"
+#include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
 #include "widgets/CodeBlockWidget.h"
 #include "widgets/MessagePreview.h"
@@ -76,6 +77,38 @@ MessageView message(const QString &id, const QString &body, int seconds = 0, boo
     view.setDateTime(QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
                                            Qt::ISODate).addSecs(seconds));
     return view;
+}
+
+// Whether a right click shows the message's own menu, rather than that of the view.
+bool opensMessageMenu(MamChatWidget &chat, QWidget *over)
+{
+    // A view's own menu blocks in exec(): do not let a regression hang the test.
+    QTimer::singleShot(100, &chat, [] {
+        if (auto *popup = QApplication::activePopupWidget())
+            popup->close();
+    });
+    QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), over->mapToGlobal(QPoint(3, 3)));
+    QApplication::sendEvent(over, &event);
+    std::unique_ptr<QMenu> menu(chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu")));
+    return menu != nullptr;
+}
+
+// QTest::mouseMove() only moves the cursor on Qt 5, without the held button.
+void dragWidget(QWidget *widget, const QPoint &from, const QPoint &to)
+{
+    QTest::mousePress(widget, Qt::LeftButton, Qt::NoModifier, from);
+    QMouseEvent move(QEvent::MouseMove, QPointF(to), QPointF(widget->mapToGlobal(to)), Qt::NoButton, Qt::LeftButton,
+                     Qt::NoModifier);
+    QApplication::sendEvent(widget, &move);
+    QTest::mouseRelease(widget, Qt::LeftButton, Qt::NoModifier, to);
+}
+
+QString proseAroundFencedCode(const QString &language, const QStringList &sourceLines)
+{
+    return MessageStyling::toHtml(
+        QStringLiteral("Before the example<br>") + QString(3, QChar(0x60)) + language + QStringLiteral("<br>")
+        + sourceLines.join(QStringLiteral("<br>")) + QStringLiteral("<br>") + QString(3, QChar(0x60))
+        + QStringLiteral("<br>After the example"));
 }
 }
 
@@ -494,6 +527,92 @@ private slots:
         QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("int number = 42;"));
     }
 
+    void replyPreviewUsesTheSameCodeWidgetsAsTheMessage()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 360);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        QStringList sourceLines;
+        for (int i = 0; i < 55; ++i)
+            sourceLines << QStringLiteral("int value_%1 = %1;").arg(i);
+        const QString code = sourceLines.join(QLatin1Char('\n'));
+        auto original = message(QStringLiteral("original"), proseAroundFencedCode(QStringLiteral("cpp"), sourceLines));
+        original.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(original);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("That looks correct"), 1, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        chat.show();
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(1));
+        auto *row = chat.itemWidget(1);
+        auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview);
+        auto *codeBlock = preview->findChild<CodeBlockWidget *>();
+        auto *clip = preview->findChild<QWidget *>(QStringLiteral("previewClip"));
+        QVERIFY(codeBlock && clip);
+        const int collapsedHeight = clip->height();
+        QCOMPARE(codeBlock->code(), code);
+        QCOMPARE(codeBlock->language(), QStringLiteral("cpp"));
+        QVERIFY(clip->isVisible());
+        QTRY_VERIFY(preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"))->isVisible());
+
+        // Controls of a real code widget retain their own actions, without
+        // passing the click on to navigation on the reply preview.
+        QSignalSpy navigated(preview, &MessagePreview::activated);
+        auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        QCOMPARE(navigated.size(), 0);
+        QTRY_VERIFY(clip->height() > collapsedHeight);
+        QVERIFY(clip->height() > chat.height() / 2);
+        QTRY_VERIFY(codeBlock->editor()->verticalScrollBar()->maximum() > 0);
+        QVERIFY(row->height() >= preview->height());
+
+        // Test a *real mouse click* on the embedded Copy control, not just
+        // QAction::trigger(): the parent preview must not navigate.
+        QToolButton *copyButton = nullptr;
+        for (auto *button : codeBlock->findChildren<QToolButton *>())
+            if (button->defaultAction() == codeBlock->copyAction()) {
+                copyButton = button;
+                break;
+            }
+        QVERIFY(copyButton);
+        QTRY_VERIFY(copyButton->isVisible());
+        QTest::mouseClick(copyButton, Qt::LeftButton);
+        QCOMPARE(QApplication::clipboard()->text(), code);
+        QCOMPARE(navigated.size(), 0);
+        QVERIFY(codeBlock->languageSelector()->menu());
+
+        // Ordinary prose around the code is still the quote's activation surface.
+        auto *before = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        const auto prose = preview->findChildren<ChatMessageText *>(QStringLiteral("previewText"));
+        QCOMPARE(prose.size(), 2);
+        auto *after = prose.last();
+        QVERIFY(before == prose.first());
+        QCOMPARE(before->toPlainText(), QStringLiteral("Before the example"));
+        QCOMPARE(after->toPlainText(), QStringLiteral("After the example"));
+        QCOMPARE(before->palette().color(QPalette::Text), QColor("#707070"));
+        QCOMPARE(after->palette().color(QPalette::Text), QColor("#707070"));
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(before->palette().color(QPalette::Text), QColor("#a0a4a8"));
+        QCOMPARE(after->palette().color(QPalette::Text), QColor("#a0a4a8"));
+        QTest::mouseClick(after->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(5, 5));
+        QCOMPARE(navigated.size(), 1);
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(!preview->isExpanded());
+        QTRY_COMPARE(clip->height(), collapsedHeight);
+
+        QTest::mouseClick(before->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(5, 5));
+        QCOMPARE(navigated.size(), 2);
+
+        // A regular, unrelated preview stays text-only even with fenced text.
+        MessagePreview plain(Qt::gray);
+        plain.setContent(QStringLiteral("Other"), QStringLiteral("```cpp\nint a = 1;\n```"));
+        QVERIFY(plain.findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
     void xep0393WideCodeUsesBubbleMaximumBeforeHorizontalScroll()
     {
         MamChatWidget chat;
@@ -892,6 +1011,780 @@ private slots:
         QTRY_COMPARE(excerpt->toPlainText(), QString("Updated original"));
     }
 
+    void replyPreviewClickNavigatesToOriginalMessage()
+    {
+        MamChatWidget chat;
+        chat.resize(480, 230);
+        chat.setHistoryLoading(true);
+        auto original = message(QStringLiteral("original"), QStringLiteral("This is the original message."));
+        original.setUserId(QStringLiteral("peer@example.org/phone"));
+        original.setReactionTargetId(QStringLiteral("origin-id"));
+        chat.appendMessage(original);
+        for (int i = 1; i < 35; ++i)
+            chat.appendMessage(message(QStringLiteral("intermediate-%1").arg(i),
+                                       QStringLiteral("Ordinary conversation message"), i));
+
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("I agree with that."), 36, true);
+        reply.setReply({ QStringLiteral("origin-id"), QStringLiteral("peer@example.org"),
+                         QStringLiteral("Peer"), QStringLiteral("Fallback text") });
+        chat.appendMessage(reply);
+        chat.show();
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(35));
+        auto *preview = chat.itemWidget(35)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->property("replyResolved").toBool());
+        QTRY_VERIFY(chat.visibleRange().contains(35));
+        QVERIFY(!chat.visibleRange().contains(0));
+
+        // A click inside the quoted excerpt navigates, without selecting a
+        // whole message or relying on the quoted row's current index.
+        auto *excerpt = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(excerpt);
+        // A drag out of the quote selects its text, never whole messages.
+        dragWidget(excerpt->viewport(), QPoint(6, 6), excerpt->viewport()->mapFrom(chat.viewport(), QPoint(6, 10)));
+        QCOMPARE(chat.selectedMessageCount(), 0);
+        QVERIFY(chat.visibleRange().contains(35));
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(6, 6));
+        QTRY_VERIFY(chat.visibleRange().contains(0));
+        QCOMPARE(chat.selectedMessageCount(), 0);
+
+        // Older history shifts every row: the target is found by its identity.
+        QList<QPair<QString, MessageView>> older;
+        for (int i = 0; i < 40; ++i)
+            older.append({ QStringLiteral("archive-%1").arg(i),
+                           message(QStringLiteral("older-%1").arg(i), QStringLiteral("Older message"), i - 100) });
+        QCOMPARE(chat.prependArchivePage(older), 40);
+        chat.scrollToEnd();
+        QTRY_VERIFY(chat.itemWidget(75));
+        QTRY_VERIFY(!chat.visibleRange().contains(40));
+        preview = chat.itemWidget(75)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QTRY_VERIFY(chat.visibleRange().contains(40));
+        QVERIFY(!chat.visibleRange().contains(0));
+    }
+
+    void unresolvedReplyPreviewDoesNotNavigate()
+    {
+        MamChatWidget chat;
+        chat.resize(480, 250);
+        auto orphan = message(QStringLiteral("orphan"), QStringLiteral("Latest message"), 1, true);
+        orphan.setReply({ QStringLiteral("missing-id"), {}, QStringLiteral("Peer"),
+                          QStringLiteral("Not available") });
+        chat.appendMessage(orphan);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *preview = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && !preview->property("replyResolved").toBool());
+        QSignalSpy activated(preview, &MessagePreview::activated);
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QCOMPARE(activated.size(), 0);
+    }
+
+    void clickablePreviewPreservesSelectionAndLinks()
+    {
+        QWidget window;
+        window.resize(480, 280);
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        preview->setRichContent(QStringLiteral("Author"),
+                                QStringLiteral("Some selectable text and "
+                                               "<a href='https://example.org'>a link</a>."));
+        preview->setActivatable(true);
+        QSignalSpy activated(preview, &MessagePreview::activated);
+        auto *excerpt = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        int linksOpened = 0;
+        excerpt->setLinkHandler([&](const QString &) {
+            ++linksOpened;
+            return true;
+        });
+        window.show();
+        QTRY_VERIFY(excerpt->height() > 0);
+        const QPoint from(4, excerpt->fontMetrics().height() / 2);
+        const QPoint to(from.x() + QApplication::startDragDistance() + 70, from.y());
+        dragWidget(excerpt->viewport(), from, to);
+        QVERIFY(excerpt->textCursor().hasSelection());
+        QCOMPARE(activated.size(), 0);
+        // A plain click clears that selection, and a selection does not block it.
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, from);
+        QVERIFY(!excerpt->textCursor().hasSelection());
+        QCOMPARE(activated.size(), 1);
+        activated.clear();
+        // Selecting even a single letter is not a click, however short the drag.
+        dragWidget(excerpt->viewport(), from, from + QPoint(QApplication::startDragDistance() - 1, 0));
+        QVERIFY(excerpt->textCursor().hasSelection());
+        QCOMPARE(activated.size(), 0);
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, to);
+        QCOMPARE(activated.size(), 1);
+        activated.clear();
+        // Modifiers and other buttons have their own meaning.
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::ControlModifier, from);
+        QTest::mouseClick(excerpt->viewport(), Qt::MiddleButton, Qt::NoModifier, from);
+        QCOMPARE(activated.size(), 0);
+
+        auto linkCursor = excerpt->document()->find(QStringLiteral("a link"));
+        QVERIFY(!linkCursor.isNull());
+        // QTextDocument::find() leaves the cursor at the end of the match.
+        // Position it inside the anchor, not after the closing tag.
+        linkCursor.setPosition(linkCursor.selectionStart() + 2);
+        const QPoint linkPoint = excerpt->cursorRect(linkCursor).center();
+        QCOMPARE(excerpt->anchorAt(linkPoint), QStringLiteral("https://example.org"));
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, linkPoint);
+        QCOMPARE(activated.size(), 0);
+        QCOMPARE(linksOpened, 1);
+
+        auto *title = preview->findChild<QLabel *>(QStringLiteral("previewTitle"));
+        const QPoint titleFrom(2, title->height() / 2);
+        const QPoint titleTo(titleFrom.x() + QApplication::startDragDistance() + 20, titleFrom.y());
+        dragWidget(title, titleFrom, titleFrom + QPoint(QApplication::startDragDistance() - 1, 0));
+        QVERIFY(title->hasSelectedText());
+        QCOMPARE(activated.size(), 0);
+        QTest::mouseClick(title, Qt::LeftButton, Qt::NoModifier, titleTo);
+        QVERIFY(!title->hasSelectedText());
+        QCOMPARE(activated.size(), 1);
+        // The card's own surface activates too, but not a press on a child.
+        QTest::mouseClick(preview, Qt::LeftButton, Qt::NoModifier, QPoint(1, preview->height() / 2));
+        QCOMPARE(activated.size(), 2);
+        QTest::mouseClick(preview, Qt::LeftButton, Qt::NoModifier, title->mapTo(preview, titleFrom));
+        QCOMPARE(activated.size(), 2);
+        const QPoint bar(1, preview->height() / 2);
+        dragWidget(preview, bar, bar + QPoint(QApplication::startDragDistance() + 20, 0));
+        QCOMPARE(activated.size(), 2);
+        // A child button handles its own click. It must never bubble up as
+        // activation, even when the preview itself is navigable.
+        auto *footer = new QWidget(preview);
+        auto *controls = new QHBoxLayout(footer);
+        auto *action = new QPushButton(QStringLiteral("Download"), footer);
+        controls->addWidget(action);
+        preview->setFooter(footer);
+        QSignalSpy actionClicked(action, &QPushButton::clicked);
+        QTest::mouseClick(action, Qt::LeftButton);
+        QCOMPARE(actionClicked.size(), 1);
+        QCOMPARE(activated.size(), 2);
+
+        preview->setActivatable(false);
+        QTest::mouseClick(title, Qt::LeftButton);
+        QTest::mouseClick(excerpt->viewport(), Qt::LeftButton, Qt::NoModifier, from);
+        QCOMPARE(activated.size(), 2);
+    }
+
+    void quotesAroundCodeStayQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        const QString fence(3, QChar(0x60));
+        chat.appendMessage(message(QStringLiteral("m"), MessageStyling::toHtml(
+            QStringLiteral("&gt; first quote<br>First answer<br>") + fence + QStringLiteral("cpp<br>int a = 1;<br>")
+            + fence + QStringLiteral("<br>&gt; second quote<br>Second answer"))));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto prose = row->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        auto *first = prose.first();
+        auto *second = prose.last();
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QVERIFY(opensMessageMenu(chat, second->viewport()));
+        QVERIFY(opensMessageMenu(chat, code->editor()->viewport()));
+        const auto quoteColor = [](ChatMessageText *text, const QString &quote) {
+            return text->document()->find(quote).charFormat().foreground().color();
+        };
+        for (const auto &[text, quote, answer] :
+             { std::make_tuple(first, QStringLiteral("first quote"), QStringLiteral("First answer")),
+               std::make_tuple(second, QStringLiteral("second quote"), QStringLiteral("Second answer")) }) {
+            QCOMPARE(text->toPlainText(), quote + QLatin1Char('\n') + answer);
+            QVERIFY(text->isQuotedBlock(text->document()->begin()));
+            QCOMPARE(text->document()->begin().blockFormat().leftMargin(), 10.0);
+            QVERIFY(!text->isQuotedBlock(text->document()->begin().next()));
+            QCOMPARE(quoteColor(text, quote), QColor("#707070"));
+        }
+        // The parts are spaced like the rest of the message's column.
+        QTRY_COMPARE(code->y() - first->geometry().bottom() - 1, 4);
+
+        // Later changes reach every part.
+        chat.setQuoteColor(QColor("#a0a4a8"));
+        QCOMPARE(quoteColor(first, QStringLiteral("first quote")), QColor("#a0a4a8"));
+        QCOMPARE(quoteColor(second, QStringLiteral("second quote")), QColor("#a0a4a8"));
+        chat.selectMessageRange(0, 0);
+        QCOMPARE(second->textInteractionFlags(), Qt::TextInteractionFlags(Qt::NoTextInteraction));
+        chat.cancelMessageSelection();
+        QVERIFY(second->textInteractionFlags().testFlag(Qt::TextSelectableByMouse));
+        QPalette colors = chat.palette();
+        colors.setColor(QPalette::Text, QColor("#102030"));
+        chat.setPalette(colors);
+        QTRY_COMPARE(second->palette().color(QPalette::Text), first->palette().color(QPalette::Text));
+        QCOMPARE(second->palette().color(QPalette::Text), QColor("#102030"));
+
+        // A document that cannot be split shows its quotes the same way.
+        FileSharingDeviceOpener opener;
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        chat.setMediaOpener(&opener);
+        chat.appendMessage(message(QStringLiteral("whole"), MessageStyling::toHtml(
+            QStringLiteral("&gt; a quote<br><share id=\"audio\"/><br>") + fence + QStringLiteral("<br>code<br>")
+            + fence), 1));
+        QTRY_VERIFY(chat.itemWidget(1));
+        auto *whole = chat.itemWidget(1)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(whole->isQuotedBlock(whole->document()->begin()));
+        QVERIFY(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
+    void codeKeepsLinesThatLookLikeQuotes()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        const QString fence(3, QChar(0x60));
+        const QString html = MessageStyling::toHtml(QStringLiteral("Before<br>") + fence
+            + QStringLiteral("sh<br>&gt; ls -l<br>echo ok<br>&gt; cat file<br>") + fence + QStringLiteral("<br>After"));
+        auto original = message(QStringLiteral("original"), html);
+        original.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(original);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 1, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        const QString source = QStringLiteral("> ls -l\necho ok\n> cat file");
+        auto *code = chat.itemWidget(0)->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        QCOMPARE(code->code(), source);
+        auto *preview = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        auto *quoted = preview ? preview->findChild<CodeBlockWidget *>() : nullptr;
+        QVERIFY(quoted);
+        QCOMPARE(quoted->code(), source);
+
+        // In a document that stays whole they are not quotes either.
+        FileSharingDeviceOpener opener;
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        ChatMessageBody whole;
+        whole.text()->setMediaOpener(&opener);
+        whole.setRichText(QStringLiteral("<share id=\"audio\"/><br>") + html, {});
+        QVERIFY(whole.codeBlocks().isEmpty());
+        QVERIFY(whole.text()->toPlainText().contains(QStringLiteral("> ls -l")));
+        ChatMessageBody::RichTextOptions withoutQuotes;
+        withoutQuotes.withoutQuotedLines = true;
+        whole.setRichText(QStringLiteral("<share id=\"audio\"/><br>") + html, withoutQuotes);
+        QVERIFY(whole.text()->toPlainText().contains(QStringLiteral("> ls -l")));
+
+        // A fenced block in a quote is part of that quote.
+        const QString inQuote = MessageStyling::toHtml(QStringLiteral("&gt; ") + fence
+                                                       + QStringLiteral("<br>&gt; old<br>&gt; ") + fence
+                                                       + QStringLiteral("<br>Answer"));
+        ChatMessageBody body;
+        body.setRichText(inQuote, {});
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.text()->toPlainText(), fence + QStringLiteral("\nold\n") + fence + QStringLiteral("\nAnswer"));
+        const auto quotedBlock = body.text()->document()->begin();
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock));
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock.next()));
+        QVERIFY(body.text()->isQuotedBlock(quotedBlock.next().next()));
+        body.setRichText(inQuote, withoutQuotes);
+        QCOMPARE(body.text()->toPlainText(), QStringLiteral("Answer"));
+    }
+
+    void fontChangeReachesEveryPartOfTheBody()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        QFont font = chat.font();
+        font.setPointSizeF(font.pointSizeF() + 2);
+        chat.setFont(font);
+        chat.appendMessage(message(QStringLiteral("m"),
+                                   proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") })));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        const auto prose = row->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        auto *first = prose.first();
+        auto *second = prose.last();
+        auto *code = row->findChild<CodeBlockWidget *>();
+        QVERIFY(code);
+        font.setPointSizeF(font.pointSizeF() + 6);
+        chat.setFont(font);
+        QTRY_COMPARE(first->font().pointSizeF(), font.pointSizeF());
+        QCOMPARE(second->font().pointSizeF(), font.pointSizeF());
+        QCOMPARE(code->font().pointSizeF(), font.pointSizeF());
+    }
+
+    void rendererTextColorReachesEveryPieceOfMessageText()
+    {
+        FramedRenderer renderer;
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setTheme({ QStringLiteral("framed"), QStringLiteral("Framed"), NativeChatTheme::Modern, 0, 4, {} },
+                      &renderer);
+        const QString html = proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") });
+        chat.appendMessage(message(QStringLiteral("own"), html, 0, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const auto prose = chat.itemWidget(0)->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        QCOMPARE(prose.first()->palette().color(QPalette::Text), QColor(200, 0, 0));
+        QCOMPARE(prose.last()->palette().color(QPalette::Text), QColor(200, 0, 0));
+    }
+
+    void codeWidgetsAreForStyledMessagesOnly()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString html = MessageStyling::toHtml(fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence);
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("styled"), html));
+        auto unstyled = message(QStringLiteral("unstyled"), html, 1);
+        unstyled.setStylingDisabled(true);
+        chat.appendMessage(unstyled);
+        MessageView notice(MessageView::System);
+        notice.setPlainText(html);
+        notice.setDateTime(unstyled.dateTime().addSecs(1));
+        chat.appendMessage(notice);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+        QCOMPARE(chat.itemWidget(0)->findChildren<CodeBlockWidget *>().size(), 1);
+        QVERIFY(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().isEmpty());
+        QVERIFY(chat.itemWidget(2)->findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
+    void fileCardsNeedNoTextAndAllowCodeBeside()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem archive(QStringLiteral("application/x-7z-compressed"));
+        opener.items.insert(QStringLiteral("archive"), &archive);
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        const QString share = QStringLiteral("<share id=\"archive\"/>");
+        const QString fence(3, QChar(0x60));
+        chat.appendMessage(message(QStringLiteral("card"), share));
+        chat.appendMessage(message(QStringLiteral("caption"), MessageStyling::toHtml(
+            share + QStringLiteral("Before<br>") + fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+        // Only the card: not even the gap of an empty text above it.
+        auto *card = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(card);
+        QVERIFY(chat.itemWidget(0)->findChild<ChatMessageBody *>()->isHidden());
+        QTRY_COMPARE(card->y(), 0);
+        // The share is out of the text, so nothing keeps that from being split.
+        QVERIFY(chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview")));
+        QCOMPARE(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().size(), 1);
+    }
+
+    void themeStylesEveryPieceOfMessageText()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 620);
+        chat.setHistoryLoading(true);
+        NativeChatTheme theme { QStringLiteral("styled"), QStringLiteral("Styled"), NativeChatTheme::Modern, 0, 4, {} };
+        theme.styleSheet = QStringLiteral("QTextEdit#mamBody { padding-left: 7px; }");
+        chat.setTheme(theme);
+        chat.appendMessage(message(QStringLiteral("m"),
+                                   proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") })));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const auto prose = chat.itemWidget(0)->findChildren<ChatMessageText *>(QStringLiteral("mamBody"));
+        QCOMPARE(prose.size(), 2);
+        QTRY_VERIFY(prose.first()->contentsMargins().left() >= 7);
+        QTRY_COMPARE(prose.last()->contentsMargins().left(), prose.first()->contentsMargins().left());
+    }
+
+    void bodyAppliesItsOptionsToEveryPart()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence;
+        QPixmap pixmap(8, 8);
+        pixmap.fill(Qt::red);
+        const QString image = QStringLiteral("<img src=\"test:icon\" width=\"8\" height=\"8\"/>");
+
+        ChatMessageBody body;
+        ChatMessageBody::RichTextOptions options;
+        options.inlineImages.insert(QStringLiteral("test:icon"), pixmap);
+        body.setRichText(MessageStyling::toHtml(image + QStringLiteral(" Head<br>") + code + QStringLiteral("<br>")
+                                                + image + QStringLiteral(" Tail")), options);
+        QCOMPARE(body.prose().size(), 2);
+        QCOMPARE(body.codeBlocks().size(), 1);
+        const QUrl icon(QStringLiteral("test:icon"));
+        QVERIFY(body.prose().at(0)->document()->resource(QTextDocument::ImageResource, icon).isValid());
+        QVERIFY(body.prose().at(1)->document()->resource(QTextDocument::ImageResource, icon).isValid());
+        // A document staying whole has its images, too.
+        body.setRichText(image + QStringLiteral(" Without any code"), options);
+        QVERIFY(body.text()->document()->resource(QTextDocument::ImageResource, icon).isValid());
+
+        // Without styling, a marker is just text in every part.
+        const QString quotes = MessageStyling::toHtml(QStringLiteral("&gt; one<br>") + code
+                                                      + QStringLiteral("<br>&gt; two"));
+        ChatMessageBody::RichTextOptions unstyled;
+        unstyled.quoteStyling = false;
+        body.setRichText(quotes, unstyled);
+        QCOMPARE(body.prose().size(), 2);
+        QCOMPARE(body.prose().at(0)->toPlainText(), QStringLiteral("> one"));
+        QCOMPARE(body.prose().at(1)->toPlainText(), QStringLiteral("> two"));
+        ChatMessageBody::RichTextOptions whole;
+        whole.splitCode = false;
+        body.setRichText(quotes, whole);
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.prose().size(), 1);
+        QVERIFY(body.text()->isQuotedBlock(body.text()->document()->begin()));
+
+        // Code alone measures by that code, not by the document it came from.
+        ChatMessageBody::RichTextOptions trusted;
+        trusted.messageEncrypted = true;
+        trusted.verifiedOmemo = true;
+        body.setRichText(MessageStyling::toHtml(code), trusted);
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
+        body.setPlainText(QStringLiteral("A very long line of text that is wider than the code would ever need to be"));
+        QVERIFY(body.codeBlocks().isEmpty());
+        QCOMPARE(body.naturalWidth(), body.text()->naturalWidth());
+
+        // Code gets the provenance of its message: a trusted one needs no risk checkbox.
+        body.setRichText(MessageStyling::toHtml(code), trusted);
+        auto *block = body.codeBlocks().first();
+        QAction run(QStringLiteral("Execute"), block);
+        block->setRunAction(&run);
+        bool asked = false;
+        bool riskCheckbox = true;
+        QTimer::singleShot(0, block, [&] {
+            if (auto *dialog = qobject_cast<QMessageBox *>(QApplication::activeModalWidget())) {
+                asked = true;
+                riskCheckbox = dialog->checkBox() != nullptr;
+                dialog->button(QMessageBox::Cancel)->click();
+            }
+        });
+        block->runAction()->trigger();
+        QVERIFY(asked);
+        QVERIFY(!riskCheckbox);
+    }
+
+    void onlyDocumentsWithoutForeignObjectsAreSplit()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("cpp<br>int a = 1;<br>") + fence;
+        FileSharingDeviceOpener opener;
+        FileSharingItem cached(QStringLiteral("image/png"));
+        cached.cached_ = true;
+        cached.preview_ = QImage(60, 40, QImage::Format_RGB32);
+        cached.preview_.fill(Qt::green);
+        FileSharingItem downloading(QStringLiteral("image/png"));
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("cached"), &cached);
+        opener.items.insert(QStringLiteral("downloading"), &downloading);
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        const auto parts = [&](const QString &html, const QStringList &allowed = {}) {
+            ChatMessageText text;
+            text.setMediaOpener(&opener);
+            text.setRichText(MessageStyling::toHtml(html));
+            return PsiRichText::splitCodeBlocks(text.document(), allowed).size();
+        };
+        QCOMPARE(parts(QStringLiteral("Before<br>") + code + QStringLiteral("<br>After")), 3);
+        QCOMPARE(parts(code), 1);
+        QCOMPARE(parts(QStringLiteral("No fence at all")), 0);
+
+        const QString icon = QStringLiteral("<img src=\"psi-icon:a\" width=\"10\" height=\"10\"/> Head<br>") + code;
+        QCOMPARE(parts(icon), 0);
+        QCOMPARE(parts(icon, { QStringLiteral("psi-icon:a") }), 2);
+        // The resource name decides, not any text in the tag.
+        const QString otherIcon
+            = QStringLiteral("<img src=\"psi-icon:b\" title=\"psi-icon:a\" width=\"10\" height=\"10\"/> Head<br>");
+        QCOMPARE(parts(otherIcon + code, { QStringLiteral("psi-icon:a") }), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"cached\"/><br>") + code), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"downloading\"/><br>") + code), 0);
+        QCOMPARE(parts(QStringLiteral("<share id=\"audio\"/><br>") + code), 0);
+        // A share that created nothing cannot lose anything either.
+        QCOMPARE(parts(QStringLiteral("<share id=\"unknown\"/>Head<br>") + code), 2);
+    }
+
+    void pressTakenByAnEventFilterIsNotAPlainClick()
+    {
+        // As a media player's control does: it takes the press, not the release.
+        class PressFilter final : public QObject {
+        protected:
+            bool eventFilter(QObject *, QEvent *event) override { return event->type() == QEvent::MouseButtonPress; }
+        };
+        ChatMessageText text;
+        text.setRichText(QStringLiteral("Some text"));
+        text.resize(200, 80);
+        text.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&text));
+        QSignalSpy clicked(&text, &ChatMessageText::plainClicked);
+        const QPoint point(4, text.fontMetrics().height() / 2);
+        QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(clicked.size(), 1);
+        PressFilter filter;
+        text.viewport()->installEventFilter(&filter);
+        QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, point);
+        QCOMPARE(clicked.size(), 1);
+    }
+
+    void imageHitTestUsesTheDrawnSize()
+    {
+        ChatMessageText text;
+        text.resize(300, 120);
+        QImage picture(600, 400, QImage::Format_RGB32);
+        picture.fill(Qt::green);
+        text.document()->addResource(QTextDocument::ImageResource, QUrl(QStringLiteral("test:picture")), picture);
+        QTextImageFormat format;
+        format.setName(QStringLiteral("test:picture"));
+        QTextCursor(text.document()).insertImage(format);
+        text.setMaximumImageHeight(60); // Drawn at 90x60, without a size of its own in the format.
+        text.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&text));
+        QVERIFY(text.imageAt(QPoint(45, 30)));
+        QVERIFY(!text.imageAt(QPoint(120, 30)));
+        QVERIFY(!text.imageAt(QPoint(45, 90)));
+        // The image claims a click on it, and only there.
+        QSignalSpy clicked(&text, &ChatMessageText::plainClicked);
+        QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(45, 30));
+        QCOMPARE(clicked.size(), 0);
+        QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(120, 30));
+        QCOMPARE(clicked.size(), 1);
+    }
+
+    void quotedImageOpensItsViewerInsteadOfActivatingThePreview()
+    {
+        QTemporaryDir cache;
+        QVERIFY(cache.isValid());
+        const QString path = cache.filePath(QStringLiteral("original.png"));
+        QImage original(1200, 800, QImage::Format_RGB32);
+        original.fill(Qt::red);
+        QVERIFY(original.save(path));
+        FileSharingDeviceOpener opener;
+        FileSharingItem item(QStringLiteral("image/png"));
+        item.cachedPath_ = path;
+        item.preview_ = QImage(600, 400, QImage::Format_RGB32);
+        item.preview_.fill(Qt::blue);
+        opener.items.insert(QStringLiteral("photo"), &item);
+
+        MamChatWidget chat;
+        chat.resize(560, 700);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        auto quoted = message(QStringLiteral("original"), QStringLiteral("<share id=\"photo\"/>"));
+        quoted.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(quoted);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 1, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(1));
+        auto *preview = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->property("replyResolved").toBool());
+        auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(text);
+        QTRY_VERIFY(text->viewport()->isVisible());
+
+        const auto viewerWindow = []() -> MamImageViewer * {
+            for (auto *widget : QApplication::topLevelWidgets())
+                if (widget->isVisible() && widget->objectName() == QLatin1String("mamImageViewer"))
+                    return qobject_cast<MamImageViewer *>(widget);
+            return nullptr;
+        };
+        // Collapsed, the thumbnail is as high as three lines, keeping its 3:2 aspect.
+        const int thumbnailHeight = 3 * preview->fontMetrics().lineSpacing();
+        const int thumbnailWidth = thumbnailHeight * 3 / 2;
+        QSignalSpy activated(preview, &MessagePreview::activated);
+        QTest::mouseClick(text->viewport(), Qt::LeftButton, Qt::NoModifier,
+                          QPoint(thumbnailWidth / 2, thumbnailHeight / 2));
+        QTRY_VERIFY(viewerWindow());
+        // The original of the quoted message: the share is not in the reply's own markup.
+        QVERIFY(viewerWindow()->displayedImageRect().width() > 600);
+        QCOMPARE(activated.size(), 0);
+        viewerWindow()->close();
+        QCoreApplication::processEvents();
+
+        // Beside the thumbnail is the quote itself, even within the image's natural size.
+        QTest::mouseClick(text->viewport(), Qt::LeftButton, Qt::NoModifier,
+                          QPoint(thumbnailWidth + 40, thumbnailHeight / 2));
+        QCOMPARE(activated.size(), 1);
+        QVERIFY(!viewerWindow());
+    }
+
+    void quotedMediaPlayerIsNotAPlainClickSurface()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        opener.items.insert(QStringLiteral("audio"), &audio);
+        QWidget window;
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        preview->setMediaOpener(&opener);
+        preview->setRichContent(QStringLiteral("Author"), QStringLiteral("<share id=\"audio\"/>"));
+        preview->setActivatable(true);
+        window.resize(600, 300);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QTRY_VERIFY(text->height() > 0);
+        // The corner of the player, away from its controls: they take the press themselves.
+        const QPoint surface(2, 2);
+        QVERIFY(text->objectAt(surface));
+        QSignalSpy activated(preview, &MessagePreview::activated);
+        QTest::mouseClick(text->viewport(), Qt::LeftButton, Qt::NoModifier, surface);
+        QCOMPARE(activated.size(), 0);
+        // The title beside it stays the way to the quoted message.
+        QTest::mouseClick(preview->findChild<QLabel *>(QStringLiteral("previewTitle")), Qt::LeftButton);
+        QCOMPARE(activated.size(), 1);
+    }
+
+    void wheelOverReplyPreviewTextScrollsTimeline()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 300);
+        chat.setHistoryLoading(true);
+        QStringList sourceLines;
+        for (int i = 0; i < 55; ++i)
+            sourceLines << QStringLiteral("int value_%1 = %1;").arg(i);
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 0, true);
+        reply.setReply({ QStringLiteral("original-id"), {}, QStringLiteral("Peer"), QStringLiteral("fallback") });
+        chat.appendMessage(reply);
+        auto original = message(QStringLiteral("original"),
+                                proseAroundFencedCode(QStringLiteral("cpp"), sourceLines), 1);
+        original.setReactionTargetId(QStringLiteral("original-id"));
+        chat.appendMessage(original);
+        for (int i = 0; i < 30; ++i)
+            chat.appendMessage(message(QString::number(i), QStringLiteral("Message text"), i + 2));
+        chat.show();
+
+        const auto wheelMovesTimeline = [&chat] {
+            chat.scrollToIndex(0, MamChatWidget::Alignment::Top);
+            QTRY_VERIFY_WITH_TIMEOUT(chat.verticalScrollBar()->value() == 0 && chat.itemWidget(0), 2000);
+            auto *preview = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+            auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+            QWheelEvent wheel(QPointF(4, 4), QPointF(text->viewport()->mapToGlobal(QPoint(4, 4))),
+                              QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+            QApplication::sendEvent(text->viewport(), &wheel);
+            QTRY_VERIFY_WITH_TIMEOUT(chat.verticalScrollBar()->value() > 0, 2000);
+            // Everything the preview contains stays at its place.
+            QCOMPARE(preview->findChild<QWidget *>(QStringLiteral("previewContent"))->y(), 0);
+        };
+        wheelMovesTimeline();
+        if (QTest::currentTestFailed())
+            return;
+        auto *preview = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QTest::mouseClick(preview->findChild<LinkButton *>(QStringLiteral("previewShowMore")), Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        wheelMovesTimeline();
+    }
+
+    void previewFollowsTheHeightOfItsParts()
+    {
+        QWidget window;
+        window.resize(600, 500);
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        const QString json = QStringLiteral("{&quot;a&quot;:1,&quot;b&quot;:{&quot;c&quot;:2,&quot;d&quot;:[1,2,3]}}");
+        preview->setRichContent(QStringLiteral("Author"), proseAroundFencedCode(QStringLiteral("json"), { json }));
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        auto *code = preview->findChild<CodeBlockWidget *>();
+        auto *clip = preview->findChild<QWidget *>(QStringLiteral("previewClip"));
+        auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
+        auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        QVERIFY(code && clip && more && text);
+        QTRY_VERIFY(more->isVisible());
+        QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        QTRY_VERIFY(clip->height() > code->height());
+        // Let the window finish laying out the expansion: a pending resize would update the preview too.
+        QTRY_VERIFY(preview->rect().contains(QRect(clip->mapTo(preview, QPoint()), clip->size())));
+        const int expanded = clip->height();
+        const int codeHeight = code->height();
+
+        // A part changes its height by itself: nothing resizes the preview for it.
+        code->formatAction()->setChecked(true);
+        QVERIFY(code->editor()->document()->blockCount() > 1);
+        QTRY_VERIFY(code->sizeHint().height() > codeHeight && code->height() == code->sizeHint().height());
+        QTRY_COMPARE(clip->height(), expanded + code->height() - codeHeight);
+
+        // As does media that arrives after the text.
+        const int beforeMedia = clip->height();
+        QImage picture(60, 90, QImage::Format_RGB32);
+        picture.fill(Qt::green);
+        text->document()->addResource(QTextDocument::ImageResource, QUrl(QStringLiteral("test:picture")), picture);
+        QTextImageFormat format;
+        format.setName(QStringLiteral("test:picture"));
+        QTextCursor(text->document()).insertImage(format);
+        QTRY_VERIFY(clip->height() >= beforeMedia + 90 - text->fontMetrics().height());
+    }
+
+    void previewOfCodeAloneHasNoEmptyTextAboveIt()
+    {
+        QWidget window;
+        window.resize(600, 500);
+        auto *layout = new QVBoxLayout(&window);
+        auto *preview = new MessagePreview(Qt::gray, {}, &window);
+        layout->addWidget(preview);
+        layout->addStretch();
+        const QString fence(3, QChar(0x60));
+        const QString source = QStringLiteral("int a = 1;<br>").repeated(8);
+        preview->setRichContent(QStringLiteral("Author"),
+                                MessageStyling::toHtml(fence + QStringLiteral("cpp<br>") + source + fence));
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        auto *text = preview->findChild<ChatMessageText *>(QStringLiteral("previewText"));
+        auto *code = preview->findChild<CodeBlockWidget *>();
+        auto *clip = preview->findChild<QWidget *>(QStringLiteral("previewClip"));
+        auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
+        QVERIFY(text && code && clip && more);
+        QVERIFY(text->isHidden());
+        QVERIFY(text->toPlainText().isEmpty()); // It does not keep a second copy of the code.
+        QTRY_VERIFY(more->isVisible());
+        QTest::mouseClick(more, Qt::LeftButton);
+        QTRY_COMPARE(clip->height(), code->sizeHint().height());
+        QTRY_COMPARE(code->y(), 0);
+
+        // Other content brings the text back, without the code.
+        preview->setContent(QStringLiteral("Author"), QStringLiteral("Just text"));
+        QVERIFY(!text->isHidden());
+        QVERIFY(preview->findChildren<CodeBlockWidget *>().isEmpty());
+    }
+
+    void codeQuotedFromALateTargetKeepsTheMessageMenu()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 420);
+        chat.setHistoryLoading(true);
+        chat.setQuoteColor(QColor("#707070"));
+        auto reply = message(QStringLiteral("reply"), QStringLiteral("Answer"), 100, true);
+        reply.setReply({ QStringLiteral("origin"), {}, QStringLiteral("Peer"), QStringLiteral("old fallback") });
+        chat.appendMessage(reply);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *preview = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
+        QVERIFY(preview && preview->findChildren<CodeBlockWidget *>().isEmpty());
+
+        // Only now does the preview create its code and additional prose widgets.
+        auto original = message(QStringLiteral("client"),
+                                proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") }));
+        original.setUserId(QStringLiteral("peer@example.org/phone"));
+        original.setReactionTargetId(QStringLiteral("origin"));
+        chat.prependArchivePage({ qMakePair(QStringLiteral("archive-original"), original) });
+        QTRY_VERIFY(!preview->findChildren<CodeBlockWidget *>().isEmpty());
+        auto *code = preview->findChild<CodeBlockWidget *>();
+        auto *prose = preview->findChildren<ChatMessageText *>(QStringLiteral("previewText")).last();
+        QVERIFY(prose != preview->findChild<ChatMessageText *>(QStringLiteral("previewText")));
+        // Nothing has changed the palette since this part was created.
+        QCOMPARE(prose->palette().color(QPalette::Text), QColor("#707070"));
+
+        QVERIFY(opensMessageMenu(chat, prose->viewport()));
+        QVERIFY(opensMessageMenu(chat, code->editor()->viewport()));
+    }
+
     void replyPreviewShowsTheQuotedMessageWithoutNestedQuotes()
     {
         FileSharingDeviceOpener opener;
@@ -956,10 +1849,11 @@ private slots:
         // expanded, it is as large as in the message.
         auto *more = preview->findChild<LinkButton *>(QStringLiteral("previewShowMore"));
         QTRY_VERIFY(more->isVisible());
-        const int collapsed = text->height();
+        auto *clip = preview->findChild<QWidget *>(QStringLiteral("previewClip"));
+        const int collapsed = clip->height();
         QVERIFY(collapsed <= 3 * text->fontMetrics().lineSpacing() + 1);
         QTest::mouseClick(more, Qt::LeftButton);
-        QTRY_VERIFY(text->height() > collapsed + 100);
+        QTRY_VERIFY(clip->height() > collapsed + 100);
         QTRY_VERIFY(preview->rect().contains(QRect(text->mapTo(preview, QPoint()), text->size())));
 
         auto *fallback = chat.itemWidget(2)->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"));
@@ -1129,9 +2023,10 @@ private slots:
         auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
         QVERIFY(preview);
         auto *excerpt = preview->findChild<QTextEdit *>("previewText");
+        auto *clip = preview->findChild<QWidget *>("previewClip");
         auto *title = preview->findChild<QLabel *>("previewTitle");
         auto *body = row->findChild<ChatMessageText *>();
-        QVERIFY(excerpt && title && body);
+        QVERIFY(excerpt && clip && title && body);
         QTRY_VERIFY2(preview->height() >= preview->minimumSizeHint().height(),
                      qPrintable(QString("preview height=%1 minimum=%2 row=%3 rowHint=%4")
                                     .arg(preview->height()).arg(preview->minimumSizeHint().height())
@@ -1140,13 +2035,13 @@ private slots:
             return row->rect().contains(QRect(child->mapTo(row, QPoint()), child->size()));
         };
         QTRY_VERIFY(insideRow(preview));
-        QTRY_VERIFY2(preview->rect().contains(QRect(excerpt->mapTo(preview, QPoint()), excerpt->size())),
+        QTRY_VERIFY2(preview->rect().contains(QRect(clip->mapTo(preview, QPoint()), clip->size())),
                      qPrintable(QString("preview=%1x%2 hint=%3x%4 excerpt=%5,%6 %7x%8 row=%9")
                                     .arg(preview->width()).arg(preview->height())
                                     .arg(preview->sizeHint().width()).arg(preview->sizeHint().height())
-                                    .arg(excerpt->mapTo(preview, QPoint()).x()).arg(excerpt->mapTo(preview, QPoint()).y())
-                                    .arg(excerpt->width()).arg(excerpt->height()).arg(row->height())));
-        QTRY_VERIFY(excerpt->height() >= 2 * excerpt->fontMetrics().lineSpacing());
+                                    .arg(clip->mapTo(preview, QPoint()).x()).arg(clip->mapTo(preview, QPoint()).y())
+                                    .arg(clip->width()).arg(clip->height()).arg(row->height())));
+        QTRY_VERIFY(clip->height() >= 2 * excerpt->fontMetrics().lineSpacing());
         QVERIFY(title->height() >= title->fontMetrics().height());
         QCOMPARE(excerpt->palette().color(QPalette::Text), QColor("#707070"));
         QCOMPARE(title->palette().color(QPalette::WindowText), QColor("#707070"));
@@ -1174,7 +2069,7 @@ private slots:
         for (int width : { 280, 700, 550 }) {
             chat.resize(width, chat.height());
             QTRY_VERIFY(insideRow(preview) && insideRow(body));
-            QTRY_VERIFY(preview->rect().contains(QRect(excerpt->mapTo(preview, QPoint()), excerpt->size())));
+            QTRY_VERIFY(preview->rect().contains(QRect(clip->mapTo(preview, QPoint()), clip->size())));
         }
     }
 
@@ -1335,20 +2230,23 @@ private slots:
         window.show();
         auto *browser = preview->findChild<QTextEdit *>("previewText");
         auto *more = preview->findChild<LinkButton *>("previewShowMore");
+        auto *clip = preview->findChild<QWidget *>("previewClip");
         QTRY_VERIFY(more->isVisible());
-        const int collapsedHeight = browser->height();
+        const int collapsedHeight = clip->height();
         browser->selectAll();
         browser->copy();
         QCOMPARE(QApplication::clipboard()->text(), text);
         QTest::mouseClick(more, Qt::LeftButton);
         QVERIFY(preview->isExpanded());
-        QTRY_VERIFY(browser->height() > collapsedHeight);
-        QTRY_VERIFY(browser->verticalScrollBar()->maximum() > 0);
-        QVERIFY(browser->height() <= window.height() / 2);
+        QTRY_VERIFY(clip->height() > collapsedHeight);
+        QVERIFY(clip->height() > window.height() / 2);
+        // The outer chat timeline owns scrolling once Show more is clicked.
+        // The text preview itself must have no independent scrollbar.
+        QTRY_COMPARE(browser->verticalScrollBar()->maximum(), 0);
         QCOMPARE(browser->toPlainText(), text);
         QTest::mouseClick(more, Qt::LeftButton);
         QVERIFY(!preview->isExpanded());
-        QCOMPARE(browser->height(), collapsedHeight);
+        QCOMPARE(clip->height(), collapsedHeight);
         QCOMPARE(browser->verticalScrollBar()->value(), 0);
         QSignalSpy dismissed(preview, &MessagePreview::dismissed);
         QTest::mouseClick(preview->findChild<QPushButton *>("previewDismiss"), Qt::LeftButton);

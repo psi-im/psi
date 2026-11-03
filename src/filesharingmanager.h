@@ -100,15 +100,18 @@ public:
     // The largest attachment of the message the view may download by itself, 0 for none.
     quint64 autoDownloadLimit(const XMPP::Message &m, PsiAccount *acc) const;
 
-    // returns false if unable to accept automatically
-    bool jingleAutoAcceptIncomingDownloadRequest(XMPP::Jingle::Session *session);
+    // Answers a remote request for a file on behalf of the account. Returns false when
+    // the session is not a request, such as a file offer for the user to accept.
+    bool answerFileRequest(XMPP::Jingle::Session *session, PsiAccount *account);
+    // Whether the account answers remote requests for the file.
+    void setServed(PsiAccount *account, const QList<XMPP::Hash> &hashes, bool served);
+    void importOwnPublications(const QString &accountId, const XMPP::Jid &self);
 
 signals:
 
 public slots:
 
 private:
-    bool acceptIncomingDownloadContents(XMPP::Jingle::Session *session);
     class Private;
     std::unique_ptr<Private> d;
 };

@@ -219,7 +219,9 @@ private:
     QString plainMessage(const Row &) const;
     QString copiedMessage(const Row &) const;
     QMenu *createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition);
+    int  replyTargetIndex(const ChatReply &) const;
     bool resolveReply(const ChatReply &, QString &author, QString &html) const;
+    void navigateToReply(const ChatReply &);
     void showReply(MessagePreview *preview, const ChatReply &reply) const;
     // A message's text as its row shows it, as rich text.
     QString richMessage(const Row &row) const;

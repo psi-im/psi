@@ -42,7 +42,7 @@ class GlobalShortcutManager::KeyTrigger::Impl : public QWidget {
 #endif
         {
             if (eventType == "windows_generic_MSG") {
-                return impl->nativeEvent(eventType, static_cast<MSG *>(m), result);
+                return impl->handleHotkeyEvent(eventType, static_cast<MSG *>(m), result);
             }
             return false;
         }
@@ -75,9 +75,9 @@ public:
      * Triggers triggered() signal when the hotkey is activated.
      */
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    bool nativeEvent(const QByteArray &eventType, MSG *m, long *result)
+    bool handleHotkeyEvent(const QByteArray &eventType, MSG *m, long *result)
 #else
-    bool nativeEvent(const QByteArray &eventType, MSG *m, qintptr *result)
+    bool handleHotkeyEvent(const QByteArray &eventType, MSG *m, qintptr *result)
 #endif
     {
         Q_UNUSED(eventType);

@@ -31,6 +31,15 @@ public:
     // For a mapping whose content left the file cache.
     void forgetUrlContent(const QString &account, const XMPP::Hash &urlIdentity);
 
+    // Files this account answers remote requests for: it published them or joined
+    // their publication. A remembered descriptor or a cached copy serves nothing.
+    bool markServed(const QString &account, const QList<XMPP::Hash> &hashes);
+    void unmarkServed(const QString &account, const QList<XMPP::Hash> &hashes);
+    bool isServed(const QString &account, const QList<XMPP::Hash> &hashes) const;
+    // Runs once per account. Publications older than the list above are the files
+    // the account itself shared and held a local copy of.
+    void importOwnPublications(const QString &account, const XMPP::Jid &self);
+
     // Mappings older than this are dropped when the catalog opens, like the cached files they name.
     static constexpr qint64 UrlContentTtl = 365 * 24 * 3600;
 

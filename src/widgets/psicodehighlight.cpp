@@ -5,11 +5,13 @@
 #include "qsourcehighliter.h"
 
 #include <QColor>
+#include <QStringList>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
+#include <QTextDocumentFragment>
+#include <QTextFormat>
 #include <QTextLayout>
-#include <QStringList>
 
 #include <algorithm>
 #include <optional>
@@ -102,6 +104,51 @@ QList<PsiRichText::CodeBlock> PsiRichText::codeBlocks(const QTextDocument *doc)
         first = closing;
     }
     return result;
+}
+
+QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument *doc,
+                                                             const QStringList &allowedInlineImages)
+{
+    QList<ContentPart> parts;
+    const auto         blocks = codeBlocks(doc);
+    if (blocks.isEmpty())
+        return parts;
+
+    // QTextDocument fragments cannot carry an object's resource, handler or
+    // player, nor the markers of an image still downloading. Decide on the
+    // rendered document: its source may refer to objects that were not created.
+    for (auto block = doc->begin(); block.isValid(); block = block.next()) {
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextCharFormat format = it.fragment().charFormat();
+            if (format.objectType() != QTextFormat::NoObject
+                && !(format.isImageFormat() && allowedInlineImages.contains(format.toImageFormat().name())))
+                return parts;
+        }
+    }
+
+    const auto isBreak = [doc](int at) {
+        const QChar c = doc->characterAt(at);
+        return c == QChar::ParagraphSeparator || c == QChar::LineSeparator;
+    };
+    const auto addProse = [&parts, doc](int first, int last) {
+        if (first >= last)
+            return;
+        QTextCursor cursor(const_cast<QTextDocument *>(doc));
+        cursor.setPosition(first);
+        cursor.setPosition(last, QTextCursor::KeepAnchor);
+        parts.append({ ContentPart::Prose, QTextDocumentFragment(cursor).toHtml(), {} });
+    };
+    const int end      = doc->characterCount() - 1;
+    int       position = 0;
+    for (const auto &block : blocks) {
+        // Whitespace between prose and code belongs to the layout boundary.
+        const int proseEnd = block.begin > position && isBreak(block.begin - 1) ? block.begin - 1 : block.begin;
+        addProse(position, proseEnd);
+        parts.append({ ContentPart::Code, block.code, block.language });
+        position = block.end < end && isBreak(block.end) ? block.end + 1 : block.end;
+    }
+    addProse(position, end);
+    return parts;
 }
 
 void PsiRichText::highlightCodeBlocks(QTextDocument *doc)

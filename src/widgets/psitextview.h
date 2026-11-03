@@ -45,6 +45,8 @@ public:
     void setQuoteColor(const QColor &color);
     void setQuoteStylingEnabled(bool enabled) { quoteStylingEnabled_ = enabled; }
     bool isQuotedBlock(const QTextBlock &block) const;
+    // Inside a preformatted XEP-0393 block, where a '>' is literal text.
+    bool isPreformattedAt(int position) const;
     virtual void appendText(const QString &text);
     virtual void insertText(const QString &text, QTextCursor &cursor);
     QTextCursor  appendTextWithRange(const QString &text);
@@ -72,12 +74,12 @@ protected:
     void setPlainText(const QString &) { }
 
     // reimplemented
-    void       contextMenuEvent(QContextMenuEvent *e);
-    void       mouseMoveEvent(QMouseEvent *e);
-    void       mousePressEvent(QMouseEvent *e);
-    void       mouseReleaseEvent(QMouseEvent *e);
-    QMimeData *createMimeDataFromSelection() const;
-    void       resizeEvent(QResizeEvent *);
+    void       contextMenuEvent(QContextMenuEvent *e) override;
+    void       mouseMoveEvent(QMouseEvent *e) override;
+    void       mousePressEvent(QMouseEvent *e) override;
+    void       mouseReleaseEvent(QMouseEvent *e) override;
+    QMimeData *createMimeDataFromSelection() const override;
+    void       resizeEvent(QResizeEvent *) override;
     void       paintEvent(QPaintEvent *event) override;
     void       clearQuoteFormatting();
 

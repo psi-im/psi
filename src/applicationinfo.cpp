@@ -315,7 +315,7 @@ QString ApplicationInfo::historyDir() { return makeSubprofilePath("history", App
 
 QString ApplicationInfo::vCardDir() { return makeSubprofilePath("vcard", ApplicationInfo::CacheLocation); }
 
-QString ApplicationInfo::bobDir() { return makeSubhomePath("bob", ApplicationInfo::CacheLocation); }
+QString ApplicationInfo::bobDir() { return makeSubprofilePath("bob", ApplicationInfo::CacheLocation); }
 
 QString ApplicationInfo::documentsDir()
 {

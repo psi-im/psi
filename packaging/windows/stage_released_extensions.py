@@ -53,6 +53,11 @@ def stage_extensions(
     qt_version = lock["qt"]["windows_msvc_qt6"]
     if qt_version != "6.12.0":
         fail(f"Unexpected locked Windows Qt version: {qt_version}")
+    # Psi's QCA is whatever its Iris gitlink pins.
+    iris_lock = dependency_lock.parent / "iris" / "dependencies.lock.json"
+    if not iris_lock.is_file():
+        fail(f"Missing the dependency lock of the pinned Iris: {iris_lock}")
+    qca_tag = json.loads(iris_lock.read_text(encoding="utf-8"))["qca"]["tag"]
 
     source = plugins / "PLUGINS-MANIFEST.json"
     if not source.is_file():
@@ -64,7 +69,7 @@ def stage_extensions(
     expected = {
         "platform": "windows-x64",
         "qt": qt_version,
-        "qca_tag": lock["qca"]["tag"],
+        "qca_tag": qca_tag,
     }
     for key, value in expected.items():
         if manifest.get(key) != value:

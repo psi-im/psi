@@ -78,7 +78,32 @@ private slots:
         const QString fence(3, QChar(0x60));
         const QString html = "&gt; " + fence + "<br>&gt; *literal*<br>outside _emphasis_";
         const QString out = MessageStyling::toHtml(html);
-        QVERIFY(out.contains(QStringLiteral("&gt; *literal*</span><br>outside <i>_emphasis_</i>")));
+        QVERIFY(out.contains(QStringLiteral("&gt; <span style=\"font-family:monospace; white-space:pre-wrap\">"
+                                            "*literal*</span><br>outside <i>_emphasis_</i>")));
+    }
+    void fenceKeepsQuoteMarkersLiteral()
+    {
+        // A preformatted block has no child blocks: only a closing fence or
+        // the end of the message ends it (XEP-0393 "Preformatted Text").
+        const QString fence(3, QChar(0x60));
+        const QString pre = QStringLiteral("<span style=\"font-family:monospace; white-space:pre-wrap\">");
+        QCOMPARE(MessageStyling::toHtml(fence + "sh<br>&gt; ls -l<br>echo *ok*<br>&gt;&gt; x<br>" + fence
+                                        + "<br>after *bold*"),
+                 pre + fence + "sh<br>&gt; ls -l<br>echo *ok*<br>&gt;&gt; x<br>" + fence
+                     + "</span><br>after <b>*bold*</b>");
+        QCOMPARE(MessageStyling::toHtml(fence + "<br>&gt; never closed"),
+                 pre + fence + "<br>&gt; never closed</span>");
+    }
+    void quotedFenceLeavesItsMarkersToTheQuote()
+    {
+        // The markers of the enclosing quote are not preformatted text, but a
+        // further '>' in a line is, and a closing fence ends the block there.
+        const QString fence(3, QChar(0x60));
+        const QString pre = QStringLiteral("<span style=\"font-family:monospace; white-space:pre-wrap\">");
+        QCOMPARE(MessageStyling::toHtml("&gt; " + fence + "<br>&gt; &gt; deeper<br>&gt; " + fence
+                                        + "<br>&gt; *bold*<br>after"),
+                 "&gt; " + pre + fence + "</span><br>&gt; " + pre + "&gt; deeper</span><br>&gt; " + pre + fence
+                     + "</span><br>&gt; <b>*bold*</b><br>after");
     }
 };
 

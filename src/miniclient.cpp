@@ -39,7 +39,7 @@ using namespace XMPP;
 MiniClient::MiniClient(QObject *parent) : QObject(parent)
 {
     _client = new Client;
-    _client->bobManager()->setCache(BoBFileCache::instance());
+    _client->bobManager()->setCache(new BoBFileCache(QString(), this));
     conn             = nullptr;
     tls              = nullptr;
     tlsHandler       = nullptr;

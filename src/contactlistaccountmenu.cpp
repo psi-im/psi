@@ -230,7 +230,7 @@ private slots:
             std::ranges::sort(sorted);
             for (const auto &cp : sorted) {
                 auto     c          = *std::get<1>(cp);
-                QAction *joinAction = new QAction(c.name(), this);
+                QAction *joinAction = new QAction(c.name().isEmpty() ? c.jid().bare() : c.name(), this);
                 connect(joinAction, &QAction::triggered, account, [this, c]() { account->actionJoin(c, true); });
                 bookmarksMenu_->addAction(joinAction);
                 bookmarksJoinActions_ << joinAction;

@@ -423,6 +423,8 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
     _published = false;
     // Cache temporary files before registering a factory that will serve them.
     const bool serveLocally = savePublishedFile();
+    if (serveLocally)
+        _manager->setServed(_acc, _sums, true);
     if (serveLocally && _fileSize) {
         auto cache = _manager->mediaChunkCache();
         if (cache->isCompleteFile(localFilePath()))
@@ -441,6 +443,8 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
         _published = !_uris.isEmpty();
         _publication = nullptr;
         publication->deleteLater();
+        if (!_published && _acc)
+            _manager->setServed(_acc, _sums, false);
         // Also remove expired URLs from the cache when every method failed.
         savePublishedFile();
         if (_published && _acc) {
