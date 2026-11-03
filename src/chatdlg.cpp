@@ -117,11 +117,7 @@ void ChatDlg::init()
     bool isPrivate = account()->groupchats().contains(jid().bare());
     chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
     chatView()->setLocalNickname(account()->nick());
-#ifdef WEBKIT
-    chatView()->setAccount(account());
-#else
     chatView()->setMediaOpener(account()->fileSharingDeviceOpener());
-#endif
     chatView()->init();
     connect(chatView(), &ChatView::outgoingReactions, this, &ChatDlg::sendOutgoingReactions);
     connect(chatView(), &ChatView::outgoingMessageRetraction, this, &ChatDlg::sendMessageRetraction);
@@ -430,13 +426,9 @@ UserStatus ChatDlg::userStatusFor(const Jid &jid, QList<UserListItem *> ul, bool
 
 void ChatDlg::preloadHistory(bool forceLocal)
 {
-#ifndef WEBKIT
     if (!forceLocal && account()->isConnected() && !account()->findGCContact(jid())
         && !(account()->edb()->features() & EDB::ArchiveCache))
         return; // The optional flat-file backend has no persistent archive identity.
-#else
-    Q_UNUSED(forceLocal)
-#endif
     int cnt = PsiOptions::instance()->getOption("options.ui.chat.history.preload-history-size").toInt();
     if (cnt > 0 && !localHistoryPending_) {
         localHistoryPending_ = true;

@@ -134,21 +134,10 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
         set(CPACK_PACKAGE_ICON "${CPACK_PSI_ICON}")
         # Create qt.conf file in bin catalog
         cpack_generate_qconf(${CMAKE_INSTALL_BINDIR})
-        set(WEBENGINE_RENDER_VARS "")
-        if(IS_WEBENGINE AND (${QT_DEFAULT_MAJOR_VERSION} EQUAL 6))
-            set(WEBENGINE_RENDER_VARS "
-# Rendering variables for Qt 6 / QtWebEngine
-export QT_QUICK_BACKEND=software
-export QTWEBENGINE_CHROMIUM_FLAGS=\"--disable-gpu --no-sandbox\"
-export QTWEBENGINE_DISABLE_SANDBOX=1
-"
-            )
-        endif()
         # Create custom AppRun
         file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" "#!/bin/sh
 HERE=\"$(dirname \"$(readlink -f \"\${0}\")\")\"
 
-${WEBENGINE_RENDER_VARS}
 export GST_PLUGIN_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0\"
 # Path to the libraries inside of AppImage
 export LD_LIBRARY_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}:\${LD_LIBRARY_PATH}\"

@@ -13,7 +13,7 @@ MAC_DEPLOYMENT_TARGET=10.9
 QTDIR="${HOME}/Qt/5.9.7/clang_64"
 QT_FRAMEWORK_VERSION=5
 
-QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets QtSql QtDBus"  #QtWebEngine
+QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtQuick QtQml QtPositioning QtQuickWidgets QtSql QtDBus"
 
 QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
 QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib styles/libqmacstyle.dylib sqldrivers/libqsqlite.dylib"
@@ -59,7 +59,6 @@ QTKEYCHAIN_REPO_URI="https://github.com/frankosterfeld/qtkeychain.git"
 LIBSIGNAL_REPO_URI="https://github.com/signalapp/libsignal-protocol-c.git"
 
 ALL_TRANS="1"
-ENABLE_WEBKIT="0"
 WORK_OFFLINE="0"
 
 
@@ -377,13 +376,9 @@ prepare_sources() {
     cd ${PSI_DIR}/build
     local cur_ver=$(cat ./version | grep -Eoe "^[^\-]+")
 
-        if [ -z $VERSION ];
-        then
-            VERSION=$(echo "${cur_ver}.${rev}$([ "$ENABLE_WEBKIT" = 1 ] && echo "-webkit") ($(echo ${rev_date}))")
-        else
-        if [ $ENABLE_WEBKIT != 0 ]; then
-                    VERSION="${VERSION}-webkit"
-            fi
+    if [ -z $VERSION ];
+    then
+        VERSION=$(echo "${cur_ver}.${rev} ($(echo ${rev_date}))")
     fi
 
     log "Psi version is ${VERSION}"
@@ -396,10 +391,6 @@ src_compile() {
     cd "${PSI_DIR}"/build
 
     CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --release"
-
-    if [ $ENABLE_WEBKIT != 0 ]; then
-        CONF_OPTS=" --enable-webkit $CONF_OPTS"
-    fi
 
     CONF_OPTS=" --with-qca-lib=${QCA_PREFIX}/lib --with-zlib-lib=${LIBS_PATH}/lib --with-zlib-inc=${LIBS_PATH}/include --with-growl=${PSI_DIR} $CONF_OPTS"
 
@@ -726,9 +717,7 @@ make_bundle2() {
 #############
 while [ "$1" != "" ]; do
     case $1 in
-        -w | --webkit )        ENABLE_WEBKIT=1
-                            ;;
-        -h | --help )        echo "usage: $0 [-w | --webkit] [-v | --verbose] VERSION"
+        -h | --help )        echo "usage: $0 [-v | --verbose] VERSION"
                             exit
                             ;;
         * )                    VERSION=$1

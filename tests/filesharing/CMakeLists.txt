@@ -58,12 +58,6 @@ if(WIN32)
 endif()
 add_test(NAME filesharing_external_player COMMAND filesharing_external_player_test)
 set_tests_properties(filesharing_external_player PROPERTIES TIMEOUT 20 ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
-find_program(NODE_EXECUTABLE NAMES node nodejs)
-if(NODE_EXECUTABLE)
-    add_test(NAME filesharing_media_actions COMMAND ${NODE_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/media-actions.js ${CMAKE_CURRENT_SOURCE_DIR}/../../themes/chatview/util.js)
-endif()
-
 add_executable(filesharing_chunk_transfer_test chunktransfer.cpp ../../src/mediachunktransfer.cpp)
 set_target_properties(filesharing_chunk_transfer_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_chunk_transfer_test PRIVATE ../../src)

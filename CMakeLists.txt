@@ -65,10 +65,7 @@ if (APPLE OR ((MSVC OR DEFAULT_USE_MXE) OR BUNDLED_IRIS_ALL))
 endif()
 
 # Common options
-set( CHAT_TYPE "BASIC" CACHE STRING "Type of chatlog engine. WEBKIT | WEBENGINE | BASIC" )
-set_property(CACHE CHAT_TYPE PROPERTY STRINGS WEBKIT WEBENGINE BASIC)
 option( PRODUCTION "Build production version" OFF )
-option( VERBOSE_PROGRAM_NAME "Verbose output binary name" OFF )
 option( BUILD_PSIMEDIA "Build psimedia plugin if its code is found in sources tree. Works only with ENABLE_PLUGINS=ON" OFF )
 option( ENABLE_PLUGINS "Enable plugins" OFF )
 option( ENABLE_AVCALL "Enable native secure audio/video calls" ON )
@@ -140,22 +137,6 @@ if( ONLY_BINARY AND INSTALL_EXTRA_FILES )
 endif()
 
 set( GLOBAL_DEPENDS_DEBUG_MODE ON )
-
-set(IS_WEBKIT OFF CACHE INTERNAL "Use webkit. Internal variable")
-set(IS_WEBENGINE OFF CACHE INTERNAL "Use webengine. Internal variable")
-string(TOLOWER "${CHAT_TYPE}" LCHAT_TYPE)
-
-if("${LCHAT_TYPE}" STREQUAL "webkit")
-    set(IS_WEBKIT ON)
-    message(STATUS "Chatlog type - QtWebKit")
-elseif("${LCHAT_TYPE}" STREQUAL "webengine")
-    set(IS_WEBENGINE ON)
-    message(STATUS "Chatlog type - QtWebEngine")
-else()
-    set(IS_WEBKIT OFF)
-    set(IS_WEBENGINE OFF)
-    message(STATUS "Chatlog type - Basic")
-endif()
 
 if(USE_QT6)
     set(QT_DEFAULT_MAJOR_VERSION 6)

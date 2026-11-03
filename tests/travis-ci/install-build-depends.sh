@@ -24,20 +24,12 @@ then
                              libomemo-c-dev \
                              libsm-dev \
                              libssl-dev \
-                             libtidy-dev \
                              libxss-dev \
                              qt5keychain-dev \
                              qtbase5-dev \
                              qtmultimedia5-dev \
                              zlib1g-dev
 
-    if [ "${CHAT_TYPE}" = "webkit" ]
-    then
-        sudo apt-get install -qq libqt5webkit5-dev
-    elif [ "${CHAT_TYPE}" = "webengine" ]
-    then
-        sudo apt-get install -qq qtwebengine5-dev
-    fi
 elif [ "${TARGET}" = "macos64" ]
 then
     # export HOMEBREW_NO_AUTO_UPDATE=1
@@ -47,7 +39,6 @@ then
                      qtkeychain \
                      minizip \
                      hunspell \
-                     tidy-html5 \
                      libgpg-error \
                      libotr \
                      libomemo-c \
@@ -67,12 +58,10 @@ then
                              ${PREFIX}-hunspell \
                              ${PREFIX}-minizip \
                              ${PREFIX}-libotr \
-                             ${PREFIX}-tidy-html5 \
                              ${PREFIX}-qtbase \
                              ${PREFIX}-qttools \
                              ${PREFIX}-qttranslations \
                              ${PREFIX}-qtmultimedia \
-                             ${PREFIX}-qtwebkit \
                              ${PREFIX}-gstreamer \
                              ${PREFIX}-gst-plugins-bad \
                              ${PREFIX}-gst-plugins-good

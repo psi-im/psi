@@ -346,15 +346,11 @@ static void emojiconifyPlainText(RTParse &p, const QString &in)
 
     auto dump_emoji = [&p, &emojisStartIdx, &in, &idx]() {
         auto code = QStringView { in }.mid(emojisStartIdx, idx - emojisStartIdx).toString();
-#if defined(WEBKIT) || defined(WEBENGINE)
-        p.putRich(QLatin1String(R"html(<span class="emojis">)html") + code + QLatin1String("</span>"));
-#else
         // FIXME custom style here is a hack. This supposed to be handled via style resource in PsiTextView
         p.putRich(
             QString(
                 R"(<icon text="%1" min-height="1.25em" max-height="1.7em" font-size="1.3em" valign="bottom" type="smiley">)")
                 .arg(code));
-#endif
     };
     int position;
     while (std::tie(ref, position) = reg.findEmoji(in, idx), !ref.isEmpty()) {
@@ -503,16 +499,12 @@ QString TextUtil::linkify(const QString &in)
             href = escape(href);
             href = linkify_htmlsafe(href);
             // printf("link: [%s], href=[%s]\n", link.latin1(), href.latin1());
-#ifdef WEBKIT
-            linked = QString("<a href=\"%1\">").arg(href);
-#else
             const QPalette palette = qApp->palette();
             const auto     linkColor
                 = ColorOpt::ensureContrast(ColorOpt::instance()->color("options.ui.look.colors.messages.link"),
                                            palette.color(QPalette::Base), palette.color(QPalette::Text));
             // we have visited link as well but it's no applicable to QTextEdit or we have to track visited manually
             linked = QString("<a href=\"%1\" style=\"color:%2\">").arg(href, linkColor.name());
-#endif
             linked += (escape(link) + "</a>" + escape(pre.mid(cutoff)));
             out.replace(x1, len, linked);
             n = x1 + linked.length() - 1;

@@ -107,7 +107,7 @@ jobs:
       - name: Build actual Psi BASIC client
         run: |
           cmake -S . -B build-native -G Ninja -DCMAKE_BUILD_TYPE=Release \
-            -DUSE_QT6=${{ matrix.qt == 6 && 'ON' || 'OFF' }} -DCHAT_TYPE=BASIC \
+            -DUSE_QT6=${{ matrix.qt == 6 && 'ON' || 'OFF' }} \
             -DBUNDLED_IRIS=ON -DIRIS_SYSTEM_QCA=2 -DENABLE_OMEMO=OFF \
             -DENABLE_AVCALL=OFF -DIRIS_ENABLE_JINGLE_SCTP=OFF \
             -DUSE_KEYCHAIN=OFF -DUSE_HUNSPELL=OFF -DENABLE_PLUGINS=OFF \

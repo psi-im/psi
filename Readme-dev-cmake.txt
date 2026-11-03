@@ -4,7 +4,6 @@ This file contains the CMake files description
 ./CMakeLists.txt - root file (the main script):
     contains a list of general options;
     determines the program type Psi/Psi+;
-    determines chatlog type Basic/Webkit/Webengine;
     contains general compile definitions;
     enables ccache, mxe;
     adds iris, 3rdparty, src, plugins subdirectories;

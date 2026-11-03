@@ -126,11 +126,6 @@ class DependencyLockTests(unittest.TestCase):
             self.assertIn("USE_QT6=ON", workflow)
             self.assertNotIn("matrix:", workflow)
             self.assertNotIn("cmake --install build", workflow)
-        for workflow in (ubuntu, mac):
-            self.assertIn("CHAT_TYPE=BASIC", workflow)
-        self.assertIn("CHAT_TYPE=WEBENGINE", fedora)
-        self.assertIn("qt6-qtwebengine-devel", fedora)
-        self.assertEqual(sum("CHAT_TYPE=WEBENGINE" in wf for wf in (ubuntu, fedora, mac)), 1)
         linux_selector = (ROOT / ".github/scripts/select-linux-iris.sh").read_text()
         for distro, workflow in (("ubuntu", ubuntu), ("fedora", fedora)):
             self.assertIn('BUNDLED_IRIS="$IRIS_BUNDLED"', workflow, distro)
@@ -156,8 +151,6 @@ class DependencyLockTests(unittest.TestCase):
         self.assertIn("git submodule update --init --depth 1 iris", mac)
         self.assertNotIn("iris-qt6-macos-arm64.zip", mac)
         self.assertNotIn("BUNDLED_IRIS=OFF", mac)
-        self.assertIn("chat_type: WEBKIT", win5)
-        self.assertIn("default: WEBKIT", (root / "windows-msys2-qt5-profile.yml").read_text())
         mac_defs = (ROOT / "mac/macos_definitions.cmake").read_text()
         mac_src = (ROOT / "src/CMakeLists.txt").read_text()
         advwidget_cpp = (ROOT / "src/tools/advwidget/advwidget.cpp").read_text()
@@ -291,6 +284,26 @@ class DependencyLockTests(unittest.TestCase):
         }
         for path, needle in workflows.items():
             self.assertIn(needle, (ROOT / ".github/workflows" / path).read_text(), path)
+
+
+    def test_native_only_chat_and_windows_packaging(self):
+        self.assertFalse((ROOT / "src/chatview_webkit.cpp").exists())
+        self.assertFalse((ROOT / "src/webview.cpp").exists())
+        self.assertFalse((ROOT / "tests/filesharing/media-actions.js").exists())
+        self.assertNotIn("media-actions.js", (ROOT / "tests/filesharing/CMakeLists.txt").read_text())
+        self.assertNotIn("CHAT_TYPE", (ROOT / "CMakeLists.txt").read_text())
+        self.assertIn("PSI_SDK_MINGW_x86_64",
+                      (ROOT / "cmake/modules/win32_definitions.cmake").read_text())
+        profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
+        packaging = (ROOT / ".github/workflows/windows-msvc-qt6-packaging.yml").read_text()
+        builder = (ROOT / "packaging/windows/build_profile_msvc.ps1").read_text()
+        smoke = (ROOT / "packaging/windows/smoke_installer.ps1").read_text()
+        self.assertNotIn("inputs.chat_type", profile)
+        self.assertNotIn("chat_type:", packaging)
+        self.assertNotIn("-DCHAT_TYPE", builder)
+        self.assertNotIn("Chatlog type - Basic", builder)
+        self.assertIn("Chat rendering: BASIC", builder)
+        self.assertIn("BASIC installer unexpectedly contains", smoke)
 
 
 if __name__ == "__main__":

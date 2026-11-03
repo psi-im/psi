@@ -49,7 +49,7 @@ jobs:
       - name: Configure bundled Iris and focused test
         run: |
           cmake -S . -B build-vcard -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DCMAKE_BUILD_TYPE=Release \
             -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
             -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \
             -DENABLE_OMEMO=OFF -DENABLE_PLUGINS=OFF \

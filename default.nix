@@ -12,7 +12,6 @@ in
 { pkgs ? import nixpkgsPin {}
 , src ? ./.
 , version ? "git-unknown"
-, chatType ? "basic" # "webkit" "webengine"
 }:
 
 let
@@ -20,7 +19,6 @@ let
     (pkgs.psi-plus.override {
       enablePlugins = false; # Not in this repository
       enablePsiMedia = false;
-      inherit chatType;
     }).overrideAttrs (srcAttrs: {
       name = "psi";
       inherit src;

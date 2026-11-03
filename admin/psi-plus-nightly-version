@@ -2,7 +2,7 @@
 
 show_help()
 {
-    echo "Usage: ${0} [--webkit|--webengine]"
+    echo "Usage: ${0}"
     echo ""
     echo "* first argument is optional"
     echo "* second and next arguments are ignored"
@@ -28,7 +28,5 @@ DATE_STR="$(git log -n1 --date=short --pretty=format:'%ad')"
 
 # features list
 FEATURES=""
-[ "${1}" = "--webkit" ] && FEATURES=", webkit"
-[ "${1}" = "--webengine" ] && FEATURES=", webengine"
 
 echo "${PSI_TAG}.${PATCHES_NUM} (${DATE_STR}, ${PSI_HASH}${FEATURES})"

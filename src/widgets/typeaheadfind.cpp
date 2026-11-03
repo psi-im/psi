@@ -29,9 +29,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QTextEdit>
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) && defined(WEBENGINE)
-#include <QWebEngineFindTextResult>
-#endif
 
 /**
  * \class TypeAheadFindBar
@@ -61,16 +58,10 @@ public:
         if (backward) {
             options |= QTextDocument::FindBackward;
 
-            if (widgetType == TypeAheadFindBar::Type::WebView) {
-                // FIXME make it work with web
-            } else {
-                // move cursor before currect selection
-                // to prevent finding the same occurence again
-                QTextCursor cursor = te->textCursor();
-                cursor.setPosition(cursor.selectionStart());
-                cursor.movePosition(QTextCursor::Left);
-                te->setTextCursor(cursor);
-            }
+            QTextCursor cursor = te->textCursor();
+            cursor.setPosition(cursor.selectionStart());
+            cursor.movePosition(QTextCursor::Left);
+            te->setTextCursor(cursor);
         }
         find(text, options);
     }
@@ -80,36 +71,6 @@ public:
     void find(const QString &str, QTextDocument::FindFlags options,
               QTextCursor::MoveOperation start = QTextCursor::NoMove)
     {
-        if (widgetType == TypeAheadFindBar::Type::WebView) {
-#ifdef WEBKIT
-#ifdef WEBENGINE
-            QWebEnginePage::FindFlags wkOptions;
-            wkOptions
-                |= options & QTextDocument::FindBackward ? QWebEnginePage::FindBackward : QWebEnginePage::FindFlags();
-            wkOptions |= options & QTextDocument::FindCaseSensitively ? QWebEnginePage::FindCaseSensitively
-                                                                      : QWebEnginePage::FindFlags();
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-            wv->findText(str, wkOptions, [this](bool found) { updateFoundStyle(found); });
-#else
-            wv->findText(str, wkOptions, [this](const QWebEngineFindTextResult &found) {
-                updateFoundStyle(found.numberOfMatches() > 0);
-            });
-#endif
-#else
-            QWebPage::FindFlags wkOptions;
-            wkOptions |= options & QTextDocument::FindBackward ? QWebPage::FindBackward : QWebPage::FindFlags();
-            wkOptions
-                |= options & QTextDocument::FindCaseSensitively ? QWebPage::FindCaseSensitively : QWebPage::FindFlags();
-            updateFoundStyle(wv->findText(str, wkOptions));
-#endif
-#else
-            Q_UNUSED(str);
-#endif
-            return;
-        }
-
-        // If we are here then it's not webkit/engine.
-
         if (start != QTextCursor::NoMove) {
             QTextCursor cursor = te->textCursor();
             cursor.movePosition(start);
@@ -127,12 +88,8 @@ public:
 
     QString                text;
     bool                   caseSensitive;
-    TypeAheadFindBar::Type widgetType;
 
     QTextEdit *te;
-#ifdef WEBKIT
-    WebView *wv;
-#endif
     QLineEdit *le_find;
     QAction   *act_prev;
     QAction   *act_next;
@@ -148,20 +105,9 @@ public:
 TypeAheadFindBar::TypeAheadFindBar(QTextEdit *textedit, const QString &title, QWidget *parent) : QToolBar(title, parent)
 {
     d             = new Private();
-    d->widgetType = Type::TextEdit;
     d->te         = textedit;
     init();
 }
-
-#ifdef WEBKIT
-TypeAheadFindBar::TypeAheadFindBar(WebView *webView, const QString & /*title*/, QWidget * /*parent*/)
-{
-    d             = new Private();
-    d->widgetType = Type::WebView;
-    d->wv         = webView;
-    init();
-}
-#endif
 
 void TypeAheadFindBar::init()
 {
@@ -263,32 +209,21 @@ void TypeAheadFindBar::toggleVisibility()
 void TypeAheadFindBar::textChanged(const QString &str)
 {
     QTextCursor cursor;
-    if (d->widgetType == Type::TextEdit) {
-        cursor = d->te->textCursor();
-    }
+    cursor = d->te->textCursor();
 
     if (str.isEmpty()) {
         d->act_prev->setEnabled(false);
         d->act_next->setEnabled(false);
         d->le_find->setStyleSheet("");
-        if (d->widgetType == Type::WebView) {
-#ifdef WEBKIT
-            d->wv->page()->findText(""); // its buggy in qt-4.6.0
-#endif
-        } else { // TextEditType
-            cursor.clearSelection();
-            d->te->setTextCursor(cursor);
-        }
+        cursor.clearSelection();
+        d->te->setTextCursor(cursor);
         d->le_find->setStyleSheet("");
     } else {
         d->act_prev->setEnabled(true);
         d->act_next->setEnabled(true);
-
-        if (d->widgetType == Type::TextEdit) {
-            // don't jump to next word occurence after appending new charater
-            cursor.setPosition(cursor.selectionStart());
-            d->te->setTextCursor(cursor);
-        }
+        // don't jump to next word occurence after appending new charater
+        cursor.setPosition(cursor.selectionStart());
+        d->te->setTextCursor(cursor);
 
         d->text = str;
         d->doFind();

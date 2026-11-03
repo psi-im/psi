@@ -12,11 +12,6 @@ on:
         required: false
         default: false
         type: boolean
-      chat_type:
-        description: BASIC, WEBKIT or WEBENGINE
-        required: false
-        default: WEBKIT
-        type: string
       run_tests:
         description: Build and run the avcall regression tests
         required: false
@@ -125,11 +120,6 @@ jobs:
           pacman --noconfirm -U --needed
           https://repo.msys2.org/mingw/mingw64/mingw-w64-x86_64-libsrtp-2.8.0-1-any.pkg.tar.zst
 
-      - name: Install QtWebKit for WEBKIT profile
-        if: inputs.chat_type == 'WEBKIT'
-        shell: msys2 {0}
-        run: pacman --noconfirm -S --needed mingw-w64-x86_64-qtwebkit
-
       - name: Download dependency SDK release
         shell: bash
         env:
@@ -184,7 +174,6 @@ jobs:
         env:
           PROFILE: ${{ inputs.profile }}
           ALLOW_FAILURE: ${{ inputs.allow_failure }}
-          CHAT_TYPE: ${{ inputs.chat_type }}
           BUILD_TESTING: ${{ inputs.run_tests && 'ON' || 'OFF' }}
           PACKAGE_ENABLED: ${{ inputs.package && 'ON' || 'OFF' }}
         run: |
