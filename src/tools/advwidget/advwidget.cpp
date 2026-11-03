@@ -385,7 +385,11 @@ bool GAdvancedWidget::Private::eventFilter(QObject *obj, QEvent *e)
 GAdvancedWidget::GAdvancedWidget(QWidget *parent) : QObject(parent) { d = new Private(parent); }
 
 #ifdef Q_OS_WIN
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 bool GAdvancedWidget::nativeEvent(const QByteArray &eventType, MSG *msg, long *result)
+#else
+bool GAdvancedWidget::nativeEvent(const QByteArray &eventType, MSG *msg, qintptr *result)
+#endif
 {
     Q_UNUSED(eventType);
     if (msg->message == WM_WINDOWPOSCHANGING) {
