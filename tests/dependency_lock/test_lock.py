@@ -289,6 +289,8 @@ class DependencyLockTests(unittest.TestCase):
     def test_native_only_chat_and_windows_packaging(self):
         self.assertFalse((ROOT / "src/chatview_webkit.cpp").exists())
         self.assertFalse((ROOT / "src/webview.cpp").exists())
+        self.assertFalse((ROOT / "tests/filesharing/media-actions.js").exists())
+        self.assertNotIn("media-actions.js", (ROOT / "tests/filesharing/CMakeLists.txt").read_text())
         self.assertNotIn("CHAT_TYPE", (ROOT / "CMakeLists.txt").read_text())
         profile = (ROOT / ".github/workflows/windows-msvc-qt6-profile.yml").read_text()
         packaging = (ROOT / ".github/workflows/windows-msvc-qt6-packaging.yml").read_text()

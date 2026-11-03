@@ -108,7 +108,7 @@
             "name": "psi-plus",
             "buildsystem": "cmake",
             "builddir": true,
-            "config-opts": ["-DENABLE_PLUGINS=ON", "-DCHAT_TYPE=basic"],
+            "config-opts": ["-DENABLE_PLUGINS=ON"],
             "sources": [
                 {
                     "type": "git",

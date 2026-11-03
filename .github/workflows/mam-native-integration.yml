@@ -53,7 +53,7 @@ jobs:
       - name: Configure basic chat with bundled Iris
         run: |
           cmake -S . -B build-mam-chat -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
             -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \

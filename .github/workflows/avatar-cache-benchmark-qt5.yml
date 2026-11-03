@@ -44,7 +44,7 @@ jobs:
       - name: Configure and build BASIC Psi with real benchmark
         run: |
           cmake -S . -B build-benchmark -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DCHAT_TYPE=BASIC \
+            -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_AVATAR_CACHE_BENCHMARK=ON -DBUILD_TESTING=ON \
             -DBUNDLED_IRIS=ON -DBUNDLED_IRIS_ALL=OFF \
             -DIRIS_SYSTEM_QCA=2 -DIRIS_ENABLE_OMEMO=OFF \

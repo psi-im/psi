@@ -17,7 +17,7 @@ Build standard BASIC Psi with an additional opt-in switch:
 ```sh
 cmake -S . -B build-bench -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCHAT_TYPE=BASIC -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
+  -DENABLE_AVATAR_CACHE_BENCHMARK=ON \
   # ...your usual Qt5 or Qt6 build options and dependencies...
 cmake --build build-bench --parallel 4
 
