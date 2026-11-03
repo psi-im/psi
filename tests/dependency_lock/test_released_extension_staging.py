@@ -81,30 +81,6 @@ class ReleasedExtensionsTests(unittest.TestCase):
         self.assertIn("gstreamer-runtime.txt", source["files"])
         self.assertFalse((self.psi_stage / "psi").exists())
 
-    def test_legacy_juick_is_verified_but_not_installed(self):
-        # The existing release artifact still lists these obsolete binaries.
-        for name in ("plugins/juickplugin.dll", "plugins/libjuickplugin.dll"):
-            path = self.plugins / name
-            path.write_bytes(name.encode())
-            self.manifest["files"][name] = hashlib.sha256(path.read_bytes()).hexdigest()
-        self.write_manifest()
-        self.stage()
-        for name in ("plugins/juickplugin.dll", "plugins/libjuickplugin.dll"):
-            self.assertFalse((self.psi_stage / name).exists())
-        staged = json.loads((self.psi_stage / "PLUGINS-MANIFEST.json").read_text())
-        self.assertFalse(any("juickplugin" in key for key in staged["files"]))
-        self.assertIn("plugins/official-00.dll", staged["files"])
-
-    def test_retired_plugin_still_requires_a_valid_checksum(self):
-        name = "plugins/juickplugin.dll"
-        path = self.plugins / name
-        path.write_bytes(b"original")
-        self.manifest["files"][name] = hashlib.sha256(path.read_bytes()).hexdigest()
-        self.write_manifest()
-        path.write_bytes(b"tampered")
-        with self.assertRaisesRegex(ValueError, "checksum mismatch"):
-            self.stage()
-
     def test_refuses_tampered_official_plugin(self):
         (self.plugins / "plugins" / "official-00.dll").write_bytes(b"tampered")
         with self.assertRaisesRegex(ValueError, "checksum mismatch"):

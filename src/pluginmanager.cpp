@@ -129,13 +129,6 @@ QList<PluginHost *> PluginManager::updatePluginsList()
 #endif
                 if (!pluginByFile_.contains(file)) {
                     PluginHost *host = new PluginHost(this, file);
-                    // Older installed Juick binaries expect the removed WebkitAccessingHost
-                    // interface and can dereference a null host when handling messages.
-                    if (host->shortName() == QLatin1String("juick")) {
-                        qWarning() << "Ignoring incompatible legacy Juick plugin:" << file;
-                        delete host;
-                        continue;
-                    }
                     connect(host, &PluginHost::enabled, this,
                             [this, shortName = host->shortName()]() { emit pluginEnabled(shortName); });
                     connect(host, &PluginHost::disabled, this,

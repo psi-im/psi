@@ -35,15 +35,6 @@ def hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-# Historical plugin releases can still contain Juick binaries built against
-# the removed WebkitAccessingHost interface. Verify them, but do not stage them.
-RETIRED_PLUGIN_STEMS = {"juickplugin", "libjuickplugin"}
-
-
-def is_retired_plugin(path: Path) -> bool:
-    return path.parts[0].lower() == "plugins" and path.stem.lower() in RETIRED_PLUGIN_STEMS
-
-
 def copy_checked(source: Path, destination: Path) -> None:
     if source.is_symlink() or not source.is_file():
         fail(f"Unexpected nonregular artifact file: {source}")
@@ -102,20 +93,12 @@ def stage_extensions(
     if binary_count < 20:
         fail("Too few official plugins")
 
-    # Older released archives are authenticated in full above, but binaries
-    # requiring removed plugin interfaces must not enter new Psi packages.
-    included_files = {
-        name: digest for name, digest in files.items()
-        if not is_retired_plugin(safe_relative(name))
-    }
-    for name in sorted(included_files):
+    # Include exactly the declared source files and manifest, not unverified
+    # leftovers in the downloaded artifact extraction directory.
+    for name in sorted(files):
         relative = safe_relative(name)
         copy_checked(plugins / relative, target / relative)
-    staged_manifest = dict(manifest)
-    staged_manifest["files"] = included_files
-    (target / "PLUGINS-MANIFEST.json").write_text(
-        json.dumps(staged_manifest, indent=2) + "\n", encoding="utf-8"
-    )
+    copy_checked(source, target / "PLUGINS-MANIFEST.json")
 
     # This is the *stage* directory contained in the published PsiMedia
     # GitHub Actions artifact zip, not its enclosing download directory.
@@ -178,7 +161,7 @@ def stage_extensions(
         ) + "\n",
         encoding="utf-8",
     )
-    print(f"Staged {len(included_files)} official plugins and PsiMedia with GStreamer")
+    print(f"Staged {binary_count} official plugins and PsiMedia with GStreamer")
 
 
 def main() -> None:

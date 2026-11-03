@@ -273,6 +273,14 @@ bool PluginHost::load()
 #endif
             delete loader_;
             loader_ = nullptr;
+        } else if (plugin && plugin->qt_metacast("org.psi-im.WebkitAccessor/0.1")) {
+            // The removed host interface cannot be supplied to older plugins.
+            // Reject incompatible interface versions before enabling the plugin.
+            qWarning() << "Plugin requires the obsolete WebkitAccessor/0.1 interface:" << file_;
+            loader_->unload();
+            delete loader_;
+            loader_ = nullptr;
+            valid_ = false;
         } else if (plugin) {
 #ifndef PLUGINS_NO_DEBUG
             qDebug("Trying to load plugin");
