@@ -64,6 +64,7 @@
 #include <QTextImageFormat>
 #include <QTextFragment>
 #include <QTextDocument>
+#include <QTextEdit>
 #include <QWheelEvent>
 #include <QTimer>
 #include <QtMath>
@@ -903,6 +904,126 @@ void MamChatWidget::scrollToIndex(int index, Mattermost::LongListWidget::Alignme
     Mattermost::LongListWidget::scrollToIndex(index, alignment);
 }
 
+bool MamChatWidget::findText(const QString &text, bool backward, bool caseSensitive, bool restart)
+{
+    if (text.isEmpty()) {
+        clearTextSearch();
+        return true;
+    }
+
+    const bool continuing = !restart && searchText_ == text && searchCaseSensitive_ == caseSensitive;
+    const int  oldIndex   = indexOfKey(searchKey_);
+    const int  resume     = continuing ? oldIndex : -1;
+    if (!continuing) {
+        searchKey_.clear();
+        searchMatchStart_ = -1;
+        searchMatchEnd_   = -1;
+        searchOrdinal_    = 0;
+        if (oldIndex >= 0)
+            updateTextSearchHighlight(oldIndex, rowWidget(oldIndex));
+    }
+    searchText_          = text;
+    searchCaseSensitive_ = caseSensitive;
+    if (items_.isEmpty())
+        return false;
+
+    const int count = items_.size();
+    const auto visible = knownVisibleRange();
+    const int initial  = resume >= 0 ? resume
+        : visible.isValid() ? qBound(0, backward ? visible.last : visible.first, count - 1)
+                            : (backward ? count - 1 : 0);
+    QTextDocument::FindFlags flags;
+    if (caseSensitive)
+        flags |= QTextDocument::FindCaseSensitively;
+    if (backward)
+        flags |= QTextDocument::FindBackward;
+
+    // Revisit the starting row after wrapping so a single match can wrap to itself.
+    const int attempts = count + (resume >= 0 ? 1 : 0);
+    for (int step = 0; step < attempts; ++step) {
+        const int index = (initial + count - (backward ? step % count : 0) + (backward ? 0 : step % count)) % count;
+        QTextDocument document;
+        PsiRichText::setText(&document, richMessage(items_.at(index)));
+        const int position = resume >= 0 && step == 0
+            ? (backward ? searchMatchStart_ : searchMatchEnd_)
+            : (backward ? document.characterCount() - 1 : 0);
+        const QTextCursor match = document.find(text, position, flags);
+        if (match.isNull())
+            continue;
+
+        // Keep a match ordinal rather than an absolute QTextDocument offset:
+        // HeaderInText themes may prepend time, icon and nickname markup.
+        int ordinal = 0;
+        QTextDocument::FindFlags forwardFlags;
+        if (caseSensitive)
+            forwardFlags |= QTextDocument::FindCaseSensitively;
+        QTextCursor scan = document.find(text, 0, forwardFlags);
+        while (!scan.isNull() && scan.selectionStart() < match.selectionStart()) {
+            ++ordinal;
+            scan = document.find(text, scan.selectionEnd(), forwardFlags);
+        }
+
+        const int previousIndex = indexOfKey(searchKey_);
+        searchKey_        = items_.at(index).key;
+        searchMatchStart_ = match.selectionStart();
+        searchMatchEnd_   = match.selectionEnd();
+        searchOrdinal_    = ordinal;
+        if (previousIndex >= 0 && previousIndex != index)
+            updateTextSearchHighlight(previousIndex, rowWidget(previousIndex));
+
+        // The match is in a loaded model row; do not turn navigation into a
+        // MAM network seek for history that is not resident.
+        Mattermost::LongListWidget::scrollToIndex(
+            historySource_.logicalIndex(index), Mattermost::LongListWidget::Alignment::Center);
+        updateTextSearchHighlight(index, rowWidget(index));
+        return true;
+    }
+    return false;
+}
+
+void MamChatWidget::clearTextSearch()
+{
+    const int previousIndex = indexOfKey(searchKey_);
+    searchKey_.clear();
+    searchText_.clear();
+    searchMatchStart_ = -1;
+    searchMatchEnd_ = -1;
+    searchOrdinal_ = 0;
+    if (previousIndex >= 0)
+        updateTextSearchHighlight(previousIndex, rowWidget(previousIndex));
+}
+
+int MamChatWidget::currentSearchIndex() const
+{
+    return indexOfKey(searchKey_);
+}
+
+void MamChatWidget::updateTextSearchHighlight(int index, QWidget *row)
+{
+    if (!row)
+        return;
+    auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+    if (!body)
+        return;
+    QList<QTextEdit::ExtraSelection> selections;
+    if (index >= 0 && index < items_.size() && items_.at(index).key == searchKey_ && !searchText_.isEmpty()) {
+        QTextDocument::FindFlags flags;
+        if (searchCaseSensitive_)
+            flags |= QTextDocument::FindCaseSensitively;
+        QTextCursor match = body->document()->find(searchText_, 0, flags);
+        for (int i = 0; i < searchOrdinal_ && !match.isNull(); ++i)
+            match = body->document()->find(searchText_, match.selectionEnd(), flags);
+        if (!match.isNull()) {
+            QTextEdit::ExtraSelection selection;
+            selection.cursor = match;
+            selection.format.setBackground(palette().color(QPalette::Highlight));
+            selection.format.setForeground(palette().color(QPalette::HighlightedText));
+            selections.append(selection);
+        }
+    }
+    body->setExtraSelections(selections);
+}
+
 bool MamChatWidget::sameSender(const MessageView &a, const MessageView &b) const
 {
     // The widget is scoped to one conversation. A direct-chat sender can use
@@ -1638,6 +1759,7 @@ void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
 
 void MamChatWidget::clearMessages()
 {
+    clearTextSearch();
     hideMessageActions();
     reactionEvents_.clear();
     retractions_.clear();
@@ -2469,6 +2591,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     renderer_->arrange(canvas, row->info);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
+    updateTextSearchHighlight(index, row);
     return row;
 }
 

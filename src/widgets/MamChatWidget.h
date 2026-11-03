@@ -49,6 +49,10 @@ public:
     void appendMessage(const MessageView &view);
     int  prependArchivePage(const QList<QPair<QString, MessageView>> &page);
     void clearMessages();
+    // Search loaded model rows, including rows whose QWidget has been evicted.
+    bool findText(const QString &text, bool backward = false, bool caseSensitive = false, bool restart = false);
+    void clearTextSearch();
+    int  currentSearchIndex() const;
     void setHistoryLoading(bool loading);
     void setHistoryExhausted(bool exhausted);
     // Continue an explicit pixel demand after a completed source page.
@@ -287,6 +291,14 @@ private:
     // new rows or MAM/EDB prepends history. A real user scroll takes ownership.
     bool    followingInitialTail_ = true;
     quint64 generatedKey_         = 0;
+
+    QString searchText_;
+    QString searchKey_;
+    int     searchMatchStart_ = -1;
+    int     searchMatchEnd_   = -1;
+    int     searchOrdinal_    = 0;
+    bool    searchCaseSensitive_ = false;
+    void updateTextSearchHighlight(int index, QWidget *row);
 
     QSet<QString> selectedKeys_;
     QString       selectionAnchorKey_;
