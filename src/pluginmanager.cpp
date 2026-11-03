@@ -98,11 +98,6 @@ PluginManager::PluginManager() : QObject(nullptr), psi_(nullptr)
         dirWatchers_.append(dw);
     }
 
-    _messageViewJSFiltersTimer = new QTimer(this);
-    _messageViewJSFiltersTimer->setSingleShot(true);
-    _messageViewJSFiltersTimer->setInterval(10); // to be able to restart in case of batch events
-    connect(_messageViewJSFiltersTimer, &QTimer::timeout, this, &PluginManager::jsFiltersUpdated);
-
     connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &PluginManager::optionChanged);
 }
 
@@ -134,6 +129,13 @@ QList<PluginHost *> PluginManager::updatePluginsList()
 #endif
                 if (!pluginByFile_.contains(file)) {
                     PluginHost *host = new PluginHost(this, file);
+                    // Older installed Juick binaries expect the removed WebkitAccessingHost
+                    // interface and can dereference a null host when handling messages.
+                    if (host->shortName() == QLatin1String("juick")) {
+                        qWarning() << "Ignoring incompatible legacy Juick plugin:" << file;
+                        delete host;
+                        continue;
+                    }
                     connect(host, &PluginHost::enabled, this,
                             [this, shortName = host->shortName()]() { emit pluginEnabled(shortName); });
                     connect(host, &PluginHost::disabled, this,
@@ -1141,47 +1143,6 @@ void PluginManager::createNewMessageEvent(int account, QDomElement const &elemen
     if (acc) {
         acc->createNewMessageEvent(element);
     }
-}
-
-QString PluginManager::installChatLogJSDataFilter(const QString &js, PsiPlugin::Priority priority)
-{
-    QString uuid = QUuid::createUuid().toString();
-    _messageViewJSFilters.insert(priority, { uuid, js });
-    _messageViewJSFiltersTimer->start();
-    return uuid;
-}
-
-void PluginManager::uninstallChatLogJSDataFilter(const QString &id)
-{
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QMutableMapIterator<PsiPlugin::Priority, std::pair<QString, QString>> it(_messageViewJSFilters);
-#else
-    QMutableMultiMapIterator<PsiPlugin::Priority, std::pair<QString, QString>> it(_messageViewJSFilters);
-#endif
-
-    while (it.hasNext()) {
-        if (it.next().value().first == id) {
-            it.remove();
-            _messageViewJSFiltersTimer->start();
-            return;
-        }
-    }
-}
-
-QStringList PluginManager::messageViewJSFilters() const
-{
-    if (_messageViewJSFilters.isEmpty()) {
-        return QStringList();
-    }
-    QStringList ret;
-    ret.reserve(_messageViewJSFilters.size());
-    for (int i = PsiPlugin::PriorityHighest; i >= PsiPlugin::PriorityLowest; i--) {
-        auto values = _messageViewJSFilters.values(PsiPlugin::Priority(i));
-        for (const auto &p : std::as_const(values)) {
-            ret.append(p.second);
-        }
-    }
-    return ret;
 }
 
 QList<QAction *> PluginManager::globalAboutMenuActions() const { return QList<QAction *>(); }
