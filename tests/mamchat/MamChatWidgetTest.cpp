@@ -3726,6 +3726,8 @@ private slots:
             bubble ? QStringLiteral("bubble") : QStringLiteral("modern"));
         chosen.id = QStringLiteral("test");
         chosen.name = QStringLiteral("Test");
+        // This fixture explicitly tests hover tint even with Bubble's renderer.
+        chosen.hoverHighlight = true;
         if (themeSheet)
             chosen.styleSheet = sheet;
         list->setTheme(chosen);
