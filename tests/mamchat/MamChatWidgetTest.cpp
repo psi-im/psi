@@ -6243,12 +6243,18 @@ private slots:
         QTRY_VERIFY(chat.itemWidget(0));
         chat.markUnreadBoundary();
 
-        // Unmodified themes still use the existing one-pixel fallback.
+        // Unmodified themes arrange the same QFrame beneath their content.
         QTRY_VERIFY(chat.itemWidget(0));
         QVERIFY(chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
-        auto *unused = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
-        QVERIFY(unused);
-        QVERIFY(unused->isHidden());
+        auto *fallback = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(fallback);
+        QTRY_VERIFY(!fallback->isHidden());
+        auto *layout = chat.itemWidget(0)->layout();
+        QVERIFY(layout);
+        QCOMPARE(layout->count(), 2);
+        QCOMPARE(layout->itemAt(1)->widget(), static_cast<QWidget *>(fallback));
+        QTRY_VERIFY(fallback->height() >= 4);
+        QCOMPARE(fallback->width(), chat.itemWidget(0)->width());
 
         // A description-only theme can position the separator as a slot.
         NativeChatTheme theme;
@@ -6262,6 +6268,7 @@ private slots:
         QVERIFY(placed);
         QVERIFY(!placed->isHidden());
         QVERIFY(placed->height() >= 4);
+        QCOMPARE(chat.itemWidget(0)->findChildren<QFrame *>(QStringLiteral("mamUnreadSeparator")).size(), 1);
 
         // Bubble places the rule in its own layout, underneath the bubble.
         theme.id = QStringLiteral("test-unread-bubble");
