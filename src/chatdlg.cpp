@@ -568,12 +568,8 @@ void ChatDlg::doWhiteboard() { emit aWhiteboard(jid()); }
 
 void ChatDlg::updateAvatar(const Jid &j)
 {
-    if (j.compare(jid(), false)) {
+    if (j.compare(jid(), false))
         updateAvatar();
-        chatTimeline()->refreshAvatars();
-    } else if (j.compare(account()->jid(), false)) {
-        chatTimeline()->refreshAvatars();
-    }
 }
 
 void ChatDlg::setLooks()

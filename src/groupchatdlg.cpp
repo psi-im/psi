@@ -2304,8 +2304,6 @@ XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const { return Jid(jid()).w
 void GCMainDlg::avatarUpdated(const Jid &jid_)
 {
     if (jid_.compare(jid(), false)) {
-        if (nativeTimeline_ && !jid_.resource().isEmpty())
-            nativeTimeline_->refreshAvatars();
         if (nativeTimeline_)
             nativeTimeline_->refreshAvatars();
         if (jid_.resource().isEmpty()) {
