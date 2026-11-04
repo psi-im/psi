@@ -3655,7 +3655,7 @@ private slots:
         auto [longRow, longBubble, longAvatar] = parts(2);
         QVERIFY(longBubble);
         const int textLimit = qCeil(QFontMetricsF(longBubble->font()).averageCharWidth()
-                                    * NativeChatRenderers::BubbleMaxTextColumns);
+                                    * 60 /* Bubble default text columns */);
         const QMargins margins = longBubble->layout()->contentsMargins();
         QCOMPARE(longBubble->maximumWidth(), textLimit + margins.left() + margins.right());
         QCOMPARE(longBubble->width(), longBubble->maximumWidth());
