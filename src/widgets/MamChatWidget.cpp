@@ -904,6 +904,16 @@ void MamChatWidget::scrollToIndex(int index, Mattermost::LongListWidget::Alignme
     Mattermost::LongListWidget::scrollToIndex(index, alignment);
 }
 
+const QString &MamChatWidget::searchablePlainText(const Row &row)
+{
+    // Virtualized rows have no QTextEdit/QTextDocument. Parse their rich text
+    // just once, then search this lightweight model-backed representation.
+    auto it = searchPlainTextCache_.find(row.key);
+    if (it == searchPlainTextCache_.end())
+        it = searchPlainTextCache_.insert(row.key, plainMessage(row));
+    return it.value();
+}
+
 bool MamChatWidget::findText(const QString &text, bool backward, bool caseSensitive, bool restart)
 {
     if (text.isEmpty()) {
@@ -932,41 +942,40 @@ bool MamChatWidget::findText(const QString &text, bool backward, bool caseSensit
     const int initial  = resume >= 0 ? resume
         : visible.isValid() ? qBound(0, backward ? visible.last : visible.first, count - 1)
                             : (backward ? count - 1 : 0);
-    QTextDocument::FindFlags flags;
-    if (caseSensitive)
-        flags |= QTextDocument::FindCaseSensitively;
-    if (backward)
-        flags |= QTextDocument::FindBackward;
+    const auto sensitivity = caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive;
 
     // Revisit the starting row after wrapping so a single match can wrap to itself.
     const int attempts = count + (resume >= 0 ? 1 : 0);
     for (int step = 0; step < attempts; ++step) {
         const int index = (initial + count - (backward ? step % count : 0) + (backward ? 0 : step % count)) % count;
-        QTextDocument document;
-        PsiRichText::setText(&document, richMessage(items_.at(index)));
-        const int position = resume >= 0 && step == 0
-            ? (backward ? searchMatchStart_ : searchMatchEnd_)
-            : (backward ? document.characterCount() - 1 : 0);
-        const QTextCursor match = document.find(text, position, flags);
-        if (match.isNull())
+        const QString &plain = searchablePlainText(items_.at(index));
+        int matchStart = -1;
+        if (resume >= 0 && step == 0) {
+            // Continue after/before the selected occurrence, not at the row start.
+            if (backward) {
+                if (searchMatchStart_ > 0)
+                    matchStart = plain.lastIndexOf(text, searchMatchStart_ - 1, sensitivity);
+            } else if (searchMatchEnd_ <= plain.size()) {
+                matchStart = plain.indexOf(text, searchMatchEnd_, sensitivity);
+            }
+        } else {
+            matchStart = backward ? plain.lastIndexOf(text, -1, sensitivity)
+                                  : plain.indexOf(text, 0, sensitivity);
+        }
+        if (matchStart < 0)
             continue;
 
         // Keep a match ordinal rather than an absolute QTextDocument offset:
         // HeaderInText themes may prepend time, icon and nickname markup.
         int ordinal = 0;
-        QTextDocument::FindFlags forwardFlags;
-        if (caseSensitive)
-            forwardFlags |= QTextDocument::FindCaseSensitively;
-        QTextCursor scan = document.find(text, 0, forwardFlags);
-        while (!scan.isNull() && scan.selectionStart() < match.selectionStart()) {
+        for (int at = plain.indexOf(text, 0, sensitivity); at >= 0 && at < matchStart;
+             at = plain.indexOf(text, at + text.size(), sensitivity))
             ++ordinal;
-            scan = document.find(text, scan.selectionEnd(), forwardFlags);
-        }
 
         const int previousIndex = indexOfKey(searchKey_);
         searchKey_        = items_.at(index).key;
-        searchMatchStart_ = match.selectionStart();
-        searchMatchEnd_   = match.selectionEnd();
+        searchMatchStart_ = matchStart;
+        searchMatchEnd_   = matchStart + text.size();
         searchOrdinal_    = ordinal;
         if (previousIndex >= 0 && previousIndex != index)
             updateTextSearchHighlight(previousIndex, rowWidget(previousIndex));
@@ -1117,6 +1126,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         if (updated.historyId() <= 0)
             updated.setHistoryId(previous.historyId());
         row.message = updated;
+        searchPlainTextCache_.remove(row.key);
         replaceRow(index);
     } else if (messageState != previous.messageState() || (edited && !previous.isEdited()) || reactionId != previous.reactionTargetId()
                || retractionId != previous.retractionTargetId()
@@ -1127,6 +1137,7 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
         row.message.setMessageState(messageState);
         row.message.setReactionTargetId(reactionId);
         row.message.setRetractionTargetId(retractionId);
+        searchPlainTextCache_.remove(row.key);
         replaceRow(index);
     }
 
@@ -1199,6 +1210,8 @@ void MamChatWidget::coalesceRevisionRows()
         merged.message.setEdited();
         merged.message.setMessageState(messageState);
         items_[keeper] = merged;
+        searchPlainTextCache_.remove(survivingKey);
+        searchPlainTextCache_.remove(removedKey);
 
         for (auto it = sourceAliases_.begin(); it != sourceAliases_.end(); ++it)
             if (it.value() == removedKey)
@@ -1498,10 +1511,14 @@ bool MamChatWidget::applyProtocolEvent(const MessageView &event)
     } else
         return false;
     hideMessageActions();
-    for (int i = 0; i < items_.size(); ++i)
+    for (int i = 0; i < items_.size(); ++i) {
         if (reactionKey(items_.at(i)) == target || retractionTarget(items_.at(i).message) == target
-            || items_.at(i).stanzaIds.contains(target))
+            || items_.at(i).stanzaIds.contains(target)) {
+            if (event.type() == MessageView::MessageRetraction)
+                searchPlainTextCache_.remove(items_.at(i).key);
             replaceRow(i);
+        }
+    }
     if (event.type() == MessageView::MessageRetraction)
         refreshReplyPreviews(true);
     return true;
@@ -1760,6 +1777,7 @@ void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
 void MamChatWidget::clearMessages()
 {
     clearTextSearch();
+    searchPlainTextCache_.clear();
     hideMessageActions();
     reactionEvents_.clear();
     retractions_.clear();

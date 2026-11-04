@@ -221,6 +221,7 @@ private:
     void                                          updateRowSelection(QFrame *row, bool selected);
     void                                          updateRowPalette(QFrame *row, bool selected);
     QString plainMessage(const Row &) const;
+    const QString &searchablePlainText(const Row &);
     QString copiedMessage(const Row &) const;
     QMenu *createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition);
     int  replyTargetIndex(const ChatReply &) const;
@@ -292,6 +293,9 @@ private:
     bool    followingInitialTail_ = true;
     quint64 generatedKey_         = 0;
 
+    // Cache by stable model identity, not QWidget: text is also searchable
+    // after its row is evicted. Invalidate on edits, retractions and clear.
+    QHash<QString, QString> searchPlainTextCache_;
     QString searchText_;
     QString searchKey_;
     int     searchMatchStart_ = -1;
