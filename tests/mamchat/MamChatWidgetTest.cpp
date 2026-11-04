@@ -6193,7 +6193,9 @@ private slots:
         QVERIFY(!list.findText(QStringLiteral("obsolete"), false, false, true));
         QVERIFY(list.findText(QStringLiteral("updated"), false, false, true));
 
-        list.appendMessage(MessageView::retractionMessage(QStringLiteral("edited")));
+        MessageView retraction(MessageView::MessageRetraction);
+        retraction.setRetractionId(QStringLiteral("edited"));
+        list.appendMessage(retraction);
         QVERIFY(!list.findText(QStringLiteral("updated"), false, false, true));
 
         list.clearMessages();
