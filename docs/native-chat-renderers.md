@@ -84,12 +84,13 @@ public:
   `take()`. Parts that are not taken are hidden. Rows are measured with
   `heightForWidth()`, so use layouts (or widgets) that support it.
 - The optional `UnreadSeparator` is present only on the row marking the
-  unread boundary. If a renderer takes it, Psi suppresses its default
-  one-pixel bottom rule. The renderer can arrange the supplied
-  `QFrame#mamUnreadSeparator` (and style it via QSS), or hide that widget
-  and draw a completely custom indicator. Without `take()`, the old
-  bottom rule remains as a fallback. This extends the existing `Part` enum,
-  not the renderer's vtable, so previously compiled renderers still work.
+  unread boundary. The renderer may take and arrange the supplied
+  `QFrame#mamUnreadSeparator` (and style it via QSS), or hide it to draw
+  a completely custom indicator. If the renderer does not take it, Psi
+  wraps the renderer's existing row layout and places that same frame
+  beneath the message content. There is no separately painted fallback
+  rule. This extends the existing `Part` enum, not the renderer's vtable,
+  so previously compiled renderers still work.
   `setActionAnchor()` attaches the hover actions toolbar to a widget other
   than the row, and `setBodyTextColor()` overrides the text colour of the body,
   e.g. on a dark bubble.
