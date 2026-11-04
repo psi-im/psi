@@ -4,7 +4,6 @@
 #include "ChatMessageText.h"
 #include "ChatMessageBody.h"
 #include "MessagePreview.h"
-#include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "textutil.h"
@@ -281,8 +280,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     setFrameShape(QFrame::NoFrame);
     qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
-    theme_.layout  = NativeChatTheme::Modern;
-    ownedRenderer_ = NativeChatRenderers::forDescription(theme_);
+    ownedRenderer_ = theme_.renderer();
     renderer_      = ownedRenderer_.get();
     // Coalesced single-shot timer: no updates while a chat is hidden and
     // no per-second activity. Only the next visible relative-time boundary
@@ -875,6 +873,7 @@ public:
             taken_.insert(part);
         return widget;
     }
+    bool wasTaken(Part part) const { return taken_.contains(part); }
     void setActionAnchor(QWidget *anchor) override { row_->actionAnchor = anchor; }
     void setBodyTextColor(const QColor &color) override { row_->bodyTextColor = color; }
     // Parts left out of the renderer's layout stay hidden children of the
@@ -1223,6 +1222,8 @@ void MamChatWidget::coalesceRevisionRows()
             selectionAnchorKey_ = survivingKey;
         if (pressedKey_ == removedKey)
             pressedKey_ = survivingKey;
+        if (unreadBoundaryKey_ == removedKey)
+            unreadBoundaryKey_ = survivingKey;
 
         // These indices are all before i; removing i never invalidates them.
         for (const QString &id : merged.stanzaIds)
@@ -1784,6 +1785,7 @@ void MamChatWidget::clearMessages()
     receipts_.clear();
     security_.clear();
     lastDisplayedRowKey_.clear();
+    unreadBoundaryKey_.clear();
     lastMarkedIncomingRowKey_.clear();
     lastMarkedIncomingTime_      = {};
     lastMarkedIncomingHistoryId_ = 0;
@@ -2014,6 +2016,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setFrameShape(QFrame::NoFrame);
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
+    const bool unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
+    row->setProperty("_psiMamUnreadBoundary", unreadBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -2033,6 +2037,16 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
     canvas.add(NativeChatMessageCanvas::Selection, selection);
+    if (unreadBoundary) {
+        auto *separator = new QFrame(row);
+        separator->setObjectName(QStringLiteral("mamUnreadSeparator"));
+        separator->setFrameShape(QFrame::HLine);
+        separator->setFrameShadow(QFrame::Plain);
+        separator->setMinimumHeight(4);
+        separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        separator->setForegroundRole(QPalette::Highlight);
+        canvas.add(NativeChatMessageCanvas::UnreadSeparator, separator);
+    }
     connect(selection, &QCheckBox::toggled, this, [this, row](bool checked) {
         // A prepend shifts indices, and a MAM overlap can adopt a new key.
         // Resolve the row's current identity at the time of the click.
@@ -2607,6 +2621,27 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Psi styles its parts first, so that a renderer may refine them.
     applyPartStyle(row, index);
     renderer_->arrange(canvas, row->info);
+    const bool fallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
+    if (fallback) {
+        // Keep the original renderer layout intact inside a content widget,
+        // then place the same separator below it instead of painting over it.
+        QLayout *contentLayout = row->layout();
+        QWidget *content = nullptr;
+        if (contentLayout) {
+            content = new QWidget(row);
+            auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+            policy.setHeightForWidth(true);
+            content->setSizePolicy(policy);
+            content->setLayout(contentLayout);
+        }
+        auto *column = new QVBoxLayout(row);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(0);
+        if (content)
+            column->addWidget(content);
+        column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
+    }
+    row->setProperty("_psiMamUnreadBoundaryFallback", fallback);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     updateTextSearchHighlight(index, row);
@@ -2860,19 +2895,14 @@ void MamChatWidget::refreshPalette()
         }
 }
 
-void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer)
+void MamChatWidget::setTheme(const NativeChatTheme &theme)
 {
     measuredMessageHeights_.clear();
     theme_ = theme;
-    // Rows built earlier keep their parts and options until they are replaced
-    // below; nothing calls back into the previous renderer.
-    if (renderer) {
-        ownedRenderer_.reset();
-        renderer_ = renderer;
-    } else {
-        ownedRenderer_ = NativeChatRenderers::forDescription(theme);
-        renderer_      = ownedRenderer_.get();
-    }
+    // Each theme owns its renderer. Description-only themes create the
+    // standard JSON renderer here, without special cases in the widget.
+    ownedRenderer_ = theme_.renderer();
+    renderer_ = ownedRenderer_.get();
     ++rendererGeneration_;
     applyLogLook();
     for (int index : materializedRows())
@@ -3132,6 +3162,56 @@ void MamChatWidget::cancelMessageSelection()
     refreshSelection();
 }
 
+void MamChatWidget::markUnreadBoundary()
+{
+    const QString next = items_.isEmpty() ? QString() : items_.last().key;
+    if (next == unreadBoundaryKey_)
+        return;
+    const int previousIndex = indexOfKey(unreadBoundaryKey_);
+    unreadBoundaryKey_ = next;
+    // A renderer may put the separator into its layout, not just paint it.
+    // Rebuild affected materialized rows so the part appears or disappears.
+    if (previousIndex >= 0 && rowWidget(previousIndex))
+        replaceRow(previousIndex);
+    const int nextIndex = indexOfKey(unreadBoundaryKey_);
+    if (nextIndex >= 0 && rowWidget(nextIndex))
+        replaceRow(nextIndex);
+}
+
+bool MamChatWidget::copyCurrentTextSelection()
+{
+    if (!selectedKeys_.isEmpty()) {
+        copySelectedMessages();
+        return true;
+    }
+    // Only resident widgets have text selections; the model itself handles
+    // whole-message selection even after a row has been evicted.
+    for (int i : materializedRows()) {
+        QWidget *row = rowWidget(i);
+        if (!row)
+            continue;
+        for (auto *text : row->findChildren<QTextEdit *>()) {
+            if (text->textCursor().hasSelection()) {
+                text->copy();
+                return true;
+            }
+        }
+        for (auto *code : row->findChildren<QPlainTextEdit *>()) {
+            if (code->textCursor().hasSelection()) {
+                code->copy();
+                return true;
+            }
+        }
+        for (auto *label : row->findChildren<QLabel *>()) {
+            if (label->hasSelectedText()) {
+                QApplication::clipboard()->setText(label->selectedText());
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void MamChatWidget::copySelectedMessages()
 {
     if (selectedKeys_.isEmpty())
@@ -3379,6 +3459,19 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         const auto &message = items_.at(at).message;
         emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at))});
     });
+    if (items_.at(at).message.isLocal() && !items_.at(at).message.messageId().isEmpty()
+        && !isRetracted(items_.at(at))) {
+        auto *edit = menu->addAction(tr("Edit message"));
+        edit->setObjectName(QStringLiteral("mamEditMessage"));
+        connect(edit, &QAction::triggered, this, [this, key] {
+            const int index = indexOfKey(key);
+            if (index < 0 || isRetracted(items_.at(index)))
+                return;
+            const auto &message = items_.at(index).message;
+            if (message.isLocal() && !message.messageId().isEmpty())
+                emit editMessageRequested(message.messageId(), plainMessage(items_.at(index)));
+        });
+    }
     auto *select = menu->addAction(tr("Select message"));
     select->setObjectName(QStringLiteral("mamSelectMessage"));
     select->setCheckable(true);

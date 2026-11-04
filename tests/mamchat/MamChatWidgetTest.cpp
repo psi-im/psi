@@ -6,7 +6,7 @@
 #include "widgets/CodeBlockWidget.h"
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
-#include "widgets/NativeChatRenderers.h"
+#include "widgets/NativeChatThemeRegistry.h"
 #include "widgets/psirichtext.h"
 #include <QContextMenuEvent>
 #include <QCursor>
@@ -56,6 +56,13 @@
 #include <tuple>
 
 namespace {
+NativeChatTheme testRendererTheme(NativeChatTheme theme, const NativeChatMessageRenderer *renderer)
+{
+    // The fixture owns this stack renderer and outlives its MamChatWidget.
+    theme.setRenderer(std::shared_ptr<const NativeChatMessageRenderer>(
+        renderer, [](const NativeChatMessageRenderer *) {}));
+    return theme;
+}
 void enterWidget(QWidget *widget)
 {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -618,9 +625,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(1300, 350);
         chat.setHistoryLoading(true);
-        chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"),
-                        NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         const QString longLine(1200, QLatin1Char('x'));
         auto styled = message(QStringLiteral("wide-code"), MessageStyling::toHtml(
             QString(3, QChar(0x60)) + QStringLiteral("cpp<br>")
@@ -645,8 +650,7 @@ private slots:
     {
         MamChatWidget chat;
         chat.resize(600, 300);
-        chat.setTheme({ QStringLiteral("classic"), QStringLiteral("Classic"),
-                        NativeChatTheme::Classic, 0, 4, {} });
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         chat.setMessageIconsEnabled(true);
         chat.setHistoryLoading(true);
         auto styled = message(QStringLiteral("classic-code"), MessageStyling::toHtml(
@@ -1320,8 +1324,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(620, 620);
         chat.setHistoryLoading(true);
-        chat.setTheme({ QStringLiteral("framed"), QStringLiteral("Framed"), NativeChatTheme::Modern, 0, 4, {} },
-                      &renderer);
+        chat.setTheme(testRendererTheme(NativeChatTheme(QStringLiteral("framed"), QStringLiteral("Framed"), 0, 4), &renderer));
         const QString html = proseAroundFencedCode(QStringLiteral("cpp"), { QStringLiteral("int a = 1;") });
         chat.appendMessage(message(QStringLiteral("own"), html, 0, true));
         chat.show();
@@ -1385,7 +1388,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(620, 620);
         chat.setHistoryLoading(true);
-        NativeChatTheme theme { QStringLiteral("styled"), QStringLiteral("Styled"), NativeChatTheme::Modern, 0, 4, {} };
+        NativeChatTheme theme { QStringLiteral("styled"), QStringLiteral("Styled"), 0, 4, {} };
         theme.styleSheet = QStringLiteral("QTextEdit#mamBody { padding-left: 7px; }");
         chat.setTheme(theme);
         chat.appendMessage(message(QStringLiteral("m"),
@@ -1951,8 +1954,7 @@ private slots:
         chat.setHistoryLoading(true);
         chat.setMediaOpener(&opener);
         if (bubble)
-            chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                          NativeChatRenderers::bubble());
+            chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         auto reply = message(QStringLiteral("photo-reply"),
                              QStringLiteral("<share id=\"photo\" account=\"account-a\"/>"));
         reply.setReply({ idless ? QString() : QStringLiteral("missing-target"), {},
@@ -2009,7 +2011,7 @@ private slots:
         chat.setHistoryLoading(true);
         chat.setQuoteColor(QColor("#707070"));
         if (classic)
-            chat.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+            chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         auto reply = message("reply", "1234");
         QString quoted = "Quoted first line\nQuoted second line";
         if (longQuote)
@@ -2271,7 +2273,7 @@ private slots:
         chat.resize(550, 350);
         chat.setHistoryLoading(true);
         if (classic)
-            chat.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+            chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         QPalette palette = chat.palette();
         const QColor base = dark ? QColor(25, 25, 25) : QColor(Qt::white);
         palette.setColor(QPalette::Base, base);
@@ -3338,8 +3340,7 @@ private slots:
         QVERIFY(status);
         QCOMPARE(status->text(), QStringLiteral("Downloading…"));
 
-        NativeChatTheme classic;
-        classic.layout = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         list.setTheme(classic);
         QTRY_VERIFY(list.itemWidget(0));
         QCOMPARE(list.itemWidget(0)->findChildren<MessagePreview *>(QStringLiteral("mamFilePreview")).size(), 1);
@@ -3418,8 +3419,7 @@ private slots:
         auto *body=list.itemWidget(0)->findChild<ChatMessageText*>();
         QVERIFY(body->document()->toPlainText().contains(QChar::ObjectReplacementCharacter));
         QVERIFY(body->heightForWidth(500)>=220);
-        NativeChatTheme theme;
-        theme.layout=NativeChatTheme::Classic;
+        NativeChatTheme theme = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         list.setTheme(theme); // Recreate materialized row with the same attachment.
         QTRY_VERIFY(list.itemWidget(0));
         body=list.itemWidget(0)->findChild<ChatMessageText*>();
@@ -3517,8 +3517,7 @@ private slots:
         QCOMPARE(timestamp()->font().pointSizeF(), 11.0);
         QCOMPARE(timestamp()->palette().color(QPalette::Text).alpha(), 188);
 
-        NativeChatTheme classic;
-        classic.layout = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         // Classic has the time in the message text, at the chat font size and
@@ -3533,8 +3532,7 @@ private slots:
         QTRY_VERIFY(list.itemWidget(0) && !timestamp() && classicTime().isValid());
         QCOMPARE(classicTime().font().pointSizeF(), 12.0);
         QCOMPARE(classicTime().foreground().color(), QColor(60, 95, 150));
-        NativeChatTheme modern;
-        modern.layout = NativeChatTheme::Modern;
+        NativeChatTheme modern = NativeChatThemes::instance()->theme(QStringLiteral("modern"));
         modern.avatarSize = 40;
         list.setTheme(modern);
         QTRY_VERIFY(timestamp() && qFuzzyCompare(timestamp()->font().pointSizeF(), 11.0));
@@ -3551,8 +3549,7 @@ private slots:
         MamChatWidget  list;
         list.resize(700, 500);
         list.setHistoryLoading(true);
-        list.setTheme({ QStringLiteral("org.example.framed"), QStringLiteral("Framed"), NativeChatTheme::Modern, 40, 10, {} },
-                      &renderer);
+        list.setTheme(testRendererTheme(NativeChatTheme(QStringLiteral("org.example.framed"), QStringLiteral("Framed"), 40, 10), &renderer));
         auto incoming = message(QStringLiteral("in"), QStringLiteral("Incoming text"));
         incoming.setReactionTargetId(QStringLiteral("in-origin"));
         list.appendMessage(incoming);
@@ -3604,7 +3601,7 @@ private slots:
         QCOMPARE(author->palette().color(QPalette::Text), QColor(10, 20, 30));
 
         // Switching to a description theme drops the renderer for new rows.
-        list.setTheme({ QStringLiteral("modern"), QStringLiteral("Modern"), NativeChatTheme::Modern, 40, 10, {} });
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("modern")));
         QTRY_VERIFY(list.itemWidget(0) && !list.itemWidget(0)->findChild<QFrame *>(QStringLiteral("pluginFrame")));
         const int restyledAfterSwitch = renderer.restyled;
         palette.setColor(QPalette::Text, QColor(30, 20, 10));
@@ -3618,8 +3615,7 @@ private slots:
         MamChatWidget list;
         list.resize(1300, 700);
         list.setHistoryLoading(true);
-        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         auto incoming = message(QStringLiteral("short-in"), QStringLiteral("Hi"));
         incoming.setReactionTargetId(QStringLiteral("short-in-origin"));
         list.appendMessage(incoming);
@@ -3659,7 +3655,7 @@ private slots:
         auto [longRow, longBubble, longAvatar] = parts(2);
         QVERIFY(longBubble);
         const int textLimit = qCeil(QFontMetricsF(longBubble->font()).averageCharWidth()
-                                    * NativeChatRenderers::BubbleMaxTextColumns);
+                                    * 60 /* Bubble default text columns */);
         const QMargins margins = longBubble->layout()->contentsMargins();
         QCOMPARE(longBubble->maximumWidth(), textLimit + margins.left() + margins.right());
         QCOMPARE(longBubble->width(), longBubble->maximumWidth());
@@ -3726,9 +3722,15 @@ private slots:
         if (!themeSheet)
             window.setStyleSheet(sheet);
         list->setHistoryLoading(true);
-        list->setTheme({ QStringLiteral("test"), QStringLiteral("Test"), NativeChatTheme::Modern, 40, 6,
-                         themeSheet ? sheet : QString() },
-                       bubble ? NativeChatRenderers::bubble() : nullptr);
+        NativeChatTheme chosen = NativeChatThemes::instance()->theme(
+            bubble ? QStringLiteral("bubble") : QStringLiteral("modern"));
+        chosen.id = QStringLiteral("test");
+        chosen.name = QStringLiteral("Test");
+        // This fixture explicitly tests hover tint even with Bubble's renderer.
+        chosen.hoverHighlight = true;
+        if (themeSheet)
+            chosen.styleSheet = sheet;
+        list->setTheme(chosen);
         list->setNicknameColorResolver([](const MessageView &) { return QColor(0x88, 0x44, 0x00); });
         list->appendMessage(message(QStringLiteral("in"), QStringLiteral("Hi")));
         auto own = message(QStringLiteral("own"), QStringLiteral("A longer reply that wraps in a narrow bubble"), 1,
@@ -3846,7 +3848,7 @@ private slots:
         };
 
         // A theme colour replaces the chat background, for rows too.
-        NativeChatTheme theme { QStringLiteral("t"), QStringLiteral("T"), NativeChatTheme::Modern, 40, 10, {}, {} };
+        NativeChatTheme theme { QStringLiteral("t"), QStringLiteral("T"), 40, 10, {}, {} };
         theme.background = QColor(0x20, 0x40, 0x60);
         list->setTheme(theme);
         QCOMPARE(list->viewport()->palette().color(QPalette::Base), theme.background);
@@ -3946,8 +3948,7 @@ private slots:
             list.setHistoryLoading(true);
             list.setMediaOpener(&opener);
             if (bubble)
-                list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                              NativeChatRenderers::bubble());
+                list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
             list.appendMessage(
                 message(QStringLiteral("wide"), QStringLiteral("<share id=\"wide\" account=\"account-a\"/>"), 0, true));
             list.show();
@@ -4050,8 +4051,7 @@ private slots:
         list.resize(900, 700);
         list.setHistoryLoading(true);
         list.setMediaOpener(&opener);
-        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         for (int i = 0; i < 5; ++i)
             list.appendMessage(message(QString::number(i), QStringLiteral("Earlier message"), i, i % 2));
         const auto picture = message(QStringLiteral("picture"),
@@ -4071,8 +4071,7 @@ private slots:
             emit image.downloadFinished();
         } else if (flow == QLatin1String("rebuilt")) {
             QTest::qWait(100);
-            list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                          NativeChatRenderers::bubble());
+            list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         }
         const auto onScreen = [&list, index]() -> QColor {
             auto *row  = list.itemWidget(index);
@@ -4118,8 +4117,7 @@ private slots:
         QCOMPARE(modernNick->text(), QStringLiteral("Peer"));
         QVERIFY(modernBody->mapTo(modern, QPoint()).y() > modernNick->mapTo(modern, QPoint()).y());
 
-        NativeChatTheme classic;
-        classic.layout = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         // Virtual rows stage replacement until Qt's rich-text height settles.
@@ -4134,7 +4132,7 @@ private slots:
                      + QStringLiteral("] <Peer> Message body"));
 
         NativeChatTheme plugin;
-        plugin.layout = NativeChatTheme::Modern;
+
         plugin.avatarSize = 0;
         plugin.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body",{"direction":"horizontal","items":["timestamp","author"]}]})");
         list.setTheme(plugin);
@@ -4163,8 +4161,7 @@ private slots:
         list.setGroupChat(true);
         list.setHistoryLoading(true);
         list.resize(420, 600);
-        NativeChatTheme classic;
-        classic.layout     = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         list.setNicknameColorResolver([](const MessageView &) { return QColor(60, 95, 150); });
@@ -4233,8 +4230,7 @@ private slots:
         MamChatWidget list;
         list.setHistoryLoading(true);
         list.resize(420, 400);
-        NativeChatTheme classic;
-        classic.layout     = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         list.setDirectionColors(QColor("#ff0000"), QColor("#0000ff"));
@@ -4265,7 +4261,7 @@ private slots:
 
         // Modern colours the nickname the same way; Bubble, whose bubbles
         // already tell sent from received, does not.
-        list.setTheme({ QStringLiteral("modern"), QStringLiteral("Modern"), NativeChatTheme::Modern, 40, 10, {} });
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("modern")));
         const auto author = [&list](int index) {
             auto *row = list.itemWidget(index);
             return row ? row->findChild<QLabel *>(QStringLiteral("mamAuthor")) : nullptr;
@@ -4273,8 +4269,7 @@ private slots:
         QTRY_VERIFY(author(0) && author(1));
         QCOMPARE(author(0)->palette().color(QPalette::WindowText), QColor("#0000aa"));
         QCOMPARE(author(1)->palette().color(QPalette::WindowText), QColor("#aa0000"));
-        list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble"))
                     && author(0));
         QCOMPARE(author(0)->palette().color(QPalette::WindowText), list.palette().color(QPalette::Text));
@@ -4490,7 +4485,7 @@ private slots:
         if (groupChat)
             list.setNicknameColorResolver([nickColor](const MessageView &) { return nickColor; });
         if (classic)
-            list.setTheme({ "classic", "Classic", NativeChatTheme::Classic, 0, 4, {} });
+            list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         list.resize(550, 450);
         list.setHistoryLoading(true);
         auto apply = [&] {
@@ -4651,7 +4646,7 @@ private slots:
         for (bool classic : {false, true}) {
             MamChatWidget list;
             if (classic)
-                list.setTheme({QStringLiteral("classic"), QStringLiteral("Classic"), NativeChatTheme::Classic, 0, 4, {}});
+                list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
             list.setInformationalColor(QColor(0, 128, 0));
             list.resize(650, 550);
             list.setHistoryLoading(true);
@@ -4704,7 +4699,7 @@ private slots:
         QFETCH(bool, classic);
         MamChatWidget list;
         if (classic)
-            list.setTheme({QStringLiteral("classic"), QStringLiteral("Classic"), NativeChatTheme::Classic, 0, 4, {}});
+            list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         list.resize(550, 480);
         list.setHistoryLoading(true);
         for (int i = 0; i < 3; ++i)
@@ -4769,7 +4764,7 @@ private slots:
         QFETCH(bool, modern);
         MamChatWidget list;
         if (!modern)
-            list.setTheme({QStringLiteral("classic"), QStringLiteral("Classic"), NativeChatTheme::Classic, 0, 4, {}});
+            list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         list.resize(750, 700);
         list.setHistoryLoading(true);
         list.appendMessage(message(QStringLiteral("short"), QStringLiteral("Short message")));
@@ -4906,8 +4901,7 @@ private slots:
         QVERIFY(!clock->isActive());
         list.show();
         QTRY_VERIFY(clock->isActive());
-        NativeChatTheme classic;
-        classic.layout = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         QVERIFY(!clock->isActive());
@@ -4965,12 +4959,12 @@ private slots:
         if (!qEnvironmentVariableIsEmpty("PSI_NATIVE_CHAT_SCREENSHOT"))
             list.grab().save(qEnvironmentVariable("PSI_NATIVE_CHAT_SCREENSHOT"));
         list.setMessageSelected(0, true);
-        list.setTheme({QStringLiteral("classic"), QStringLiteral("Classic"), NativeChatTheme::Classic, 0, 4, {}});
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
         QTRY_VERIFY(list.itemWidget(0));
         QTRY_VERIFY(!list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAvatar")));
         QCOMPARE(list.selectedMessageCount(), 1);
         QCOMPARE(list.messageCount(), 1);
-        list.setTheme({QStringLiteral("modern"), QStringLiteral("Modern"), NativeChatTheme::Modern, 40, 10, {}});
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("modern")));
         QTRY_VERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamAvatar")));
     }
 
@@ -5180,8 +5174,7 @@ private slots:
         QVERIFY2(pencilPlacement(pixels(18), 16), "Edit pencil near its native size was resized");
         QVERIFY2(pencilPlacement(pixels(23), 22), "Edit pencil is not font-sized and centred on the checks");
         QVERIFY2(pencilPlacement(points(20.0), 0), "Edit pencil is not font-sized and centred on the checks");
-        NativeChatTheme classic;
-        classic.layout = NativeChatTheme::Classic;
+        NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
         QTRY_VERIFY(list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamEditedIndicator")));
@@ -6202,6 +6195,144 @@ private slots:
         list.appendMessage(message(QStringLiteral("original"), QStringLiteral("new session"), 3));
         QVERIFY(!list.findText(QStringLiteral("obsolete"), false, false, true));
         QVERIFY(list.findText(QStringLiteral("new session"), false, false, true));
+    }
+
+
+    void nativeUnreadBoundaryFollowsModelRowsAndClearsWithChat()
+    {
+        MamChatWidget chat;
+        chat.resize(430, 260);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("a"), QStringLiteral("Before"), 1));
+        chat.appendMessage(message(QStringLiteral("b"), QStringLiteral("Boundary"), 2));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(1));
+        chat.markUnreadBoundary();
+        QTRY_VERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
+
+        chat.appendMessage(message(QStringLiteral("c"), QStringLiteral("After"), 3));
+        QTRY_VERIFY(chat.itemWidget(2));
+        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(!chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
+
+        chat.markUnreadBoundary();
+        // LongListWidget may rebuild materialized rows on its next layout pass.
+        QTRY_VERIFY(chat.itemWidget(1) && !chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
+        chat.clearMessages();
+        chat.appendMessage(message(QStringLiteral("fresh"), QStringLiteral("New conversation"), 4));
+        QTRY_VERIFY(chat.itemWidget(0));
+        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+    }
+
+
+    void unreadSeparatorUsesOneFrameForFallbackAndThemePlacement()
+    {
+        MamChatWidget chat;
+        chat.resize(450, 240);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("before"), QStringLiteral("First"), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        chat.markUnreadBoundary();
+
+        // Unmodified themes arrange the same QFrame beneath their content.
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *fallback = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(fallback);
+        QTRY_VERIFY(!fallback->isHidden());
+        auto *layout = chat.itemWidget(0)->layout();
+        QVERIFY(layout);
+        QCOMPARE(layout->count(), 2);
+        QCOMPARE(layout->itemAt(1)->widget(), static_cast<QWidget *>(fallback));
+        QTRY_VERIFY(fallback->height() >= 4);
+        QCOMPARE(fallback->width(), chat.itemWidget(0)->width());
+
+        // A description-only theme can position the separator as a slot.
+        NativeChatTheme theme;
+        theme.id         = QStringLiteral("test-unread-slot");
+
+        theme.layoutSpec = QStringLiteral(
+            R"({"direction":"vertical","items":["body","unreadSeparator"]})");
+        chat.setTheme(theme);
+        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *placed = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(placed);
+        QVERIFY(!placed->isHidden());
+        QVERIFY(placed->height() >= 4);
+        QCOMPARE(chat.itemWidget(0)->findChildren<QFrame *>(QStringLiteral("mamUnreadSeparator")).size(), 1);
+
+        // Bubble places the rule in its own layout, underneath the bubble.
+        theme = NativeChatThemes::instance()->theme(QStringLiteral("bubble"));
+        theme.id = QStringLiteral("test-unread-bubble");
+        chat.setTheme(theme);
+        QTRY_VERIFY(chat.itemWidget(0)
+                    && chat.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider")));
+        auto *row = chat.itemWidget(0);
+        QVERIFY(!row->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *container = row->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"));
+        placed = container->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(placed && !placed->isHidden());
+
+        // Replacing the boundary removes the previous renderer's decoration.
+        chat.appendMessage(message(QStringLiteral("after"), QStringLiteral("Second"), 2));
+        chat.markUnreadBoundary();
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(0)
+                    && chat.itemWidget(1)->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"))
+                    && !chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(!chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
+        QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
+        QVERIFY(chat.itemWidget(1)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
+    }
+
+    void nativeSelectionCopyWorksWithoutFocusOnMessageText()
+    {
+        MamChatWidget chat;
+        chat.resize(450, 260);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("copy"), QStringLiteral("Copy this text"), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+
+        QVERIFY(!chat.copyCurrentTextSelection());
+        QTextCursor selection = body->textCursor();
+        selection.setPosition(0);
+        selection.setPosition(4, QTextCursor::KeepAnchor);
+        body->setTextCursor(selection);
+        QVERIFY(chat.copyCurrentTextSelection());
+        QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("Copy"));
+
+        body->setTextCursor(QTextCursor(body->document()));
+        chat.selectMessageRange(0, 0);
+        QVERIFY(chat.copyCurrentTextSelection());
+        QVERIFY(QApplication::clipboard()->text().contains(QStringLiteral("Copy this text")));
+        chat.cancelMessageSelection();
+    }
+
+    void nativeOwnMessageContextMenuOffersCorrection()
+    {
+        MamChatWidget chat;
+        chat.resize(440, 230);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("mine"), QStringLiteral("Original message"), 1, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QWidget *row = chat.itemWidget(0);
+        QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), row->mapToGlobal(QPoint(3, 3)));
+        QApplication::sendEvent(row, &event);
+        auto *menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
+        QVERIFY(menu);
+        auto *action = menu->findChild<QAction *>(QStringLiteral("mamEditMessage"));
+        QVERIFY(action);
+        QSignalSpy corrected(&chat, &MamChatWidget::editMessageRequested);
+        action->trigger();
+        QCOMPARE(corrected.size(), 1);
+        QCOMPARE(corrected.first().at(0).toString(), QStringLiteral("mine"));
+        QCOMPARE(corrected.first().at(1).toString(), QStringLiteral("Original message"));
+        delete menu;
     }
 
 };

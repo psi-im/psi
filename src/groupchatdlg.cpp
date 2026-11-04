@@ -26,7 +26,7 @@
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
 #include "coloropt.h"
-#include "chatview.h"
+#include "chatviewcommon.h"
 #include "eventdb.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
@@ -231,6 +231,7 @@ public:
     QString                                password;
     QMap<LanguageManager::LangId, QString> subjectMap;
     QString                                lastTopic;
+    ChatViewCommon                         nicknameColors; // Native MUC color policy.
     QDateTime                              lastMsgTime;
     bool                                   nonAnonymous; // got status code 100 ?
     ActionList                            *actions;
@@ -278,7 +279,6 @@ public:
 
 public:
     ChatEdit *mle() const { return dlg->ui_.mle->chatEdit(); }
-    ChatView *te_log() const { return dlg->ui_.log; }
 
 public slots:
     void addEmoticon(const PsiIcon *icon) { addEmoticon(icon->defaultText()); }
@@ -406,7 +406,6 @@ public slots:
             if (!nick.isEmpty()) {
                 prev_self = self;
                 self      = nick;
-                dlg->ui_.log->setLocalNickname(self);
                 dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                     dlg->account()->status());
             }
@@ -450,7 +449,6 @@ join <channel>{,<channel>} [pass{,<pass>}
                     // FIXME nick can't be empty....
                     prev_self = self;
                     self      = nick;
-                    dlg->ui_.log->setLocalNickname(self);
                     dlg->account()->groupChatChangeNick(dlg->jid().domain(), dlg->jid().node(), self,
                                                         dlg->account()->status());
                     newstate = nullptr;
@@ -564,7 +562,7 @@ public:
     void doTrackBar()
     {
         trackBar = false;
-        te_log()->doTrackBar();
+        dlg->nativeTimeline_->markUnreadBoundary();
     }
     void doFileShare(const QList<Reference> &refs, const QString &desc)
     {
@@ -618,13 +616,10 @@ public slots:
 public:
     bool eventFilter(QObject *obj, QEvent *ev)
     {
-        if (obj == te_log()->realTextWidget()) {
-            if (ev->type() == QEvent::MouseButtonPress)
-                mle()->setFocus();
-            return QObject::eventFilter(obj, ev);
-        }
-
-        if (te_log()->handleCopyEvent(obj, ev, mle()))
+        if (obj == mle() && ev->type() == QEvent::ShortcutOverride
+            && static_cast<QKeyEvent *>(ev)->matches(QKeySequence::Copy)
+            && !mle()->textCursor().hasSelection()
+            && dlg->nativeTimeline_->copyCurrentTextSelection())
             return true;
 
         if (obj == mle() && ev->type() == QEvent::KeyPress) {
@@ -974,11 +969,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     nativeTimeline_->setGroupChat(true);
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
     ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
+    delete ui_.log; // .ui layout placeholder, not a message log.
     // Qt 5 leaves the replacement explicitly hidden after reparenting.
-    // This suppresses both rendering and the visible-viewport fill demand.
     nativeTimeline_->show();
-    ui_.log->setParent(ui_.topFrame);
-    ui_.log->hide();
     configureNativeChat(nativeTimeline_, account(), true);
     // AvatarCache owns both decoded pixmaps and negative PHOTO lookups.
     // The chat supplies only the sender identity; never memoize a QPixmap
@@ -988,6 +981,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &MamChatWidget::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
     connect(nativeTimeline_, &MamChatWidget::contactMenuRequested, this, &GCMainDlg::showContactContextMenu);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
     connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
@@ -996,14 +990,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     });
     // Preserve Psi's established per-nickname coloring policy in both native
     // layouts, including fixed/hash palettes and muted MAM/history records.
-    QPointer<ChatView> oldView(ui_.log);
-    nativeTimeline_->setNicknameColorResolver([oldView](const MessageView &message) -> QColor {
-        if (!oldView)
-            return {};
+    nativeTimeline_->setNicknameColorResolver([this](const MessageView &message) -> QColor {
         if (message.isSpooled() && !PsiOptions::instance()->getOption(
                 QStringLiteral("options.ui.muc.colored-history")).toBool())
             return ColorOpt::instance()->color(QStringLiteral("options.ui.look.colors.messages.informational"));
-        return QColor(oldView->getMucNickColor(message.nick(), message.isLocal()));
+        return QColor(d->nicknameColors.getMucNickColor(message.nick(), message.isLocal()));
     });
     connect(PsiOptions::instance(), &PsiOptions::optionChanged, nativeTimeline_,
             [this](const QString &option) {
@@ -1050,15 +1041,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
-    ui_.log->setSessionData(true, false, jid(), jid().full()); // FIXME change conference name
-    ui_.log->setLocalNickname(d->self);
-    ui_.log->setMediaOpener(account()->fileSharingDeviceOpener());
-
-    connect(ui_.log, SIGNAL(showNickMenu(QString)), this, SLOT(doContactContextMenu(QString)));
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
-    connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
-    connect(ui_.log, &ChatView::outgoingReactions, this, &GCMainDlg::outgoingReactions);
-    connect(ui_.log, &ChatView::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
 
     PsiToolTip::install(ui_.le_topic);
 
@@ -1069,10 +1052,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 */
     ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
-#ifdef Q_OS_MACOS
-    // seems its useless hack
-    // connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
-#endif
 
     ui_.lv_users->setModel(d->usersModel);
     connect(ui_.lv_users, SIGNAL(contextMenuRequested(const QString &)), SLOT(doContactContextMenu(const QString &)));
@@ -1212,7 +1191,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     ui_.mini_prompt->hide();
     connect(ui_.mle, &ChatEditProxy::textEditCreated, this, &GCMainDlg::chatEditCreated);
     chatEditCreated();
-    ui_.log->init(); // we are ready to do that now. chatEditCreated() inited last pieces required for this init
 
     d->pm_settings = new QMenu(this);
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
@@ -1250,7 +1228,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     X11WM_CLASS("groupchat");
 
     ui_.mle->chatEdit()->setFocus();
-    ui_.log->realTextWidget()->installEventFilter(d);
 
     // Connect signals from MUC manager
     connect(d->mucManager, &MUCManager::action_error, this, &GCMainDlg::action_error);
@@ -1266,16 +1243,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     invalidateTab();
     setConnecting();
 
-    connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
-    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
-    connect(ui_.log, &ChatView::forwardMessageRequested, account(),
-            [this](const QString &messageId, const QString &nick, const QString &text) {
-                account()->psi()->invokeForwardMessage(messageId, jid().withResource(nick), text);
-            });
-    connect(ui_.log, &ChatView::openInfoRequested, account(),
-            [this](const QString &nick) { account()->invokeGCInfo(jid().withResource(nick)); });
-    connect(ui_.log, &ChatView::openChatRequested, account(),
-            [this](const QString &nick) { account()->invokeGCChat(jid().withResource(nick)); });
     connect(pa->avatarFactory(), &AvatarFactory::avatarChanged, this, &GCMainDlg::avatarUpdated);
 
 #ifdef PSI_PLUGINS
@@ -1295,8 +1262,6 @@ GCMainDlg::~GCMainDlg()
         account()->groupChatLeave(jid().domain(), jid().node());
     }
 
-    // QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
-    // ui_.log->setMimeSourceFactory(0);
     // delete m;
 
     account()->dialogUnregister(this);
@@ -1426,18 +1391,12 @@ void GCMainDlg::setShortcuts()
 
 void GCMainDlg::scrollUp()
 {
-    if (nativeTimeline_)
-        nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepSub);
-    else
-        ui_.log->scrollUp();
+    nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepSub);
 }
 
 void GCMainDlg::scrollDown()
 {
-    if (nativeTimeline_)
-        nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepAdd);
-    else
-        ui_.log->scrollDown();
+    nativeTimeline_->verticalScrollBar()->triggerAction(QAbstractSlider::SliderPageStepAdd);
 }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
@@ -1693,7 +1652,6 @@ void GCMainDlg::mle_returnPressed()
         if (!nick.isEmpty() && newJid.isValid()) {
             d->prev_self = d->self;
             d->self      = newJid.resource();
-            ui_.log->setLocalNickname(d->self);
             account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
         }
         ui_.mle->chatEdit()->setText("");
@@ -1809,7 +1767,6 @@ void GCMainDlg::doShowInfo()
 
 void GCMainDlg::doClear()
 {
-    ui_.log->clear();
     if (mamTask_) {
         mamTask_->safeDelete();
         mamTask_.clear();
@@ -2096,7 +2053,6 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         if (s.errorCode() == 409) {
             message = tr("Please choose a different nickname");
             d->self = d->prev_self;
-            ui_.log->setLocalNickname(d->self);
         } else {
             message = tr("An error occurred (errorcode: %1)").arg(s.errorCode());
         }
@@ -2143,8 +2099,6 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         auto contact = d->usersModel->findEntry(nick);
         if (contact == nullptr) {
             // contact joining
-            // ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty:
-            // ChatViewCommon::Participant);
 
             MessageView mv(MessageView::MUCJoin);
             if ((!d->connecting || options_->getOption("options.ui.muc.show-initial-joins").toBool())
@@ -2350,16 +2304,13 @@ XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const { return Jid(jid()).w
 void GCMainDlg::avatarUpdated(const Jid &jid_)
 {
     if (jid_.compare(jid(), false)) {
-        if (nativeTimeline_ && !jid_.resource().isEmpty())
+        if (nativeTimeline_)
             nativeTimeline_->refreshAvatars();
         if (jid_.resource().isEmpty()) {
-            ui_.log->updateAvatar(jid_, ChatViewCommon::RemoteParty);
             setMucSelfAvatar();
             return;
         }
         d->usersModel->updateAvatar(jid_.resource());
-        ui_.log->updateAvatar(jid_,
-                              jid_.resource() == d->self ? ChatViewCommon::LocalParty : ChatViewCommon::Participant);
     }
 }
 
@@ -2556,7 +2507,6 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
 
     if (nativeTimeline_)
         nativeTimeline_->appendMessage(mv);
-    ui_.log->dispatchMessage(mv);
     if (mv.isAlert())
         doAlert();
 }
@@ -2718,7 +2668,6 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
         encEnabled        = lastWasEncrypted_;
     }
     if (encChanged) {
-        ui_.log->setEncryptionEnabled(encEnabled);
         QString msg = QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled");
         if (encEnabled) {
             if (!dm.encryptionProtocol().isEmpty()) {
@@ -2781,7 +2730,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
         d->keepOpen = true;
         QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
                 }*/
-    emit messageAppended(dm.body(), ui_.log->textWidget());
+    emit messageAppended(dm.body(), nativeTimeline_);
 }
 
 void GCMainDlg::doAlert()
@@ -2820,7 +2769,7 @@ void GCMainDlg::setLooks()
     // update the fonts
     QFont f;
     f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
-    ui_.log->setFont(f);
+    nativeTimeline_->setFont(f);
     ui_.mle->chatEdit()->setFont(f);
 
     f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
@@ -2895,9 +2844,6 @@ void GCMainDlg::setToolbuttons()
 
 void GCMainDlg::optionsUpdate()
 {
-    /*QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
-    ui_.log->setMimeSourceFactory(PsiIconset::instance()->emoticons.generateFactory());
-    delete m;*/
 
     setLooks();
     setToolbuttons();
@@ -3044,7 +2990,6 @@ void GCMainDlg::chatEditCreated()
     d->mCmdSite.setPrompt(ui_.mini_prompt);
     d->tabCompletion.setTextEdit(d->mle());
 
-    ui_.log->setDialog(this);
     ui_.mle->chatEdit()->setDialog(this);
 
     ui_.mle->chatEdit()->installEventFilter(d);

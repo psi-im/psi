@@ -23,7 +23,7 @@ class QWidget;
 // Rows are measured with heightForWidth(), so use layouts that support it.
 //
 // See docs/native-chat-renderers.md for a walkthrough and the built-in
-// renderers in src/widgets/NativeChatRenderers.cpp for complete examples.
+// theme providers/renderers in src/widgets/nativechat/themes/ for examples.
 
 // What is being rendered. Values only; valid for the duration of the call.
 struct NativeChatMessageInfo {
@@ -79,6 +79,7 @@ public:
         Author,    // QLabel with the nickname. Messages with HeaderParts only.
         Timestamp, // The time with its delivery/encryption/edit marks. Messages with HeaderParts only.
         Body,      // Text with reply preview, file cards and reactions. Always present.
+        UnreadSeparator, // Optional boundary frame; Psi places it below the row if not taken.
     };
 
     // The row widget. Psi owns it, paints its hover/selection surface and
@@ -88,6 +89,10 @@ public:
 
     // Hands over a part to be placed in the renderer's layout, or nullptr if
     // this message has no such part. Parts that are not taken are hidden.
+    // UnreadSeparator is available only on the boundary row. Taking it lets
+    // the theme position and style the frame; otherwise Psi places it below
+    // the renderer's content as the default layout fallback.
+    // The new enum value does not change the plugin interface vtable.
     virtual QWidget *take(Part part) = 0;
 
     // The widget whose top-right corner anchors the hover actions toolbar.
@@ -124,19 +129,6 @@ public:
     }
 };
 
-// Implemented by a plugin's root object next to NativeChatThemeProvider.
-//
-// Psi asks for a renderer for each theme the plugin declared. The renderer
-// and the code of the widgets it creates must stay valid until the plugin
-// object is destroyed: while such a plugin is disabled at runtime its themes
-// are removed and existing rows are rebuilt with a built-in theme, but its
-// library stays loaded until Psi exits, so rows built earlier can die safely.
-class NativeChatRendererProvider {
-public:
-    virtual ~NativeChatRendererProvider() = default;
-    // nullptr: Psi lays the theme out from its NativeChatTheme description.
-    virtual const NativeChatMessageRenderer *nativeChatRenderer(const QString &themeId) const = 0;
-};
-Q_DECLARE_INTERFACE(NativeChatRendererProvider, "org.psi-im.NativeChatRendererProvider/1.1")
-
+// A theme supplies an optional renderer using NativeChatTheme::setRenderer().
+// Themes without a C++ renderer are interpreted from layoutSpec.
 #endif

@@ -9,10 +9,11 @@ There are four levels, from the simplest to the most powerful:
 2. **A style sheet** (`options.ui.chat.css`). Tweaks any theme, built-in or
    not, without writing code.
 3. **A theme plugin with a description.** A new entry in the theme list,
-   built from Modern or Classic with your own avatar size, spacing, style
+   with your own avatar size, spacing, style
    sheet and part arrangement. No widget code.
 4. **A theme plugin with a renderer.** Full control over the widgets around
-   the parts of a message, e.g. Psi's own Bubble theme. See
+   the parts of a message, e.g. Psi's own Bubble theme in
+   `src/widgets/nativechat/themes/Bubble.cpp`. See
    [native-chat-renderers.md](native-chat-renderers.md).
 
 ## 1. Options
@@ -62,9 +63,28 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `#mamBubble` | A speech bubble (Bubble theme) | `[tone="incoming"]`, `[tone="own"]`, `[tone="notice"]`; `[tailSide="left"]`, `"right"`, `"none"`. Painted by Psi, styled with the properties below. |
 | `#mamHeader`, `#mamHeaderGroup` | Container of nickname and time | Spacing via padding. |
 | `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. |
+| `QFrame#mamUnreadSeparator` | Unread boundary when the renderer places it | Style its border/colour/height in QSS; absent on other messages. |
 
 Combine selectors to style parts in one kind of message, for example our own
 messages in the Bubble theme: `#mamBubble[tone="own"] QLabel#mamTimestamp`.
+
+### Unread boundary
+
+The native timeline stores the unread boundary independently of the
+materialized message widgets. It creates a single `QFrame#mamUnreadSeparator`
+for the boundary row. A renderer can take the optional
+`NativeChatMessageCanvas::UnreadSeparator` part and place it anywhere in
+its layout; otherwise Psi puts the same frame below the renderer's content.
+The built-in Bubble renderer lays it out below the bubble.
+
+A description-only theme may add `"unreadSeparator"` to its JSON
+`layoutSpec`, for example:
+```json
+{"direction":"vertical","items":["body","unreadSeparator"]}
+```
+The part is a `QFrame#mamUnreadSeparator` that can be customized with QSS.
+Themes that do not take the part receive the same frame beneath their message
+layout automatically.
 
 ### Bubble properties
 
@@ -184,9 +204,10 @@ public:
         NativeChatTheme compact;
         compact.id         = QStringLiteral("org.example.compact"); // Globally unique.
         compact.name       = tr("Compact");
-        compact.layout     = NativeChatTheme::Modern;
         compact.avatarSize = 24;  // 0 hides avatars; at most 96.
         compact.spacing    = 6;   // Between the avatar and the message; at most 32.
+        compact.layoutSpec = QStringLiteral(
+            R"({"direction":"horizontal","items":["avatar",{"direction":"vertical","items":[{"direction":"horizontal","items":["author","timestamp"]},"body"]}]})");
         compact.styleSheet = QStringLiteral(
             "QLabel#mamTimestamp { color: palette(mid); }"
             "QTextEdit#mamBody { padding-left: 2px; }");
@@ -194,7 +215,6 @@ public:
         NativeChatTheme irc;
         irc.id         = QStringLiteral("org.example.irc");
         irc.name       = tr("IRC");
-        irc.layout     = NativeChatTheme::Classic;
         irc.avatarSize = 0;
         irc.spacing    = 4;
         irc.layoutSpec = QStringLiteral(
@@ -217,18 +237,16 @@ The fields:
 - `id`: a globally unique, stable identifier, saved in the user's options.
   Use a reverse domain name. Themes whose id is taken are ignored.
 - `name`: shown in the theme list.
-- `layout`: the built-in theme to start from. `Modern` (avatar, bold nickname
-  with a small relative time, text below) or `Classic` (`[HH:mm:ss] <nick>
-  text` in the message text, as in the legacy text log, times in the
-  nickname colour in group chats). It also decides the nickname and time
-  styles. A `Classic` theme with a `layoutSpec` arranges the nickname and
-  time as parts instead (`[HH:mm:ss] nick: text`).
+- `description`: optional explanation in the theme picker.
+- `setRenderer(std::shared_ptr<const NativeChatMessageRenderer>)`: optional
+  C++ message renderer owned by the theme. Without it Psi interprets
+  `layoutSpec` as a generic part layout.
 - `avatarSize`, `spacing`: in pixels.
 - `styleSheet`: a Qt style sheet set on every message row of the theme, with
   the selectors from section 2. Prefer `palette(...)` colours so the theme
   follows light and dark palettes.
-- `layoutSpec`: optional JSON that arranges the parts instead of the base
-  layout.
+- `layoutSpec`: optional JSON that arranges the parts. With no C++ renderer
+  and no valid JSON specification, a neutral avatar/header/body layout is used.
 - `hoverHighlight`: whether the message under the pointer is tinted (default
   `true`). The hover actions appear either way.
 - `background`: the log's background colour; invalid (the default) uses the
@@ -242,9 +260,9 @@ The fields:
 Users can override the log properties and restyle the parts with
 `options.ui.chat.css` (section 2).
 
-The description structure is part of the plugin interface
-`org.psi-im.NativeChatThemeProvider/1.1`. Plugins built against 1.0, before
-the log fields existed, must be rebuilt.
+The provider interface is `org.psi-im.NativeChatThemeProvider/2.0`.
+The theme object itself owns its optional renderer; plugins do not implement
+a second renderer-provider interface.
 
 ### `layoutSpec`
 
@@ -269,7 +287,7 @@ loading avatars. An invalid tree is ignored and the base layout is used.
 }
 ```
 
-That is Modern's own arrangement. A horizontal group inside a vertical one
+That reproduces a Modern-like arrangement using JSON. A horizontal group inside a vertical one
 becomes a `#mamHeaderGroup` widget.
 
 ### Building and installing
@@ -283,14 +301,14 @@ chats switch back to a built-in theme.
 
 ## 4. A theme plugin with a renderer
 
-When a description is not enough (shapes painted around the message, parts
-placed differently for our own messages, per-message decisions), implement
-`NativeChatRendererProvider` as well and return a
-`NativeChatMessageRenderer` for your theme ids. The renderer receives the
-parts Psi built for each message and places them in widgets of its own; Psi
-keeps all behaviour (selection, actions, menus, links, media, relative times,
-virtualization). The API, a complete example and the lifetime rules are in
-[native-chat-renderers.md](native-chat-renderers.md).
+When JSON and stylesheets are insufficient (painted shapes, different
+arrangements for incoming/outgoing messages, custom widgets), implement
+`NativeChatMessageRenderer` and attach it directly to the theme with
+`theme.setRenderer(std::make_shared<MyRenderer>())`. The theme's
+`renderer()` method returns that object; Psi continues to own all semantic
+parts and their behaviour (selection, actions, menus, media, relative times
+and virtualization). See [native-chat-renderers.md](native-chat-renderers.md)
+for the API and lifetime rules.
 
 Rows built by a renderer can still be adjusted by `options.ui.chat.css` and
 by the theme's `styleSheet`. Give the widgets you create object names and

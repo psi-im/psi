@@ -5,7 +5,6 @@
 
 #include "pluginhost.h"
 #include "nativechattheme.h"
-#include "../plugins/include/nativechatrenderer.h"
 #include "../plugins/include/nativechatthemeprovider.h"
 
 #include "../avcall/mediadevicewatcher.h"
@@ -15,7 +14,6 @@
 #include "applicationinfoaccessor.h"
 #include "chatdlg.h"
 #include "chattabaccessor.h"
-#include "chatview.h"
 #include "contactinfoaccessor.h"
 #include "contactstateaccessor.h"
 #include "encryptionmethodaccessor.h"
@@ -538,11 +536,10 @@ bool PluginHost::enable()
         enabled_      = qobject_cast<PsiPlugin *>(plugin_)->enable();
         if (enabled_) {
             if (auto *themes = qobject_cast<NativeChatThemeProvider *>(plugin_)) {
-                NativeChatThemes::instance()->add(this, themes->nativeChatThemes(),
-                                                  qobject_cast<NativeChatRendererProvider *>(plugin_));
+                NativeChatThemes::instance()->add(this, themes->nativeChatThemes());
                 // Chat rows built by the plugin's renderers run its code and
                 // are destroyed later than the plugin is disabled.
-                if (NativeChatThemes::instance()->hasRenderers(this))
+                if (NativeChatThemes::instance()->hasCustomRenderers(this))
                     keepResident_ = true;
             }
             emit enabled();

@@ -1,21 +1,26 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "widgets/NativeChatRenderers.h"
 #include "widgets/NativeChatThemeRegistry.h"
+#include "../../plugins/include/nativechatrenderer.h"
 #include <QSignalSpy>
 #include <QtTest>
+#include <memory>
 
 class PlainRenderer final : public NativeChatMessageRenderer {
 public:
     NativeChatPartOptions partOptions(const NativeChatMessageInfo &) const override { return {}; }
-    void                  arrange(NativeChatMessageCanvas &, const NativeChatMessageInfo &) const override { }
+    void arrange(NativeChatMessageCanvas &, const NativeChatMessageInfo &) const override { }
 };
 
-class RendererPlugin final : public NativeChatRendererProvider {
+class RendererPlugin final : public NativeChatThemeProvider {
 public:
-    PlainRenderer                    renderer;
-    const NativeChatMessageRenderer *nativeChatRenderer(const QString &themeId) const override
+    std::shared_ptr<PlainRenderer> renderer = std::make_shared<PlainRenderer>();
+    QList<NativeChatTheme> nativeChatThemes() const override
     {
-        return themeId == QLatin1String("org.example.coded") ? &renderer : nullptr;
+        NativeChatTheme coded(QStringLiteral("org.example.coded"), QStringLiteral("Coded"));
+        coded.setRenderer(renderer);
+        NativeChatTheme described(QStringLiteral("org.example.described"), QStringLiteral("Described"));
+        described.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body"]})");
+        return { coded, described };
     }
 };
 
@@ -26,31 +31,34 @@ private slots:
     {
         auto *registry = NativeChatThemes::instance();
         QCOMPARE(registry->themes().size(), 3);
+        QCOMPARE(registry->themes().at(0).id, QStringLiteral("modern"));
+        QCOMPARE(registry->themes().at(1).id, QStringLiteral("classic"));
+        QCOMPARE(registry->themes().at(2).id, QStringLiteral("bubble"));
         QCOMPARE(registry->theme(QStringLiteral("missing")).id, QStringLiteral("modern"));
-        QObject         owner;
-        QSignalSpy      changed(registry, &NativeChatThemes::changed);
-        NativeChatTheme plugin { QStringLiteral("org.example.theme"),
-                                 QStringLiteral("Example"),
-                                 NativeChatTheme::Classic,
-                                 500,
-                                 -10,
-                                 QStringLiteral("QLabel { color: palette(text); }") };
+
+        QObject owner;
+        QSignalSpy changed(registry, &NativeChatThemes::changed);
+        NativeChatTheme plugin(QStringLiteral("org.example.theme"), QStringLiteral("Example"), 500, -10,
+                               QStringLiteral("QLabel { color: palette(text); }"));
+        plugin.description = QStringLiteral("Example theme");
         plugin.layoutSpec = QStringLiteral(R"({"direction":"horizontal","items":["body","author"]})");
-        plugin.hoverHighlight      = false;
-        plugin.background          = QColor(0x10, 0x20, 0x30);
-        plugin.backgroundImage     = QStringLiteral(":/example/paper.png");
+        plugin.hoverHighlight = false;
+        plugin.background = QColor(0x10, 0x20, 0x30);
+        plugin.backgroundImage = QStringLiteral(":/example/paper.png");
         plugin.backgroundImageMode = NativeChatTheme::Scale;
         registry->add(&owner, { plugin, plugin, registry->themes().first() });
         QCOMPARE(changed.count(), 1);
         QCOMPARE(registry->themes().size(), 4);
-        QVERIFY(!registry->renderer(plugin.id));
-        QVERIFY(!registry->hasRenderers(&owner));
+        QVERIFY(!registry->theme(plugin.id).hasCustomRenderer());
+        QVERIFY(!registry->hasCustomRenderers(&owner));
+        QVERIFY(registry->theme(plugin.id).renderer());
+
         const auto copied = registry->theme(plugin.id);
         QCOMPARE(copied.avatarSize, 96);
         QCOMPARE(copied.spacing, 0);
-        // Values are detached from the plugin's potentially static storage.
         QVERIFY(copied.id.constData() != plugin.id.constData());
         QVERIFY(copied.name.constData() != plugin.name.constData());
+        QVERIFY(copied.description.constData() != plugin.description.constData());
         QVERIFY(copied.styleSheet.constData() != plugin.styleSheet.constData());
         QVERIFY(copied.layoutSpec.constData() != plugin.layoutSpec.constData());
         QVERIFY(copied.backgroundImage.constData() != plugin.backgroundImage.constData());
@@ -58,6 +66,7 @@ private slots:
         QVERIFY(!copied.hoverHighlight);
         QCOMPARE(copied.background, plugin.background);
         QCOMPARE(copied.backgroundImageMode, NativeChatTheme::Scale);
+
         registry->remove(&owner);
         QCOMPARE(changed.count(), 2);
         QCOMPARE(registry->themes().size(), 3);
@@ -68,40 +77,52 @@ private slots:
         QCOMPARE(registry->themes().size(), 3);
     }
 
-    void builtInBubbleUsesItsRenderer()
+    void everyBuiltInThemeOwnsItsRenderer()
     {
         auto *registry = NativeChatThemes::instance();
-        QCOMPARE(registry->theme(QStringLiteral("bubble")).id, QStringLiteral("bubble"));
-        QCOMPARE(registry->renderer(QStringLiteral("bubble")), NativeChatRenderers::bubble());
-        QVERIFY(!registry->renderer(QStringLiteral("modern")));
-        QVERIFY(!registry->renderer(QStringLiteral("classic")));
-        // Bubbles set messages apart without tinting the one under the pointer.
-        QVERIFY(!registry->theme(QStringLiteral("bubble")).hoverHighlight);
-        QVERIFY(registry->theme(QStringLiteral("modern")).hoverHighlight);
-        QVERIFY(registry->theme(QStringLiteral("classic")).hoverHighlight);
-        // Built-in IDs are reserved.
+        const auto modern = registry->theme(QStringLiteral("modern"));
+        const auto classic = registry->theme(QStringLiteral("classic"));
+        const auto bubble = registry->theme(QStringLiteral("bubble"));
+        QVERIFY(modern.hasCustomRenderer());
+        QVERIFY(classic.hasCustomRenderer());
+        QVERIFY(bubble.hasCustomRenderer());
+        QVERIFY(modern.renderer());
+        QVERIFY(classic.renderer());
+        QVERIFY(bubble.renderer());
+        QCOMPARE(modern.renderer()->partOptions({}).avatarSize, 40);
+        QCOMPARE(classic.renderer()->partOptions({}).header, NativeChatPartOptions::HeaderInText);
+        QCOMPARE(bubble.renderer()->partOptions({}).avatarSize, 40);
+        QVERIFY(!bubble.hoverHighlight);
+        QVERIFY(modern.hoverHighlight);
+        QVERIFY(classic.hoverHighlight);
+        QVERIFY(!modern.description.isEmpty());
+        QVERIFY(!classic.description.isEmpty());
+        QVERIFY(!bubble.description.isEmpty());
+
         QObject owner;
-        registry->add(&owner, { { QStringLiteral("bubble"), QStringLiteral("Mine"), NativeChatTheme::Modern, 40, 10, {} } });
-        QCOMPARE(registry->theme(QStringLiteral("bubble")).name, registry->themes().at(2).name);
+        registry->add(&owner, { NativeChatTheme(QStringLiteral("bubble"), QStringLiteral("Mine")) });
+        QCOMPARE(registry->theme(QStringLiteral("bubble")).name, bubble.name);
         QCOMPARE(registry->themes().size(), 3);
     }
 
-    void pluginRenderersFollowTheirThemes()
+    void pluginRenderersBelongToThemes()
     {
-        auto          *registry = NativeChatThemes::instance();
+        auto *registry = NativeChatThemes::instance();
         RendererPlugin plugin;
-        QObject        owner;
-        registry->add(&owner,
-                      { { QStringLiteral("org.example.coded"), QStringLiteral("Coded"), NativeChatTheme::Modern, 40, 10, {} },
-                        { QStringLiteral("org.example.described"), QStringLiteral("Described"), NativeChatTheme::Classic, 0,
-                          4, {} } },
-                      &plugin);
-        QCOMPARE(registry->renderer(QStringLiteral("org.example.coded")), &plugin.renderer);
-        QVERIFY(!registry->renderer(QStringLiteral("org.example.described")));
-        QVERIFY(registry->hasRenderers(&owner));
+        QObject owner;
+        registry->add(&owner, plugin.nativeChatThemes());
+        const auto coded = registry->theme(QStringLiteral("org.example.coded"));
+        const auto described = registry->theme(QStringLiteral("org.example.described"));
+        QCOMPARE(coded.renderer().get(), plugin.renderer.get());
+        QVERIFY(coded.hasCustomRenderer());
+        QVERIFY(!described.hasCustomRenderer());
+        QVERIFY(described.renderer());
+        QVERIFY(registry->hasCustomRenderers(&owner));
         registry->remove(&owner);
-        QVERIFY(!registry->renderer(QStringLiteral("org.example.coded")));
-        QVERIFY(!registry->hasRenderers(&owner));
+        QCOMPARE(registry->theme(QStringLiteral("org.example.coded")).id, QStringLiteral("modern"));
+        QVERIFY(!registry->hasCustomRenderers(&owner));
+        // A selected/copied theme keeps its renderer alive through removal.
+        QCOMPARE(coded.renderer().get(), plugin.renderer.get());
     }
 };
 QTEST_MAIN(NativeChatThemeTest)

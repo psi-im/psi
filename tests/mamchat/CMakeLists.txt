@@ -74,9 +74,17 @@ add_test(NAME mam_archive_peer_policy COMMAND mam_archive_peer_policy_test)
 # MessageView test double so no PsiAccount or application singleton is needed.
 # PsiTextView, PsiRichText and qite are real, including media parsers/players.
 # Test doubles supply deterministic icon assets and the account/storage boundary.
+set(NATIVE_CHAT_THEME_SOURCES
+    ${PSI_WIDGETS}/NativeChatThemeRegistry.cpp ${PSI_WIDGETS}/NativeChatThemeRegistry.h
+    ${PSI_WIDGETS}/nativechat/DescriptionRenderer.cpp
+    ${PSI_WIDGETS}/nativechat/themes/BuiltinThemes.cpp ${PSI_WIDGETS}/nativechat/themes/BuiltinThemes.h
+    ${PSI_WIDGETS}/nativechat/themes/Modern.cpp
+    ${PSI_WIDGETS}/nativechat/themes/Classic.cpp
+    ${PSI_WIDGETS}/nativechat/themes/Bubble.cpp
+    ${PSI_WIDGETS}/nativechat/themes/ThemeLayoutHelpers.h)
 add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
-    ${PSI_WIDGETS}/NativeChatRenderers.cpp ${PSI_WIDGETS}/NativeChatRenderers.h
+    ${NATIVE_CHAT_THEME_SOURCES}
     ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
     ${PSI_WIDGETS}/ChatMessageBody.cpp ${PSI_WIDGETS}/ChatMessageBody.h
@@ -112,9 +120,7 @@ target_link_libraries(mam_image_viewer_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_image_viewer COMMAND mam_image_viewer_test)
 
-add_executable(mam_native_theme_test NativeChatThemeTest.cpp
-    ${PSI_WIDGETS}/NativeChatThemeRegistry.cpp ${PSI_WIDGETS}/NativeChatThemeRegistry.h
-    ${PSI_WIDGETS}/NativeChatRenderers.cpp ${PSI_WIDGETS}/NativeChatRenderers.h)
+add_executable(mam_native_theme_test NativeChatThemeTest.cpp ${NATIVE_CHAT_THEME_SOURCES})
 target_include_directories(mam_native_theme_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_native_theme_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)

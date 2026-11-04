@@ -1,48 +1,35 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "NativeChatThemeRegistry.h"
-#include "NativeChatRenderers.h"
+#include "nativechat/themes/BuiltinThemes.h"
 #include <QApplication>
 #include <QSet>
 
 NativeChatThemes::NativeChatThemes(QObject *parent) : QObject(parent) { }
 NativeChatThemes *NativeChatThemes::instance()
 {
-    static auto *registry = new NativeChatThemes(qApp);
+    static auto *registry = [] {
+        auto *value = new NativeChatThemes(qApp);
+        NativeChatBuiltins::registerThemes(value);
+        return value;
+    }();
     return registry;
 }
 QList<NativeChatTheme> NativeChatThemes::themes() const
 {
-    // Bubble is laid out by NativeChatRenderers::bubble(); the description is
-    // what plugins and settings see. Its bubbles already set each message
-    // apart, so it does not tint the message under the pointer.
-    NativeChatTheme bubble { QStringLiteral("bubble"), tr("Bubble"), NativeChatTheme::Modern, 40, 6, {}, {}, true, {}, {} };
-    bubble.hoverHighlight = false;
-    QList<NativeChatTheme> result { { QStringLiteral("modern"), tr("Modern"), NativeChatTheme::Modern, 40, 10, {}, {}, true, {}, {} },
-                                    { QStringLiteral("classic"), tr("Classic"), NativeChatTheme::Classic, 0, 4, {}, {}, true, {}, {} },
-                                    bubble };
-    for (const auto &plugin : plugins_)
-        result.append(plugin.themes);
+    QList<NativeChatTheme> result;
+    for (const auto &entry : registrations_)
+        result.append(entry.themes);
     return result;
 }
 NativeChatTheme NativeChatThemes::theme(const QString &id) const
 {
-    const auto all = themes();
-    for (const auto &theme : all)
-        if (theme.id == id)
-            return theme;
-    return all.first();
+    for (const auto &entry : registrations_)
+        for (const auto &theme : entry.themes)
+            if (theme.id == id)
+                return theme;
+    return registrations_.first().themes.first();
 }
-const NativeChatMessageRenderer *NativeChatThemes::renderer(const QString &id) const
-{
-    if (id == QLatin1String("bubble"))
-        return NativeChatRenderers::bubble();
-    for (const auto &plugin : plugins_)
-        if (auto *renderer = plugin.renderers.value(id, nullptr))
-            return renderer;
-    return nullptr;
-}
-void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes,
-                           const NativeChatRendererProvider *renderers)
+void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes)
 {
     if (!owner)
         return;
@@ -50,38 +37,46 @@ void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes,
     QSet<QString> ids;
     for (const auto &theme : this->themes())
         ids.insert(theme.id);
-    PluginThemes accepted;
+    Registration accepted;
+    accepted.owner = owner;
     for (auto theme : themes) {
         if (theme.id.isEmpty() || theme.name.isEmpty() || ids.contains(theme.id))
             continue;
         ids.insert(theme.id);
-        // QStringLiteral data may live in the plugin's shared library.
+        // Detach plugin QString storage before a plugin may be disabled.
         theme.id.detach();
         theme.name.detach();
+        theme.description.detach();
         theme.styleSheet.detach();
         theme.layoutSpec.detach();
         theme.backgroundImage.detach();
         theme.avatarSize = qBound(0, theme.avatarSize, 96);
-        theme.spacing    = qBound(0, theme.spacing, 32);
+        theme.spacing = qBound(0, theme.spacing, 32);
         accepted.themes.append(theme);
-        if (renderers)
-            if (auto *renderer = renderers->nativeChatRenderer(theme.id))
-                accepted.renderers.insert(theme.id, renderer);
     }
     if (accepted.themes.isEmpty())
         return;
-    plugins_.insert(owner, accepted);
+    registrations_.append(accepted);
     connect(owner, &QObject::destroyed, this, [this, owner] { remove(owner); });
     emit changed();
 }
 void NativeChatThemes::remove(QObject *owner)
 {
     disconnect(owner, nullptr, this, nullptr);
-    if (plugins_.remove(owner))
+    for (int i = 0; i < registrations_.size(); ++i) {
+        if (registrations_.at(i).owner != owner)
+            continue;
+        registrations_.removeAt(i);
         emit changed();
+        return;
+    }
 }
-bool NativeChatThemes::hasRenderers(QObject *owner) const
+bool NativeChatThemes::hasCustomRenderers(QObject *owner) const
 {
-    const auto it = plugins_.constFind(owner);
-    return it != plugins_.cend() && !it->renderers.isEmpty();
+    for (const auto &entry : registrations_)
+        if (entry.owner == owner)
+            for (const auto &theme : entry.themes)
+                if (theme.hasCustomRenderer())
+                    return true;
+    return false;
 }

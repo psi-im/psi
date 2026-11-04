@@ -78,7 +78,7 @@ public:
     void           setGroupChat(bool enabled) { groupChat_ = enabled; }
     // Without a renderer, the theme is laid out from its description alone.
     // A renderer must outlive the rows it builds (see nativechatrenderer.h).
-    void           setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer = nullptr);
+    void           setTheme(const NativeChatTheme &theme);
     void           setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
     void           setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
     void           refreshNicknameColors();
@@ -99,13 +99,19 @@ public:
     void selectMessageRange(int first, int last);
     void setMessageSelected(int index, bool selected);
     void copySelectedMessages();
+    // Copy selection from native message texts or code blocks when the composer
+    // owns keyboard focus but has no selection of its own.
+    bool copyCurrentTextSelection();
     void cancelMessageSelection();
+    // Place the unread boundary after the last currently displayed row.
+    void markUnreadBoundary();
     void toggleReaction(const QString &messageId, const QString &emoji);
 
 signals:
     void contactMenuRequested(const QString &nick, const QPoint &globalPosition);
     void replyRequested(const ChatReply &reply);
     void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
+    void editMessageRequested(const QString &messageId, const QString &text);
     void olderMessagesRequested();
     void archiveRangeRequested(const MamHistorySource::Request &request);
     void archiveRangeCancelled();
@@ -205,6 +211,7 @@ private:
     QHash<QString, QPair<bool, QString>>          security_; // message id -> (encrypted, protocol)
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
+    QString                                       unreadBoundaryKey_;
     QString                                       lastMarkedIncomingRowKey_;
     QDateTime                                     lastMarkedIncomingTime_;
     qint64                                        lastMarkedIncomingHistoryId_ = 0;
@@ -237,7 +244,7 @@ private:
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;
     const NativeChatMessageRenderer              *renderer_ = nullptr;
-    std::unique_ptr<NativeChatMessageRenderer>    ownedRenderer_;
+    std::shared_ptr<const NativeChatMessageRenderer> ownedRenderer_;
     // Rows remember the generation that built them; only those of the current
     // renderer are passed back to it.
     quint64                                       rendererGeneration_ = 0;
