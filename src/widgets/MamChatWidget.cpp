@@ -800,7 +800,7 @@ public:
     void paintEvent(QPaintEvent *event) override
     {
         QFrame::paintEvent(event);
-        if (!unreadBoundary)
+        if (!unreadBoundary || unreadBoundaryHandled)
             return;
         QPainter painter(this);
         QPen pen(palette().color(QPalette::Highlight), 1);
@@ -809,6 +809,7 @@ public:
         painter.drawLine(0, height() - 1, width(), height() - 1);
     }
     bool unreadBoundary = false;
+    bool unreadBoundaryHandled = false;
 
     // What the renderer was told and asked for when this row was built.
     NativeChatMessageInfo info;
@@ -888,6 +889,7 @@ public:
             taken_.insert(part);
         return widget;
     }
+    bool wasTaken(Part part) const { return taken_.contains(part); }
     void setActionAnchor(QWidget *anchor) override { row_->actionAnchor = anchor; }
     void setBodyTextColor(const QColor &color) override { row_->bodyTextColor = color; }
     // Parts left out of the renderer's layout stay hidden children of the
@@ -2051,6 +2053,16 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
     canvas.add(NativeChatMessageCanvas::Selection, selection);
+    if (row->unreadBoundary) {
+        auto *separator = new QFrame(row);
+        separator->setObjectName(QStringLiteral("mamUnreadSeparator"));
+        separator->setFrameShape(QFrame::HLine);
+        separator->setFrameShadow(QFrame::Plain);
+        separator->setMinimumHeight(4);
+        separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        separator->setForegroundRole(QPalette::Highlight);
+        canvas.add(NativeChatMessageCanvas::UnreadSeparator, separator);
+    }
     connect(selection, &QCheckBox::toggled, this, [this, row](bool checked) {
         // A prepend shifts indices, and a MAM overlap can adopt a new key.
         // Resolve the row's current identity at the time of the click.
@@ -2625,6 +2637,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Psi styles its parts first, so that a renderer may refine them.
     applyPartStyle(row, index);
     renderer_->arrange(canvas, row->info);
+    row->unreadBoundaryHandled = canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
+    row->setProperty("_psiMamUnreadBoundaryFallback", row->unreadBoundary && !row->unreadBoundaryHandled);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     updateTextSearchHighlight(index, row);
@@ -3152,21 +3166,18 @@ void MamChatWidget::cancelMessageSelection()
 
 void MamChatWidget::markUnreadBoundary()
 {
-    if (auto *previous = rowWidget(indexOfKey(unreadBoundaryKey_))) {
-        if (auto *row = messageRow(previous)) {
-            row->unreadBoundary = false;
-            row->setProperty("_psiMamUnreadBoundary", false);
-            row->update();
-        }
-    }
-    unreadBoundaryKey_ = items_.isEmpty() ? QString() : items_.last().key;
-    if (auto *current = rowWidget(indexOfKey(unreadBoundaryKey_))) {
-        if (auto *row = messageRow(current)) {
-            row->unreadBoundary = true;
-            row->setProperty("_psiMamUnreadBoundary", true);
-            row->update();
-        }
-    }
+    const QString next = items_.isEmpty() ? QString() : items_.last().key;
+    if (next == unreadBoundaryKey_)
+        return;
+    const int previousIndex = indexOfKey(unreadBoundaryKey_);
+    unreadBoundaryKey_ = next;
+    // A renderer may put the separator into its layout, not just paint it.
+    // Rebuild affected materialized rows so the part appears or disappears.
+    if (previousIndex >= 0 && rowWidget(previousIndex))
+        replaceRow(previousIndex);
+    const int nextIndex = indexOfKey(unreadBoundaryKey_);
+    if (nextIndex >= 0 && rowWidget(nextIndex))
+        replaceRow(nextIndex);
 }
 
 bool MamChatWidget::copyCurrentTextSelection()

@@ -29,7 +29,8 @@ const QHash<QString, Canvas::Part> &slotParts()
     static const QHash<QString, Canvas::Part> parts { { QStringLiteral("author"), Canvas::Author },
                                                       { QStringLiteral("timestamp"), Canvas::Timestamp },
                                                       { QStringLiteral("avatar"), Canvas::Avatar },
-                                                      { QStringLiteral("body"), Canvas::Body } };
+                                                      { QStringLiteral("body"), Canvas::Body },
+                                                      { QStringLiteral("unreadSeparator"), Canvas::UnreadSeparator } };
     return parts;
 }
 
