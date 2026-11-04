@@ -6224,8 +6224,9 @@ private slots:
         QVERIFY(!chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
 
         chat.markUnreadBoundary();
-        QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
-        QVERIFY(chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
+        // LongListWidget may rebuild materialized rows on its next layout pass.
+        QTRY_VERIFY(chat.itemWidget(1) && !chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
         chat.clearMessages();
         chat.appendMessage(message(QStringLiteral("fresh"), QStringLiteral("New conversation"), 4));
         QTRY_VERIFY(chat.itemWidget(0));
@@ -6233,7 +6234,7 @@ private slots:
     }
 
 
-    void unreadSeparatorCanBeArrangedByThemeWithoutFallbackPainting()
+    void unreadSeparatorUsesOneFrameForFallbackAndThemePlacement()
     {
         MamChatWidget chat;
         chat.resize(450, 240);
@@ -6244,8 +6245,7 @@ private slots:
         chat.markUnreadBoundary();
 
         // Unmodified themes arrange the same QFrame beneath their content.
-        QTRY_VERIFY(chat.itemWidget(0));
-        QVERIFY(chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
         auto *fallback = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
         QVERIFY(fallback);
         QTRY_VERIFY(!fallback->isHidden());
