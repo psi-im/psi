@@ -9,6 +9,7 @@
 #include <QPainterPath>
 #include <QTransform>
 #include <QtMath>
+#include <memory>
 namespace {
 using Canvas = NativeChatMessageCanvas;
 using NativeChatThemeLayout::messageHeader;
@@ -273,12 +274,9 @@ NativeChatTheme bubble()
     theme.name = QCoreApplication::translate("NativeChatThemes", "Bubble");
     theme.spacing = 6;
     theme.hoverHighlight = false;
+    theme.description = QCoreApplication::translate("NativeChatThemes", "Speech bubbles, your messages on the right");
+    theme.setRenderer(std::make_shared<BubbleRenderer>());
     return theme;
-}
-const NativeChatMessageRenderer *bubbleRenderer()
-{
-    static const BubbleRenderer renderer;
-    return &renderer;
 }
 }
 #include "Bubble.moc"

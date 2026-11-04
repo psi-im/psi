@@ -23,21 +23,13 @@ QList<NativeChatTheme> NativeChatThemes::themes() const
 }
 NativeChatTheme NativeChatThemes::theme(const QString &id) const
 {
-    const auto all = themes();
-    for (const auto &theme : all)
-        if (theme.id == id)
-            return theme;
-    return all.first();
-}
-const NativeChatMessageRenderer *NativeChatThemes::renderer(const QString &id) const
-{
     for (const auto &entry : registrations_)
-        if (auto *renderer = entry.renderers.value(id, nullptr))
-            return renderer;
-    return nullptr;
+        for (const auto &theme : entry.themes)
+            if (theme.id == id)
+                return theme;
+    return registrations_.first().themes.first();
 }
-void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes,
-                           const NativeChatRendererProvider *renderers)
+void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes)
 {
     if (!owner)
         return;
@@ -45,24 +37,22 @@ void NativeChatThemes::add(QObject *owner, const QList<NativeChatTheme> &themes,
     QSet<QString> ids;
     for (const auto &theme : this->themes())
         ids.insert(theme.id);
-    RegisteredThemes accepted;
+    Registration accepted;
     accepted.owner = owner;
     for (auto theme : themes) {
         if (theme.id.isEmpty() || theme.name.isEmpty() || ids.contains(theme.id))
             continue;
         ids.insert(theme.id);
-        // QStringLiteral data may live in a plugin's shared library.
+        // Detach plugin QString storage before a plugin may be disabled.
         theme.id.detach();
         theme.name.detach();
+        theme.description.detach();
         theme.styleSheet.detach();
         theme.layoutSpec.detach();
         theme.backgroundImage.detach();
         theme.avatarSize = qBound(0, theme.avatarSize, 96);
-        theme.spacing    = qBound(0, theme.spacing, 32);
+        theme.spacing = qBound(0, theme.spacing, 32);
         accepted.themes.append(theme);
-        if (renderers)
-            if (auto *renderer = renderers->nativeChatRenderer(theme.id))
-                accepted.renderers.insert(theme.id, renderer);
     }
     if (accepted.themes.isEmpty())
         return;
@@ -81,10 +71,12 @@ void NativeChatThemes::remove(QObject *owner)
         return;
     }
 }
-bool NativeChatThemes::hasRenderers(QObject *owner) const
+bool NativeChatThemes::hasCustomRenderers(QObject *owner) const
 {
     for (const auto &entry : registrations_)
         if (entry.owner == owner)
-            return !entry.renderers.isEmpty();
+            for (const auto &theme : entry.themes)
+                if (theme.hasCustomRenderer())
+                    return true;
     return false;
 }

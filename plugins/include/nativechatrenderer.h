@@ -129,19 +129,6 @@ public:
     }
 };
 
-// Implemented by a plugin's root object next to NativeChatThemeProvider.
-//
-// Psi asks for a renderer for each theme the plugin declared. The renderer
-// and the code of the widgets it creates must stay valid until the plugin
-// object is destroyed: while such a plugin is disabled at runtime its themes
-// are removed and existing rows are rebuilt with a built-in theme, but its
-// library stays loaded until Psi exits, so rows built earlier can die safely.
-class NativeChatRendererProvider {
-public:
-    virtual ~NativeChatRendererProvider() = default;
-    // nullptr: Psi lays the theme out from its NativeChatTheme description.
-    virtual const NativeChatMessageRenderer *nativeChatRenderer(const QString &themeId) const = 0;
-};
-Q_DECLARE_INTERFACE(NativeChatRendererProvider, "org.psi-im.NativeChatRendererProvider/1.1")
-
+// A theme supplies an optional renderer using NativeChatTheme::setRenderer().
+// Themes without a C++ renderer are interpreted from layoutSpec.
 #endif

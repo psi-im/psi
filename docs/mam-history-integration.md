@@ -671,26 +671,21 @@ Future timestamps also use `HH:mm`. Hovering the time always shows a full local
 date and time with seconds and the time zone. Timestamp refresh touches only
 materialized labels, without rebuilding the list or its logical identities.
 
-Plugins can implement `NativeChatThemeProvider` from
-`plugins/include/nativechatthemeprovider.h` and declare it in `Q_INTERFACES`.
-After a successful enable, Psi copies each theme description (unique ID, name,
-Modern/Classic base layout, avatar size, spacing, row stylesheet, optional
-nested JSON `layoutSpec`) into the native
-theme registry. A layout tree has `direction` (`horizontal`/`vertical`)
-and `items` (nested groups or any ordering of `author`, `timestamp`,
-`avatar`, `body`). Each leaf is unique and `body` is required; invalid
-definitions fall back to the native Modern/Classic layout. IDs `modern`,
-`classic` and `bubble` are reserved; duplicate IDs are ignored. Stylesheets may
-target `mamMessageRow`, `mamAvatar`, `mamAuthor`, `mamTimestamp` and `mamBody`.
-Use palette colours to support light/dark desktops. String data is explicitly
-detached from plugin static storage. Disable/unload removes the plugin's
-themes, refreshes open settings and views, and falls back to Modern if the
-selected theme disappeared. The saved ID is retained for the next enable.
+Plugins implement `NativeChatThemeProvider` from
+`plugins/include/nativechatthemeprovider.h`. A `NativeChatTheme` includes
+its ID, name, description, style and background options, optional JSON
+`layoutSpec` and optional C++ renderer. With no custom renderer the common
+interpreter handles the JSON slot tree (or its neutral default arrangement).
+Each theme's `renderer()` method supplies the message renderer, independently
+of whether the theme is built-in or plugin-provided. All three built-ins
+(Modern, Classic and Bubble) have dedicated C++ renderers in
+`src/widgets/nativechat/themes/`. Registration is centralized in
+`BuiltinThemes.cpp`; the registry does not branch on built-in theme IDs.
+Duplicate IDs are ignored. Disabling a theme plugin removes its entries from
+the registry, updates settings and open chats, and selects Modern if the saved
+theme ID is no longer present. C++-renderer plugins remain loaded through
+application exit because their widgets may be destroyed later.
 
-For full control over the appearance of each message, a plugin can also
-implement `NativeChatRendererProvider` and arrange Psi-built message parts with
-its own widgets; see [native-chat-renderers.md](native-chat-renderers.md). The
-built-in Modern, Classic and Bubble themes are renderers on the same API.
 
 Conference MAM requests start after joining and address the room's bare JID,
 without a `with` filter, as required by [XEP-0313](https://xmpp.org/extensions/xep-0313.html).

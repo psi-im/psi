@@ -1,45 +1,23 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "BuiltinThemes.h"
 #include "../../NativeChatThemeRegistry.h"
-#include <QHash>
 
-// The single registration list for built-in native chat themes.
-// All built-in and plugin themes enter the registry through the same API.
+// Built-ins and external plugins register through NativeChatThemeProvider.
 namespace NativeChatBuiltins {
 namespace {
-struct Entry {
-    NativeChatTheme theme;
-    const NativeChatMessageRenderer *renderer;
-};
-
-class Provider final : public QObject, public NativeChatThemeProvider, public NativeChatRendererProvider {
+class Provider final : public QObject, public NativeChatThemeProvider {
 public:
-    explicit Provider(QObject *parent) : QObject(parent)
+    explicit Provider(QObject *parent) : QObject(parent) { }
+    QList<NativeChatTheme> nativeChatThemes() const override
     {
-        const QList<Entry> entries {
-            { modern(), nullptr },
-            { classic(), nullptr },
-            { bubble(), bubbleRenderer() },
-        };
-        for (const auto &entry : entries) {
-            themes_.append(entry.theme);
-            if (entry.renderer)
-                renderers_.insert(entry.theme.id, entry.renderer);
-        }
+        // Add a new built-in theme here; no changes to the registry or chat widget.
+        return { modern(), classic(), bubble() };
     }
-    QList<NativeChatTheme> nativeChatThemes() const override { return themes_; }
-    const NativeChatMessageRenderer *nativeChatRenderer(const QString &themeId) const override
-    {
-        return renderers_.value(themeId, nullptr);
-    }
-private:
-    QList<NativeChatTheme> themes_;
-    QHash<QString, const NativeChatMessageRenderer *> renderers_;
 };
 }
 void registerThemes(NativeChatThemes *registry)
 {
     auto *provider = new Provider(registry);
-    registry->add(provider, provider->nativeChatThemes(), provider);
+    registry->add(provider, provider->nativeChatThemes());
 }
 }

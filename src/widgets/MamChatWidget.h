@@ -78,7 +78,7 @@ public:
     void           setGroupChat(bool enabled) { groupChat_ = enabled; }
     // Without a renderer, the theme is laid out from its description alone.
     // A renderer must outlive the rows it builds (see nativechatrenderer.h).
-    void           setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer = nullptr);
+    void           setTheme(const NativeChatTheme &theme);
     void           setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
     void           setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
     void           refreshNicknameColors();
@@ -244,7 +244,7 @@ private:
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;
     const NativeChatMessageRenderer              *renderer_ = nullptr;
-    std::unique_ptr<NativeChatMessageRenderer>    ownedRenderer_;
+    std::shared_ptr<const NativeChatMessageRenderer> ownedRenderer_;
     // Rows remember the generation that built them; only those of the current
     // renderer are passed back to it.
     quint64                                       rendererGeneration_ = 0;

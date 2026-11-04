@@ -76,7 +76,7 @@ add_test(NAME mam_archive_peer_policy COMMAND mam_archive_peer_policy_test)
 # Test doubles supply deterministic icon assets and the account/storage boundary.
 set(NATIVE_CHAT_THEME_SOURCES
     ${PSI_WIDGETS}/NativeChatThemeRegistry.cpp ${PSI_WIDGETS}/NativeChatThemeRegistry.h
-    ${PSI_WIDGETS}/NativeChatRenderers.cpp ${PSI_WIDGETS}/NativeChatRenderers.h
+    ${PSI_WIDGETS}/nativechat/DescriptionRenderer.cpp
     ${PSI_WIDGETS}/nativechat/themes/BuiltinThemes.cpp ${PSI_WIDGETS}/nativechat/themes/BuiltinThemes.h
     ${PSI_WIDGETS}/nativechat/themes/Modern.cpp
     ${PSI_WIDGETS}/nativechat/themes/Classic.cpp

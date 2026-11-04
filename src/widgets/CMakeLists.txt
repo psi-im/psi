@@ -9,7 +9,7 @@ set(SOURCES
     OverlayScrollBarManager.cpp
     ThinSplitter.cpp
     NativeChatThemeRegistry.cpp
-    NativeChatRenderers.cpp
+    nativechat/DescriptionRenderer.cpp
     nativechat/themes/BuiltinThemes.cpp
     nativechat/themes/Modern.cpp
     nativechat/themes/Classic.cpp
@@ -53,7 +53,6 @@ set(HEADERS
     OverlayScrollBarManager.h
     ThinSplitter.h
     NativeChatThemeRegistry.h
-    NativeChatRenderers.h
     nativechat/themes/BuiltinThemes.h
     nativechat/themes/ThemeLayoutHelpers.h
     ChatMessageBody.h

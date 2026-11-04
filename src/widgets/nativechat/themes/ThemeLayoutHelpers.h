@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
-#include "../../NativeChatRenderers.h"
+#include "../../../../plugins/include/nativechatrenderer.h"
 #include <QHBoxLayout>
 #include <QSizePolicy>
 #include <QVBoxLayout>

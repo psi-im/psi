@@ -90,7 +90,7 @@ public:
   wraps the renderer's existing row layout and places that same frame
   beneath the message content. There is no separately painted fallback
   rule. This extends the existing `Part` enum, not the renderer's vtable,
-  so previously compiled renderers still work.
+  without changing the renderer's vtable.
   `setActionAnchor()` attaches the hover actions toolbar to a widget other
   than the row, and `setBodyTextColor()` overrides the text colour of the body,
   e.g. on a dark bubble.
@@ -109,46 +109,40 @@ renderer's widgets.
 
 ## Plugins
 
-A plugin declares its themes with `NativeChatThemeProvider` and offers
-renderers for them with `NativeChatRendererProvider`; both go into
-`Q_INTERFACES`. Themes without a renderer are laid out from their description
-(base layout, avatar size, spacing, style sheet, optional JSON `layoutSpec`).
+A plugin implements `NativeChatThemeProvider` and returns complete
+`NativeChatTheme` objects. Each theme optionally owns a
+`NativeChatMessageRenderer` through `setRenderer()`; there is no separate
+renderer-provider interface or registry lookup. The caller uses
+`theme.renderer()`, which returns the supplied renderer or creates a generic
+description/JSON renderer.
 
 ```cpp
-class MyPlugin : public QObject, public PsiPlugin, public NativeChatThemeProvider,
-                 public NativeChatRendererProvider {
+class MyPlugin : public QObject, public PsiPlugin, public NativeChatThemeProvider {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "com.psi-plus.MyPlugin" FILE "psiplugin.json")
-    Q_INTERFACES(PsiPlugin NativeChatThemeProvider NativeChatRendererProvider)
+    Q_INTERFACES(PsiPlugin NativeChatThemeProvider)
 public:
     QList<NativeChatTheme> nativeChatThemes() const override
     {
-        return { { QStringLiteral("org.example.cards"), tr("Cards"), NativeChatTheme::Modern, 32, 8, {}, {} } };
+        NativeChatTheme cards(QStringLiteral("org.example.cards"), tr("Cards"), 32, 8);
+        cards.setRenderer(std::make_shared<MyRenderer>());
+        return { cards };
     }
-    const NativeChatMessageRenderer *nativeChatRenderer(const QString &id) const override
-    {
-        return id == QLatin1String("org.example.cards") ? &renderer_ : nullptr;
-    }
-
-private:
-    MyRenderer renderer_;
 };
 ```
 
-The renderer interface is `org.psi-im.NativeChatRendererProvider/1.1`;
-plugins built against 1.0, before the header options existed, must be
-rebuilt.
+The theme provider IID is `org.psi-im.NativeChatThemeProvider/2.0`. No
+pre-existing third-party native-theme plugins require compatibility with the
+earlier provisional interface.
 
 ### Lifetime
 
-Rows built by a renderer contain the plugin's code: its widget classes, and any
-lambdas it connected. When such a plugin is disabled, Psi removes its themes,
-rebuilds the open chat logs with a built-in theme and stops calling the
-renderer, but the old rows are destroyed asynchronously. A plugin that
-registered a renderer is therefore never unloaded from memory at runtime: it
-is disabled, and its library stays loaded until Psi exits. The renderer object
-must stay valid until the plugin object is destroyed, not only until
-`disable()`.
+A `NativeChatTheme` copy retains a shared handle to its renderer. Rows built
+by that renderer may also contain plugin widget classes and lambdas. When a
+plugin is disabled, Psi removes its registered themes and rebuilds the visible
+rows with the fallback theme. Deferred widget deletion can outlive disabling,
+so any plugin contributing a C++ renderer remains loaded until Psi exits;
+description-only plugins do not have that restriction.
 
 ## Built-in themes
 
@@ -172,11 +166,12 @@ must stay valid until the plugin object is destroyed, not only until
 
 Built-in themes live in `src/widgets/nativechat/themes/`: each theme has
 its own source file, and `BuiltinThemes.cpp` is the single registration list.
-Built-ins implement the same `NativeChatThemeProvider` and
-`NativeChatRendererProvider` interfaces as plugins and are registered through
-`NativeChatThemes::add()`. Modern and Classic use the generic
-`NativeChatRenderers::forDescription()` adapter; Bubble has a C++ renderer in
-`Bubble.cpp`. The registry does not special-case any theme ID.
+Built-ins use the same `NativeChatThemeProvider` interface as plugins and
+register through `NativeChatThemes::add()`. Each of Modern, Classic and Bubble
+owns its own C++ renderer in its respective source file; the
+`nativechat/DescriptionRenderer.cpp` interpreter handles only themes without
+a C++ renderer, using `layoutSpec` or a neutral default layout. The registry
+does not know or special-case any theme ID.
 
 ## Style sheets
 

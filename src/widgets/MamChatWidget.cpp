@@ -4,7 +4,6 @@
 #include "ChatMessageText.h"
 #include "ChatMessageBody.h"
 #include "MessagePreview.h"
-#include "NativeChatRenderers.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "textutil.h"
@@ -281,8 +280,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     setFrameShape(QFrame::NoFrame);
     qRegisterMetaType<ChatReply>();
     qRegisterMetaType<MamHistorySource::Request>();
-    theme_.layout  = NativeChatTheme::Modern;
-    ownedRenderer_ = NativeChatRenderers::forDescription(theme_);
+    ownedRenderer_ = theme_.renderer();
     renderer_      = ownedRenderer_.get();
     // Coalesced single-shot timer: no updates while a chat is hidden and
     // no per-second activity. Only the next visible relative-time boundary
@@ -2897,19 +2895,14 @@ void MamChatWidget::refreshPalette()
         }
 }
 
-void MamChatWidget::setTheme(const NativeChatTheme &theme, const NativeChatMessageRenderer *renderer)
+void MamChatWidget::setTheme(const NativeChatTheme &theme)
 {
     measuredMessageHeights_.clear();
     theme_ = theme;
-    // Rows built earlier keep their parts and options until they are replaced
-    // below; nothing calls back into the previous renderer.
-    if (renderer) {
-        ownedRenderer_.reset();
-        renderer_ = renderer;
-    } else {
-        ownedRenderer_ = NativeChatRenderers::forDescription(theme);
-        renderer_      = ownedRenderer_.get();
-    }
+    // Each theme owns its renderer. Description-only themes create the
+    // standard JSON renderer here, without special cases in the widget.
+    ownedRenderer_ = theme_.renderer();
+    renderer_ = ownedRenderer_.get();
     ++rendererGeneration_;
     applyLogLook();
     for (int index : materializedRows())

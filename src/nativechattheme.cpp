@@ -19,12 +19,7 @@ public:
     {
         id          = theme.id;
         name        = theme.name;
-        if (theme.id == QLatin1String("bubble"))
-            description = QObject::tr("Speech bubbles, your messages on the right");
-        else if (theme.layout == NativeChatTheme::Classic)
-            description = QObject::tr("Compact text layout");
-        else
-            description = QObject::tr("Avatars and message headers");
+        description = theme.description.isEmpty() ? QObject::tr("Native message layout") : theme.description;
     }
     bool exists() override { return true; }
     bool load(const QString &) override
@@ -102,7 +97,7 @@ void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupCha
     auto apply = [view, option] {
         const auto *themes = NativeChatThemes::instance();
         const auto  theme  = themes->theme(PsiOptions::instance()->getOption(option).toString());
-        view->setTheme(theme, themes->renderer(theme.id));
+        view->setTheme(theme);
     };
     apply();
     auto applyFont = [view] {

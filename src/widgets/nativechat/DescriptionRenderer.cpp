@@ -1,32 +1,23 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "NativeChatRenderers.h"
-#include "nativechat/themes/ThemeLayoutHelpers.h"
+#include "../../../plugins/include/nativechatthemeprovider.h"
+#include "../../../plugins/include/nativechatrenderer.h"
+#include "themes/ThemeLayoutHelpers.h"
 
 #include <QBoxLayout>
-#include <QEvent>
-#include <QFontMetricsF>
 #include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include <QPaintEvent>
-#include <QPainter>
-#include <QPainterPath>
 #include <QSet>
-#include <QTransform>
 #include <QWidget>
-#include <QtMath>
 
 namespace {
-
 using Canvas = NativeChatMessageCanvas;
 using NativeChatThemeLayout::messageHeader;
 using NativeChatThemeLayout::rowLayout;
 
-// ---------------------------------------------------------------------------
-// Theme descriptions: Modern, Classic and JSON slot trees.
-
+// The interpreter only knows the public semantic slots, not theme identities.
 const QHash<QString, Canvas::Part> &slotParts()
 {
     static const QHash<QString, Canvas::Part> parts { { QStringLiteral("author"), Canvas::Author },
@@ -95,105 +86,72 @@ QBoxLayout *buildSlotLayout(const QJsonObject &node, const QHash<QString, QWidge
     return layout;
 }
 
+
 class DescriptionRenderer final : public NativeChatMessageRenderer {
 public:
-    explicit DescriptionRenderer(const NativeChatTheme &theme) :
-        theme_(theme), modern_(theme.layout == NativeChatTheme::Modern)
+    explicit DescriptionRenderer(const NativeChatTheme &theme) : theme_(theme)
     {
-        if (!theme.layoutSpec.isEmpty()) {
-            const auto    custom = QJsonDocument::fromJson(theme.layoutSpec.toUtf8());
-            QSet<QString> seen;
-            if (custom.isObject() && validateLayout(custom.object(), seen) && seen.contains(QStringLiteral("body"))) {
-                tree_  = custom.object();
-                slots_ = seen;
-            }
+        if (theme_.layoutSpec.isEmpty())
+            return;
+        const auto custom = QJsonDocument::fromJson(theme_.layoutSpec.toUtf8());
+        QSet<QString> seen;
+        if (custom.isObject() && validateLayout(custom.object(), seen)
+            && seen.contains(QStringLiteral("body"))) {
+            tree_ = custom.object();
+            slots_ = seen;
         }
-        // Classic without a tree of its own is the legacy text log: the time
-        // and nickname are in the message text, so wrapped lines start at the
-        // left edge instead of under the end of the nickname.
-        textLog_ = tree_.isEmpty() && !modern_;
     }
 
-    NativeChatPartOptions partOptions(const NativeChatMessageInfo &info) const override
+    NativeChatPartOptions partOptions(const NativeChatMessageInfo &) const override
     {
         NativeChatPartOptions options;
         options.directionColors = true;
-        // Modern's own arrangement always shows the avatar; a slot tree only
-        // if it names it.
-        const bool avatar  = !textLog_ && (tree_.isEmpty() || slots_.contains(QStringLiteral("avatar")));
-        options.avatarSize = avatar ? theme_.avatarSize : 0;
-        if (modern_) {
-            options.boldAuthor     = true;
-            options.timePointDelta = -1.0;
-            options.timeAlpha      = 188; // Legible but unobtrusive.
-        } else {
-            // The legacy text log: "[HH:mm:ss] <nick> text" at full size.
-            // Group chats painted the time in the same colour as the nickname.
-            options.timeFormat      = QStringLiteral("[HH:mm:ss]");
-            options.boldAuthor      = false;
-            options.timeInNickColor = info.groupChat;
-            if (textLog_) {
-                options.header       = NativeChatPartOptions::HeaderInText;
-                options.authorPrefix = QStringLiteral("<");
-                options.authorSuffix = QStringLiteral(">");
-            } else {
-                options.authorSuffix = QStringLiteral(":");
-            }
-        }
+        options.avatarSize = (tree_.isEmpty() || slots_.contains(QStringLiteral("avatar")))
+                                 ? theme_.avatarSize : 0;
+        options.boldAuthor = true;
+        options.timePointDelta = -1.0;
+        options.timeAlpha = 188;
         return options;
     }
 
     void arrange(Canvas &canvas, const NativeChatMessageInfo &info) const override
     {
-        const int   vertical = modern_ ? 8 : 2;
-        auto       *outer    = rowLayout(canvas, QMargins(12, vertical, 12, vertical), theme_.spacing);
-        if (textLog_) {
-            outer->addWidget(canvas.take(Canvas::Body), 1, Qt::AlignTop);
-            return;
-        }
-        auto       *content  = new QWidget(canvas.row());
+        auto *outer = rowLayout(canvas, QMargins(12, 8, 12, 8), theme_.spacing);
+        auto *content = new QWidget(canvas.row());
         content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        if (!tree_.isEmpty()) {
-            // Classic and plugin descriptions choose any nested row/column
-            // arrangement of the parts.
+        if (tree_.isEmpty()) {
+            // Standard fallback for a description without a valid slot tree.
+            // It is not an alias or a special case for any built-in theme.
+            if (auto *avatar = canvas.take(Canvas::Avatar))
+                outer->addWidget(avatar, 0, Qt::AlignTop);
             outer->addWidget(content, 1, Qt::AlignTop);
-            QHash<QString, QWidget *> elements;
-            for (const auto &slot : slots_)
-                if (auto *part = canvas.take(slotParts().value(slot)))
-                    elements.insert(slot, part);
-            content->setLayout(buildSlotLayout(tree_, elements, modern_ ? 10 : 4));
+            auto *column = new QVBoxLayout(content);
+            column->setContentsMargins(0, 0, 0, 0);
+            column->setSpacing(3);
+            if (info.kind == NativeChatMessageInfo::Message)
+                column->addWidget(messageHeader(canvas, content), 0, Qt::AlignTop);
+            column->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
             return;
         }
-        // Psi's original Modern geometry. Qt6 treats nested QBoxLayouts
-        // differently from Qt5 when the body has a custom height-for-width
-        // and the header is not a separate QWidget.
-        if (auto *avatar = canvas.take(Canvas::Avatar))
-            outer->addWidget(avatar, 0, Qt::AlignTop);
+
         outer->addWidget(content, 1, Qt::AlignTop);
-        auto *column = new QVBoxLayout(content);
-        column->setContentsMargins(0, 0, 0, 0);
-        column->setSpacing(3);
-        if (info.kind == NativeChatMessageInfo::Message)
-            column->addWidget(messageHeader(canvas, content), 0, Qt::AlignTop);
-        column->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
+        QHash<QString, QWidget *> elements;
+        for (const auto &slot : slots_)
+            if (auto *part = canvas.take(slotParts().value(slot)))
+                elements.insert(slot, part);
+        content->setLayout(buildSlotLayout(tree_, elements, theme_.spacing));
     }
 
 private:
     NativeChatTheme theme_;
-    bool            modern_;
-    QJsonObject     tree_;
-    QSet<QString>   slots_;
-    bool            textLog_ = false;
+    QJsonObject tree_;
+    QSet<QString> slots_;
 };
-
-
 }
 
-namespace NativeChatRenderers {
-
-std::unique_ptr<NativeChatMessageRenderer> forDescription(const NativeChatTheme &theme)
+std::shared_ptr<const NativeChatMessageRenderer> NativeChatTheme::renderer() const
 {
-    return std::make_unique<DescriptionRenderer>(theme);
-}
-
+    if (renderer_)
+        return renderer_;
+    return std::make_shared<DescriptionRenderer>(*this);
 }
