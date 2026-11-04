@@ -50,6 +50,7 @@
 #include "userlist.h"
 
 #include <QDateTime>
+#include <QKeyEvent>
 #include <QMessageBox>
 #include <QTimer>
 #include <Qt>

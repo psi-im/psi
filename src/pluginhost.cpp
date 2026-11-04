@@ -15,7 +15,6 @@
 #include "applicationinfoaccessor.h"
 #include "chatdlg.h"
 #include "chattabaccessor.h"
-#include "chatview.h"
 #include "contactinfoaccessor.h"
 #include "contactstateaccessor.h"
 #include "encryptionmethodaccessor.h"

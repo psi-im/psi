@@ -109,9 +109,7 @@ list(APPEND HEADERS
     chatreply.h
     chateditproxy.h
     chatsplitter.h
-    chatview.h
     chatviewcommon.h
-    chatview_te.h
     desktopcolorpalette.h
     coloropt.h
     common.h
@@ -379,7 +377,6 @@ list(APPEND SOURCES
     chateditproxy.cpp
     chatsplitter.cpp
     chatviewcommon.cpp
-    chatview_te.cpp
     coloropt.cpp
     common.cpp
     conferencebookmark.cpp

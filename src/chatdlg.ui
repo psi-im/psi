@@ -234,7 +234,7 @@
         </layout>
        </item>
        <item>
-        <widget class="ChatView" name="log">
+        <widget class="QFrame" name="log">
          <property name="frameShape">
           <enum>QFrame::Shape::NoFrame</enum>
          </property>
@@ -365,12 +365,6 @@
   </layout>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>ChatView</class>
-   <extends>QFrame</extends>
-   <header>chatview.h</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>ChatSplitter</class>
    <extends>QSplitter</extends>

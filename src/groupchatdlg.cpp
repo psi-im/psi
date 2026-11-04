@@ -1051,10 +1051,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 */
     ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
-#ifdef Q_OS_MACOS
-    // seems its useless hack
-    // connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
-#endif
 
     ui_.lv_users->setModel(d->usersModel);
     connect(ui_.lv_users, SIGNAL(contextMenuRequested(const QString &)), SLOT(doContactContextMenu(const QString &)));
@@ -1265,8 +1261,6 @@ GCMainDlg::~GCMainDlg()
         account()->groupChatLeave(jid().domain(), jid().node());
     }
 
-    // QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
-    // ui_.log->setMimeSourceFactory(0);
     // delete m;
 
     account()->dialogUnregister(this);
@@ -1772,7 +1766,6 @@ void GCMainDlg::doShowInfo()
 
 void GCMainDlg::doClear()
 {
-    ui_.log->clear();
     if (mamTask_) {
         mamTask_->safeDelete();
         mamTask_.clear();
@@ -2105,8 +2098,6 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
         auto contact = d->usersModel->findEntry(nick);
         if (contact == nullptr) {
             // contact joining
-            // ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty:
-            // ChatViewCommon::Participant);
 
             MessageView mv(MessageView::MUCJoin);
             if ((!d->connecting || options_->getOption("options.ui.muc.show-initial-joins").toBool())
