@@ -797,6 +797,19 @@ class ChatMessageRow : public QFrame {
 public:
     QSize sizeHint() const override { return QSize(0, qMax(1, heightForWidth(qMax(1, width())))); }
 
+    void paintEvent(QPaintEvent *event) override
+    {
+        QFrame::paintEvent(event);
+        if (!unreadBoundary)
+            return;
+        QPainter painter(this);
+        QPen pen(palette().color(QPalette::Highlight), 1);
+        pen.setCosmetic(true);
+        painter.setPen(pen);
+        painter.drawLine(0, height() - 1, width(), height() - 1);
+    }
+    bool unreadBoundary = false;
+
     // What the renderer was told and asked for when this row was built.
     NativeChatMessageInfo info;
     NativeChatPartOptions options;
@@ -1223,6 +1236,8 @@ void MamChatWidget::coalesceRevisionRows()
             selectionAnchorKey_ = survivingKey;
         if (pressedKey_ == removedKey)
             pressedKey_ = survivingKey;
+        if (unreadBoundaryKey_ == removedKey)
+            unreadBoundaryKey_ = survivingKey;
 
         // These indices are all before i; removing i never invalidates them.
         for (const QString &id : merged.stanzaIds)
@@ -1784,6 +1799,7 @@ void MamChatWidget::clearMessages()
     receipts_.clear();
     security_.clear();
     lastDisplayedRowKey_.clear();
+    unreadBoundaryKey_.clear();
     lastMarkedIncomingRowKey_.clear();
     lastMarkedIncomingTime_      = {};
     lastMarkedIncomingHistoryId_ = 0;
@@ -2014,6 +2030,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setFrameShape(QFrame::NoFrame);
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
+    row->unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -3130,6 +3147,57 @@ void MamChatWidget::cancelMessageSelection()
     selectionAnchorKey_.clear();
     finishDragSelection();
     refreshSelection();
+}
+
+void MamChatWidget::markUnreadBoundary()
+{
+    if (auto *previous = rowWidget(indexOfKey(unreadBoundaryKey_))) {
+        if (auto *row = messageRow(previous)) {
+            row->unreadBoundary = false;
+            row->update();
+        }
+    }
+    unreadBoundaryKey_ = items_.isEmpty() ? QString() : items_.last().key;
+    if (auto *current = rowWidget(indexOfKey(unreadBoundaryKey_))) {
+        if (auto *row = messageRow(current)) {
+            row->unreadBoundary = true;
+            row->update();
+        }
+    }
+}
+
+bool MamChatWidget::copyCurrentTextSelection()
+{
+    if (!selectedKeys_.isEmpty()) {
+        copySelectedMessages();
+        return true;
+    }
+    // Only resident widgets have text selections; the model itself handles
+    // whole-message selection even after a row has been evicted.
+    for (int i : materializedRows()) {
+        QWidget *row = rowWidget(i);
+        if (!row)
+            continue;
+        for (auto *text : row->findChildren<QTextEdit *>()) {
+            if (text->textCursor().hasSelection()) {
+                text->copy();
+                return true;
+            }
+        }
+        for (auto *code : row->findChildren<QPlainTextEdit *>()) {
+            if (code->textCursor().hasSelection()) {
+                code->copy();
+                return true;
+            }
+        }
+        for (auto *label : row->findChildren<QLabel *>()) {
+            if (label->hasSelectedText()) {
+                QApplication::clipboard()->setText(label->selectedText());
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void MamChatWidget::copySelectedMessages()

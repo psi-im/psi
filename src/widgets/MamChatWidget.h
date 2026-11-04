@@ -99,7 +99,12 @@ public:
     void selectMessageRange(int first, int last);
     void setMessageSelected(int index, bool selected);
     void copySelectedMessages();
+    // Copy selection from native message texts or code blocks when the composer
+    // owns keyboard focus but has no selection of its own.
+    bool copyCurrentTextSelection();
     void cancelMessageSelection();
+    // Place the unread boundary after the last currently displayed row.
+    void markUnreadBoundary();
     void toggleReaction(const QString &messageId, const QString &emoji);
 
 signals:
@@ -205,6 +210,7 @@ private:
     QHash<QString, QPair<bool, QString>>          security_; // message id -> (encrypted, protocol)
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
+    QString                                       unreadBoundaryKey_;
     QString                                       lastMarkedIncomingRowKey_;
     QDateTime                                     lastMarkedIncomingTime_;
     qint64                                        lastMarkedIncomingHistoryId_ = 0;
