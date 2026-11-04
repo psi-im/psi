@@ -70,11 +70,11 @@ messages in the Bubble theme: `#mamBubble[tone="own"] QLabel#mamTimestamp`.
 ### Unread boundary
 
 The native timeline stores the unread boundary independently of the
-materialized message widgets. By default it draws a one-pixel rule at the
-bottom of the boundary row. A renderer can take the optional
+materialized message widgets. It creates a single `QFrame#mamUnreadSeparator`
+for the boundary row. A renderer can take the optional
 `NativeChatMessageCanvas::UnreadSeparator` part and place it anywhere in
-its layout; doing so disables the fallback line. The built-in Bubble
-renderer lays it out below the bubble.
+its layout; otherwise Psi puts the same frame below the renderer's content.
+The built-in Bubble renderer lays it out below the bubble.
 
 A description-only theme may add `"unreadSeparator"` to its JSON
 `layoutSpec`, for example:
@@ -82,8 +82,8 @@ A description-only theme may add `"unreadSeparator"` to its JSON
 {"direction":"vertical","items":["body","unreadSeparator"]}
 ```
 The part is a `QFrame#mamUnreadSeparator` that can be customized with QSS.
-Existing themes that do not use the part retain their original fallback
-without any plugin ABI changes.
+Existing themes that do not use the part receive the frame below their
+message layout automatically, without any plugin ABI changes.
 
 ### Bubble properties
 
