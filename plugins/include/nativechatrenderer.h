@@ -79,7 +79,7 @@ public:
         Author,    // QLabel with the nickname. Messages with HeaderParts only.
         Timestamp, // The time with its delivery/encryption/edit marks. Messages with HeaderParts only.
         Body,      // Text with reply preview, file cards and reactions. Always present.
-        UnreadSeparator, // Optional boundary line; taking it replaces Psi's fallback.
+        UnreadSeparator, // Optional boundary frame; Psi places it below the row if not taken.
     };
 
     // The row widget. Psi owns it, paints its hover/selection surface and
@@ -89,8 +89,9 @@ public:
 
     // Hands over a part to be placed in the renderer's layout, or nullptr if
     // this message has no such part. Parts that are not taken are hidden.
-    // UnreadSeparator is available only on the boundary row. Taking it
-    // suppresses the default rule; themes may position and style it instead.
+    // UnreadSeparator is available only on the boundary row. Taking it lets
+    // the theme position and style the frame; otherwise Psi places it below
+    // the renderer's content as the default layout fallback.
     // The new enum value does not change the plugin interface vtable.
     virtual QWidget *take(Part part) = 0;
 
