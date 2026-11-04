@@ -62,9 +62,28 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `#mamBubble` | A speech bubble (Bubble theme) | `[tone="incoming"]`, `[tone="own"]`, `[tone="notice"]`; `[tailSide="left"]`, `"right"`, `"none"`. Painted by Psi, styled with the properties below. |
 | `#mamHeader`, `#mamHeaderGroup` | Container of nickname and time | Spacing via padding. |
 | `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. |
+| `QFrame#mamUnreadSeparator` | Unread boundary when the renderer places it | Style its border/colour/height in QSS; absent on other messages. |
 
 Combine selectors to style parts in one kind of message, for example our own
 messages in the Bubble theme: `#mamBubble[tone="own"] QLabel#mamTimestamp`.
+
+### Unread boundary
+
+The native timeline stores the unread boundary independently of the
+materialized message widgets. By default it draws a one-pixel rule at the
+bottom of the boundary row. A renderer can take the optional
+`NativeChatMessageCanvas::UnreadSeparator` part and place it anywhere in
+its layout; doing so disables the fallback line. The built-in Bubble
+renderer lays it out below the bubble.
+
+A description-only theme may add `"unreadSeparator"` to its JSON
+`layoutSpec`, for example:
+```json
+{"direction":"vertical","items":["body","unreadSeparator"]}
+```
+The part is a `QFrame#mamUnreadSeparator` that can be customized with QSS.
+Existing themes that do not use the part retain their original fallback
+without any plugin ABI changes.
 
 ### Bubble properties
 

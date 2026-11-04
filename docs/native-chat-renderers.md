@@ -19,6 +19,7 @@ code, see [native-chat-themes.md](native-chat-themes.md).
 | `Author`    | `QLabel` (`mamAuthor`)                    | messages                        |
 | `Timestamp` | time label (`mamTimestamp`) with delivery, encryption and edit marks | messages |
 | `Body`      | `mamBodyPart`: reply preview, text (`mamBody`), file cards, reactions | every row |
+| `UnreadSeparator` | `QFrame#mamUnreadSeparator`, a theme-placeable unread boundary rule | only on the row immediately before unread messages |
 
 Psi owns selection, hover highlighting and the hover actions toolbar, context
 menus, link and media handling, reply resolution, relative-time refresh,
@@ -82,6 +83,13 @@ public:
 - `arrange()` gives `canvas.row()` a layout and places the parts taken with
   `take()`. Parts that are not taken are hidden. Rows are measured with
   `heightForWidth()`, so use layouts (or widgets) that support it.
+- The optional `UnreadSeparator` is present only on the row marking the
+  unread boundary. If a renderer takes it, Psi suppresses its default
+  one-pixel bottom rule. The renderer can arrange the supplied
+  `QFrame#mamUnreadSeparator` (and style it via QSS), or hide that widget
+  and draw a completely custom indicator. Without `take()`, the old
+  bottom rule remains as a fallback. This extends the existing `Part` enum,
+  not the renderer's vtable, so previously compiled renderers still work.
   `setActionAnchor()` attaches the hover actions toolbar to a widget other
   than the row, and `setBodyTextColor()` overrides the text colour of the body,
   e.g. on a dark bubble.
@@ -149,7 +157,8 @@ must stay valid until the plugin object is destroyed, not only until
   (`HeaderInText`), with the legacy message icons before the time, the
   time painted in the nickname colour in group chats, and notices left
   aligned after an information icon.
-- **Bubble**: based on Modern. Each message is a speech bubble whose text area
+- **Bubble**: places its unread separator in a separate row beneath the bubble
+  rather than drawing a line over the message. Each message is a speech bubble whose text area
   is limited to about 60 average characters of the chat font (by default),
   whatever the width of the log, and which shrinks to short messages. Incoming messages sit
   on the left and our own on the right, each with the avatar on its outer side
