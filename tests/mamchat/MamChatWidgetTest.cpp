@@ -6267,10 +6267,11 @@ private slots:
         theme.id = QStringLiteral("test-unread-bubble");
         theme.layoutSpec.clear();
         chat.setTheme(theme, NativeChatRenderers::bubble());
-        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        QTRY_VERIFY(chat.itemWidget(0)
+                    && chat.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider")));
         auto *row = chat.itemWidget(0);
+        QVERIFY(!row->property("_psiMamUnreadBoundaryFallback").toBool());
         auto *container = row->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"));
-        QVERIFY(container);
         placed = container->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
         QVERIFY(placed && !placed->isHidden());
 
@@ -6278,6 +6279,7 @@ private slots:
         chat.appendMessage(message(QStringLiteral("after"), QStringLiteral("Second"), 2));
         chat.markUnreadBoundary();
         QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(0)
+                    && chat.itemWidget(1)->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"))
                     && !chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
         QVERIFY(!chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
         QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
