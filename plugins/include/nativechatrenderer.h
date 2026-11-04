@@ -23,7 +23,7 @@ class QWidget;
 // Rows are measured with heightForWidth(), so use layouts that support it.
 //
 // See docs/native-chat-renderers.md for a walkthrough and the built-in
-// renderers in src/widgets/NativeChatRenderers.cpp for complete examples.
+// theme providers/renderers in src/widgets/nativechat/themes/ for examples.
 
 // What is being rendered. Values only; valid for the duration of the call.
 struct NativeChatMessageInfo {

@@ -3,7 +3,7 @@
 #include "../../plugins/include/nativechatrenderer.h"
 #include "../../plugins/include/nativechatthemeprovider.h"
 #include <QHash>
-#include <QMap>
+#include <QList>
 #include <QObject>
 
 class NativeChatThemes : public QObject {
@@ -27,9 +27,11 @@ signals:
 
 private:
     explicit NativeChatThemes(QObject *parent);
-    struct PluginThemes {
+    struct RegisteredThemes {
+        QObject *owner = nullptr;
         QList<NativeChatTheme>                          themes;
         QHash<QString, const NativeChatMessageRenderer *> renderers;
     };
-    QMap<QObject *, PluginThemes> plugins_;
+    // Stable registration order: the first built-in theme is the default.
+    QList<RegisteredThemes> registrations_;
 };

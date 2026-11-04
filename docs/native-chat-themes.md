@@ -12,7 +12,8 @@ There are four levels, from the simplest to the most powerful:
    built from Modern or Classic with your own avatar size, spacing, style
    sheet and part arrangement. No widget code.
 4. **A theme plugin with a renderer.** Full control over the widgets around
-   the parts of a message, e.g. Psi's own Bubble theme. See
+   the parts of a message, e.g. Psi's own Bubble theme in
+   `src/widgets/nativechat/themes/Bubble.cpp`. See
    [native-chat-renderers.md](native-chat-renderers.md).
 
 ## 1. Options

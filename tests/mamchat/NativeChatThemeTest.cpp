@@ -26,6 +26,9 @@ private slots:
     {
         auto *registry = NativeChatThemes::instance();
         QCOMPARE(registry->themes().size(), 3);
+        QCOMPARE(registry->themes().at(0).id, QStringLiteral("modern"));
+        QCOMPARE(registry->themes().at(1).id, QStringLiteral("classic"));
+        QCOMPARE(registry->themes().at(2).id, QStringLiteral("bubble"));
         QCOMPARE(registry->theme(QStringLiteral("missing")).id, QStringLiteral("modern"));
         QObject         owner;
         QSignalSpy      changed(registry, &NativeChatThemes::changed);
@@ -72,7 +75,9 @@ private slots:
     {
         auto *registry = NativeChatThemes::instance();
         QCOMPARE(registry->theme(QStringLiteral("bubble")).id, QStringLiteral("bubble"));
-        QCOMPARE(registry->renderer(QStringLiteral("bubble")), NativeChatRenderers::bubble());
+        const auto *bubble = registry->renderer(QStringLiteral("bubble"));
+        QVERIFY(bubble);
+        QVERIFY(bubble->partOptions({}).avatarSize == 40);
         QVERIFY(!registry->renderer(QStringLiteral("modern")));
         QVERIFY(!registry->renderer(QStringLiteral("classic")));
         // Bubbles set messages apart without tinting the one under the pointer.

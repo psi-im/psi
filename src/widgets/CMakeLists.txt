@@ -10,6 +10,10 @@ set(SOURCES
     ThinSplitter.cpp
     NativeChatThemeRegistry.cpp
     NativeChatRenderers.cpp
+    nativechat/themes/BuiltinThemes.cpp
+    nativechat/themes/Modern.cpp
+    nativechat/themes/Classic.cpp
+    nativechat/themes/Bubble.cpp
     ChatMessageBody.cpp
     ChatMessageText.cpp
     CodeBlockWidget.cpp
@@ -50,6 +54,8 @@ set(HEADERS
     ThinSplitter.h
     NativeChatThemeRegistry.h
     NativeChatRenderers.h
+    nativechat/themes/BuiltinThemes.h
+    nativechat/themes/ThemeLayoutHelpers.h
     ChatMessageBody.h
     ChatMessageText.h
     CodeBlockWidget.h

@@ -7,6 +7,7 @@
 #include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
 #include "widgets/NativeChatRenderers.h"
+#include "widgets/NativeChatThemeRegistry.h"
 #include "widgets/psirichtext.h"
 #include <QContextMenuEvent>
 #include <QCursor>
@@ -620,7 +621,7 @@ private slots:
         chat.setHistoryLoading(true);
         chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"),
                         NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+                      NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         const QString longLine(1200, QLatin1Char('x'));
         auto styled = message(QStringLiteral("wide-code"), MessageStyling::toHtml(
             QString(3, QChar(0x60)) + QStringLiteral("cpp<br>")
@@ -1952,7 +1953,7 @@ private slots:
         chat.setMediaOpener(&opener);
         if (bubble)
             chat.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                          NativeChatRenderers::bubble());
+                          NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         auto reply = message(QStringLiteral("photo-reply"),
                              QStringLiteral("<share id=\"photo\" account=\"account-a\"/>"));
         reply.setReply({ idless ? QString() : QStringLiteral("missing-target"), {},
@@ -3619,7 +3620,7 @@ private slots:
         list.resize(1300, 700);
         list.setHistoryLoading(true);
         list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+                      NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         auto incoming = message(QStringLiteral("short-in"), QStringLiteral("Hi"));
         incoming.setReactionTargetId(QStringLiteral("short-in-origin"));
         list.appendMessage(incoming);
@@ -3728,7 +3729,7 @@ private slots:
         list->setHistoryLoading(true);
         list->setTheme({ QStringLiteral("test"), QStringLiteral("Test"), NativeChatTheme::Modern, 40, 6,
                          themeSheet ? sheet : QString() },
-                       bubble ? NativeChatRenderers::bubble() : nullptr);
+                       bubble ? NativeChatThemes::instance()->renderer(QStringLiteral("bubble")) : nullptr);
         list->setNicknameColorResolver([](const MessageView &) { return QColor(0x88, 0x44, 0x00); });
         list->appendMessage(message(QStringLiteral("in"), QStringLiteral("Hi")));
         auto own = message(QStringLiteral("own"), QStringLiteral("A longer reply that wraps in a narrow bubble"), 1,
@@ -3947,7 +3948,7 @@ private slots:
             list.setMediaOpener(&opener);
             if (bubble)
                 list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                              NativeChatRenderers::bubble());
+                              NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
             list.appendMessage(
                 message(QStringLiteral("wide"), QStringLiteral("<share id=\"wide\" account=\"account-a\"/>"), 0, true));
             list.show();
@@ -4051,7 +4052,7 @@ private slots:
         list.setHistoryLoading(true);
         list.setMediaOpener(&opener);
         list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+                      NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         for (int i = 0; i < 5; ++i)
             list.appendMessage(message(QString::number(i), QStringLiteral("Earlier message"), i, i % 2));
         const auto picture = message(QStringLiteral("picture"),
@@ -4072,7 +4073,7 @@ private slots:
         } else if (flow == QLatin1String("rebuilt")) {
             QTest::qWait(100);
             list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                          NativeChatRenderers::bubble());
+                          NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         }
         const auto onScreen = [&list, index]() -> QColor {
             auto *row  = list.itemWidget(index);
@@ -4274,7 +4275,7 @@ private slots:
         QCOMPARE(author(0)->palette().color(QPalette::WindowText), QColor("#0000aa"));
         QCOMPARE(author(1)->palette().color(QPalette::WindowText), QColor("#aa0000"));
         list.setTheme({ QStringLiteral("bubble"), QStringLiteral("Bubble"), NativeChatTheme::Modern, 40, 6, {} },
-                      NativeChatRenderers::bubble());
+                      NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble"))
                     && author(0));
         QCOMPARE(author(0)->palette().color(QPalette::WindowText), list.palette().color(QPalette::Text));
@@ -6273,7 +6274,7 @@ private slots:
         // Bubble places the rule in its own layout, underneath the bubble.
         theme.id = QStringLiteral("test-unread-bubble");
         theme.layoutSpec.clear();
-        chat.setTheme(theme, NativeChatRenderers::bubble());
+        chat.setTheme(theme, NativeChatThemes::instance()->renderer(QStringLiteral("bubble")));
         QTRY_VERIFY(chat.itemWidget(0)
                     && chat.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider")));
         auto *row = chat.itemWidget(0);

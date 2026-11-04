@@ -170,7 +170,13 @@ must stay valid until the plugin object is destroyed, not only until
   `#mamBubble[tone=...]` and its `fillColor`, `borderColor`, `radius` and
   `textColumns` properties.
 
-The renderers are in `src/widgets/NativeChatRenderers.cpp`.
+Built-in themes live in `src/widgets/nativechat/themes/`: each theme has
+its own source file, and `BuiltinThemes.cpp` is the single registration list.
+Built-ins implement the same `NativeChatThemeProvider` and
+`NativeChatRendererProvider` interfaces as plugins and are registered through
+`NativeChatThemes::add()`. Modern and Classic use the generic
+`NativeChatRenderers::forDescription()` adapter; Bubble has a C++ renderer in
+`Bubble.cpp`. The registry does not special-case any theme ID.
 
 ## Style sheets
 
