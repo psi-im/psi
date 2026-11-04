@@ -111,6 +111,7 @@ signals:
     void contactMenuRequested(const QString &nick, const QPoint &globalPosition);
     void replyRequested(const ChatReply &reply);
     void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
+    void editMessageRequested(const QString &messageId, const QString &text);
     void olderMessagesRequested();
     void archiveRangeRequested(const MamHistorySource::Request &request);
     void archiveRangeCancelled();

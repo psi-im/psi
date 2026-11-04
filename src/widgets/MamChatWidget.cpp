@@ -2031,6 +2031,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
     row->unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
+    row->setProperty("_psiMamUnreadBoundary", row->unreadBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -3154,6 +3155,7 @@ void MamChatWidget::markUnreadBoundary()
     if (auto *previous = rowWidget(indexOfKey(unreadBoundaryKey_))) {
         if (auto *row = messageRow(previous)) {
             row->unreadBoundary = false;
+            row->setProperty("_psiMamUnreadBoundary", false);
             row->update();
         }
     }
@@ -3161,6 +3163,7 @@ void MamChatWidget::markUnreadBoundary()
     if (auto *current = rowWidget(indexOfKey(unreadBoundaryKey_))) {
         if (auto *row = messageRow(current)) {
             row->unreadBoundary = true;
+            row->setProperty("_psiMamUnreadBoundary", true);
             row->update();
         }
     }
@@ -3447,6 +3450,19 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         const auto &message = items_.at(at).message;
         emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at))});
     });
+    if (items_.at(at).message.isLocal() && !items_.at(at).message.messageId().isEmpty()
+        && !isRetracted(items_.at(at))) {
+        auto *edit = menu->addAction(tr("Edit message"));
+        edit->setObjectName(QStringLiteral("mamEditMessage"));
+        connect(edit, &QAction::triggered, this, [this, key] {
+            const int index = indexOfKey(key);
+            if (index < 0 || isRetracted(items_.at(index)))
+                return;
+            const auto &message = items_.at(index).message;
+            if (message.isLocal() && !message.messageId().isEmpty())
+                emit editMessageRequested(message.messageId(), plainMessage(items_.at(index)));
+        });
+    }
     auto *select = menu->addAction(tr("Select message"));
     select->setObjectName(QStringLiteral("mamSelectMessage"));
     select->setCheckable(true);

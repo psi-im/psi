@@ -981,6 +981,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &GCMainDlg::outgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &GCMainDlg::sendMessageRetraction);
+    connect(nativeTimeline_, &MamChatWidget::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
     connect(nativeTimeline_, &MamChatWidget::contactMenuRequested, this, &GCMainDlg::showContactContextMenu);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
     connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
