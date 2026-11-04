@@ -6174,6 +6174,34 @@ private slots:
         QCOMPARE(list.currentSearchIndex(), -1);
     }
 
+
+    void nativeSearchCacheInvalidatesOnCorrectionRetractionAndClear()
+    {
+        MamChatWidget list;
+        list.resize(380, 200);
+        list.setHistoryLoading(true);
+        list.appendMessage(message(QStringLiteral("original"), QStringLiteral("obsolete needle"), 1));
+        list.show();
+        list.setHistoryLoading(false);
+        QVERIFY(list.findText(QStringLiteral("obsolete"), false, false, true));
+        QCOMPARE(list.currentSearchIndex(), 0);
+
+        auto corrected = message(QStringLiteral("edited"), QStringLiteral("updated needle"), 2);
+        corrected.setReplaceId(QStringLiteral("original"));
+        list.appendMessage(corrected);
+        QCOMPARE(list.messageCount(), 1);
+        QVERIFY(!list.findText(QStringLiteral("obsolete"), false, false, true));
+        QVERIFY(list.findText(QStringLiteral("updated"), false, false, true));
+
+        list.appendMessage(MessageView::retractionMessage(QStringLiteral("edited")));
+        QVERIFY(!list.findText(QStringLiteral("updated"), false, false, true));
+
+        list.clearMessages();
+        list.appendMessage(message(QStringLiteral("original"), QStringLiteral("new session"), 3));
+        QVERIFY(!list.findText(QStringLiteral("obsolete"), false, false, true));
+        QVERIFY(list.findText(QStringLiteral("new session"), false, false, true));
+    }
+
 };
 
 QTEST_MAIN(MamChatWidgetTest)
