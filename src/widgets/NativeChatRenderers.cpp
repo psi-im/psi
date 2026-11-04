@@ -382,8 +382,8 @@ namespace {
 
 using NativeChatRenderers::BubbleFrame;
 
-// The bubble theme owns its unread divider and gives it layout space below the
-// bubble, instead of letting the fallback rule paint across the message row.
+// The bubble theme owns the unread frame's placement below the bubble.
+// Other renderers receive the same frame in Psi's default row layout.
 QHBoxLayout *bubbleRowLayout(Canvas &canvas)
 {
     auto *separator = canvas.take(Canvas::UnreadSeparator);
