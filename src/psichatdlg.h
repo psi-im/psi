@@ -129,7 +129,7 @@ private:
     void      setLooks() override;
     void      setShortcuts() override;
     void      appendSysMsg(const QString &) override;
-    ChatView *chatView() const override;
+    MamChatWidget *chatTimeline() const override;
     ChatEdit *chatEdit() const override;
     void      updateAutojidIcon();
     void      setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str);

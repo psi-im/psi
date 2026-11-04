@@ -21,7 +21,7 @@
 #include "chateditproxy.h"
 
 #include "avatars.h"
-#include "chatview.h"
+#include "widgets/MamChatWidget.h"
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
@@ -113,14 +113,7 @@ void ChatDlg::init()
     setShortcuts();
 
     chatEdit()->installEventFilter(this);
-    chatView()->setDialog(this);
     bool isPrivate = account()->groupchats().contains(jid().bare());
-    chatView()->setSessionData(false, isPrivate, jid(), jid().full()); // FIXME fix nick updating
-    chatView()->setLocalNickname(account()->nick());
-    chatView()->setMediaOpener(account()->fileSharingDeviceOpener());
-    chatView()->init();
-    connect(chatView(), &ChatView::outgoingReactions, this, &ChatDlg::sendOutgoingReactions);
-    connect(chatView(), &ChatView::outgoingMessageRetraction, this, &ChatDlg::sendMessageRetraction);
 
     // seems its useless hack
     // connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
@@ -161,7 +154,6 @@ void ChatDlg::init()
             SLOT(encryptedMessageSent(int, bool, int, const QString &)));
     account()->dialogRegister(this, isPrivate ? jid() : jid().withResource({}));
 
-    chatView()->setFocusPolicy(Qt::NoFocus);
     chatEdit()->setFocus();
 }
 
@@ -189,7 +181,7 @@ void ChatDlg::initComposing()
 void ChatDlg::doTrackBar()
 {
     trackBar_ = false;
-    chatView()->doTrackBar();
+    chatTimeline()->markUnreadBoundary();
 }
 
 void ChatDlg::initActions()
@@ -210,15 +202,13 @@ void ChatDlg::initActions()
     act_scrollup_ = new QAction(this);
     addAction(act_scrollup_);
     connect(act_scrollup_, &QAction::triggered, this, [this] {
-        if (!scrollNativeHistory(false))
-            chatView()->scrollUp();
+        scrollNativeHistory(false);
     });
 
     act_scrolldown_ = new QAction(this);
     addAction(act_scrolldown_);
     connect(act_scrolldown_, &QAction::triggered, this, [this] {
-        if (!scrollNativeHistory(true))
-            chatView()->scrollDown();
+        scrollNativeHistory(true);
     });
 }
 
@@ -579,9 +569,9 @@ void ChatDlg::updateAvatar(const Jid &j)
 {
     if (j.compare(jid(), false)) {
         updateAvatar();
-        chatView()->updateAvatar(j, ChatViewCommon::RemoteParty);
+        chatTimeline()->refreshAvatars();
     } else if (j.compare(account()->jid(), false)) {
-        chatView()->updateAvatar(j, ChatViewCommon::LocalParty);
+        chatTimeline()->refreshAvatars();
     }
 }
 
@@ -590,7 +580,7 @@ void ChatDlg::setLooks()
     // update the font
     QFont f;
     f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
-    chatView()->setFont(f);
+    chatTimeline()->setFont(f);
     chatEdit()->setFont(f);
 
     // update contact info
@@ -599,11 +589,6 @@ void ChatDlg::setLooks()
 
     // update the widget icon
     setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
-
-    /*QBrush brush;
-    brush.setPixmap( QPixmap( LEGOPTS.chatBgImage ) );
-    chatView()->setPaper(brush);
-    chatView()->setStaticBackground(true);*/
 
     setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))
                      / 100);
@@ -630,7 +615,6 @@ void ChatDlg::doFile() { emit aFile(jid()); }
 
 void ChatDlg::doClear()
 {
-    chatView()->clear();
     clearNativeHistory();
 }
 
@@ -906,7 +890,6 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     }
 
     if (encChanged) {
-        chatView()->setEncryptionEnabled(encEnabled);
         QString msg = QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption is disabled");
         if (encEnabled) {
             if (!m.encryptionProtocol().isEmpty()) {
@@ -978,7 +961,7 @@ void ChatDlg::appendMessage(const Message &m, bool local, qint64 historyId, cons
     mv.setReplyMetadata(dm);
 
     dispatchMessage(mv);
-    emit messageAppended(body, chatView()->textWidget());
+    emit messageAppended(body, chatTimeline());
 }
 
 void ChatDlg::holdMessages(bool hold)
@@ -1024,11 +1007,7 @@ void ChatDlg::displayMessage(const MessageView &mv)
         displayNativeMessage(mv);
         return;
     }
-    // The legacy view is hidden but still owns message receipts, reactions,
-    // corrections and composer integration. Keep it synchronized until those
-    // interactions have equivalent native implementations.
     displayNativeMessage(mv);
-    chatView()->dispatchMessage(mv);
     if (mv.type() == MessageView::Reactions || mv.type() == MessageView::MessageRetraction)
         return;
 
@@ -1165,7 +1144,9 @@ bool ChatDlg::eventFilter(QObject *obj, QEvent *event)
             return true;
     }
 
-    if (chatView()->handleCopyEvent(obj, event, chatEdit()))
+    if (obj == chatEdit() && event->type() == QEvent::ShortcutOverride
+        && static_cast<QKeyEvent *>(event)->matches(QKeySequence::Copy)
+        && !chatEdit()->textCursor().hasSelection() && chatTimeline()->copyCurrentTextSelection())
         return true;
 
     return QWidget::eventFilter(obj, event);

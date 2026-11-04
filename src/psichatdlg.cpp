@@ -550,11 +550,9 @@ void PsiChatDlg::initUi()
 {
     ui_.setupUi(this);
 
-    // The historical QTextEdit remains an internal compatibility adapter
-    // during this first vertical slice; visible rows are real Qt widgets.
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
-    ui_.log->hide();
+    delete ui_.log; // The .ui placeholder is not part of the native timeline.
     configureNativeChat(nativeTimeline_, account(), false);
     roomOccupantChat_ = isRoomOccupantChat();
     nativeTimeline_->setAvatarResolver([this](const MessageView &message) {
@@ -710,12 +708,8 @@ void PsiChatDlg::initUi()
     connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
     addAction(act_mini_cmd_);
 
-    connect(ui_.log, &ChatView::quote, ui_.mle->chatEdit(), &ChatEdit::insertAsQuote);
-    connect(ui_.log, &ChatView::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
-
     act_pastesend_ = actions_->action("chat_paste_send");
 
-    ui_.log->realTextWidget()->installEventFilter(this);
     ui_.mini_prompt->hide();
 
     if (throbber_icon == nullptr) {
@@ -1547,7 +1541,7 @@ void PsiChatDlg::appendSysMsg(const QString &str)
     dispatchMessage(mv);
 }
 
-ChatView *PsiChatDlg::chatView() const { return ui_.log; }
+MamChatWidget *PsiChatDlg::chatTimeline() const { return nativeTimeline_; }
 
 ChatEdit *PsiChatDlg::chatEdit() const { return ui_.mle->chatEdit(); }
 
@@ -1646,11 +1640,6 @@ bool PsiChatDlg::eventFilter(QObject *obj, QEvent *ev)
 
             tabCompletion.reset();
         }
-    }
-
-    else if (obj == ui_.log->realTextWidget()) {
-        if (ev->type() == QEvent::MouseButtonPress)
-            chatEdit()->setFocus();
     }
 
     return ChatDlg::eventFilter(obj, ev);

@@ -34,7 +34,7 @@
 #include <QTextEdit>
 
 class ChatEdit;
-class ChatView;
+class MamChatWidget;
 class FileSharingItem;
 class PsiAccount;
 class QDragEnterEvent;
@@ -195,7 +195,7 @@ protected:
 
     QString whoNick(bool local) const;
 
-    virtual ChatView *chatView() const = 0;
+    virtual MamChatWidget *chatTimeline() const = 0;
     virtual ChatEdit *chatEdit() const = 0;
 
 protected:
