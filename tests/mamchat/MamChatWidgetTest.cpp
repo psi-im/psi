@@ -6257,8 +6257,7 @@ private slots:
         theme.layoutSpec = QStringLiteral(
             R"({"direction":"vertical","items":["body","unreadSeparator"]})");
         chat.setTheme(theme);
-        QTRY_VERIFY(chat.itemWidget(0));
-        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
         auto *placed = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
         QVERIFY(placed);
         QVERIFY(!placed->isHidden());
@@ -6268,9 +6267,8 @@ private slots:
         theme.id = QStringLiteral("test-unread-bubble");
         theme.layoutSpec.clear();
         chat.setTheme(theme, NativeChatRenderers::bubble());
-        QTRY_VERIFY(chat.itemWidget(0));
+        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
         auto *row = chat.itemWidget(0);
-        QVERIFY(!row->property("_psiMamUnreadBoundaryFallback").toBool());
         auto *container = row->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"));
         QVERIFY(container);
         placed = container->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
@@ -6279,8 +6277,8 @@ private slots:
         // Replacing the boundary removes the previous renderer's decoration.
         chat.appendMessage(message(QStringLiteral("after"), QStringLiteral("Second"), 2));
         chat.markUnreadBoundary();
-        QTRY_VERIFY(chat.itemWidget(1));
-        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+        QTRY_VERIFY(chat.itemWidget(1) && chat.itemWidget(0)
+                    && !chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
         QVERIFY(!chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
         QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
         QVERIFY(chat.itemWidget(1)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
