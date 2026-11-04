@@ -797,20 +797,6 @@ class ChatMessageRow : public QFrame {
 public:
     QSize sizeHint() const override { return QSize(0, qMax(1, heightForWidth(qMax(1, width())))); }
 
-    void paintEvent(QPaintEvent *event) override
-    {
-        QFrame::paintEvent(event);
-        if (!unreadBoundary || unreadBoundaryHandled)
-            return;
-        QPainter painter(this);
-        QPen pen(palette().color(QPalette::Highlight), 1);
-        pen.setCosmetic(true);
-        painter.setPen(pen);
-        painter.drawLine(0, height() - 1, width(), height() - 1);
-    }
-    bool unreadBoundary = false;
-    bool unreadBoundaryHandled = false;
-
     // What the renderer was told and asked for when this row was built.
     NativeChatMessageInfo info;
     NativeChatPartOptions options;
@@ -2032,8 +2018,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setFrameShape(QFrame::NoFrame);
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
-    row->unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
-    row->setProperty("_psiMamUnreadBoundary", row->unreadBoundary);
+    const bool unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
+    row->setProperty("_psiMamUnreadBoundary", unreadBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -2053,7 +2039,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
     canvas.add(NativeChatMessageCanvas::Selection, selection);
-    if (row->unreadBoundary) {
+    if (unreadBoundary) {
         auto *separator = new QFrame(row);
         separator->setObjectName(QStringLiteral("mamUnreadSeparator"));
         separator->setFrameShape(QFrame::HLine);
@@ -2637,8 +2623,27 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Psi styles its parts first, so that a renderer may refine them.
     applyPartStyle(row, index);
     renderer_->arrange(canvas, row->info);
-    row->unreadBoundaryHandled = canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
-    row->setProperty("_psiMamUnreadBoundaryFallback", row->unreadBoundary && !row->unreadBoundaryHandled);
+    const bool fallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
+    if (fallback) {
+        // Keep the original renderer layout intact inside a content widget,
+        // then place the same separator below it instead of painting over it.
+        QLayout *contentLayout = row->layout();
+        QWidget *content = nullptr;
+        if (contentLayout) {
+            content = new QWidget(row);
+            auto policy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+            policy.setHeightForWidth(true);
+            content->setSizePolicy(policy);
+            content->setLayout(contentLayout);
+        }
+        auto *column = new QVBoxLayout(row);
+        column->setContentsMargins(0, 0, 0, 0);
+        column->setSpacing(0);
+        if (content)
+            column->addWidget(content);
+        column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
+    }
+    row->setProperty("_psiMamUnreadBoundaryFallback", fallback);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     updateTextSearchHighlight(index, row);
