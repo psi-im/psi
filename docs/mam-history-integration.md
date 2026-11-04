@@ -530,12 +530,12 @@ The initial widget implementation lives in the dependent Draft PR #997
 only on the new view. Widget-only CI runs original MatterLeast behavioral
 tests on Qt5 and Qt6, including scroll anchors, resizing and edge actions.
 
-The BASIC `PsiChatDlg` currently replaces only its visible presentation;
-`chatview_te` is still a hidden compatibility adapter for the rest of
-Psi's chat API. It must not be removed until selection, correction/retraction,
-reactions, file and message context menus, trackbar and custom rendering are
-ported. WEBKIT/WEBENGINE view types are explicitly excluded from the BASIC
-replacement.
+The BASIC `PsiChatDlg` and `GCMainDlg` use `MamChatWidget` as the sole
+message presentation and history model. The hidden `chatview_te` adapter
+was removed in PR #1105 after native selection, message context actions,
+unread separator, copy shortcut, reactions, retraction and correction
+handling became independent from the legacy text widget. WEBKIT and
+WEBENGINE chat backends were removed earlier in PR #1087.
 
 A `MAMManager` query fetches at most 40 archived results. The first page
 is shown newest-last; scrolling to the top requests the preceding page
@@ -571,8 +571,9 @@ A match adopts the authenticated archive UID without inserting a duplicate row.
 The ordinary stanza ID is **never** treated as a MAM cursor or server UID.
 SQLite rows still need origin-ID/stanza-ID provenance and archive coverage for
 complete durable reconciliation; the heuristic must not delete any local record.
-The hidden QTextEdit adapter continues to receive live message updates while
-native reaction/retraction and composer interactions remain unfinished.
+Live message updates now go directly to `MamChatWidget`, without a second
+rendering pass through a hidden `QTextEdit`. Protocol effects are applied to
+the native message model.
 
 An interrupted MAM task is cancelled when an account disconnects. If the
 archive fetch was in flight, reauthentication restarts from the same opaque
@@ -644,10 +645,10 @@ ported because Psi does not yet expose its equivalent safe operation.
 
 ### Native themes and conference presentation
 
-BASIC personal chats and conference windows now use the same `MamChatWidget`.
-The old ChatView stays hidden for the remaining compatibility APIs; WebKit and
-WebEngine keep their existing theme providers. In Appearance → Themes, BASIC
-has separate Chat Message Style and Groupchat Message Style selections:
+BASIC personal chats and conference windows now use only `MamChatWidget`.
+The old `ChatView`, WebKit and WebEngine presentation backends have been
+removed. In Appearance → Themes, BASIC has separate Chat Message Style
+and Groupchat Message Style selections:
 
 - **Modern** (default): avatar column, bold author, time beside the author, body below.
 - **Corrections (XEP-0308)**: the visible message keeps one logical row with
@@ -775,10 +776,10 @@ already-at-target shortcut. Otherwise leaving before the first reveal frame
 would leave the reveal running after a zero-opacity fade, making the bar visible
 again. The scrollbar suite reproduces this race and a lost Leave notification.
 
-Palette refresh also recolours link fragments already stored in message
-documents. Native rows and the legacy text view share PsiRichText's link
-recolouring helper; inline foregrounds produced by linkify on a light desktop
-must not survive unchanged after switching to a dark palette.
+Palette refresh also recolours link fragments already stored in native message
+documents using PsiRichText's link recolouring helper; inline foregrounds
+produced by linkify on a light desktop must not survive unchanged after
+switching to a dark palette.
 
 ### SIMS compatibility and native inline media
 
