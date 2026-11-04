@@ -382,6 +382,36 @@ namespace {
 
 using NativeChatRenderers::BubbleFrame;
 
+// The bubble theme owns its unread divider and gives it layout space below the
+// bubble, instead of letting the fallback rule paint across the message row.
+QHBoxLayout *bubbleRowLayout(Canvas &canvas)
+{
+    auto *separator = canvas.take(Canvas::UnreadSeparator);
+    if (!separator)
+        return rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
+
+    auto *column = new QVBoxLayout(canvas.row());
+    column->setContentsMargins(0, 0, 0, 0);
+    column->setSpacing(0);
+
+    auto *message = new QWidget(canvas.row());
+    message->setObjectName(QStringLiteral("mamBubbleMessage"));
+    message->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    column->addWidget(message, 0, Qt::AlignTop);
+
+    auto *outer = new QHBoxLayout(message);
+    outer->setContentsMargins(12, 4, 12, 4);
+    outer->setSpacing(6);
+
+    auto *divider = new QWidget(canvas.row());
+    divider->setObjectName(QStringLiteral("mamBubbleUnreadDivider"));
+    auto *dividerLayout = new QHBoxLayout(divider);
+    dividerLayout->setContentsMargins(12, 2, 12, 2);
+    dividerLayout->addWidget(separator);
+    column->addWidget(divider, 0, Qt::AlignTop);
+    return outer;
+}
+
 // Messages in speech bubbles, based on Modern. Incoming messages sit on the
 // left and our own on the right, each with the avatar on its outer side and
 // the bubble's tail pointing at it.
@@ -401,7 +431,7 @@ public:
     {
         if (info.kind != NativeChatMessageInfo::Message) {
             // Notices and the subject: a centred bubble without a tail.
-            auto *outer  = rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
+            auto *outer  = bubbleRowLayout(canvas);
             auto *bubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, canvas.row());
             bubble->column()->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
             outer->addStretch(1);
@@ -410,7 +440,7 @@ public:
             canvas.setActionAnchor(bubble);
             return;
         }
-        auto *outer  = rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
+        auto *outer  = bubbleRowLayout(canvas);
         auto *avatar = canvas.take(Canvas::Avatar);
         auto *bubble = new BubbleFrame(info.local ? BubbleFrame::Right : BubbleFrame::Left,
                                        info.local ? BubbleFrame::Own : BubbleFrame::Incoming, canvas.row());
