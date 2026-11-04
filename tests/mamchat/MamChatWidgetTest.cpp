@@ -6204,6 +6204,82 @@ private slots:
         QVERIFY(list.findText(QStringLiteral("new session"), false, false, true));
     }
 
+
+    void nativeUnreadBoundaryFollowsModelRowsAndClearsWithChat()
+    {
+        MamChatWidget chat;
+        chat.resize(430, 260);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("a"), QStringLiteral("Before"), 1));
+        chat.appendMessage(message(QStringLiteral("b"), QStringLiteral("Boundary"), 2));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(1));
+        chat.markUnreadBoundary();
+        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+
+        chat.appendMessage(message(QStringLiteral("c"), QStringLiteral("After"), 3));
+        QTRY_VERIFY(chat.itemWidget(2));
+        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(!chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
+
+        chat.markUnreadBoundary();
+        QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(chat.itemWidget(2)->property("_psiMamUnreadBoundary").toBool());
+        chat.clearMessages();
+        chat.appendMessage(message(QStringLiteral("fresh"), QStringLiteral("New conversation"), 4));
+        QTRY_VERIFY(chat.itemWidget(0));
+        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+    }
+
+    void nativeSelectionCopyWorksWithoutFocusOnMessageText()
+    {
+        MamChatWidget chat;
+        chat.resize(450, 260);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("copy"), QStringLiteral("Copy this text"), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *body = chat.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+
+        QVERIFY(!chat.copyCurrentTextSelection());
+        QTextCursor selection = body->textCursor();
+        selection.setPosition(0);
+        selection.setPosition(4, QTextCursor::KeepAnchor);
+        body->setTextCursor(selection);
+        QVERIFY(chat.copyCurrentTextSelection());
+        QCOMPARE(QApplication::clipboard()->text(), QStringLiteral("Copy"));
+
+        body->setTextCursor(QTextCursor(body->document()));
+        chat.selectMessageRange(0, 0);
+        QVERIFY(chat.copyCurrentTextSelection());
+        QVERIFY(QApplication::clipboard()->text().contains(QStringLiteral("Copy this text")));
+        chat.cancelMessageSelection();
+    }
+
+    void nativeOwnMessageContextMenuOffersCorrection()
+    {
+        MamChatWidget chat;
+        chat.resize(440, 230);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("mine"), QStringLiteral("Original message"), 1, true));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        QWidget *row = chat.itemWidget(0);
+        QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), row->mapToGlobal(QPoint(3, 3)));
+        QApplication::sendEvent(row, &event);
+        auto *menu = chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu"));
+        QVERIFY(menu);
+        auto *action = menu->findChild<QAction *>(QStringLiteral("mamEditMessage"));
+        QVERIFY(action);
+        QSignalSpy corrected(&chat, &MamChatWidget::editMessageRequested);
+        action->trigger();
+        QCOMPARE(corrected.size(), 1);
+        QCOMPARE(corrected.first().at(0).toString(), QStringLiteral("mine"));
+        QCOMPARE(corrected.first().at(1).toString(), QStringLiteral("Original message"));
+        delete menu;
+    }
+
 };
 
 QTEST_MAIN(MamChatWidgetTest)
