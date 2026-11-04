@@ -6215,7 +6215,8 @@ private slots:
         chat.show();
         QTRY_VERIFY(chat.itemWidget(1));
         chat.markUnreadBoundary();
-        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QTRY_VERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
 
         chat.appendMessage(message(QStringLiteral("c"), QStringLiteral("After"), 3));
         QTRY_VERIFY(chat.itemWidget(2));
@@ -6229,6 +6230,60 @@ private slots:
         chat.appendMessage(message(QStringLiteral("fresh"), QStringLiteral("New conversation"), 4));
         QTRY_VERIFY(chat.itemWidget(0));
         QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+    }
+
+
+    void unreadSeparatorCanBeArrangedByThemeWithoutFallbackPainting()
+    {
+        MamChatWidget chat;
+        chat.resize(450, 240);
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("before"), QStringLiteral("First"), 1));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        chat.markUnreadBoundary();
+
+        // Unmodified themes still use the existing one-pixel fallback.
+        QTRY_VERIFY(chat.itemWidget(0));
+        QVERIFY(chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *unused = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(unused);
+        QVERIFY(unused->isHidden());
+
+        // A description-only theme can position the separator as a slot.
+        NativeChatTheme theme;
+        theme.id         = QStringLiteral("test-unread-slot");
+        theme.layout     = NativeChatTheme::Modern;
+        theme.layoutSpec = QStringLiteral(
+            R"({"direction":"vertical","items":["body","unreadSeparator"]})");
+        chat.setTheme(theme);
+        QTRY_VERIFY(chat.itemWidget(0));
+        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *placed = chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(placed);
+        QVERIFY(!placed->isHidden());
+        QVERIFY(placed->height() >= 4);
+
+        // Bubble places the rule in its own layout, underneath the bubble.
+        theme.id = QStringLiteral("test-unread-bubble");
+        theme.layoutSpec.clear();
+        chat.setTheme(theme, NativeChatRenderers::bubble());
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *row = chat.itemWidget(0);
+        QVERIFY(!row->property("_psiMamUnreadBoundaryFallback").toBool());
+        auto *container = row->findChild<QWidget *>(QStringLiteral("mamBubbleUnreadDivider"));
+        QVERIFY(container);
+        placed = container->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator"));
+        QVERIFY(placed && !placed->isHidden());
+
+        // Replacing the boundary removes the previous renderer's decoration.
+        chat.appendMessage(message(QStringLiteral("after"), QStringLiteral("Second"), 2));
+        chat.markUnreadBoundary();
+        QTRY_VERIFY(chat.itemWidget(1));
+        QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
+        QVERIFY(!chat.itemWidget(0)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
+        QVERIFY(!chat.itemWidget(1)->property("_psiMamUnreadBoundaryFallback").toBool());
+        QVERIFY(chat.itemWidget(1)->findChild<QFrame *>(QStringLiteral("mamUnreadSeparator")));
     }
 
     void nativeSelectionCopyWorksWithoutFocusOnMessageText()
