@@ -1305,7 +1305,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     setKnownPgpKeys(acc.pgpKnownKeys);
 
     setUserAccount(acc);
-    psi()->fileSharingManager()->importOwnPublications(acc.id, Jid(acc.jid));
     connect(ProxyManager::instance(), &ProxyManager::proxyRemoved, d, &Private::pm_proxyRemoved);
 
     connect(d->psi, &PsiCon::emitOptionsUpdate, this, &PsiAccount::optionsUpdate);

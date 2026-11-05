@@ -100,7 +100,8 @@ class EDBSqLite : public EDB {
 public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
-    bool init();
+    bool    init();
+    QString connectionName() const;
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
     HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) override;
@@ -124,6 +125,11 @@ public:
     HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) override;
     bool                 mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
+
+signals:
+    // Attachments of stored messages were linked to publications, or such links went away.
+    void mediaLinksAdded();
+    void mediaLinksRemoved();
 
 private:
     enum { NotActive, NotCommited, Commited };

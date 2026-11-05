@@ -4,6 +4,7 @@
 #include "iris/xmpp_message.h"
 #include "oobmediapolicy.h"
 
+#include <QCryptographicHash>
 #include <QSet>
 
 namespace MessageAttachments {
@@ -34,6 +35,18 @@ namespace {
         return false;
     }
 } // namespace
+
+bool Attachment::isFile() const
+{
+    return reference.isValid() && reference.mediaSharing().isValid() && reference.mediaSharing().file.hasComputedHashes();
+}
+
+QUrl Attachment::url() const
+{
+    if (!reference.isValid() || reference.mediaSharing().isValid() || reference.type() != XMPP::Reference::Data)
+        return {};
+    return OobMediaPolicy::normalizedHttpSource(reference.uri());
+}
 
 Result collect(const XMPP::Message &message)
 {
@@ -91,5 +104,11 @@ Result collect(const XMPP::Message &message)
         result.attachments.append({ reference, url.desc() });
     }
     return result;
+}
+
+XMPP::Hash urlIdentity(const QUrl &url)
+{
+    const QByteArray key = QByteArrayLiteral("psi-oob-url-v1:") + url.toString(QUrl::FullyEncoded).toUtf8();
+    return XMPP::Hash(XMPP::Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
 }
 } // namespace MessageAttachments

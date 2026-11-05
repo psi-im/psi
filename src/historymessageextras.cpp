@@ -39,6 +39,25 @@ bool parseReferenceXml(QDomDocument &doc, const QString &xml)
     return doc.setContent(xml, true);
 #endif
 }
+
+void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message)
+{
+    for (const auto &value : extra.value(QStringLiteral("jabber:x:oob")).toArray()) {
+        const auto pair = value.toArray();
+        if (!pair.isEmpty() && pair.first().isString() && !pair.first().toString().isEmpty())
+            message.urlAdd(XMPP::Url(pair.first().toString(), pair.size() > 1 ? pair.at(1).toString() : QString()));
+    }
+    QList<XMPP::Reference> references;
+    for (const auto &value : extra.value(XMPP::REFERENCE_NS).toArray()) {
+        QDomDocument    doc;
+        XMPP::Reference reference;
+        if (value.isString() && parseReferenceXml(doc, value.toString())
+            && doc.documentElement().namespaceURI() == XMPP::REFERENCE_NS && reference.fromXml(doc.documentElement()))
+            references.append(reference);
+    }
+    if (!references.isEmpty())
+        message.setReferences(references);
+}
 }
 
 QString HistoryMessageExtras::encode(const XMPP::Message &message)
@@ -129,6 +148,11 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     return extra.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
 }
 
+void HistoryMessageExtras::restoreAttachments(const QString &json, XMPP::Message &message)
+{
+    restoreUrlsAndReferences(QJsonDocument::fromJson(json.toUtf8()).object(), message);
+}
+
 void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
 {
     const auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
@@ -167,21 +191,7 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
         const auto id = value.toObject();
         message.addStanzaId({ XMPP::Jid(id.value("by").toString()), id.value("id").toString() });
     }
-    for (const auto &value : extra.value(QStringLiteral("jabber:x:oob")).toArray()) {
-        const auto pair = value.toArray();
-        if (!pair.isEmpty() && pair.first().isString() && !pair.first().toString().isEmpty())
-            message.urlAdd(XMPP::Url(pair.first().toString(), pair.size() > 1 ? pair.at(1).toString() : QString()));
-    }
-    QList<XMPP::Reference> references;
-    for (const auto &value : extra.value(XMPP::REFERENCE_NS).toArray()) {
-        QDomDocument    doc;
-        XMPP::Reference reference;
-        if (value.isString() && parseReferenceXml(doc, value.toString())
-            && doc.documentElement().namespaceURI() == XMPP::REFERENCE_NS && reference.fromXml(doc.documentElement()))
-            references.append(reference);
-    }
-    if (!references.isEmpty())
-        message.setReferences(references);
+    restoreUrlsAndReferences(extra, message);
     QList<XMPP::Message::Fallback> fallbacks;
     for (const auto &value : extra.value(fallbackNS).toArray()) {
         const auto object = value.toObject();

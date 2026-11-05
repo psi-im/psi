@@ -794,7 +794,8 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
     return page;
 }
 
-bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page)
+bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page,
+               const std::function<bool(qint64)> &eventStored)
 {
     if (key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty() || limit <= 0
         || page.entries.size() > limit || !db.transaction())
@@ -957,6 +958,10 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     }
     if (!recordMessageStates(db, stateEvents))
         return fail();
+    if (eventStored)
+        for (const auto eventId : std::as_const(stateEvents))
+            if (!eventStored(eventId))
+                return fail();
     if (page.checkpoint) {
         // Failed/unstable queries cannot leave an older reusable checkpoint behind.
         q.prepare("DELETE FROM archive_pages WHERE " + scope + " AND before_uid=:before AND page_size=:limit");
