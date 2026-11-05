@@ -124,6 +124,153 @@ private slots:
         QCOMPARE(readPage(db, key, "edge", 1).entries.first().uid, QString("sims-body"));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
     }
+    void localDeletionScrubsEveryRevisionAndPreventsMamReplay()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "original", "correction" }, true);
+        messages.entries[0].body = QStringLiteral("secret original");
+        messages.entries[1].body = QStringLiteral("secret correction");
+        messages.entries[1].replaceId = QStringLiteral("original-client");
+        QVERIFY(storePage(db, key, "", 2, messages));
+
+        const auto root = messages.entries[0].eventId;
+        QCOMPARE(resolvedRecord(db, messages.entries[1].eventId).value("m_text").toString(),
+                 QStringLiteral("secret correction"));
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 1);
+        QVERIFY(scrubStoredMessage(db, key, root));
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 20).size(), 0);
+        QVERIFY(resolvedRecord(db, root).isEmpty());
+        QVERIFY(resolvedRecord(db, messages.entries[1].eventId).isEmpty());
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data='' "
+                        "AND subject='' AND lang='' AND resource=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM message_revisions").toInt(), 2);
+        // Do not discard structural archive indices when hiding content.
+        QCOMPARE(scalar("SELECT count(*) FROM archive_page_items").toInt(), 2);
+
+        // A confirmed server replay may refresh ordering metadata but cannot
+        // reinsert either version's body or retained raw forwarded stanza.
+        messages.entries[0].body = QStringLiteral("resurrected original");
+        messages.entries[1].body = QStringLiteral("resurrected correction");
+        messages.entries[0].xml  = QStringLiteral("<result>original sensitive XML</result>");
+        messages.entries[1].xml  = QStringLiteral("<result>correction sensitive XML</result>");
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 2);
+    }
+
+    void localDeletionDoesNotAffectOtherAccounts()
+    {
+        QVERIFY(migrate(db));
+        auto mine = page({ "same-uid" }, true);
+        auto otherKey = key;
+        otherKey.account = QStringLiteral("account-b");
+        auto other = page({ "same-uid" }, true);
+        other.entries[0].body = QStringLiteral("other account's content");
+        QVERIFY(storePage(db, key, "", 1, mine));
+        QVERIFY(storePage(db, otherKey, "", 1, other));
+        QVERIFY(scrubStoredMessage(db, key, mine.entries.first().eventId));
+        QCOMPARE(resolvedRecord(db, other.entries.first().eventId).value("m_text").toString(),
+                 QStringLiteral("other account's content"));
+        QCOMPARE(localRecords(db, otherKey.account, otherKey.peer, 0, 10).size(), 1);
+    }
+
+    void scrubbedMessageRetainsIdentityAliases_data()
+    {
+        QTest::addColumn<bool>("replay");
+        QTest::newRow("state-reindex") << false;
+        QTest::newRow("MAM-replay") << true;
+    }
+    void scrubbedMessageRetainsIdentityAliases()
+    {
+        QFETCH(bool, replay);
+        QVERIFY(migrate(db));
+        auto messages = page({ "secret" }, true);
+        auto extra    = QJsonDocument::fromJson(messages.entries[0].extra.toUtf8()).object();
+        extra.insert("psi:origin", QStringLiteral("origin-alias"));
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM message_state_refs WHERE kind=2 AND target='origin-alias'").toInt(), 1);
+        QVERIFY(scrubStoredMessage(db, key, messages.entries[0].eventId));
+        if (replay)
+            QVERIFY(storePage(db, key, "", 1, messages));
+        else
+            QVERIFY(backfillMessageStates(db));
+        QCOMPARE(scalar("SELECT count(*) FROM message_state_refs WHERE kind=2 AND target='origin-alias'").toInt(), 1);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 1);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 1);
+        QVERIFY(resolvedRecord(db, messages.entries[0].eventId).isEmpty());
+    }
+
+    void scrubbingRejectsWrongScopeAndProtocolEvents()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "message" }, true);
+        QVERIFY(storePage(db, key, "", 1, messages));
+        const auto id    = messages.entries[0].eventId;
+        auto       wrong = key;
+        wrong.account    = QStringLiteral("other-account");
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        wrong      = key;
+        wrong.peer = QStringLiteral("other@example.org");
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        wrong      = key;
+        wrong.room = true;
+        QVERIFY(!scrubStoredMessage(db, wrong, id));
+        QVERIFY(!scrubStoredMessage(db, key, 0));
+        QVERIFY(!scrubStoredMessage(db, key, id + 100));
+        QCOMPARE(resolvedRecord(db, id).value("m_text").toString(), QStringLiteral("hello"));
+
+        auto marker    = page({ });
+        marker.entries = { effect("read", "displayed", "message-client", 1) };
+        QVERIFY(storePage(db, key, "marker-edge", 1, marker));
+        QVERIFY(!scrubStoredMessage(db, key, marker.entries[0].eventId));
+        QCOMPARE(flags(id), int(MessageState::Displayed));
+        // A failed request must also release the transaction for a valid one.
+        QVERIFY(scrubStoredMessage(db, key, id));
+        QVERIFY(scrubStoredMessage(db, key, id));
+        QCOMPARE(scalar(QStringLiteral("SELECT message_flags FROM events WHERE id=%1").arg(id)).toInt(),
+                 int(MessageState::Displayed | MessageState::LocalDeleted));
+    }
+
+    void scrubbingRefusesAmbiguousCorrectionTargets()
+    {
+        QVERIFY(migrate(db));
+        auto messages                 = page({ "first", "second", "correction" }, true);
+        messages.entries[1].messageId = messages.entries[0].messageId;
+        messages.entries[1].extra     = messages.entries[0].extra;
+        messages.entries[2].replaceId = messages.entries[0].messageId;
+        QVERIFY(storePage(db, key, "", 3, messages));
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 3);
+        QVERIFY(!scrubStoredMessage(db, key, messages.entries[2].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='hello'").toInt(), 3);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 0);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml<>''").toInt(), 3);
+    }
+
+    void scrubbingFailureRollsBackEveryRevision()
+    {
+        QVERIFY(migrate(db));
+        auto messages                 = page({ "original", "correction" }, true);
+        messages.entries[1].replaceId = messages.entries[0].messageId;
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QSqlQuery query(db);
+        QVERIFY(query.exec("CREATE TRIGGER reject_scrub BEFORE UPDATE OF xml ON archive_items "
+                           "WHEN old.uid='correction' AND new.xml='' "
+                           "BEGIN SELECT RAISE(ABORT,'simulated scrub failure'); END"));
+        QVERIFY(!scrubStoredMessage(db, key, messages.entries[1].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='hello'").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE (message_flags & 16)<>0").toInt(), 0);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml<>''").toInt(), 2);
+        QVERIFY(query.exec("DROP TRIGGER reject_scrub"));
+        QVERIFY(scrubStoredMessage(db, key, messages.entries[1].eventId));
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text='' AND extra_data=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_items WHERE xml=''").toInt(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM archive_page_items").toInt(), 2);
+    }
+
     void confirmedResultRepairsAnUnverifiedProjection()
     {
         QVERIFY(migrate(db));
