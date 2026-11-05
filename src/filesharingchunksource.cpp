@@ -7,7 +7,6 @@
 #include "mediachunktransfer.h"
 #include "psiaccount.h"
 #include "psicon.h"
-#include <QDomDocument>
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QHash>
@@ -64,7 +63,7 @@ public:
         connect(download_, &FileShareDownloader::fileMetadataReceived, this,
                 [this](const XMPP::Jingle::FileTransfer::File &file) {
                     if (item_)
-                        FileSharingChunkSource::addMetadata(item_, file);
+                        FileSharingChunkSource::addChecksums(item_, file);
                 });
         connect(download_, &FileShareDownloader::transferCompleted, this, [this] {
             accepted_ = true;
@@ -206,7 +205,7 @@ QString FileSharingChunkSource::identity(FileSharingItem *item)
 {
     return item && item->account() ? item->account()->id() + QChar(0) + item->sums().value(0).toString() : QString();
 }
-void FileSharingChunkSource::addMetadata(FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
+void FileSharingChunkSource::addChecksums(FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return;
@@ -224,22 +223,13 @@ void FileSharingChunkSource::addMetadata(FileSharingItem *item, const XMPP::Jing
             if (!h.data().isEmpty())
                 hashes.append({ range.offset, length, h.stringType(), h.data() });
     }
-    QDomDocument document;
-    document.appendChild(item->fileMetadata().toXml(&document));
-    QVariantMap metadata = item->metaData();
-    metadata.insert(QStringLiteral("file-xml"), document.toString(-1));
-    metadata.insert(QStringLiteral("sources"), item->uris());
-    metadata.insert(QStringLiteral("media-type"), item->mimeType());
-    metadata.insert(QStringLiteral("name"), item->displayName());
-    metadata.insert(QStringLiteral("identity"), identity(item));
-    auto cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
-    cache->configure(identity(item), size, hashes, metadata);
+    item->account()->psi()->fileSharingManager()->mediaChunkCache()->configure(identity(item), size, hashes);
 }
 MediaChunkCache *FileSharingChunkSource::configure(FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return nullptr;
-    addMetadata(item, item->fileMetadata());
+    addChecksums(item, item->fileMetadata());
     return item->account()->psi()->fileSharingManager()->mediaChunkCache();
 }
 QString FileSharingChunkSource::localFile(FileSharingItem *item)
@@ -302,7 +292,7 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
     auto checksumSpan = std::make_shared<QPair<quint64, quint64>>(offset, length);
     QObject::connect(download, &FileShareDownloader::fileMetadataReceived, item,
                      [item, checksumSpan](const XMPP::Jingle::FileTransfer::File &file) {
-                         addMetadata(item, file);
+                         addChecksums(item, file);
                          const auto range = file.range();
                          if (!range.hashes.isEmpty() && range.offset < *item->fileSize())
                              *checksumSpan

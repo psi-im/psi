@@ -403,7 +403,9 @@ list(APPEND SOURCES
     historysyncaccount.cpp
     nativechathistory.cpp
     historymessageextras.cpp
-    filesharingstore.cpp
+    filesharingcatalog.cpp
+    filesharingpublicationsync.cpp
+    historymediarefs.cpp
     edbsqlite.cpp
     eventdb.cpp
     eventdlg.cpp

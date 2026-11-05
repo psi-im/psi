@@ -133,6 +133,45 @@ private slots:
         QCOMPARE(result.attachments.first().description, QString("movie"));
     }
 
+    void attachmentsTellFilesFromUrls()
+    {
+        const MessageAttachments::Attachment file { share("https://example.org/photo.png"), {} };
+        QVERIFY(file.isFile());
+        QVERIFY(!file.url().isValid());
+
+        const MessageAttachments::Attachment url { Reference(Reference::Data, "https://example.org/a.png#frag"), {} };
+        QVERIFY(!url.isFile());
+        QCOMPARE(url.url(), QUrl("https://example.org/a.png"));
+
+        MediaSharing unhashed;
+        unhashed.file.setName("photo.png");
+        Reference reference(Reference::Data, "https://example.org/b.png");
+        reference.setMediaSharing(unhashed);
+        const MessageAttachments::Attachment hashless { reference, {} };
+        QVERIFY(!hashless.isFile());
+        QVERIFY(!hashless.url().isValid());
+
+        const MessageAttachments::Attachment mention { Reference(Reference::Mention, "https://example.org/c"), {} };
+        QVERIFY(!mention.isFile());
+        QVERIFY(!mention.url().isValid());
+
+        const MessageAttachments::Attachment link { Reference(Reference::Data, "xmpp:room@example.org?join"), {} };
+        QVERIFY(!link.isFile());
+        QVERIFY(!link.url().isValid());
+
+        const MessageAttachments::Attachment nothing;
+        QVERIFY(!nothing.isFile());
+        QVERIFY(!nothing.url().isValid());
+    }
+
+    void urlIdentityIsStable()
+    {
+        // Persisted with the URL-to-content mappings and publications.
+        const QByteArray key("psi-oob-url-v1:https://example.org/a.png");
+        QCOMPARE(MessageAttachments::urlIdentity(QUrl("https://example.org/a.png")).toString(),
+                 Hash(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256)).toString());
+    }
+
     void nonHttpUrlsAreLinks()
     {
         Message incoming;

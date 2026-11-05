@@ -7,4 +7,7 @@
 namespace HistoryMessageExtras {
 QString encode(const XMPP::Message &message);
 void    restore(const QString &json, XMPP::Message &message);
+// Only what the message attaches. This one works off the GUI thread, as it involves no
+// JID: Iris prepares JIDs through a cache without locks.
+void restoreAttachments(const QString &json, XMPP::Message &message);
 }

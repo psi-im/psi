@@ -20,7 +20,7 @@
 #include "applicationinfo.h"
 // #include "common.h"
 #include "edbsqlite.h"
-#include "filesharingmanager.h"
+#include "historymediarefs.h"
 #include "historyupgrade.h"
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
@@ -305,8 +305,12 @@ bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &
 {
     if (!commit())
         return false;
-    const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
+    auto       db = QSqlDatabase::database("history");
+    const bool ok = HistoryArchive::storePage(db, key, before, limit, page,
+                                              [db](qint64 eventId) { return HistoryMediaRefs::link(db, eventId); });
     jidsCache.clear(); // A failed transaction must not retain an inserted contact ID.
+    if (ok)
+        emit mediaLinksAdded();
     return ok;
 }
 
@@ -315,11 +319,12 @@ bool EDBSqLite::init()
     if (status == NotActive)
         return false;
     auto db = QSqlDatabase::database("history");
-    if (HistoryArchive::needsMigration(db)) {
+    if (HistoryArchive::needsMigration(db) || HistoryMediaRefs::needsMigration(db)) {
         QSqlQuery  count(db);
         const bool empty = count.exec("SELECT 1 FROM events LIMIT 1") && !count.next();
         count.finish();
-        const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryUpgrade::upgradeDatabase(db.databaseName());
+        const bool migrated = empty ? HistoryArchive::migrate(db) && HistoryMediaRefs::migrate(db)
+                                    : HistoryUpgrade::upgradeDatabase(db.databaseName());
         if (!migrated) {
             status = NotActive;
             return false;
@@ -328,6 +333,8 @@ bool EDBSqLite::init()
 
     return true;
 }
+
+QString EDBSqLite::connectionName() const { return QStringLiteral("history"); }
 
 int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache; }
 
@@ -650,8 +657,6 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         query->bindValue(":m_text", m.body(lang));
         query->bindValue(":lang", lang);
         query->bindValue(":extra_data", HistoryMessageExtras::encode(m));
-        if (auto account = psi()->contactList()->getAccount(accId))
-            psi()->fileSharingManager()->rememberMessage(m, account);
     } else {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         query->bindValue(":subject", QVariant(QVariant::String));
@@ -668,13 +673,16 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
     bool res = query->exec();
     if (res && e->type() == PsiEvent::Message) {
         const Message &m = e.staticCast<MessageEvent>()->message().displayMessage();
-        if (!HistoryArchive::recordRevision(db,query->lastInsertId().toLongLong(),
-                                             contactId,nType,nDirection,m.from().full(),
-                                             m.id(),m.replaceId())
-            || !HistoryArchive::recordMessageStates(db, { query->lastInsertId().toLongLong() })) {
+        // SQLite keeps the last insert per connection, so this changes with the next write.
+        const qint64 eventId = query->lastInsertId().toLongLong();
+        if (!HistoryArchive::recordRevision(db, eventId, contactId, nType, nDirection, m.from().full(), m.id(),
+                                            m.replaceId())
+            || !HistoryArchive::recordMessageStates(db, { eventId }) || !HistoryMediaRefs::link(db, eventId)) {
             rollback();
             return false;
         }
+        if (!m.references().isEmpty() || !m.urlList().isEmpty())
+            emit mediaLinksAdded();
     }
     return res;
 }
@@ -859,6 +867,8 @@ bool EDBSqLite::eraseHistory(const QString &accId, const XMPP::Jid &jid)
         res = commit();
     else
         rollback();
+    if (res)
+        emit mediaLinksRemoved();
     return res;
 }
 
