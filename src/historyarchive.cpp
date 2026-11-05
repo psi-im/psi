@@ -902,7 +902,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
                 for (const auto &name :
                      { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin", "psi:encrypted",
                        "psi:encryption-protocol", "psi:decoded", "psi:has-body", "psi:decryption-error",
-                       "psi:protocol-only", "urn:xmpp:reference:0", "jabber:x:oob" })
+                       "psi:protocol-only", "urn:xmpp:reference:0", "urn:xmpp:sfs:0", "jabber:x:oob" })
                     merged.remove(QLatin1String(name));
                 for (auto it = incoming.begin(); it != incoming.end(); ++it)
                     merged.insert(it.key(), it.value());

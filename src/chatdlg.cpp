@@ -29,6 +29,7 @@
 #include "iconaction.h"
 #include "iconselect.h"
 #include "jidutil.h"
+#include "messageattachments.h"
 #include "pgputil.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -819,8 +820,7 @@ void ChatDlg::incomingMessage(const Message &m)
 {
     Message dm   = m.displayMessage();
     historyState = false;
-    if (dm.body().isEmpty() && dm.subject().isEmpty() && dm.urlList().isEmpty()
-        && dm.references().isEmpty()) {
+    if (dm.body().isEmpty() && dm.subject().isEmpty() && !MessageAttachments::hasAttachments(dm)) {
         // Event message
         if (dm.containsEvent(CancelEvent)) {
             setContactChatState(XMPP::StatePaused);

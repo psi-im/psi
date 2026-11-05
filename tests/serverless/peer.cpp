@@ -43,6 +43,15 @@ int main(int argc, char **argv)
         XMPP::Reference reference(XMPP::Reference::Data, media.sources.first());
         reference.setMediaSharing(media);
         reply.setReferences({ reference });
+        XMPP::StatelessFileSharing::Sources sources;
+        sources.add(XMPP::StatelessFileSharing::Source::fromUrl(QUrl("https://example.invalid/shared-file.bin")));
+        media.file.setName(QStringLiteral("shared-file.bin"));
+        media.file.setHashes({ XMPP::Hash::from(XMPP::Hash::Sha256, QByteArrayLiteral("serverless-ui-sharing")) });
+        XMPP::StatelessFileSharing::FileSharing sharing;
+        sharing.setDisposition(XMPP::StatelessFileSharing::Disposition::Attachment);
+        sharing.setFile(media.file);
+        sharing.setSources(sources);
+        reply.addFileSharing(sharing);
         client.sendMessage(reply);
         qInfo("PEER-MESSAGE-OK");
     });

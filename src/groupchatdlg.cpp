@@ -40,6 +40,7 @@
 #include "lastactivitytask.h"
 #include "mcmdmanager.h"
 #include "mcmdsimplesite.h"
+#include "messageattachments.h"
 #include "messageview.h"
 #include "historysync.h"
 #include "nativechathistory.h"
@@ -2398,9 +2399,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    // An attachment-only SIMS or jabber:x:oob stanza is still a
-    // visible message, even with no ordinary <body>.
-    if (dm.body().isEmpty() && dm.references().isEmpty() && dm.urlList().isEmpty())
+    // An attachment-only stanza is still a visible message, even with no ordinary <body>.
+    if (dm.body().isEmpty() && !MessageAttachments::hasAttachments(dm))
         return;
 
     // code to determine if the speaker was addressing this client in chat
