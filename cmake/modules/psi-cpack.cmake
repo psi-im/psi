@@ -137,7 +137,7 @@ if(CMAKE_VERSION GREATER_EQUAL 4.2.0)
         # Create custom AppRun
         file(WRITE "${CMAKE_BINARY_DIR}/AppRun.sh" "#!/bin/sh
 HERE=\"$(dirname \"$(readlink -f \"\${0}\")\")\"
-export QT_QPA_PLATFORMTHEME=\"\${QT_QPA_PLATFORMTHEME: -xdgdesktopportal}\"
+export QT_QPA_PLATFORMTHEME=\"\${QT_QPA_PLATFORMTHEME:-xdgdesktopportal}\"
 export GST_PLUGIN_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0\"
 # Path to the libraries inside of AppImage
 export LD_LIBRARY_PATH=\"\${HERE}/usr/${CMAKE_INSTALL_LIBDIR}:\${LD_LIBRARY_PATH}\"
