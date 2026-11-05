@@ -25,6 +25,7 @@
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
+#include "messageattachments.h"
 #include "psiaccount.h"
 #include "psicontactlist.h"
 
@@ -681,7 +682,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
             rollback();
             return false;
         }
-        if (!m.references().isEmpty() || !m.urlList().isEmpty())
+        if (MessageAttachments::hasAttachments(m))
             emit mediaLinksAdded();
     }
     return res;

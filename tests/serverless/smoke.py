@@ -124,27 +124,29 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                                      "WHERE c.acc_id=? AND e.m_text=?",
                                      (persistent_id, "serverless-ui-test")).fetchone()[0]
             assert count == 2, f"Expected incoming/outgoing EDB records, got {count}"
-            # Of those two, the reply attaches a file, and history links only that to a publication.
+            # Of those two, the reply attaches two files, and history links only those to publications.
             links = database.execute("SELECT r.publication_id FROM message_media_refs r "
                                      "JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
-                                     "WHERE c.acc_id=?", (persistent_id,)).fetchall()
-            assert len(links) == 1, f"Expected the attachment of the reply to be linked, got {links}"
+                                     "WHERE c.acc_id=? ORDER BY r.ordinal", (persistent_id,)).fetchall()
+            assert len(links) == 2, f"Expected the attachments of the reply to be linked, got {links}"
         database.close()
         with sqlite3.connect(profile / "files.sqlite") as database:
             publications = database.execute("SELECT id,serving,announcer FROM publications WHERE account=?",
                                             (persistent_id,)).fetchall()
-            assert len(publications) == 1 and publications[0][:2] == (links[0][0], 0), publications
-            assert publications[0][2].startswith("test@p-"), publications
-            sources = database.execute("SELECT uri FROM publication_sources WHERE publication_id=?",
-                                       links[0]).fetchall()
-            assert sources == [("https://example.invalid/peer-file.bin",)], sources
-            digests = database.execute("SELECT algorithm,digest FROM publication_hashes WHERE publication_id=?",
-                                       links[0]).fetchall()
-            assert digests == [("sha-256", hashlib.sha256(b"serverless-ui-file").digest())], digests
+            assert sorted(row[:2] for row in publications) == sorted((link[0], 0) for link in links), publications
+            assert all(row[2].startswith("test@p-") for row in publications), publications
+            for link, url, content in ((links[0], "https://example.invalid/peer-file.bin", b"serverless-ui-file"),
+                                       (links[1], "https://example.invalid/shared-file.bin", b"serverless-ui-sharing")):
+                sources = database.execute("SELECT uri FROM publication_sources WHERE publication_id=?",
+                                           link).fetchall()
+                assert sources == [(url,)], sources
+                digests = database.execute("SELECT algorithm,digest FROM publication_hashes WHERE publication_id=?",
+                                           link).fetchall()
+                assert digests == [("sha-256", hashlib.sha256(content).digest())], digests
             # Only what the account shared survives from the old catalog, and it serves that.
             imported = database.execute("SELECT serving,announcer FROM publications WHERE account=?",
                                         ("existing-xmpp-fixture",)).fetchall()
             assert imported == [(1, "fixture@example.invalid")], imported
         database.close()
         assert not legacy_catalog.exists(), "The old catalog was left behind"
-    print("PASS: settings, discovered peer, two-process chat, file publication, roster, disable and profile restart")
+    print("PASS: settings, discovered peer, two-process chat, file publications, roster, disable and profile restart")

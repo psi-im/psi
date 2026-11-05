@@ -57,6 +57,14 @@ void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message)
     }
     if (!references.isEmpty())
         message.setReferences(references);
+    for (const auto &value : extra.value(XMPP::StatelessFileSharing::NS).toArray()) {
+        QDomDocument doc;
+        if (value.isString() && parseReferenceXml(doc, value.toString())) {
+            const XMPP::StatelessFileSharing::FileSharing sharing(doc.documentElement());
+            if (sharing.isValid())
+                message.addFileSharing(sharing);
+        }
+    }
 }
 }
 
@@ -91,6 +99,14 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     }
     if (!references.isEmpty())
         extra.insert(XMPP::REFERENCE_NS, references);
+    QJsonArray fileSharings;
+    for (const auto &sharing : message.fileSharings()) {
+        QDomDocument doc;
+        doc.appendChild(sharing.toXml(&doc));
+        fileSharings.append(doc.toString(-1));
+    }
+    if (!fileSharings.isEmpty())
+        extra.insert(XMPP::StatelessFileSharing::NS, fileSharings);
     // Shares may locate their body text only through XEP-0428 fallbacks.
     QJsonArray fallbacks;
     for (const auto &fallback : message.fallbacks())

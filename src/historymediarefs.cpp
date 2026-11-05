@@ -15,8 +15,9 @@ namespace {
 const QString tableName = QStringLiteral("message_media_refs");
 
 // Spares nearly every message from being decoded.
-const QString mayHaveAttachments
-    = QStringLiteral("(instr(extra_data,'\"urn:xmpp:reference:0\"')>0 OR instr(extra_data,'\"jabber:x:oob\"')>0)");
+const QString mayHaveAttachments = QStringLiteral("(instr(extra_data,'\"urn:xmpp:reference:0\"')>0 "
+                                                   "OR instr(extra_data,'\"urn:xmpp:sfs:0\"')>0 "
+                                                   "OR instr(extra_data,'\"jabber:x:oob\"')>0)");
 }
 
 bool HistoryMediaRefs::needsMigration(QSqlDatabase db) { return !db.tables().contains(tableName); }
