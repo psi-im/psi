@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
+#include "widgets/OverlayScrollBarManager.h"
 #include "widgets/MamImageViewer.h"
 #include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
@@ -6303,6 +6304,69 @@ private slots:
         chat.setTheme(described);
         QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
         QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+    }
+
+    void unreadEdgeBadgeCountsOnlyUnseenIncomingMessages()
+    {
+        MamChatWidget chat;
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("seen"), QStringLiteral("Seen")));
+        chat.markUnreadBoundary();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+
+        chat.appendMessage(message(QStringLiteral("incoming1"), QStringLiteral("First"), 1));
+        chat.appendMessage(message(QStringLiteral("local"), QStringLiteral("Sent"), 2, true));
+        MessageView notice = MessageView::systemMessage(QStringLiteral("Notice"));
+        notice.setDateTime(message(QStringLiteral("notice"), {}, 3).dateTime());
+        chat.appendMessage(notice);
+        chat.appendMessage(message(QStringLiteral("incoming2"), QStringLiteral("Second"), 4));
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("2"));
+
+        // Loading old history and inserting own messages does not inflate the
+        // count or change the reference boundary.
+        auto older = message(QStringLiteral("older"), QStringLiteral("Archived"), -3600);
+        older.setHistoryId(10);
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QStringLiteral("old-archive"), older) }), 1);
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("2"));
+
+        chat.markUnreadBoundary();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+        chat.appendMessage(message(QStringLiteral("incoming3"), QStringLiteral("Third"), 5));
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("1"));
+        chat.clearMessages();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+    }
+
+    void edgeNavigationGuardImmediatelyDismissesMessageActions()
+    {
+        MamChatWidget chat;
+        chat.resize(460, 200);
+        chat.setHistoryLoading(true);
+        auto first = message(QStringLiteral("first"), QStringLiteral("First message"), 0, true);
+        first.setReactionTargetId(QStringLiteral("first-reaction"));
+        first.setRetractionTargetId(QStringLiteral("first"));
+        chat.appendMessage(first);
+        for (int i = 1; i < 20; ++i)
+            chat.appendMessage(message(QStringLiteral("more-%1").arg(i),
+                                       QStringLiteral("Message %1").arg(i), i));
+        Mattermost::OverlayScrollBarManager::attach(chat);
+        chat.show();
+        chat.scrollToIndex(0);
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *guard = chat.findChild<QWidget *>(QStringLiteral("mattermostOverlayScrollToEndGuard"));
+        auto *button = chat.findChild<QToolButton *>(
+            QStringLiteral("mattermostOverlayScrollToEndButton"));
+        QVERIFY(guard && button);
+        QTRY_VERIFY(guard->isVisible() && button->isVisible());
+
+        auto *row = chat.itemWidget(0);
+        QCursor::setPos(row->mapToGlobal(QPoint(5, 5)));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(row, &enter);
+        auto *actions = chat.findChild<QFrame *>(QStringLiteral("mamMessageActions"));
+        QTRY_VERIFY(actions && actions->isVisible());
+        QApplication::sendEvent(guard, &enter);
+        QVERIFY(!actions->isVisible());
     }
 
     void unreadSeparatorUsesOneFrameForFallbackAndThemePlacement()
