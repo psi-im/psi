@@ -65,7 +65,7 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. |
 | `QFrame#mamUnreadSeparator` | Unread boundary when the renderer places it | Style its border/colour/height in QSS; absent on other messages. |
 | `QLabel#mamDateSeparator` | Local calendar date divider | Theme-placeable date text, styled like other labels. |
-| `#mamBubble[dateSeparator="true"]` | Bubble theme's date bubble | Set `qproperty-fillColor`, `qproperty-borderColor` and `qproperty-radius`. |
+| `#mamDateBubble` | Bubble theme's date bubble | Set `qproperty-fillColor`, `qproperty-borderColor` and `qproperty-radius` independently of message bubbles. |
 
 Combine selectors to style parts in one kind of message, for example our own
 messages in the Bubble theme: `#mamBubble[tone="own"] QLabel#mamTimestamp`.
