@@ -4817,9 +4817,11 @@ private slots:
         // combined author/body text, and determines the minimum row height.
         auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar"));
         const int avatarHeight = avatar ? avatar->height() : 0;
+        auto *dateDivider = row->findChild<QWidget *>(QStringLiteral("mamDateDivider"));
+        const int dateHeight = dateDivider ? dateDivider->height() : 0;
         QTRY_VERIFY2(row->height() <= qMax(avatarHeight,
                                            authorHeight + body->heightForWidth(body->width()) + 3)
-                                            + 18,
+                                            + 18 + dateHeight,
                      qPrintable(QStringLiteral("row=%1 avatar=%2 author=%3 body=%4 width=%5")
                                     .arg(row->height()).arg(avatarHeight).arg(authorHeight)
                                     .arg(body->heightForWidth(body->width())).arg(body->width())));
@@ -5104,7 +5106,8 @@ private slots:
         QTRY_VERIFY(list.itemWidget(0) != nullptr);
         QWidget *row = list.itemWidget(0);
         auto labels = row->findChildren<QLabel *>();
-        QCOMPARE(labels.size(), 3);
+        QCOMPARE(labels.size(), 4); // Author, timestamp, avatar and date divider.
+        QVERIFY(row->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
         QCOMPARE(row->findChild<ChatMessageText *>()->toPlainText(), QStringLiteral("first body"));
 
         auto changed = message(QStringLiteral("m2"), QStringLiteral("edited body"), 2);
@@ -6293,7 +6296,8 @@ private slots:
         QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(3));
         QTRY_VERIFY(chat.itemWidget(0)->property("_psiMamDateBoundary").toBool());
         QTRY_VERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
-        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        auto *oldDivider = chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(oldDivider && !oldDivider->isVisible());
         QVERIFY(chat.itemWidget(3)->property("_psiMamDateBoundary").toBool());
 
         // Description themes may position the date slot themselves.
