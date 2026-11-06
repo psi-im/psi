@@ -337,6 +337,7 @@ void CodeBlockWidget::addCodeAction(QAction *action)
         "QToolButton#mamCodeBlockAction { color: #f1f3ed; background: #50554b;"
         " border: 1px solid #787e73; border-radius: 5px; padding: 2px 6px; }"
         "QToolButton#mamCodeBlockAction:hover { background: #656d5e; }"
+        "QToolButton#mamCodeBlockAction:checked { background: #777f6f; border-color: #b4c1ab; }"
         "QToolButton#mamCodeBlockAction:pressed { background: #777f6f; }"));
     actionsLayout_->addWidget(button);
     actionButtons_.insert(action, button);
