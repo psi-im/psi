@@ -204,6 +204,9 @@ QHBoxLayout *bubbleRowLayout(Canvas &canvas)
         auto *dateLayout = new QHBoxLayout(dateRow);
         dateLayout->setContentsMargins(12, 5, 12, 4);
         auto *dateBubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, dateRow);
+        // Keep the date bubble independently selectable from message bubbles
+        // by QSS and findChild() consumers.
+        dateBubble->setObjectName(QStringLiteral("mamDateBubble"));
         dateBubble->setProperty("dateSeparator", true);
         dateBubble->column()->addWidget(date);
         dateLayout->addStretch(1);
