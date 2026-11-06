@@ -228,7 +228,7 @@ PsiChatDlg::PsiChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager) :
     ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_),
     tabCompletion(&mCmdManager_)
 {
-    encryptionMenu_ = new QMenu(this);
+    encryptionMenu_ = new QMenu(tr("Encryption"), this);
     connect(encryptionMenu_, &QMenu::aboutToShow, this, &PsiChatDlg::buildEncryptionMenu);
     connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
     connect(account(), SIGNAL(addedContact(PsiContact *)), SLOT(updateContactAdding(PsiContact *)));
@@ -953,7 +953,8 @@ void PsiChatDlg::initToolButtons()
         } else if (name == QString::fromLatin1("chat_file")) {
             connect(action, SIGNAL(triggered()), SLOT(doFile()));
         } else if (name == QString::fromLatin1("chat_pgp")) {
-            action->setMenu(encryptionMenu_);
+            // Keep the menu on the button, not on the shared action. Otherwise
+            // the toolbar action itself becomes an extra "Encryption" submenu.
             ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
             ui_.tb_pgp->setMenu(encryptionMenu_);
             ui_.tb_pgp->setPopupMode(QToolButton::InstantPopup);
@@ -1514,7 +1515,11 @@ void PsiChatDlg::buildMenu()
     if (AvCallManager::isSupported() || account()->canWhiteboard(jid())) {
         pm_settings_->addAction(actions_->action("chat_voice"));
     }
-    pm_settings_->addAction(actions_->action("chat_pgp"));
+    // The settings menu deliberately contains a named submenu, while the
+    // encryption toolbutton shows its choices directly.
+    encryptionMenu_->setIcon(actions_->action("chat_pgp")->icon());
+    encryptionMenu_->menuAction()->setEnabled(actions_->action("chat_pgp")->isEnabled());
+    pm_settings_->addMenu(encryptionMenu_);
     pm_settings_->addSeparator();
 
     pm_settings_->addAction(actions_->action("chat_info"));

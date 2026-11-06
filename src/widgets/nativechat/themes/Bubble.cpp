@@ -185,17 +185,35 @@ namespace {
 
 using NativeChatBuiltins::BubbleFrame;
 
-// The bubble theme owns the unread frame's placement below the bubble.
-// Other renderers receive the same frame in Psi's default row layout.
+// Bubble places the date in its own centred, tailless bubble before the
+// message, and the unread boundary below it. Neither becomes a list row.
 QHBoxLayout *bubbleRowLayout(Canvas &canvas)
 {
+    auto *date = canvas.take(Canvas::DateSeparator);
     auto *separator = canvas.take(Canvas::UnreadSeparator);
-    if (!separator)
+    if (!date && !separator)
         return rowLayout(canvas, QMargins(12, 4, 12, 4), 6);
 
     auto *column = new QVBoxLayout(canvas.row());
     column->setContentsMargins(0, 0, 0, 0);
     column->setSpacing(0);
+
+    if (date) {
+        auto *dateRow = new QWidget(canvas.row());
+        dateRow->setObjectName(QStringLiteral("mamBubbleDateRow"));
+        auto *dateLayout = new QHBoxLayout(dateRow);
+        dateLayout->setContentsMargins(12, 5, 12, 4);
+        auto *dateBubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, dateRow);
+        // Keep the date bubble independently selectable from message bubbles
+        // by QSS and findChild() consumers.
+        dateBubble->setObjectName(QStringLiteral("mamDateBubble"));
+        dateBubble->setProperty("dateSeparator", true);
+        dateBubble->column()->addWidget(date);
+        dateLayout->addStretch(1);
+        dateLayout->addWidget(dateBubble, 0, Qt::AlignCenter);
+        dateLayout->addStretch(1);
+        column->addWidget(dateRow, 0, Qt::AlignTop);
+    }
 
     auto *message = new QWidget(canvas.row());
     message->setObjectName(QStringLiteral("mamBubbleMessage"));
@@ -205,13 +223,17 @@ QHBoxLayout *bubbleRowLayout(Canvas &canvas)
     auto *outer = new QHBoxLayout(message);
     outer->setContentsMargins(12, 4, 12, 4);
     outer->setSpacing(6);
+    if (auto *selection = canvas.take(Canvas::Selection))
+        outer->addWidget(selection, 0, Qt::AlignTop);
 
-    auto *divider = new QWidget(canvas.row());
-    divider->setObjectName(QStringLiteral("mamBubbleUnreadDivider"));
-    auto *dividerLayout = new QHBoxLayout(divider);
-    dividerLayout->setContentsMargins(12, 2, 12, 2);
-    dividerLayout->addWidget(separator);
-    column->addWidget(divider, 0, Qt::AlignTop);
+    if (separator) {
+        auto *divider = new QWidget(canvas.row());
+        divider->setObjectName(QStringLiteral("mamBubbleUnreadDivider"));
+        auto *dividerLayout = new QHBoxLayout(divider);
+        dividerLayout->setContentsMargins(12, 2, 12, 2);
+        dividerLayout->addWidget(separator);
+        column->addWidget(divider, 0, Qt::AlignTop);
+    }
     return outer;
 }
 

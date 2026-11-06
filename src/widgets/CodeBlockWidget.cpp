@@ -29,6 +29,7 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QScreen>
+#include <QResizeEvent>
 #include <QStringList>
 #include <QSyntaxHighlighter>
 #include <QTextBlock>
@@ -69,6 +70,24 @@ QIcon copyIcon()
     painter.drawLine(QPointF(4, 13), QPointF(3, 13));
     painter.drawLine(QPointF(3, 13), QPointF(3, 3));
     painter.drawLine(QPointF(3, 3), QPointF(12, 3));
+    return QIcon(pixmap);
+}
+
+QIcon wordWrapIcon()
+{
+    // A small high-contrast wrapping arrow, independent of the icon theme.
+    QPixmap pixmap(20, 20);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(QColor(245, 248, 242), 1.6, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.drawLine(QPointF(3, 5), QPointF(17, 5));
+    painter.drawLine(QPointF(3, 9), QPointF(14, 9));
+    painter.drawLine(QPointF(3, 13), QPointF(11, 13));
+    painter.drawLine(QPointF(14, 9), QPointF(17, 9));
+    painter.drawLine(QPointF(17, 9), QPointF(17, 13));
+    painter.drawLine(QPointF(17, 13), QPointF(13, 16));
+    painter.drawLine(QPointF(13, 16), QPointF(15, 13));
     return QIcon(pixmap);
 }
 
@@ -255,6 +274,18 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     });
     addCodeAction(copyAction_);
 
+    wrapAction_ = new QAction(wordWrapIcon(), tr("Word wrap"), this);
+    wrapAction_->setObjectName(QStringLiteral("mamCodeBlockWordWrap"));
+    wrapAction_->setCheckable(true);
+    wrapAction_->setToolTip(tr("Wrap long lines"));
+    connect(wrapAction_, &QAction::toggled, this, [this](bool enabled) {
+        editor_->setWordWrapMode(enabled ? QTextOption::WrapAtWordBoundaryOrAnywhere : QTextOption::NoWrap);
+        editor_->setHorizontalScrollBarPolicy(enabled ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
+        wrapAction_->setToolTip(enabled ? tr("Disable word wrap") : tr("Wrap long lines"));
+        updateHeight();
+    });
+    addCodeAction(wrapAction_);
+
     openWindowAction_ = new QAction(tr("Open code in window"), this);
     openWindowAction_->setObjectName(QStringLiteral("mamCodeBlockOpenWindow"));
     openWindowAction_->setToolTip(tr("Open code in a separate window"));
@@ -306,6 +337,7 @@ void CodeBlockWidget::addCodeAction(QAction *action)
         "QToolButton#mamCodeBlockAction { color: #f1f3ed; background: #50554b;"
         " border: 1px solid #787e73; border-radius: 5px; padding: 2px 6px; }"
         "QToolButton#mamCodeBlockAction:hover { background: #656d5e; }"
+        "QToolButton#mamCodeBlockAction:checked { background: #777f6f; border-color: #b4c1ab; }"
         "QToolButton#mamCodeBlockAction:pressed { background: #777f6f; }"));
     actionsLayout_->addWidget(button);
     actionButtons_.insert(action, button);
@@ -489,9 +521,29 @@ void CodeBlockWidget::updateHeight()
         // available window height, without an arbitrary 25-line restriction.
         editorHeight_ = 0;
     } else {
-        const int visibleLines = std::min(MaximumVisibleLines, std::max(1, editor_->document()->blockCount()));
-        editorHeight_ = visibleLines * QFontMetrics(editor_->font()).lineSpacing() + 3;
+        int visibleLines = std::max(1, editor_->document()->blockCount());
+        if (wrapAction_ && wrapAction_->isChecked()) {
+            // A wrapped paragraph can occupy several visual lines. Estimate
+            // only up to the 25-line cap, without measuring huge source files.
+            visibleLines = 0;
+            const QFontMetrics metrics(editor_->font());
+            const int available = std::max(1, editor_->viewport()->width());
+            for (QTextBlock block = editor_->document()->begin(); block.isValid() && visibleLines < MaximumVisibleLines;
+                 block = block.next()) {
+                const QString line = block.text().left(2048);
+                visibleLines += std::max(1, (metrics.horizontalAdvance(line) + available - 1) / available);
+            }
+        }
+        editorHeight_ = std::min(MaximumVisibleLines, std::max(1, visibleLines))
+            * QFontMetrics(editor_->font()).lineSpacing() + 3;
         editor_->setFixedHeight(editorHeight_);
+    }
+    const int toolsWidth = actionsLayout_->sizeHint().width() + languageSelector_->sizeHint().width() + ActionGap;
+    if (wrapAction_ && wrapAction_->isChecked()) {
+        // Wrapping must not make the bubble as wide as the longest source line.
+        preferredWidth_ = std::max(420, toolsWidth);
+        updateGeometry();
+        return;
     }
     int widest = 0;
     const QFontMetrics metrics(editor_->font());
@@ -504,7 +556,6 @@ void CodeBlockWidget::updateHeight()
         if (widest >= MaximumPreferredWidth)
             break;
     }
-    const int toolsWidth = actionsLayout_->sizeHint().width() + languageSelector_->sizeHint().width() + ActionGap;
     preferredWidth_ = std::min(MaximumPreferredWidth,
                                std::max({ 140, widest + HorizontalInset * 2 + 12, toolsWidth }));
     updateGeometry();
@@ -565,6 +616,7 @@ void CodeBlockWidget::openInWindow()
     viewer->setHighlightLanguage(language_);
     if (formatAction_->isChecked() && viewer->formatAction()->isEnabled())
         viewer->formatAction()->setChecked(true);
+    viewer->wrapAction()->setChecked(wrapAction_->isChecked());
 
     const QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
     if (!screen)
@@ -579,6 +631,13 @@ void CodeBlockWidget::changeEvent(QEvent *event)
 {
     QWidget::changeEvent(event);
     if (event->type() == QEvent::FontChange)
+        updateHeight();
+}
+
+void CodeBlockWidget::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (wrapAction_ && wrapAction_->isChecked() && !expandedViewer_)
         updateHeight();
 }
 
