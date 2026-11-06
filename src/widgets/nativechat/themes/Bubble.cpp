@@ -220,6 +220,8 @@ QHBoxLayout *bubbleRowLayout(Canvas &canvas)
     auto *outer = new QHBoxLayout(message);
     outer->setContentsMargins(12, 4, 12, 4);
     outer->setSpacing(6);
+    if (auto *selection = canvas.take(Canvas::Selection))
+        outer->addWidget(selection, 0, Qt::AlignTop);
 
     if (separator) {
         auto *divider = new QWidget(canvas.row());
