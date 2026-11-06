@@ -15,6 +15,7 @@
 #include <QHash>
 #include <QList>
 #include <QSet>
+#include <QVector>
 
 class FileSharingDeviceOpener;
 class ChatMessageText;
@@ -212,6 +213,10 @@ private:
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
     QString                                       unreadBoundaryKey_;
+    QString                                       unreadReadProgressKey_; // Furthest viewed row after the boundary.
+    QVector<int>                                  unreadIncomingSuffix_;
+    bool                                          unreadCountsDirty_ = true;
+    void                                          refreshUnreadEdgeBadge();
     QString                                       lastMarkedIncomingRowKey_;
     QDateTime                                     lastMarkedIncomingTime_;
     qint64                                        lastMarkedIncomingHistoryId_ = 0;
