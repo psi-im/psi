@@ -59,6 +59,15 @@ public:
     static void setEdgeNavigationButtonsEnabled(QAbstractScrollArea& area,
                                                 bool enabled);
 
+    /**
+     * Optional generic badge: set "mattermostOverlayBottomBadgeText" on the
+     * scroll area to a nonempty label. The manager owns drawing/positioning;
+     * the consumer decides what the label means.
+     */
+
+    /** True for an edge navigation button or its invisible exclusion zone. */
+    static bool isEdgeNavigationExclusion(const QObject* object);
+
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
 
