@@ -6316,7 +6316,8 @@ private slots:
 
         chat.appendMessage(message(QStringLiteral("incoming1"), QStringLiteral("First"), 1));
         chat.appendMessage(message(QStringLiteral("local"), QStringLiteral("Sent"), 2, true));
-        MessageView notice = MessageView::systemMessage(QStringLiteral("Notice"));
+        MessageView notice(MessageView::Status);
+        notice.setPlainText(QStringLiteral("Notice"));
         notice.setDateTime(message(QStringLiteral("notice"), {}, 3).dateTime());
         chat.appendMessage(notice);
         chat.appendMessage(message(QStringLiteral("incoming2"), QStringLiteral("Second"), 4));
