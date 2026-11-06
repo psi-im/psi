@@ -203,6 +203,57 @@ private slots:
                  area.verticalScrollBar()->minimum());
     }
 
+    void bottomBadgeAndGuardRemainGenericAndClickable()
+    {
+        QAbstractScrollArea area;
+        area.resize(320, 240);
+        area.verticalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setPageStep(20);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        area.show();
+        settleEvents();
+
+        auto *button = area.findChild<QToolButton *>(
+            QStringLiteral("mattermostOverlayScrollToEndButton"));
+        auto *badge = area.findChild<QWidget *>(
+            QStringLiteral("mattermostOverlayBottomBadge"));
+        auto *guard = area.findChild<QWidget *>(
+            QStringLiteral("mattermostOverlayScrollToEndGuard"));
+        QVERIFY(button && badge && guard);
+        QVERIFY(button->isVisible());
+        QVERIFY(!badge->isVisible());
+        QVERIFY(guard->isVisible());
+        QCOMPARE(guard->parentWidget(), static_cast<QWidget *>(&area));
+        QCOMPARE(guard->size(), QSize(button->width() * 3, button->height() * 3));
+        QCOMPARE(button->pos(), guard->pos() + QPoint(button->width(), button->height()));
+        QVERIFY(Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(guard));
+        QVERIFY(Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(button));
+        QVERIFY(!Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(area.viewport()));
+
+        area.setProperty("mattermostOverlayBottomBadgeText", QStringLiteral("42"));
+        settleEvents();
+        QVERIFY(badge->isVisible());
+        QVERIFY(badge->testAttribute(Qt::WA_TransparentForMouseEvents));
+        QVERIFY(badge->geometry().bottom() <
+                button->geometry().top() - guard->geometry().top());
+        QCOMPARE(badge->parentWidget(), guard);
+
+        // The real arrow retains click priority over the invisible halo.
+        QCOMPARE(area.childAt(button->geometry().center()), static_cast<QWidget *>(button));
+        QTest::mouseClick(button, Qt::LeftButton);
+        settleEvents();
+        QCOMPARE(area.verticalScrollBar()->value(), 100);
+        QVERIFY(!button->isVisible());
+        QVERIFY(!guard->isVisible());
+        QVERIFY(!badge->isVisible());
+
+        area.verticalScrollBar()->setValue(40);
+        area.setProperty("mattermostOverlayBottomBadgeText", QString());
+        settleEvents();
+        QVERIFY(button->isVisible());
+        QVERIFY(!badge->isVisible());
+    }
+
     void edgeNavigationButtonsCanBeDisabledTogether()
     {
         QAbstractScrollArea area;
