@@ -228,6 +228,7 @@ private:
     void                                          updateTimestamps();
     NativeChatMessageInfo                         messageInfo(int index) const;
     bool                                          startsNewDate(int index) const;
+    void                                          updateAdjacentDateDivider(int index);
     // Fonts and colours of Psi's own parts, from the row's NativeChatPartOptions.
     void                                          applyPartStyle(QWidget *row, int index);
     void                                          restyleRows();
