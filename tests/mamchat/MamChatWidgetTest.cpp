@@ -42,6 +42,7 @@
 #include <QSignalSpy>
 #include <QTextBlock>
 #include <QTextFragment>
+#include <QTextOption>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QUrlQuery>
