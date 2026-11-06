@@ -24,7 +24,8 @@ const QHash<QString, Canvas::Part> &slotParts()
                                                       { QStringLiteral("timestamp"), Canvas::Timestamp },
                                                       { QStringLiteral("avatar"), Canvas::Avatar },
                                                       { QStringLiteral("body"), Canvas::Body },
-                                                      { QStringLiteral("unreadSeparator"), Canvas::UnreadSeparator } };
+                                                      { QStringLiteral("unreadSeparator"), Canvas::UnreadSeparator },
+                                                      { QStringLiteral("dateSeparator"), Canvas::DateSeparator } };
     return parts;
 }
 
