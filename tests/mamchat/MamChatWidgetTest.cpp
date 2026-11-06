@@ -6321,8 +6321,10 @@ private slots:
         QTRY_VERIFY(!fallback->isHidden());
         auto *layout = chat.itemWidget(0)->layout();
         QVERIFY(layout);
-        QCOMPARE(layout->count(), 2);
-        QCOMPARE(layout->itemAt(1)->widget(), static_cast<QWidget *>(fallback));
+        // The first row now also carries the automatic date divider above
+        // the renderer; unread remains the final fallback widget below it.
+        QCOMPARE(layout->count(), 3);
+        QCOMPARE(layout->itemAt(2)->widget(), static_cast<QWidget *>(fallback));
         QTRY_VERIFY(fallback->height() >= 4);
         QCOMPARE(fallback->width(), chat.itemWidget(0)->width());
 
