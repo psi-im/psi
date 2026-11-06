@@ -27,6 +27,7 @@
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
 #include <QLayout>
+#include <QLocale>
 #include <QMenu>
 #include <QMessageBox>
 #include <QCheckBox>
@@ -262,6 +263,33 @@ private slots:
         block.removeCodeAction(&formatAction);
         block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
         QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void codeBlockWordWrapTogglesWithoutChangingSource()
+    {
+        CodeBlockWidget block;
+        const QString source(800, QLatin1Char('x'));
+        block.setCode(source, QStringLiteral("cpp"));
+        block.resize(350, block.sizeHint().height());
+        block.show();
+        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
+        QVERIFY(block.wrapAction()->isCheckable());
+        QVERIFY(!block.wrapAction()->isChecked());
+
+        block.wrapAction()->setChecked(true);
+        QCOMPARE(block.editor()->wordWrapMode(), QTextOption::WrapAtWordBoundaryOrAnywhere);
+        QVERIFY(block.editor()->horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff);
+        QCOMPARE(block.code(), source);
+        QCOMPARE(block.displayedCode(), source);
+        // The visual lines remain bounded by the same 25-line cap.
+        QVERIFY(block.sizeHint().height() <= block.editor()->fontMetrics().lineSpacing() * 25 + 80);
+
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), source);
+        block.wrapAction()->setChecked(false);
+        QCOMPARE(block.editor()->wordWrapMode(), QTextOption::NoWrap);
+        QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAsNeeded);
+        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
     }
 
     void codeBlockLanguageMenuRehighlightsWithoutChangingReceivedText()
@@ -6226,6 +6254,55 @@ private slots:
         QVERIFY(!chat.itemWidget(0)->property("_psiMamUnreadBoundary").toBool());
     }
 
+
+    void dateSeparatorsFollowCalendarDaysAndThemePlacement()
+    {
+        MamChatWidget chat;
+        chat.resize(460, 420);
+        chat.setHistoryLoading(true);
+        auto first = message(QStringLiteral("day1"), QStringLiteral("First day"), 0);
+        auto sameDay = message(QStringLiteral("day1b"), QStringLiteral("Same day"), 60);
+        auto nextDay = message(QStringLiteral("day2"), QStringLiteral("Next day"), 86400);
+        chat.appendMessage(first);
+        chat.appendMessage(sameDay);
+        chat.appendMessage(nextDay);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+        QVERIFY(chat.itemWidget(0)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(chat.itemWidget(2)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
+        QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        QCOMPARE(chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"))->text(),
+                 QLocale().toString(nextDay.dateTime().toLocalTime().date(), QLocale::LongFormat));
+
+        // The built-in Bubble theme consumes the same semantic part inside a
+        // centred, tailless date bubble (never a separate timeline item).
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
+        QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubbleDateRow")));
+        QVERIFY(!chat.itemWidget(2)->property("_psiMamDateSeparatorFallback").toBool());
+        QVERIFY(chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+
+        // Prepending a same-day page moves the opening divider to the newly
+        // inserted row, without leaving a duplicate on the old first row.
+        auto earlier = message(QStringLiteral("earlier"), QStringLiteral("Earlier"), -3600);
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QStringLiteral("archive-earlier"), earlier) }), 1);
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(3));
+        QTRY_VERIFY(chat.itemWidget(0)->property("_psiMamDateBoundary").toBool());
+        QTRY_VERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        QVERIFY(chat.itemWidget(3)->property("_psiMamDateBoundary").toBool());
+
+        // Description themes may position the date slot themselves.
+        NativeChatTheme described;
+        described.id = QStringLiteral("test-date-slot");
+        described.layoutSpec = QStringLiteral(
+            R"({"direction":"vertical","items":["dateSeparator","body"]})");
+        chat.setTheme(described);
+        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
+        QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+    }
 
     void unreadSeparatorUsesOneFrameForFallbackAndThemePlacement()
     {
