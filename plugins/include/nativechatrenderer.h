@@ -80,6 +80,7 @@ public:
         Timestamp, // The time with its delivery/encryption/edit marks. Messages with HeaderParts only.
         Body,      // Text with reply preview, file cards and reactions. Always present.
         UnreadSeparator, // Optional boundary frame; Psi places it below the row if not taken.
+        DateSeparator, // Optional local calendar date label before the first row of a day.
     };
 
     // The row widget. Psi owns it, paints its hover/selection surface and
@@ -92,7 +93,10 @@ public:
     // UnreadSeparator is available only on the boundary row. Taking it lets
     // the theme position and style the frame; otherwise Psi places it below
     // the renderer's content as the default layout fallback.
-    // The new enum value does not change the plugin interface vtable.
+    // DateSeparator is a QLabel, supplied only for the first message of a
+    // local calendar day. Taking it lets the theme wrap/style/position it
+    // (e.g. a centred date bubble). Otherwise Psi adds a divider above
+    // the row. Neither optional part changes the plugin interface vtable.
     virtual QWidget *take(Part part) = 0;
 
     // The widget whose top-right corner anchors the hover actions toolbar.
