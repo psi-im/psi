@@ -591,6 +591,10 @@ void MamChatWidget::insertHistoryRows(int at, int count, InsertViewportPolicy po
         historySource_.rebuild();
         Mattermost::LongListWidget::insertItems(at, count, policy);
     }
+    // An insertion can take over the first date divider from the following
+    // row. Refresh that neighbour by logical identity, not a cached widget.
+    if (at + count < items_.size() && rowWidget(at + count))
+        replaceRow(at + count);
 }
 void MamChatWidget::removeHistoryRows(int at, int count)
 {
@@ -600,6 +604,9 @@ void MamChatWidget::removeHistoryRows(int at, int count)
         historySource_.rebuild();
         Mattermost::LongListWidget::removeItems(at, count);
     }
+    // Coalescing revisions can expose a different day at this boundary.
+    if (at < items_.size() && rowWidget(at))
+        replaceRow(at);
 }
 void MamChatWidget::syncSourceLayout(bool enableVirtual)
 {
@@ -2006,6 +2013,19 @@ void MamChatWidget::setHistoryExhausted(bool exhausted)
         historyRequestPending_ = false;
 }
 
+bool MamChatWidget::startsNewDate(int index) const
+{
+    if (index < 0 || index >= items_.size())
+        return false;
+    const QDateTime when = items_.at(index).message.dateTime();
+    if (!when.isValid())
+        return false;
+    if (index == 0)
+        return true;
+    const QDateTime before = items_.at(index - 1).message.dateTime();
+    return !before.isValid() || when.toLocalTime().date() != before.toLocalTime().date();
+}
+
 QWidget *MamChatWidget::createItemWidget(int logicalIndex)
 {
     const int index = historySource_.knownIndex(logicalIndex);
@@ -2017,7 +2037,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
     const bool unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
+    const bool dateBoundary   = startsNewDate(index);
     row->setProperty("_psiMamUnreadBoundary", unreadBoundary);
+    row->setProperty("_psiMamDateBoundary", dateBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -2037,6 +2059,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
     canvas.add(NativeChatMessageCanvas::Selection, selection);
+    if (dateBoundary) {
+        auto *date = new QLabel(QLocale().toString(mv.dateTime().toLocalTime().date(), QLocale::LongFormat), row);
+        date->setObjectName(QStringLiteral("mamDateSeparator"));
+        date->setTextFormat(Qt::PlainText);
+        date->setAlignment(Qt::AlignCenter);
+        date->setForegroundRole(QPalette::Mid);
+        date->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+        canvas.add(NativeChatMessageCanvas::DateSeparator, date);
+    }
     if (unreadBoundary) {
         auto *separator = new QFrame(row);
         separator->setObjectName(QStringLiteral("mamUnreadSeparator"));
@@ -2621,10 +2652,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Psi styles its parts first, so that a renderer may refine them.
     applyPartStyle(row, index);
     renderer_->arrange(canvas, row->info);
-    const bool fallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
-    if (fallback) {
-        // Keep the original renderer layout intact inside a content widget,
-        // then place the same separator below it instead of painting over it.
+    const bool unreadFallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
+    const bool dateFallback = dateBoundary && !canvas.wasTaken(NativeChatMessageCanvas::DateSeparator);
+    if (unreadFallback || dateFallback) {
+        // Keep the renderer's complete layout intact. Unhandled semantic
+        // dividers surround it rather than becoming virtual timeline rows.
         QLayout *contentLayout = row->layout();
         QWidget *content = nullptr;
         if (contentLayout) {
@@ -2637,11 +2669,32 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         auto *column = new QVBoxLayout(row);
         column->setContentsMargins(0, 0, 0, 0);
         column->setSpacing(0);
+        if (dateFallback) {
+            auto *divider = new QWidget(row);
+            divider->setObjectName(QStringLiteral("mamDateDivider"));
+            auto *line = new QHBoxLayout(divider);
+            line->setContentsMargins(12, 5, 12, 5);
+            line->setSpacing(12);
+            auto makeRule = [divider]() {
+                auto *rule = new QFrame(divider);
+                rule->setObjectName(QStringLiteral("mamDateDividerRule"));
+                rule->setFrameShape(QFrame::HLine);
+                rule->setFrameShadow(QFrame::Plain);
+                rule->setForegroundRole(QPalette::Mid);
+                return rule;
+            };
+            line->addWidget(makeRule(), 1);
+            line->addWidget(canvas.take(NativeChatMessageCanvas::DateSeparator));
+            line->addWidget(makeRule(), 1);
+            column->addWidget(divider);
+        }
         if (content)
             column->addWidget(content);
-        column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
+        if (unreadFallback)
+            column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
     }
-    row->setProperty("_psiMamUnreadBoundaryFallback", fallback);
+    row->setProperty("_psiMamUnreadBoundaryFallback", unreadFallback);
+    row->setProperty("_psiMamDateSeparatorFallback", dateFallback);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     updateTextSearchHighlight(index, row);
