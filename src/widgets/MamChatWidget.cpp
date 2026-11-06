@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
+#include "OverlayScrollBarManager.h"
 #include "MamImageViewer.h"
 #include "ChatMessageText.h"
 #include "ChatMessageBody.h"
