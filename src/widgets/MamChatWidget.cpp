@@ -501,9 +501,11 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int, int) {
         // Visibility is a geometry fact, not authorization to fetch more MAM.
         updateTimestamps();
+        refreshUnreadEdgeBadge();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged, this, [this](int, int) {
         updateTimestamps();
+        refreshUnreadEdgeBadge();
         scheduleInitialHistoryFillCheck();
     });
 }
@@ -1155,6 +1157,8 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
     }
     if (newer)
         refreshReplyPreviews(true);
+    unreadCountsDirty_ = true;
+    refreshUnreadEdgeBadge();
 }
 
 void MamChatWidget::coalesceRevisionRows()
@@ -1231,6 +1235,8 @@ void MamChatWidget::coalesceRevisionRows()
             pressedKey_ = survivingKey;
         if (unreadBoundaryKey_ == removedKey)
             unreadBoundaryKey_ = survivingKey;
+        if (unreadReadProgressKey_ == removedKey)
+            unreadReadProgressKey_ = survivingKey;
 
         // These indices are all before i; removing i never invalidates them.
         for (const QString &id : merged.stanzaIds)
@@ -1240,6 +1246,8 @@ void MamChatWidget::coalesceRevisionRows()
         replaceRow(keeper);
         // Re-check the same index: it now contains the next logical row.
     }
+    unreadCountsDirty_ = true;
+    refreshUnreadEdgeBadge();
 }
 
 QString MamChatWidget::reactionTarget(const MessageView &view) const
@@ -1578,6 +1586,11 @@ void MamChatWidget::showMessageActions(QFrame *row)
 {
     if (!row || !selectedKeys_.isEmpty() || mousePressed_ || selectingByDrag_)
         return;
+    // A synthetic row enter / row replacement must not resurrect the hover
+    // toolbar while the pointer is in the overlay navigation exclusion zone.
+    auto *atPointer = childAt(mapFromGlobal(QCursor::pos()));
+    if (Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(atPointer))
+        return;
     const int at = indexOfKey(row->property("_psiMamRowKey").toString());
     if (at < 0 || items_.at(at).message.type() != MessageView::Message || isRetracted(items_.at(at)))
         return;
@@ -1686,6 +1699,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
         row.stanzaIds.insert(view.replaceId());
     const int at = items_.size();
     items_.append(row);
+    unreadCountsDirty_ = true;
     insertHistoryRows(at, 1);
     if (!historySource_.isVirtual())
         setRangeAvailable(at, at, true);
@@ -1693,6 +1707,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     if (followTail)
         scrollToEnd();
     refreshReplyPreviews();
+    refreshUnreadEdgeBadge();
 }
 
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
@@ -1757,6 +1772,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         if (!incoming.replaceId().isEmpty())
             row.stanzaIds.insert(incoming.replaceId());
         items_.insert(at, row);
+        unreadCountsDirty_ = true;
         insertHistoryRows(at, 1, InsertViewportPolicy::PreserveVisibleContent);
         if (!historySource_.isVirtual())
             setRangeAvailable(at, at, true);
@@ -1769,6 +1785,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     if (followTail && !page.isEmpty())
         scrollToEnd();
     refreshReplyPreviews();
+    refreshUnreadEdgeBadge();
     return added;
 }
 
@@ -1793,6 +1810,9 @@ void MamChatWidget::clearMessages()
     security_.clear();
     lastDisplayedRowKey_.clear();
     unreadBoundaryKey_.clear();
+    unreadReadProgressKey_.clear();
+    unreadIncomingSuffix_.clear();
+    unreadCountsDirty_ = true;
     lastMarkedIncomingRowKey_.clear();
     lastMarkedIncomingTime_      = {};
     lastMarkedIncomingHistoryId_ = 0;
@@ -1825,6 +1845,7 @@ void MamChatWidget::clearMessages()
     historyFillReady_        = false;
     setItemCount(0);
     timestampTimer_->stop();
+    refreshUnreadEdgeBadge();
 }
 
 void MamChatWidget::requestOlderMessages(const char *gesture)
@@ -3215,6 +3236,42 @@ void MamChatWidget::cancelMessageSelection()
     refreshSelection();
 }
 
+void MamChatWidget::refreshUnreadEdgeBadge()
+{
+    // This is a presentation count based on Psi's existing unread boundary,
+    // not a new network read marker. A window that is not active must not
+    // silently consume unread messages merely because geometry changes.
+    const int boundary = indexOfKey(unreadBoundaryKey_);
+    if (boundary >= 0 && isVisible() && window()->isActiveWindow()) {
+        const auto visible = knownVisibleRange();
+        const int seen = indexOfKey(unreadReadProgressKey_);
+        if (visible.isValid() && visible.last > qMax(boundary, seen))
+            unreadReadProgressKey_ = items_.at(visible.last).key;
+    }
+
+    int count = 0;
+    if (boundary >= 0) {
+        if (unreadCountsDirty_) {
+            // Precompute suffix totals once per model mutation. Scrolling
+            // then updates the badge in O(1), even on a long MAM history.
+            unreadIncomingSuffix_.resize(items_.size() + 1);
+            unreadIncomingSuffix_[items_.size()] = 0;
+            for (int i = items_.size() - 1; i >= 0; --i) {
+                const auto &message = items_.at(i).message;
+                unreadIncomingSuffix_[i] = unreadIncomingSuffix_.at(i + 1)
+                    + (message.type() == MessageView::Message && !message.isLocal() ? 1 : 0);
+            }
+            unreadCountsDirty_ = false;
+        }
+        const int seen = indexOfKey(unreadReadProgressKey_);
+        const int from = qBound(0, qMax(boundary, seen) + 1, items_.size());
+        count = unreadIncomingSuffix_.at(from);
+    }
+    const QString label = count > 0 ? QString::number(count) : QString();
+    if (property("mattermostOverlayBottomBadgeText").toString() != label)
+        setProperty("mattermostOverlayBottomBadgeText", label);
+}
+
 void MamChatWidget::markUnreadBoundary()
 {
     const QString next = items_.isEmpty() ? QString() : items_.last().key;
@@ -3222,6 +3279,7 @@ void MamChatWidget::markUnreadBoundary()
         return;
     const int previousIndex = indexOfKey(unreadBoundaryKey_);
     unreadBoundaryKey_ = next;
+    unreadReadProgressKey_ = next;
     // A renderer may put the separator into its layout, not just paint it.
     // Rebuild affected materialized rows so the part appears or disappears.
     if (previousIndex >= 0 && rowWidget(previousIndex))
@@ -3229,6 +3287,7 @@ void MamChatWidget::markUnreadBoundary()
     const int nextIndex = indexOfKey(unreadBoundaryKey_);
     if (nextIndex >= 0 && rowWidget(nextIndex))
         replaceRow(nextIndex);
+    refreshUnreadEdgeBadge();
 }
 
 bool MamChatWidget::copyCurrentTextSelection()
@@ -3757,6 +3816,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
             scrollToEnd();
         scheduleInitialHistoryFillCheck();
         updateTimestamps();
+        refreshUnreadEdgeBadge();
     });
 }
 
@@ -3770,6 +3830,14 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    if (event->type() == QEvent::Enter
+        && Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(target)) {
+        // A navigation control owns this whole invisible halo. Drop the
+        // floating toolbar immediately, before it can capture an arrow click.
+        hideMessageActions();
+        setHoveredRow(nullptr);
+        return false;
+    }
     if (target == viewport() && selectingByDrag_ && QWidget::mouseGrabber() == viewport()) {
         // Whole-message drag selection owns the pointer (see updateDragSelection).
         auto *mouse = static_cast<QMouseEvent *>(event);
