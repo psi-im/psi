@@ -64,6 +64,8 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `#mamHeader`, `#mamHeaderGroup` | Container of nickname and time | Spacing via padding. |
 | `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. |
 | `QFrame#mamUnreadSeparator` | Unread boundary when the renderer places it | Style its border/colour/height in QSS; absent on other messages. |
+| `QLabel#mamDateSeparator` | Local calendar date divider | Theme-placeable date text, styled like other labels. |
+| `#mamBubble[dateSeparator="true"]` | Bubble theme's date bubble | Set `qproperty-fillColor`, `qproperty-borderColor` and `qproperty-radius`. |
 
 Combine selectors to style parts in one kind of message, for example our own
 messages in the Bubble theme: `#mamBubble[tone="own"] QLabel#mamTimestamp`.
@@ -85,6 +87,18 @@ A description-only theme may add `"unreadSeparator"` to its JSON
 The part is a `QFrame#mamUnreadSeparator` that can be customized with QSS.
 Themes that do not take the part receive the same frame beneath their message
 layout automatically.
+
+### Date dividers
+
+Psi supplies `NativeChatMessageCanvas::DateSeparator` only for the first
+message of a local calendar day. The default placement is a centred,
+localized date with thin lines on both sides, above the message. The Bubble
+theme places the same label inside its own centred, tailless date bubble.
+Themes may style `QLabel#mamDateSeparator` or consume the part and arrange
+it themselves. For description themes, add `"dateSeparator"` to the
+`layoutSpec` wherever the date should appear (typically before `"body"`).
+Dividers are part of the original message rows, not separate virtual list
+items, so appending and prepending history do not disturb navigation.
 
 ### Bubble properties
 
