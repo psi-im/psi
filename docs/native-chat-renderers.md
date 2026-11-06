@@ -163,7 +163,7 @@ description-only plugins do not have that restriction.
   aligned after an information icon.
 - **Bubble**: places the date in a centred bubble without a tail, above the
   first message of a local calendar day. Its own date bubble has the property
-  `dateSeparator=true` for theme styling. It places its unread separator
+  `dateSeparator=true` and its own `mamDateBubble` object name for styling. It places its unread separator
   in a separate region beneath the bubble
   rather than drawing a line over the message. Each message is a speech bubble whose text area
   is limited to about 60 average characters of the chat font (by default),
