@@ -594,10 +594,9 @@ void MamChatWidget::insertHistoryRows(int at, int count, InsertViewportPolicy po
         historySource_.rebuild();
         Mattermost::LongListWidget::insertItems(at, count, policy);
     }
-    // An insertion can take over the first date divider from the following
-    // row. Refresh that neighbour by logical identity, not a cached widget.
-    if (at + count < items_.size() && rowWidget(at + count))
-        replaceRow(at + count);
+    // An insertion may remove a date divider from the following row.
+    // Update in place to preserve its QWidget identity and scroll anchor.
+    updateAdjacentDateDivider(at + count);
 }
 void MamChatWidget::removeHistoryRows(int at, int count)
 {
@@ -608,8 +607,7 @@ void MamChatWidget::removeHistoryRows(int at, int count)
         Mattermost::LongListWidget::removeItems(at, count);
     }
     // Coalescing revisions can expose a different day at this boundary.
-    if (at < items_.size() && rowWidget(at))
-        replaceRow(at);
+    updateAdjacentDateDivider(at);
 }
 void MamChatWidget::syncSourceLayout(bool enableVirtual)
 {
@@ -2033,6 +2031,40 @@ void MamChatWidget::setHistoryExhausted(bool exhausted)
     historyExhausted_ = exhausted;
     if (exhausted)
         historyRequestPending_ = false;
+}
+
+void MamChatWidget::updateAdjacentDateDivider(int index)
+{
+    if (index < 0 || index >= items_.size())
+        return;
+    QWidget *row = rowWidget(index);
+    if (!row)
+        return;
+    const bool now = startsNewDate(index);
+    if (row->property("_psiMamDateBoundary").toBool() == now)
+        return;
+    auto *date = row->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+    if (!date) {
+        // A rare removal can expose a new boundary where no label existed.
+        if (now)
+            replaceRow(index);
+        return;
+    }
+
+    row->setProperty("_psiMamDateBoundary", now);
+    // Bubble and the default fallback give their date a dedicated wrapper.
+    // Hide that too, so no empty space survives after same-day prepends.
+    if (auto *bubble = row->findChild<QWidget *>(QStringLiteral("mamBubbleDateRow")))
+        bubble->setVisible(now);
+    else if (auto *fallback = row->findChild<QWidget *>(QStringLiteral("mamDateDivider"))) {
+        fallback->setVisible(now);
+        row->setProperty("_psiMamDateSeparatorFallback", now);
+    } else
+        date->setVisible(now); // A description-theme slot may hold just the label.
+    row->updateGeometry();
+    const int logical = historySource_.logicalIndex(index);
+    if (logical >= 0)
+        itemsChanged(logical, logical); // Remeasure without replacing the row.
 }
 
 bool MamChatWidget::startsNewDate(int index) const
