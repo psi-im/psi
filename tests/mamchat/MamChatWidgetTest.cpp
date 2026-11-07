@@ -267,31 +267,133 @@ private slots:
         QVERIFY(block.sizeHint().height() < hint.height());
     }
 
+    void codeBlockWordWrapTogglesWithoutChangingSource_data()
+    {
+        QTest::addColumn<bool>("expanded");
+        QTest::newRow("embedded") << false;
+        QTest::newRow("expanded") << true;
+    }
+
     void codeBlockWordWrapTogglesWithoutChangingSource()
     {
-        CodeBlockWidget block;
-        const QString source(800, QLatin1Char('x'));
-        block.setCode(source, QStringLiteral("cpp"));
-        block.resize(350, block.sizeHint().height());
+        QFETCH(bool, expanded);
+        CodeBlockWidget embedded;
+        const QString source = QString(800, QLatin1Char('x')) + QStringLiteral("\nint answer = 42;").repeated(50);
+        embedded.setCode(source, QStringLiteral("cpp"));
+        std::unique_ptr<CodeBlockWidget> viewer;
+        if (expanded) {
+            embedded.openWindowAction()->trigger();
+            for (auto *window : QApplication::topLevelWidgets())
+                if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                    viewer.reset(qobject_cast<CodeBlockWidget *>(window));
+            QVERIFY(viewer);
+        }
+        CodeBlockWidget &block = expanded ? *viewer : embedded;
+        block.resize(350, expanded ? 260 : block.sizeHint().height());
         block.show();
-        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
+        auto *horizontal = block.editor()->horizontalScrollBar();
+        auto *vertical = block.editor()->verticalScrollBar();
+        auto *overlay = block.editor()->findChild<QScrollBar *>("mattermostOverlayHorizontalScrollBar");
+        auto *verticalOverlay = block.editor()->findChild<QScrollBar *>("mattermostOverlayVerticalScrollBar");
+        QVERIFY(overlay && verticalOverlay);
+        QTRY_VERIFY(horizontal->maximum() > 0);
+        QTRY_VERIFY(vertical->maximum() > 0);
+        QVERIFY(!horizontal->isVisible());
+        QVERIFY(!vertical->isVisible());
+        QTRY_VERIFY(overlay->isVisible());
+        QTRY_VERIFY(verticalOverlay->isVisible());
         QVERIFY(block.wrapAction()->isCheckable());
         QVERIFY(!block.wrapAction()->isChecked());
 
-        block.wrapAction()->setChecked(true);
-        QCOMPARE(block.editor()->wordWrapMode(), QTextOption::WrapAtWordBoundaryOrAnywhere);
-        QVERIFY(block.editor()->horizontalScrollBarPolicy() == Qt::ScrollBarAlwaysOff);
-        QCOMPARE(block.code(), source);
-        QCOMPARE(block.displayedCode(), source);
-        // The visual lines remain bounded by the same 25-line cap.
-        QVERIFY(block.sizeHint().height() <= block.editor()->fontMetrics().lineSpacing() * 25 + 80);
+        for (int cycle = 0; cycle < 3; ++cycle) {
+            block.wrapAction()->setChecked(true);
+            QCOMPARE(block.editor()->wordWrapMode(), QTextOption::WrapAtWordBoundaryOrAnywhere);
+            QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QTRY_VERIFY(!overlay->isVisible());
+            QVERIFY(!horizontal->isVisible());
+            QVERIFY(!vertical->isVisible());
+            QVERIFY(verticalOverlay->isVisible());
+            QCOMPARE(block.code(), source);
+            QCOMPARE(block.displayedCode(), source);
+            // The embedded visual lines remain bounded by the same 25-line cap.
+            if (!expanded)
+                QVERIFY(block.sizeHint().height() <= block.editor()->fontMetrics().lineSpacing() * 25 + 80);
+
+            block.resize(350 + 40 * cycle, block.height());
+            block.wrapAction()->setChecked(false);
+            QCOMPARE(block.editor()->wordWrapMode(), QTextOption::NoWrap);
+            QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QTRY_VERIFY(horizontal->maximum() > 0);
+            QTRY_VERIFY(overlay->isVisible());
+            // Only the overlay may be visible: the original bars remain the
+            // hidden scroll model, including after wrapping is turned off.
+            QVERIFY(!horizontal->isVisible());
+            QVERIFY(!vertical->isVisible());
+            QVERIFY(verticalOverlay->isVisible());
+            QCOMPARE(block.editor()->horizontalScrollBar(), horizontal);
+            QCOMPARE(block.editor()->verticalScrollBar(), vertical);
+            overlay->triggerAction(QAbstractSlider::SliderToMaximum);
+            QCOMPARE(horizontal->value(), horizontal->maximum());
+            overlay->triggerAction(QAbstractSlider::SliderToMinimum);
+            QCOMPARE(horizontal->value(), 0);
+        }
 
         block.copyAction()->trigger();
         QCOMPARE(QApplication::clipboard()->text(), source);
-        block.wrapAction()->setChecked(false);
-        QCOMPARE(block.editor()->wordWrapMode(), QTextOption::NoWrap);
-        QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAsNeeded);
-        QTRY_VERIFY(block.editor()->horizontalScrollBar()->maximum() > 0);
+    }
+
+    void codeBlockScrollbarsContrastWithDarkSurface()
+    {
+        QWidget window;
+        QPalette inherited = window.palette();
+        inherited.setColor(QPalette::Window, Qt::white);
+        inherited.setColor(QPalette::Base, Qt::white);
+        window.setPalette(inherited);
+        auto *column = new QVBoxLayout(&window);
+        auto *block = new CodeBlockWidget(&window);
+        column->addWidget(block);
+        // Empty lines keep text out of the scrollbar strips so rendering a
+        // dark thumb on the dark code surface cannot pass as highlighted text.
+        block->setCode(QString(800, QLatin1Char('x')) + QString(70, QLatin1Char('\n')));
+        window.resize(380, block->sizeHint().height() + 30);
+        window.show();
+        auto *horizontal = block->editor()->findChild<QScrollBar *>("mattermostOverlayHorizontalScrollBar");
+        auto *vertical = block->editor()->findChild<QScrollBar *>("mattermostOverlayVerticalScrollBar");
+        QVERIFY(horizontal && vertical);
+        QTRY_VERIFY(horizontal->isVisible());
+        QTRY_VERIFY(vertical->isVisible());
+
+        const auto hasVisibleThumb = [&window](QScrollBar *bar) {
+            const QImage rendered = window.grab().toImage();
+            const qreal ratio = rendered.devicePixelRatio();
+            const QPoint origin = bar->mapTo(&window, QPoint());
+            int brightPixels = 0;
+            for (int y = 0; y < bar->height(); ++y)
+                for (int x = 0; x < bar->width(); ++x)
+                    if (rendered.pixelColor(qRound((origin.x() + x) * ratio),
+                                            qRound((origin.y() + y) * ratio)).lightnessF() > 0.5)
+                        ++brightPixels;
+            return brightPixels >= 20;
+        };
+
+        // The code surface stays dark across parent theme and focus changes.
+        // Both overlay thumbs must already contrast on the initial show.
+        for (const QColor surface : { QColor(Qt::white), QColor(24, 24, 24) }) {
+            inherited.setColor(QPalette::Window, surface);
+            inherited.setColor(QPalette::Base, surface);
+            window.setPalette(inherited);
+            for (bool active : { true, false }) {
+                QApplication::setActiveWindow(active ? &window : nullptr);
+                for (auto *bar : { horizontal, vertical }) {
+                    auto *opacity = qobject_cast<QGraphicsOpacityEffect *>(bar->graphicsEffect());
+                    QVERIFY(opacity);
+                    bar->triggerAction(QAbstractSlider::SliderToMaximum);
+                    bar->triggerAction(QAbstractSlider::SliderToMinimum);
+                    QTRY_VERIFY(opacity->opacity() > 0.95);
+                    QVERIFY2(hasVisibleThumb(bar), "Overlay thumb must contrast with the dark code surface");
+                }
+            }
+        }
     }
 
     void codeBlockLanguageMenuRehighlightsWithoutChangingReceivedText()

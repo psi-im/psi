@@ -62,6 +62,8 @@ constexpr qreal EdgeButtonIdleOpacity = 0.58;
 constexpr qreal EdgeButtonHoverOpacity = 1.0;
 constexpr char ScrollToStartEnabledProperty[] = "mattermostOverlayScrollToStartEnabled";
 constexpr char EdgeButtonsEnabledProperty[] = "mattermostOverlayEdgeButtonsEnabled";
+constexpr char VerticalEnabledProperty[] = "mattermostOverlayVerticalScrollBarEnabled";
+constexpr char HorizontalEnabledProperty[] = "mattermostOverlayHorizontalScrollBarEnabled";
 constexpr char VerticalObjectName[] = "mattermostOverlayVerticalScrollBar";
 constexpr char HorizontalObjectName[] = "mattermostOverlayHorizontalScrollBar";
 constexpr char ScrollToStartObjectName[] = "mattermostOverlayScrollToStartButton";
@@ -177,6 +179,17 @@ QScrollBar* createOverlay(QAbstractScrollArea& area,
 bool scrollable(const QScrollBar* bar)
 {
     return bar && bar->maximum() > bar->minimum();
+}
+
+const char* scrollBarEnabledProperty(Qt::Orientation orientation)
+{
+    return orientation == Qt::Vertical ? VerticalEnabledProperty : HorizontalEnabledProperty;
+}
+
+bool scrollBarEnabled(const QAbstractScrollArea& area, Qt::Orientation orientation)
+{
+    const QVariant value = area.property(scrollBarEnabledProperty(orientation));
+    return !value.isValid() || value.toBool();
 }
 
 bool scrollToStartButtonEnabled(const QAbstractScrollArea& area)
@@ -307,9 +320,15 @@ struct OverlayScrollBarManager::State {
     QPropertyAnimation* verticalAnimation = nullptr;
     QPropertyAnimation* horizontalAnimation = nullptr;
     QTimer* fadeTimer = nullptr;
-    bool verticalEnabled = false;
-    bool horizontalEnabled = false;
     bool cursorInside = false;
+
+    bool isScrollable(Qt::Orientation orientation) const
+    {
+        const bool vertical = orientation == Qt::Vertical;
+        return (vertical ? overlayVertical : overlayHorizontal)
+            && scrollBarEnabled(*area, orientation)
+            && scrollable(vertical ? sourceVertical : sourceHorizontal);
+    }
 };
 
 void OverlayScrollBarManager::attach(QAbstractScrollArea& area)
@@ -323,6 +342,13 @@ void OverlayScrollBarManager::attach(QAbstractScrollArea& area)
         manager = new OverlayScrollBarManager(*qApp);
     }
     manager->attachArea(area);
+}
+
+void OverlayScrollBarManager::setScrollBarEnabled(QAbstractScrollArea& area,
+                                                  Qt::Orientation orientation,
+                                                  bool enabled)
+{
+    area.setProperty(scrollBarEnabledProperty(orientation), enabled);
 }
 
 void OverlayScrollBarManager::setScrollToStartButtonEnabled(QAbstractScrollArea& area,
@@ -359,8 +385,8 @@ void OverlayScrollBarManager::attachArea(QAbstractScrollArea& target)
     state->area = area;
     state->sourceVertical = area->verticalScrollBar();
     state->sourceHorizontal = area->horizontalScrollBar();
-    state->verticalEnabled = area->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff;
-    state->horizontalEnabled = area->horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff;
+    const bool verticalEnabled = area->verticalScrollBarPolicy() != Qt::ScrollBarAlwaysOff;
+    const bool horizontalEnabled = area->horizontalScrollBarPolicy() != Qt::ScrollBarAlwaysOff;
 
     states.insert(area, state);
 
@@ -378,7 +404,7 @@ void OverlayScrollBarManager::attachArea(QAbstractScrollArea& target)
         animation->setEasingCurve(QEasingCurve::OutCubic);
     };
 
-    if (state->verticalEnabled) {
+    if (verticalEnabled) {
         state->overlayVertical = createOverlay(*area, Qt::Vertical, VerticalObjectName);
         setupOverlay(state->overlayVertical, state->verticalOpacity, state->verticalAnimation);
         state->scrollToStartGuard = createEdgeButtonGuard(*area, ScrollToStartGuardName);
@@ -409,7 +435,7 @@ void OverlayScrollBarManager::attachArea(QAbstractScrollArea& target)
         state->scrollToEndBadge->setObjectName(QString::fromLatin1(BottomBadgeObjectName));
         area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
-    if (state->horizontalEnabled) {
+    if (horizontalEnabled) {
         state->overlayHorizontal = createOverlay(*area, Qt::Horizontal, HorizontalObjectName);
         setupOverlay(state->overlayHorizontal, state->horizontalOpacity, state->horizontalAnimation);
         area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -525,22 +551,21 @@ void OverlayScrollBarManager::sync(State& state)
     syncBar(state.sourceHorizontal, state.overlayHorizontal);
 
     if (state.overlayVertical) {
-        if (state.verticalEnabled && scrollable(state.sourceVertical)) {
+        if (state.isScrollable(Qt::Vertical)) {
             state.overlayVertical->show();
         } else {
             state.overlayVertical->hide();
         }
     }
     if (state.overlayHorizontal) {
-        if (state.horizontalEnabled && scrollable(state.sourceHorizontal)) {
+        if (state.isScrollable(Qt::Horizontal)) {
             state.overlayHorizontal->show();
         } else {
             state.overlayHorizontal->hide();
         }
     }
 
-    const bool verticalScrollable =
-        state.verticalEnabled && scrollable(state.sourceVertical);
+    const bool verticalScrollable = state.isScrollable(Qt::Vertical);
     if (state.scrollToStartButton) {
         const bool awayFromStart =
             state.sourceVertical->value() > state.sourceVertical->minimum();
@@ -572,8 +597,8 @@ void OverlayScrollBarManager::layout(State& state)
     }
 
     const QRect viewportRect = state.area->viewport()->geometry();
-    const bool verticalScrollable = state.verticalEnabled && scrollable(state.sourceVertical);
-    const bool horizontalScrollable = state.horizontalEnabled && scrollable(state.sourceHorizontal);
+    const bool verticalScrollable = state.isScrollable(Qt::Vertical);
+    const bool horizontalScrollable = state.isScrollable(Qt::Horizontal);
 
     if (state.overlayVertical) {
         const int bottomCut = horizontalScrollable ? ScrollBarHitThickness : 0;
@@ -681,7 +706,7 @@ void OverlayScrollBarManager::reveal(State& state)
     sync(state);
     layout(state);
 
-    if (state.overlayVertical && state.verticalEnabled && scrollable(state.sourceVertical)) {
+    if (state.isScrollable(Qt::Vertical)) {
         state.overlayVertical->show();
         state.overlayVertical->raise();
         animateOpacity(state.verticalOpacity,
@@ -689,7 +714,7 @@ void OverlayScrollBarManager::reveal(State& state)
                        1.0,
                        RevealDurationMs);
     }
-    if (state.overlayHorizontal && state.horizontalEnabled && scrollable(state.sourceHorizontal)) {
+    if (state.isScrollable(Qt::Horizontal)) {
         state.overlayHorizontal->show();
         state.overlayHorizontal->raise();
         animateOpacity(state.horizontalOpacity,

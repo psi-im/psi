@@ -79,6 +79,62 @@ private slots:
         QVERIFY(overlay->isVisible());
     }
 
+    void suppressingAnAxisKeepsNativeChromeHidden_data()
+    {
+        QTest::addColumn<bool>("horizontal");
+        QTest::newRow("horizontal") << true;
+        QTest::newRow("vertical") << false;
+    }
+
+    void suppressingAnAxisKeepsNativeChromeHidden()
+    {
+        QFETCH(bool, horizontal);
+        const Qt::Orientation orientation = horizontal ? Qt::Horizontal : Qt::Vertical;
+        QAbstractScrollArea area;
+        area.resize(320, 240);
+        area.horizontalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setRange(0, 100);
+        auto *source = horizontal ? area.horizontalScrollBar() : area.verticalScrollBar();
+        // Suppression also works before the overlays are attached.
+        Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, false);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        area.show();
+        settleEvents();
+
+        auto *overlay = area.findChild<QScrollBar *>(horizontal
+            ? "mattermostOverlayHorizontalScrollBar" : "mattermostOverlayVerticalScrollBar");
+        auto *other = area.findChild<QScrollBar *>(horizontal
+            ? "mattermostOverlayVerticalScrollBar" : "mattermostOverlayHorizontalScrollBar");
+        QVERIFY(overlay && other);
+        QVERIFY(!overlay->isVisible());
+        QVERIFY(other->isVisible());
+
+        for (int cycle = 0; cycle < 3; ++cycle) {
+            Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, true);
+            settleEvents();
+            QVERIFY(overlay->isVisible());
+            QVERIFY(!area.horizontalScrollBar()->isVisible());
+            QVERIFY(!area.verticalScrollBar()->isVisible());
+            QCOMPARE(area.horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QCOMPARE(area.verticalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            overlay->triggerAction(QAbstractSlider::SliderToMaximum);
+            QCOMPARE(source->value(), 100);
+
+            Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, false);
+            // Range/value changes and deferred layout/reveal callbacks must
+            // not resurrect an explicitly suppressed overlay or native bar.
+            source->setRange(0, 120 + cycle);
+            source->setValue(20 + cycle);
+            source->setRange(0, 100);
+            area.resize(330 + cycle, 250 + cycle);
+            settleEvents();
+            QVERIFY(!overlay->isVisible());
+            QVERIFY(other->isVisible());
+            QVERIFY(!source->isVisible());
+        }
+        QCOMPARE(horizontal ? area.horizontalScrollBar() : area.verticalScrollBar(), source);
+    }
+
     void optedInRostersGetOverlayWithoutAffectingOtherScrollAreas()
     {
         QTreeView roster;

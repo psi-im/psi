@@ -24,6 +24,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QPainter>
+#include <QPalette>
 #include <QPlainTextEdit>
 #include <QPointer>
 #include <QPushButton>
@@ -55,6 +56,7 @@ constexpr int MaximumVisibleLines = 25;
 // clamps wide source and enables horizontal scrolling.
 constexpr int MaximumPreferredWidth = 16384;
 constexpr int MaximumFormatInput = 2 * 1024 * 1024;
+const QColor CodeSurface(39, 40, 34);
 
 QIcon copyIcon()
 {
@@ -254,10 +256,18 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     editor_->document()->setDocumentMargin(0);
     editor_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     editor_->setMinimumWidth(0);
+    // Match the painted Monokai surface before attaching overlays. A
+    // transparent stylesheet background inherits the chat's palette until
+    // polish, causing the overlay to choose a dark thumb on dark code.
+    QPalette codePalette = editor_->palette();
+    codePalette.setColor(QPalette::Base, CodeSurface);
+    codePalette.setColor(QPalette::Window, CodeSurface);
+    codePalette.setColor(QPalette::Text, QColor(227, 226, 214));
+    codePalette.setColor(QPalette::Highlight, QColor(83, 94, 113));
+    codePalette.setColor(QPalette::HighlightedText, Qt::white);
+    editor_->setPalette(codePalette);
     editor_->setStyleSheet(QStringLiteral(
-        "QPlainTextEdit#mamCodeBlockEditor { border: 0; padding: 0;"
-        " background: transparent; color: #e3e2d6;"
-        " selection-background-color: #535e71; selection-color: #ffffff; }"));
+        "QPlainTextEdit#mamCodeBlockEditor { border: 0; padding: 0; }"));
     QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
     mono.setStyleHint(QFont::Monospace);
     editor_->setFont(mono);
@@ -280,7 +290,9 @@ CodeBlockWidget::CodeBlockWidget(QWidget *parent) : QWidget(parent)
     wrapAction_->setToolTip(tr("Wrap long lines"));
     connect(wrapAction_, &QAction::toggled, this, [this](bool enabled) {
         editor_->setWordWrapMode(enabled ? QTextOption::WrapAtWordBoundaryOrAnywhere : QTextOption::NoWrap);
-        editor_->setHorizontalScrollBarPolicy(enabled ? Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded);
+        // The overlay manager owns scrollbar chrome; changing the Qt policy
+        // here would show a second, native bar when wrapping is turned off.
+        Mattermost::OverlayScrollBarManager::setScrollBarEnabled(*editor_, Qt::Horizontal, !enabled);
         wrapAction_->setToolTip(enabled ? tr("Disable word wrap") : tr("Wrap long lines"));
         updateHeight();
     });
@@ -646,6 +658,6 @@ void CodeBlockWidget::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(QPen(QColor(87, 89, 81), 1));
-    painter.setBrush(QColor(39, 40, 34));
+    painter.setBrush(CodeSurface);
     painter.drawRoundedRect(rect().adjusted(0, 0, -1, -1), 7, 7);
 }
