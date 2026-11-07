@@ -56,6 +56,7 @@
 #endif
 #include "textutil.h"
 
+#include "widgets/ThinSplitter.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QEvent>
@@ -70,7 +71,6 @@
 #include <QShortcut>
 #include <QSignalMapper>
 #include <QSplitter>
-#include "widgets/ThinSplitter.h"
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtAlgorithms>
@@ -579,7 +579,8 @@ MainWin::~MainWin()
     }
 #endif
 
-    saveToolbarsState();
+    if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A'))
+        saveToolbarsState();
 
     if (d->splitter) {
         PsiOptions::instance()->setOption(rosterGeometryPath, d->rosterSize);
@@ -598,7 +599,8 @@ void MainWin::splitterMoved()
 
 void MainWin::optionChanged(const QString &option)
 {
-    if (option == toolbarsStateOptionPath) {
+    if (option == toolbarsStateOptionPath
+        && !PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
         loadToolbarsState();
     } else if (option == "options.ui.contactlist.css") {
         const QString css = PsiOptions::instance()->getOption(option).toString();
@@ -847,23 +849,23 @@ void MainWin::loadToolbarsState()
 
 void MainWin::buildToolbars()
 {
+    PsiOptions *options  = PsiOptions::instance();
+    bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
     setUpdatesEnabled(false);
-    if (toolbars_.count() > 0) {
+    if (toolbars_.count() > 0 && !allInOne) {
         saveToolbarsState();
     }
 
     qDeleteAll(toolbars_);
     toolbars_.clear();
 
-    PsiOptions *options  = PsiOptions::instance();
-    bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
     if (allInOne && d->viewToolBar) {
         d->viewToolBar->initialize();
     }
     const auto &bases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
     for (const QString &base : bases) {
         QString toolbarName = options->getOption(base + ".name").toString();
-        if (toolbarName == "Chat" || toolbarName == "Groupchat") {
+        if (toolbarName == "Chat" || toolbarName == "Groupchat" || toolbarName == "Event notifier") {
             continue;
         }
 
@@ -884,8 +886,8 @@ void MainWin::buildToolbars()
         connect(tb, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
         toolbars_ << tb;
     }
-
-    loadToolbarsState();
+    if (!allInOne)
+        loadToolbarsState();
 
     // loadToolbarsState also restores correct toolbar visibility,
     // we might want to override that
