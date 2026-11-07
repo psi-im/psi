@@ -20,6 +20,7 @@ code, see [native-chat-themes.md](native-chat-themes.md).
 | `Timestamp` | time label (`mamTimestamp`) with delivery, encryption and edit marks | messages |
 | `Body`      | `mamBodyPart`: reply preview, text (`mamBody`), file cards, reactions | every row |
 | `UnreadSeparator` | `QFrame#mamUnreadSeparator`, a theme-placeable unread boundary rule | only on the row immediately before unread messages |
+| `DateSeparator` | `QLabel#mamDateSeparator`, localized calendar date | before the first row of each local calendar day |
 
 Psi owns selection, hover highlighting and the hover actions toolbar, context
 menus, link and media handling, reply resolution, relative-time refresh,
@@ -83,6 +84,14 @@ public:
 - `arrange()` gives `canvas.row()` a layout and places the parts taken with
   `take()`. Parts that are not taken are hidden. Rows are measured with
   `heightForWidth()`, so use layouts (or widgets) that support it.
+- The optional `DateSeparator` is present on the first message of each
+  local calendar day, including the first loaded row. The renderer can take
+  the supplied `QLabel#mamDateSeparator` and place it anywhere above the
+  message. Without `take(DateSeparator)`, Psi wraps the renderer layout
+  and shows a centred date with horizontal rules before the content.
+  The separator is part of the message row, so virtual history paging and
+  selection identities are unchanged. When older messages arrive, Psi
+  refreshes the following row to avoid duplicate dividers.
 - The optional `UnreadSeparator` is present only on the row marking the
   unread boundary. The renderer may take and arrange the supplied
   `QFrame#mamUnreadSeparator` (and style it via QSS), or hide it to draw
@@ -152,7 +161,10 @@ description-only plugins do not have that restriction.
   (`HeaderInText`), with the legacy message icons before the time, the
   time painted in the nickname colour in group chats, and notices left
   aligned after an information icon.
-- **Bubble**: places its unread separator in a separate row beneath the bubble
+- **Bubble**: places the date in a centred bubble without a tail, above the
+  first message of a local calendar day. Its own date bubble has the property
+  `dateSeparator=true` and its own `mamDateBubble` object name for styling. It places its unread separator
+  in a separate region beneath the bubble
   rather than drawing a line over the message. Each message is a speech bubble whose text area
   is limited to about 60 average characters of the chat font (by default),
   whatever the width of the log, and which shrinks to short messages. Incoming messages sit

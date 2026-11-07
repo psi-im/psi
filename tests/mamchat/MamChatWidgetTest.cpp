@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
+#include "widgets/OverlayScrollBarManager.h"
 #include "widgets/MamImageViewer.h"
 #include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
@@ -27,6 +28,7 @@
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
 #include <QLayout>
+#include <QLocale>
 #include <QMenu>
 #include <QMessageBox>
 #include <QCheckBox>
@@ -41,6 +43,7 @@
 #include <QSignalSpy>
 #include <QTextBlock>
 #include <QTextFragment>
+#include <QTextOption>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QUrlQuery>
@@ -262,6 +265,135 @@ private slots:
         block.removeCodeAction(&formatAction);
         block.setCode(QStringLiteral("x"), QStringLiteral("cpp"));
         QVERIFY(block.sizeHint().height() < hint.height());
+    }
+
+    void codeBlockWordWrapTogglesWithoutChangingSource_data()
+    {
+        QTest::addColumn<bool>("expanded");
+        QTest::newRow("embedded") << false;
+        QTest::newRow("expanded") << true;
+    }
+
+    void codeBlockWordWrapTogglesWithoutChangingSource()
+    {
+        QFETCH(bool, expanded);
+        CodeBlockWidget embedded;
+        const QString source = QString(800, QLatin1Char('x')) + QStringLiteral("\nint answer = 42;").repeated(50);
+        embedded.setCode(source, QStringLiteral("cpp"));
+        std::unique_ptr<CodeBlockWidget> viewer;
+        if (expanded) {
+            embedded.openWindowAction()->trigger();
+            for (auto *window : QApplication::topLevelWidgets())
+                if (window->objectName() == QLatin1String("mamCodeBlockViewer"))
+                    viewer.reset(qobject_cast<CodeBlockWidget *>(window));
+            QVERIFY(viewer);
+        }
+        CodeBlockWidget &block = expanded ? *viewer : embedded;
+        block.resize(350, expanded ? 260 : block.sizeHint().height());
+        block.show();
+        auto *horizontal = block.editor()->horizontalScrollBar();
+        auto *vertical = block.editor()->verticalScrollBar();
+        auto *overlay = block.editor()->findChild<QScrollBar *>("mattermostOverlayHorizontalScrollBar");
+        auto *verticalOverlay = block.editor()->findChild<QScrollBar *>("mattermostOverlayVerticalScrollBar");
+        QVERIFY(overlay && verticalOverlay);
+        QTRY_VERIFY(horizontal->maximum() > 0);
+        QTRY_VERIFY(vertical->maximum() > 0);
+        QVERIFY(!horizontal->isVisible());
+        QVERIFY(!vertical->isVisible());
+        QTRY_VERIFY(overlay->isVisible());
+        QTRY_VERIFY(verticalOverlay->isVisible());
+        QVERIFY(block.wrapAction()->isCheckable());
+        QVERIFY(!block.wrapAction()->isChecked());
+
+        for (int cycle = 0; cycle < 3; ++cycle) {
+            block.wrapAction()->setChecked(true);
+            QCOMPARE(block.editor()->wordWrapMode(), QTextOption::WrapAtWordBoundaryOrAnywhere);
+            QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QTRY_VERIFY(!overlay->isVisible());
+            QVERIFY(!horizontal->isVisible());
+            QVERIFY(!vertical->isVisible());
+            QVERIFY(verticalOverlay->isVisible());
+            QCOMPARE(block.code(), source);
+            QCOMPARE(block.displayedCode(), source);
+            // The embedded visual lines remain bounded by the same 25-line cap.
+            if (!expanded)
+                QVERIFY(block.sizeHint().height() <= block.editor()->fontMetrics().lineSpacing() * 25 + 80);
+
+            block.resize(350 + 40 * cycle, block.height());
+            block.wrapAction()->setChecked(false);
+            QCOMPARE(block.editor()->wordWrapMode(), QTextOption::NoWrap);
+            QCOMPARE(block.editor()->horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QTRY_VERIFY(horizontal->maximum() > 0);
+            QTRY_VERIFY(overlay->isVisible());
+            // Only the overlay may be visible: the original bars remain the
+            // hidden scroll model, including after wrapping is turned off.
+            QVERIFY(!horizontal->isVisible());
+            QVERIFY(!vertical->isVisible());
+            QVERIFY(verticalOverlay->isVisible());
+            QCOMPARE(block.editor()->horizontalScrollBar(), horizontal);
+            QCOMPARE(block.editor()->verticalScrollBar(), vertical);
+            overlay->triggerAction(QAbstractSlider::SliderToMaximum);
+            QCOMPARE(horizontal->value(), horizontal->maximum());
+            overlay->triggerAction(QAbstractSlider::SliderToMinimum);
+            QCOMPARE(horizontal->value(), 0);
+        }
+
+        block.copyAction()->trigger();
+        QCOMPARE(QApplication::clipboard()->text(), source);
+    }
+
+    void codeBlockScrollbarsContrastWithDarkSurface()
+    {
+        QWidget window;
+        QPalette inherited = window.palette();
+        inherited.setColor(QPalette::Window, Qt::white);
+        inherited.setColor(QPalette::Base, Qt::white);
+        window.setPalette(inherited);
+        auto *column = new QVBoxLayout(&window);
+        auto *block = new CodeBlockWidget(&window);
+        column->addWidget(block);
+        // Empty lines keep text out of the scrollbar strips so rendering a
+        // dark thumb on the dark code surface cannot pass as highlighted text.
+        block->setCode(QString(800, QLatin1Char('x')) + QString(70, QLatin1Char('\n')));
+        window.resize(380, block->sizeHint().height() + 30);
+        window.show();
+        auto *horizontal = block->editor()->findChild<QScrollBar *>("mattermostOverlayHorizontalScrollBar");
+        auto *vertical = block->editor()->findChild<QScrollBar *>("mattermostOverlayVerticalScrollBar");
+        QVERIFY(horizontal && vertical);
+        QTRY_VERIFY(horizontal->isVisible());
+        QTRY_VERIFY(vertical->isVisible());
+
+        const auto hasVisibleThumb = [&window](QScrollBar *bar) {
+            const QImage rendered = window.grab().toImage();
+            const qreal ratio = rendered.devicePixelRatio();
+            const QPoint origin = bar->mapTo(&window, QPoint());
+            int brightPixels = 0;
+            for (int y = 0; y < bar->height(); ++y)
+                for (int x = 0; x < bar->width(); ++x)
+                    if (rendered.pixelColor(qRound((origin.x() + x) * ratio),
+                                            qRound((origin.y() + y) * ratio)).lightnessF() > 0.5)
+                        ++brightPixels;
+            return brightPixels >= 20;
+        };
+
+        // The code surface stays dark across parent theme and focus changes.
+        // Both overlay thumbs must already contrast on the initial show.
+        for (const QColor surface : { QColor(Qt::white), QColor(24, 24, 24) }) {
+            inherited.setColor(QPalette::Window, surface);
+            inherited.setColor(QPalette::Base, surface);
+            window.setPalette(inherited);
+            for (bool active : { true, false }) {
+                QApplication::setActiveWindow(active ? &window : nullptr);
+                for (auto *bar : { horizontal, vertical }) {
+                    auto *opacity = qobject_cast<QGraphicsOpacityEffect *>(bar->graphicsEffect());
+                    QVERIFY(opacity);
+                    bar->triggerAction(QAbstractSlider::SliderToMaximum);
+                    bar->triggerAction(QAbstractSlider::SliderToMinimum);
+                    QTRY_VERIFY(opacity->opacity() > 0.95);
+                    QVERIFY2(hasVisibleThumb(bar), "Overlay thumb must contrast with the dark code surface");
+                }
+            }
+        }
     }
 
     void codeBlockLanguageMenuRehighlightsWithoutChangingReceivedText()
@@ -4787,9 +4919,11 @@ private slots:
         // combined author/body text, and determines the minimum row height.
         auto *avatar = row->findChild<QLabel *>(QStringLiteral("mamAvatar"));
         const int avatarHeight = avatar ? avatar->height() : 0;
+        auto *dateDivider = row->findChild<QWidget *>(QStringLiteral("mamDateDivider"));
+        const int dateHeight = dateDivider ? dateDivider->height() : 0;
         QTRY_VERIFY2(row->height() <= qMax(avatarHeight,
                                            authorHeight + body->heightForWidth(body->width()) + 3)
-                                            + 18,
+                                            + 18 + dateHeight,
                      qPrintable(QStringLiteral("row=%1 avatar=%2 author=%3 body=%4 width=%5")
                                     .arg(row->height()).arg(avatarHeight).arg(authorHeight)
                                     .arg(body->heightForWidth(body->width())).arg(body->width())));
@@ -5074,7 +5208,8 @@ private slots:
         QTRY_VERIFY(list.itemWidget(0) != nullptr);
         QWidget *row = list.itemWidget(0);
         auto labels = row->findChildren<QLabel *>();
-        QCOMPARE(labels.size(), 3);
+        QCOMPARE(labels.size(), 4); // Author, timestamp, avatar and date divider.
+        QVERIFY(row->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
         QCOMPARE(row->findChild<ChatMessageText *>()->toPlainText(), QStringLiteral("first body"));
 
         auto changed = message(QStringLiteral("m2"), QStringLiteral("edited body"), 2);
@@ -6227,6 +6362,131 @@ private slots:
     }
 
 
+    void dateSeparatorsFollowCalendarDaysAndThemePlacement()
+    {
+        MamChatWidget chat;
+        chat.resize(460, 420);
+        chat.setHistoryLoading(true);
+        chat.setAdditionalTextColor(QColor("#606060"));
+        auto first = message(QStringLiteral("day1"), QStringLiteral("First day"), 0);
+        auto sameDay = message(QStringLiteral("day1b"), QStringLiteral("Same day"), 60);
+        auto nextDay = message(QStringLiteral("day2"), QStringLiteral("Next day"), 86400);
+        chat.appendMessage(first);
+        chat.appendMessage(sameDay);
+        chat.appendMessage(nextDay);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+        QVERIFY(chat.itemWidget(0)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(chat.itemWidget(2)->property("_psiMamDateBoundary").toBool());
+        QVERIFY(chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
+        auto *classicDate = chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(classicDate);
+        QCOMPARE(classicDate->foregroundRole(), QPalette::Text);
+        QCOMPARE(classicDate->palette().color(QPalette::Text), QColor("#606060"));
+        QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        QCOMPARE(chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"))->text(),
+                 QLocale().toString(nextDay.dateTime().toLocalTime().date(), QLocale::LongFormat));
+
+        // The built-in Bubble theme consumes the same semantic part inside a
+        // centred, tailless date bubble (never a separate timeline item).
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
+        QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubbleDateRow")));
+        QVERIFY(!chat.itemWidget(2)->property("_psiMamDateSeparatorFallback").toBool());
+        auto *bubbleDate = chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(bubbleDate);
+        QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#606060"));
+        // A settings change recolors existing date bubbles without rebuilding rows.
+        QWidget *bubbleRow = chat.itemWidget(2);
+        chat.setAdditionalTextColor(QColor("#bbbbbb"));
+        QCOMPARE(chat.itemWidget(2), bubbleRow);
+        QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#bbbbbb"));
+
+        // Prepending a same-day page moves the opening divider to the newly
+        // inserted row, without leaving a duplicate on the old first row.
+        auto earlier = message(QStringLiteral("earlier"), QStringLiteral("Earlier"), -3600);
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QStringLiteral("archive-earlier"), earlier) }), 1);
+        QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(3));
+        QTRY_VERIFY(chat.itemWidget(0)->property("_psiMamDateBoundary").toBool());
+        QTRY_VERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
+        auto *oldDivider = chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(oldDivider && !oldDivider->isVisible());
+        QVERIFY(chat.itemWidget(3)->property("_psiMamDateBoundary").toBool());
+
+        // Description themes may position the date slot themselves.
+        NativeChatTheme described;
+        described.id = QStringLiteral("test-date-slot");
+        described.layoutSpec = QStringLiteral(
+            R"({"direction":"vertical","items":["dateSeparator","body"]})");
+        chat.setTheme(described);
+        QTRY_VERIFY(chat.itemWidget(0) && !chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
+        QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+    }
+
+    void unreadEdgeBadgeCountsOnlyUnseenIncomingMessages()
+    {
+        MamChatWidget chat;
+        chat.setHistoryLoading(true);
+        chat.appendMessage(message(QStringLiteral("seen"), QStringLiteral("Seen")));
+        chat.markUnreadBoundary();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+
+        chat.appendMessage(message(QStringLiteral("incoming1"), QStringLiteral("First"), 1));
+        chat.appendMessage(message(QStringLiteral("local"), QStringLiteral("Sent"), 2, true));
+        MessageView notice(MessageView::Status);
+        notice.setPlainText(QStringLiteral("Notice"));
+        notice.setDateTime(message(QStringLiteral("notice"), {}, 3).dateTime());
+        chat.appendMessage(notice);
+        chat.appendMessage(message(QStringLiteral("incoming2"), QStringLiteral("Second"), 4));
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("2"));
+
+        // Loading old history and inserting own messages does not inflate the
+        // count or change the reference boundary.
+        auto older = message(QStringLiteral("older"), QStringLiteral("Archived"), -3600);
+        older.setHistoryId(10);
+        QCOMPARE(chat.prependArchivePage({ qMakePair(QStringLiteral("old-archive"), older) }), 1);
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("2"));
+
+        chat.markUnreadBoundary();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+        chat.appendMessage(message(QStringLiteral("incoming3"), QStringLiteral("Third"), 5));
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QStringLiteral("1"));
+        chat.clearMessages();
+        QCOMPARE(chat.property("mattermostOverlayBottomBadgeText").toString(), QString());
+    }
+
+    void edgeNavigationGuardImmediatelyDismissesMessageActions()
+    {
+        MamChatWidget chat;
+        chat.resize(460, 200);
+        chat.setHistoryLoading(true);
+        auto first = message(QStringLiteral("first"), QStringLiteral("First message"), 0, true);
+        first.setReactionTargetId(QStringLiteral("first-reaction"));
+        first.setRetractionTargetId(QStringLiteral("first"));
+        chat.appendMessage(first);
+        for (int i = 1; i < 20; ++i)
+            chat.appendMessage(message(QStringLiteral("more-%1").arg(i),
+                                       QStringLiteral("Message %1").arg(i), i));
+        Mattermost::OverlayScrollBarManager::attach(chat);
+        chat.show();
+        chat.scrollToIndex(0);
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *guard = chat.findChild<QWidget *>(QStringLiteral("mattermostOverlayScrollToEndGuard"));
+        auto *button = chat.findChild<QToolButton *>(
+            QStringLiteral("mattermostOverlayScrollToEndButton"));
+        QVERIFY(guard && button);
+        QTRY_VERIFY(guard->isVisible() && button->isVisible());
+
+        auto *row = chat.itemWidget(0);
+        QCursor::setPos(row->mapToGlobal(QPoint(5, 5)));
+        QEvent enter(QEvent::Enter);
+        QApplication::sendEvent(row, &enter);
+        auto *actions = chat.findChild<QFrame *>(QStringLiteral("mamMessageActions"));
+        QTRY_VERIFY(actions && actions->isVisible());
+        QApplication::sendEvent(guard, &enter);
+        QVERIFY(!actions->isVisible());
+    }
+
     void unreadSeparatorUsesOneFrameForFallbackAndThemePlacement()
     {
         MamChatWidget chat;
@@ -6244,8 +6504,10 @@ private slots:
         QTRY_VERIFY(!fallback->isHidden());
         auto *layout = chat.itemWidget(0)->layout();
         QVERIFY(layout);
-        QCOMPARE(layout->count(), 2);
-        QCOMPARE(layout->itemAt(1)->widget(), static_cast<QWidget *>(fallback));
+        // The first row now also carries the automatic date divider above
+        // the renderer; unread remains the final fallback widget below it.
+        QCOMPARE(layout->count(), 3);
+        QCOMPARE(layout->itemAt(2)->widget(), static_cast<QWidget *>(fallback));
         QTRY_VERIFY(fallback->height() >= 4);
         QCOMPARE(fallback->width(), chat.itemWidget(0)->width());
 

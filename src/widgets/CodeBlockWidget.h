@@ -38,6 +38,7 @@ public:
     // must be true to omit the explicit risk-acceptance checkbox.
     void setExecutionProvenance(bool messageEncrypted, bool verifiedOmemo);
     QAction *copyAction() const { return copyAction_; }
+    QAction *wrapAction() const { return wrapAction_; }
     QAction *openWindowAction() const { return openWindowAction_; }
     bool isExpandedViewer() const { return expandedViewer_; }
     QAction *formatAction() const { return formatAction_; }
@@ -51,6 +52,7 @@ public:
 
 protected:
     void changeEvent(QEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
 
 private:
@@ -68,6 +70,7 @@ private:
     QMenu *languageMenu_ = nullptr;
     QHBoxLayout *actionsLayout_ = nullptr;
     QAction *copyAction_ = nullptr;
+    QAction *wrapAction_ = nullptr;
     QAction *openWindowAction_ = nullptr;
     QAction *formatAction_ = nullptr;
     QAction *runAction_ = nullptr;

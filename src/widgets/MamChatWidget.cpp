@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
+#include "OverlayScrollBarManager.h"
 #include "MamImageViewer.h"
 #include "ChatMessageText.h"
 #include "ChatMessageBody.h"
@@ -501,9 +502,11 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     connect(this, &Mattermost::LongListWidget::visibleRangeChanged, this, [this](int, int) {
         // Visibility is a geometry fact, not authorization to fetch more MAM.
         updateTimestamps();
+        refreshUnreadEdgeBadge();
     });
     connect(this, &Mattermost::LongListWidget::materializedRangeChanged, this, [this](int, int) {
         updateTimestamps();
+        refreshUnreadEdgeBadge();
         scheduleInitialHistoryFillCheck();
     });
 }
@@ -591,6 +594,9 @@ void MamChatWidget::insertHistoryRows(int at, int count, InsertViewportPolicy po
         historySource_.rebuild();
         Mattermost::LongListWidget::insertItems(at, count, policy);
     }
+    // An insertion may remove a date divider from the following row.
+    // Update in place to preserve its QWidget identity and scroll anchor.
+    updateAdjacentDateDivider(at + count);
 }
 void MamChatWidget::removeHistoryRows(int at, int count)
 {
@@ -600,6 +606,8 @@ void MamChatWidget::removeHistoryRows(int at, int count)
         historySource_.rebuild();
         Mattermost::LongListWidget::removeItems(at, count);
     }
+    // Coalescing revisions can expose a different day at this boundary.
+    updateAdjacentDateDivider(at);
 }
 void MamChatWidget::syncSourceLayout(bool enableVirtual)
 {
@@ -1148,6 +1156,8 @@ void MamChatWidget::mergeMessage(int index, const MessageView &incoming, const Q
     }
     if (newer)
         refreshReplyPreviews(true);
+    unreadCountsDirty_ = true;
+    refreshUnreadEdgeBadge();
 }
 
 void MamChatWidget::coalesceRevisionRows()
@@ -1224,6 +1234,8 @@ void MamChatWidget::coalesceRevisionRows()
             pressedKey_ = survivingKey;
         if (unreadBoundaryKey_ == removedKey)
             unreadBoundaryKey_ = survivingKey;
+        if (unreadReadProgressKey_ == removedKey)
+            unreadReadProgressKey_ = survivingKey;
 
         // These indices are all before i; removing i never invalidates them.
         for (const QString &id : merged.stanzaIds)
@@ -1233,6 +1245,8 @@ void MamChatWidget::coalesceRevisionRows()
         replaceRow(keeper);
         // Re-check the same index: it now contains the next logical row.
     }
+    unreadCountsDirty_ = true;
+    refreshUnreadEdgeBadge();
 }
 
 QString MamChatWidget::reactionTarget(const MessageView &view) const
@@ -1571,6 +1585,11 @@ void MamChatWidget::showMessageActions(QFrame *row)
 {
     if (!row || !selectedKeys_.isEmpty() || mousePressed_ || selectingByDrag_)
         return;
+    // A synthetic row enter / row replacement must not resurrect the hover
+    // toolbar while the pointer is in the overlay navigation exclusion zone.
+    auto *atPointer = childAt(mapFromGlobal(QCursor::pos()));
+    if (Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(atPointer))
+        return;
     const int at = indexOfKey(row->property("_psiMamRowKey").toString());
     if (at < 0 || items_.at(at).message.type() != MessageView::Message || isRetracted(items_.at(at)))
         return;
@@ -1679,6 +1698,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
         row.stanzaIds.insert(view.replaceId());
     const int at = items_.size();
     items_.append(row);
+    unreadCountsDirty_ = true;
     insertHistoryRows(at, 1);
     if (!historySource_.isVirtual())
         setRangeAvailable(at, at, true);
@@ -1686,6 +1706,7 @@ void MamChatWidget::appendMessage(const MessageView &view)
     if (followTail)
         scrollToEnd();
     refreshReplyPreviews();
+    refreshUnreadEdgeBadge();
 }
 
 int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &page)
@@ -1750,6 +1771,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
         if (!incoming.replaceId().isEmpty())
             row.stanzaIds.insert(incoming.replaceId());
         items_.insert(at, row);
+        unreadCountsDirty_ = true;
         insertHistoryRows(at, 1, InsertViewportPolicy::PreserveVisibleContent);
         if (!historySource_.isVirtual())
             setRangeAvailable(at, at, true);
@@ -1762,6 +1784,7 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     if (followTail && !page.isEmpty())
         scrollToEnd();
     refreshReplyPreviews();
+    refreshUnreadEdgeBadge();
     return added;
 }
 
@@ -1786,6 +1809,9 @@ void MamChatWidget::clearMessages()
     security_.clear();
     lastDisplayedRowKey_.clear();
     unreadBoundaryKey_.clear();
+    unreadReadProgressKey_.clear();
+    unreadIncomingSuffix_.clear();
+    unreadCountsDirty_ = true;
     lastMarkedIncomingRowKey_.clear();
     lastMarkedIncomingTime_      = {};
     lastMarkedIncomingHistoryId_ = 0;
@@ -1818,6 +1844,7 @@ void MamChatWidget::clearMessages()
     historyFillReady_        = false;
     setItemCount(0);
     timestampTimer_->stop();
+    refreshUnreadEdgeBadge();
 }
 
 void MamChatWidget::requestOlderMessages(const char *gesture)
@@ -2006,6 +2033,53 @@ void MamChatWidget::setHistoryExhausted(bool exhausted)
         historyRequestPending_ = false;
 }
 
+void MamChatWidget::updateAdjacentDateDivider(int index)
+{
+    if (index < 0 || index >= items_.size())
+        return;
+    QWidget *row = rowWidget(index);
+    if (!row)
+        return;
+    const bool now = startsNewDate(index);
+    if (row->property("_psiMamDateBoundary").toBool() == now)
+        return;
+    auto *date = row->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+    if (!date) {
+        // A rare removal can expose a new boundary where no label existed.
+        if (now)
+            replaceRow(index);
+        return;
+    }
+
+    row->setProperty("_psiMamDateBoundary", now);
+    // Bubble and the default fallback give their date a dedicated wrapper.
+    // Hide that too, so no empty space survives after same-day prepends.
+    if (auto *bubble = row->findChild<QWidget *>(QStringLiteral("mamBubbleDateRow")))
+        bubble->setVisible(now);
+    else if (auto *fallback = row->findChild<QWidget *>(QStringLiteral("mamDateDivider"))) {
+        fallback->setVisible(now);
+        row->setProperty("_psiMamDateSeparatorFallback", now);
+    } else
+        date->setVisible(now); // A description-theme slot may hold just the label.
+    row->updateGeometry();
+    const int logical = historySource_.logicalIndex(index);
+    if (logical >= 0)
+        itemsChanged(logical, logical); // Remeasure without replacing the row.
+}
+
+bool MamChatWidget::startsNewDate(int index) const
+{
+    if (index < 0 || index >= items_.size())
+        return false;
+    const QDateTime when = items_.at(index).message.dateTime();
+    if (!when.isValid())
+        return false;
+    if (index == 0)
+        return true;
+    const QDateTime before = items_.at(index - 1).message.dateTime();
+    return !before.isValid() || when.toLocalTime().date() != before.toLocalTime().date();
+}
+
 QWidget *MamChatWidget::createItemWidget(int logicalIndex)
 {
     const int index = historySource_.knownIndex(logicalIndex);
@@ -2017,7 +2091,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setObjectName(QStringLiteral("mamMessageRow"));
     row->setProperty("_psiMamRowKey", items_.at(index).key);
     const bool unreadBoundary = items_.at(index).key == unreadBoundaryKey_;
+    const bool dateBoundary   = startsNewDate(index);
     row->setProperty("_psiMamUnreadBoundary", unreadBoundary);
+    row->setProperty("_psiMamDateBoundary", dateBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
     row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
@@ -2037,6 +2113,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     selection->setVisible(!selectedKeys_.isEmpty());
     selection->setChecked(selectedKeys_.contains(items_.at(index).key));
     canvas.add(NativeChatMessageCanvas::Selection, selection);
+    if (dateBoundary) {
+        auto *date = new QLabel(QLocale().toString(mv.dateTime().toLocalTime().date(), QLocale::LongFormat), row);
+        date->setObjectName(QStringLiteral("mamDateSeparator"));
+        date->setTextFormat(Qt::PlainText);
+        date->setAlignment(Qt::AlignCenter);
+        date->setForegroundRole(QPalette::Text);
+        date->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+        canvas.add(NativeChatMessageCanvas::DateSeparator, date);
+    }
     if (unreadBoundary) {
         auto *separator = new QFrame(row);
         separator->setObjectName(QStringLiteral("mamUnreadSeparator"));
@@ -2621,10 +2706,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // Psi styles its parts first, so that a renderer may refine them.
     applyPartStyle(row, index);
     renderer_->arrange(canvas, row->info);
-    const bool fallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
-    if (fallback) {
-        // Keep the original renderer layout intact inside a content widget,
-        // then place the same separator below it instead of painting over it.
+    const bool unreadFallback = unreadBoundary && !canvas.wasTaken(NativeChatMessageCanvas::UnreadSeparator);
+    const bool dateFallback = dateBoundary && !canvas.wasTaken(NativeChatMessageCanvas::DateSeparator);
+    if (unreadFallback || dateFallback) {
+        // Keep the renderer's complete layout intact. Unhandled semantic
+        // dividers surround it rather than becoming virtual timeline rows.
         QLayout *contentLayout = row->layout();
         QWidget *content = nullptr;
         if (contentLayout) {
@@ -2637,11 +2723,32 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         auto *column = new QVBoxLayout(row);
         column->setContentsMargins(0, 0, 0, 0);
         column->setSpacing(0);
+        if (dateFallback) {
+            auto *divider = new QWidget(row);
+            divider->setObjectName(QStringLiteral("mamDateDivider"));
+            auto *line = new QHBoxLayout(divider);
+            line->setContentsMargins(12, 5, 12, 5);
+            line->setSpacing(12);
+            auto makeRule = [divider]() {
+                auto *rule = new QFrame(divider);
+                rule->setObjectName(QStringLiteral("mamDateDividerRule"));
+                rule->setFrameShape(QFrame::HLine);
+                rule->setFrameShadow(QFrame::Plain);
+                rule->setForegroundRole(QPalette::Mid);
+                return rule;
+            };
+            line->addWidget(makeRule(), 1);
+            line->addWidget(canvas.take(NativeChatMessageCanvas::DateSeparator));
+            line->addWidget(makeRule(), 1);
+            column->addWidget(divider);
+        }
         if (content)
             column->addWidget(content);
-        column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
+        if (unreadFallback)
+            column->addWidget(canvas.take(NativeChatMessageCanvas::UnreadSeparator));
     }
-    row->setProperty("_psiMamUnreadBoundaryFallback", fallback);
+    row->setProperty("_psiMamUnreadBoundaryFallback", unreadFallback);
+    row->setProperty("_psiMamDateSeparatorFallback", dateFallback);
     canvas.hideUntaken();
     updateRowSelection(row, selectedKeys_.contains(items_.at(index).key));
     updateTextSearchHighlight(index, row);
@@ -3162,6 +3269,42 @@ void MamChatWidget::cancelMessageSelection()
     refreshSelection();
 }
 
+void MamChatWidget::refreshUnreadEdgeBadge()
+{
+    // This is a presentation count based on Psi's existing unread boundary,
+    // not a new network read marker. A window that is not active must not
+    // silently consume unread messages merely because geometry changes.
+    const int boundary = indexOfKey(unreadBoundaryKey_);
+    if (boundary >= 0 && isVisible() && window()->isActiveWindow()) {
+        const auto visible = knownVisibleRange();
+        const int seen = indexOfKey(unreadReadProgressKey_);
+        if (visible.isValid() && visible.last > qMax(boundary, seen))
+            unreadReadProgressKey_ = items_.at(visible.last).key;
+    }
+
+    int count = 0;
+    if (boundary >= 0) {
+        if (unreadCountsDirty_) {
+            // Precompute suffix totals once per model mutation. Scrolling
+            // then updates the badge in O(1), even on a long MAM history.
+            unreadIncomingSuffix_.resize(items_.size() + 1);
+            unreadIncomingSuffix_[items_.size()] = 0;
+            for (int i = items_.size() - 1; i >= 0; --i) {
+                const auto &message = items_.at(i).message;
+                unreadIncomingSuffix_[i] = unreadIncomingSuffix_.at(i + 1)
+                    + (message.type() == MessageView::Message && !message.isLocal() ? 1 : 0);
+            }
+            unreadCountsDirty_ = false;
+        }
+        const int seen = indexOfKey(unreadReadProgressKey_);
+        const int from = qBound(0, qMax(boundary, seen) + 1, items_.size());
+        count = unreadIncomingSuffix_.at(from);
+    }
+    const QString label = count > 0 ? QString::number(count) : QString();
+    if (property("mattermostOverlayBottomBadgeText").toString() != label)
+        setProperty("mattermostOverlayBottomBadgeText", label);
+}
+
 void MamChatWidget::markUnreadBoundary()
 {
     const QString next = items_.isEmpty() ? QString() : items_.last().key;
@@ -3169,6 +3312,7 @@ void MamChatWidget::markUnreadBoundary()
         return;
     const int previousIndex = indexOfKey(unreadBoundaryKey_);
     unreadBoundaryKey_ = next;
+    unreadReadProgressKey_ = next;
     // A renderer may put the separator into its layout, not just paint it.
     // Rebuild affected materialized rows so the part appears or disappears.
     if (previousIndex >= 0 && rowWidget(previousIndex))
@@ -3176,6 +3320,7 @@ void MamChatWidget::markUnreadBoundary()
     const int nextIndex = indexOfKey(unreadBoundaryKey_);
     if (nextIndex >= 0 && rowWidget(nextIndex))
         replaceRow(nextIndex);
+    refreshUnreadEdgeBadge();
 }
 
 bool MamChatWidget::copyCurrentTextSelection()
@@ -3538,6 +3683,12 @@ void MamChatWidget::setInformationalColor(const QColor &color)
     refreshSelection();
 }
 
+void MamChatWidget::setAdditionalTextColor(const QColor &color)
+{
+    additionalTextColor_ = color;
+    refreshSelection();
+}
+
 void MamChatWidget::setQuoteColor(const QColor &color)
 {
     quoteColor_ = color;
@@ -3595,6 +3746,14 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     // Rows are transparent: the hover tint is painted under them, over the
     // log's background or image. Only a selected row paints its surface.
     row->setAutoFillBackground(selected);
+    if (auto *date = row->findChild<QLabel *>(QStringLiteral("mamDateSeparator"))) {
+        // Date separators share the existing additional-message-text option
+        // (also used for system-message details and MUC topics).
+        QPalette datePalette = palette;
+        datePalette.setColor(QPalette::Text,
+                             additionalTextColor_.isValid() ? additionalTextColor_ : palette.color(QPalette::Text));
+        date->setPalette(datePalette);
+    }
     if (auto *content = rowBody(row)) {
         auto    *body        = content->text();
         QPalette textPalette = palette;
@@ -3704,6 +3863,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
             scrollToEnd();
         scheduleInitialHistoryFillCheck();
         updateTimestamps();
+        refreshUnreadEdgeBadge();
     });
 }
 
@@ -3717,6 +3877,14 @@ void MamChatWidget::hideEvent(QHideEvent *event)
 
 bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
 {
+    if (event->type() == QEvent::Enter
+        && Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(target)) {
+        // A navigation control owns this whole invisible halo. Drop the
+        // floating toolbar immediately, before it can capture an arrow click.
+        hideMessageActions();
+        setHoveredRow(nullptr);
+        return false;
+    }
     if (target == viewport() && selectingByDrag_ && QWidget::mouseGrabber() == viewport()) {
         // Whole-message drag selection owns the pointer (see updateDragSelection).
         auto *mouse = static_cast<QMouseEvent *>(event);

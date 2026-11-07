@@ -15,6 +15,7 @@
 #include <QHash>
 #include <QList>
 #include <QSet>
+#include <QVector>
 
 class FileSharingDeviceOpener;
 class ChatMessageText;
@@ -85,6 +86,7 @@ public:
     void           refreshAvatars();
     void           setMediaOpener(FileSharingDeviceOpener *opener);
     void           setInformationalColor(const QColor &color);
+    void           setAdditionalTextColor(const QColor &color);
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString timestampText(const QDateTime &when, const NativeChatPartOptions &options,
@@ -212,6 +214,10 @@ private:
     // Stable row identity, not an index: prepending MAM pages shifts indices.
     QString                                       lastDisplayedRowKey_;
     QString                                       unreadBoundaryKey_;
+    QString                                       unreadReadProgressKey_; // Furthest viewed row after the boundary.
+    QVector<int>                                  unreadIncomingSuffix_;
+    bool                                          unreadCountsDirty_ = true;
+    void                                          refreshUnreadEdgeBadge();
     QString                                       lastMarkedIncomingRowKey_;
     QDateTime                                     lastMarkedIncomingTime_;
     qint64                                        lastMarkedIncomingHistoryId_ = 0;
@@ -222,6 +228,8 @@ private:
     void                                          rememberDisplayedIncoming(int index);
     void                                          updateTimestamps();
     NativeChatMessageInfo                         messageInfo(int index) const;
+    bool                                          startsNewDate(int index) const;
+    void                                          updateAdjacentDateDivider(int index);
     // Fonts and colours of Psi's own parts, from the row's NativeChatPartOptions.
     void                                          applyPartStyle(QWidget *row, int index);
     void                                          restyleRows();
@@ -240,6 +248,7 @@ private:
     void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
     QColor                                        informationalColor_;
+    QColor                                        additionalTextColor_;
     QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;

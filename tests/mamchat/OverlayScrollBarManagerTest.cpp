@@ -79,6 +79,62 @@ private slots:
         QVERIFY(overlay->isVisible());
     }
 
+    void suppressingAnAxisKeepsNativeChromeHidden_data()
+    {
+        QTest::addColumn<bool>("horizontal");
+        QTest::newRow("horizontal") << true;
+        QTest::newRow("vertical") << false;
+    }
+
+    void suppressingAnAxisKeepsNativeChromeHidden()
+    {
+        QFETCH(bool, horizontal);
+        const Qt::Orientation orientation = horizontal ? Qt::Horizontal : Qt::Vertical;
+        QAbstractScrollArea area;
+        area.resize(320, 240);
+        area.horizontalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setRange(0, 100);
+        auto *source = horizontal ? area.horizontalScrollBar() : area.verticalScrollBar();
+        // Suppression also works before the overlays are attached.
+        Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, false);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        area.show();
+        settleEvents();
+
+        auto *overlay = area.findChild<QScrollBar *>(horizontal
+            ? "mattermostOverlayHorizontalScrollBar" : "mattermostOverlayVerticalScrollBar");
+        auto *other = area.findChild<QScrollBar *>(horizontal
+            ? "mattermostOverlayVerticalScrollBar" : "mattermostOverlayHorizontalScrollBar");
+        QVERIFY(overlay && other);
+        QVERIFY(!overlay->isVisible());
+        QVERIFY(other->isVisible());
+
+        for (int cycle = 0; cycle < 3; ++cycle) {
+            Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, true);
+            settleEvents();
+            QVERIFY(overlay->isVisible());
+            QVERIFY(!area.horizontalScrollBar()->isVisible());
+            QVERIFY(!area.verticalScrollBar()->isVisible());
+            QCOMPARE(area.horizontalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            QCOMPARE(area.verticalScrollBarPolicy(), Qt::ScrollBarAlwaysOff);
+            overlay->triggerAction(QAbstractSlider::SliderToMaximum);
+            QCOMPARE(source->value(), 100);
+
+            Mattermost::OverlayScrollBarManager::setScrollBarEnabled(area, orientation, false);
+            // Range/value changes and deferred layout/reveal callbacks must
+            // not resurrect an explicitly suppressed overlay or native bar.
+            source->setRange(0, 120 + cycle);
+            source->setValue(20 + cycle);
+            source->setRange(0, 100);
+            area.resize(330 + cycle, 250 + cycle);
+            settleEvents();
+            QVERIFY(!overlay->isVisible());
+            QVERIFY(other->isVisible());
+            QVERIFY(!source->isVisible());
+        }
+        QCOMPARE(horizontal ? area.horizontalScrollBar() : area.verticalScrollBar(), source);
+    }
+
     void optedInRostersGetOverlayWithoutAffectingOtherScrollAreas()
     {
         QTreeView roster;
@@ -201,6 +257,57 @@ private slots:
         settleEvents();
         QCOMPARE(area.verticalScrollBar()->value(),
                  area.verticalScrollBar()->minimum());
+    }
+
+    void bottomBadgeAndGuardRemainGenericAndClickable()
+    {
+        QAbstractScrollArea area;
+        area.resize(320, 240);
+        area.verticalScrollBar()->setRange(0, 100);
+        area.verticalScrollBar()->setPageStep(20);
+        Mattermost::OverlayScrollBarManager::attach(area);
+        area.show();
+        settleEvents();
+
+        auto *button = area.findChild<QToolButton *>(
+            QStringLiteral("mattermostOverlayScrollToEndButton"));
+        auto *badge = area.findChild<QWidget *>(
+            QStringLiteral("mattermostOverlayBottomBadge"));
+        auto *guard = area.findChild<QWidget *>(
+            QStringLiteral("mattermostOverlayScrollToEndGuard"));
+        QVERIFY(button && badge && guard);
+        QVERIFY(button->isVisible());
+        QVERIFY(!badge->isVisible());
+        QVERIFY(guard->isVisible());
+        QCOMPARE(guard->parentWidget(), static_cast<QWidget *>(&area));
+        QCOMPARE(guard->size(), QSize(button->width() * 3, button->height() * 3));
+        QCOMPARE(button->pos(), guard->pos() + QPoint(button->width(), button->height()));
+        QVERIFY(Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(guard));
+        QVERIFY(Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(button));
+        QVERIFY(!Mattermost::OverlayScrollBarManager::isEdgeNavigationExclusion(area.viewport()));
+
+        area.setProperty("mattermostOverlayBottomBadgeText", QStringLiteral("42"));
+        settleEvents();
+        QVERIFY(badge->isVisible());
+        QVERIFY(badge->testAttribute(Qt::WA_TransparentForMouseEvents));
+        QVERIFY(badge->geometry().bottom() <
+                button->geometry().top() - guard->geometry().top());
+        QCOMPARE(badge->parentWidget(), guard);
+
+        // The real arrow retains click priority over the invisible halo.
+        QCOMPARE(area.childAt(button->geometry().center()), static_cast<QWidget *>(button));
+        QTest::mouseClick(button, Qt::LeftButton);
+        settleEvents();
+        QCOMPARE(area.verticalScrollBar()->value(), 100);
+        QVERIFY(!button->isVisible());
+        QVERIFY(!guard->isVisible());
+        QVERIFY(!badge->isVisible());
+
+        area.verticalScrollBar()->setValue(40);
+        area.setProperty("mattermostOverlayBottomBadgeText", QString());
+        settleEvents();
+        QVERIFY(button->isVisible());
+        QVERIFY(!badge->isVisible());
     }
 
     void edgeNavigationButtonsCanBeDisabledTogether()

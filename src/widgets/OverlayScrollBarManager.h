@@ -38,6 +38,16 @@ public:
     static void attach(QAbstractScrollArea& area);
 
     /**
+     * Temporarily suppress or restore a managed overlay, e.g. horizontal
+     * scrolling while text is wrapped. Call before or after attach(); the
+     * original scrollbars stay hidden. Axes whose Qt policy is AlwaysOff at
+     * attach time are not managed. Do not change the area's Qt scrollbar
+     * policies after attaching.
+     */
+    static void setScrollBarEnabled(QAbstractScrollArea& area,
+                                    Qt::Orientation orientation, bool enabled);
+
+    /**
      * Briefly reveal the overlay for an already-populated scroll area.
      * Returns true when the area currently has scrollable content.
      */
@@ -58,6 +68,15 @@ public:
      */
     static void setEdgeNavigationButtonsEnabled(QAbstractScrollArea& area,
                                                 bool enabled);
+
+    /**
+     * Optional generic badge: set "mattermostOverlayBottomBadgeText" on the
+     * scroll area to a nonempty label. The manager owns drawing/positioning;
+     * the consumer decides what the label means.
+     */
+
+    /** True for an edge navigation button or its invisible exclusion zone. */
+    static bool isEdgeNavigationExclusion(const QObject* object);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
