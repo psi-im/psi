@@ -94,7 +94,7 @@ Psi supplies `NativeChatMessageCanvas::DateSeparator` only for the first
 message of a local calendar day. The default placement is a centred,
 localized date with thin lines on both sides, above the message. The Bubble
 theme places the same label inside its own centred, tailless date bubble.
-Its foreground follows **Additional message text** (`messages.usertext`) from
+Its foreground follows the informational-message color (`messages.informational`) from
 Appearance → Colors, with independent light and dark palette defaults. Changing
 that setting recolors visible dates without rebuilding message rows.
 Themes may style `QLabel#mamDateSeparator` or consume the part and arrange

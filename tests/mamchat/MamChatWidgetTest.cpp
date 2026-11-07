@@ -6367,7 +6367,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(460, 420);
         chat.setHistoryLoading(true);
-        chat.setAdditionalTextColor(QColor("#606060"));
+        chat.setInformationalColor(QColor("#606060"));
         auto first = message(QStringLiteral("day1"), QStringLiteral("First day"), 0);
         auto sameDay = message(QStringLiteral("day1b"), QStringLiteral("Same day"), 60);
         auto nextDay = message(QStringLiteral("day2"), QStringLiteral("Next day"), 86400);
@@ -6398,7 +6398,7 @@ private slots:
         QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#606060"));
         // A settings change recolors existing date bubbles without rebuilding rows.
         QWidget *bubbleRow = chat.itemWidget(2);
-        chat.setAdditionalTextColor(QColor("#bbbbbb"));
+        chat.setInformationalColor(QColor("#bbbbbb"));
         QCOMPARE(chat.itemWidget(2), bubbleRow);
         QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#bbbbbb"));
 

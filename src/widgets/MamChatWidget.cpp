@@ -3683,12 +3683,6 @@ void MamChatWidget::setInformationalColor(const QColor &color)
     refreshSelection();
 }
 
-void MamChatWidget::setAdditionalTextColor(const QColor &color)
-{
-    additionalTextColor_ = color;
-    refreshSelection();
-}
-
 void MamChatWidget::setQuoteColor(const QColor &color)
 {
     quoteColor_ = color;
@@ -3747,11 +3741,10 @@ void MamChatWidget::updateRowPalette(QFrame *row, bool selected)
     // log's background or image. Only a selected row paints its surface.
     row->setAutoFillBackground(selected);
     if (auto *date = row->findChild<QLabel *>(QStringLiteral("mamDateSeparator"))) {
-        // Date separators share the existing additional-message-text option
-        // (also used for system-message details and MUC topics).
+        // Date separators use the existing informational-message color.
         QPalette datePalette = palette;
         datePalette.setColor(QPalette::Text,
-                             additionalTextColor_.isValid() ? additionalTextColor_ : palette.color(QPalette::Text));
+                             informationalColor_.isValid() ? informationalColor_ : palette.color(QPalette::Text));
         date->setPalette(datePalette);
     }
     if (auto *content = rowBody(row)) {
