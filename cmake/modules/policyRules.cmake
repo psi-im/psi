@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.10.0 )
 #Set automoc and autouic policy
-cmake_policy(PUSH)
+#cmake_policy(PUSH)
 if(POLICY CMP0071)
     cmake_policy(SET CMP0071 NEW)
     if(NOT POLICY_SET) #less messages
@@ -19,5 +19,5 @@ if(POLICY CMP0072)
         message(STATUS "CMP0072 policy set to NEW")
     endif()
 endif()
-cmake_policy(POP)
+#cmake_policy(POP)
 set(POLICY_SET ON)

@@ -8,6 +8,11 @@ if("${QT_DEFAULT_MAJOR_VERSION}" STREQUAL "")
     set(QT_DEFAULT_MAJOR_VERSION 5)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
+
+include(psi-cmake-functions)
+include(policyRules NO_POLICY_SCOPE)
+
 # Psi or Psi+ detection
 option(PSI_PLUS "Build Psi+ client instead of Psi" OFF)
 if(PSI_PLUS)
@@ -20,11 +25,6 @@ else()
 endif()
 
 include(CTest)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
-
-include(psi-cmake-functions)
-include(policyRules)
 
 # Define LINUX on Linux like and BSD as WIN32 on Windows and APPLE on macOS
 if(UNIX AND (NOT (APPLE OR HAIKU) AND NOT CYGWIN))
