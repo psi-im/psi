@@ -86,6 +86,7 @@ public:
     void           refreshAvatars();
     void           setMediaOpener(FileSharingDeviceOpener *opener);
     void           setInformationalColor(const QColor &color);
+    void           setAdditionalTextColor(const QColor &color);
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString timestampText(const QDateTime &when, const NativeChatPartOptions &options,
@@ -247,6 +248,7 @@ private:
     void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
     QColor                                        informationalColor_;
+    QColor                                        additionalTextColor_;
     QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);
     NativeChatTheme                               theme_;
