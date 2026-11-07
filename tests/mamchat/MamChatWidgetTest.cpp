@@ -6265,6 +6265,7 @@ private slots:
         MamChatWidget chat;
         chat.resize(460, 420);
         chat.setHistoryLoading(true);
+        chat.setAdditionalTextColor(QColor("#606060"));
         auto first = message(QStringLiteral("day1"), QStringLiteral("First day"), 0);
         auto sameDay = message(QStringLiteral("day1b"), QStringLiteral("Same day"), 60);
         auto nextDay = message(QStringLiteral("day2"), QStringLiteral("Next day"), 86400);
@@ -6277,7 +6278,10 @@ private slots:
         QVERIFY(!chat.itemWidget(1)->property("_psiMamDateBoundary").toBool());
         QVERIFY(chat.itemWidget(2)->property("_psiMamDateBoundary").toBool());
         QVERIFY(chat.itemWidget(0)->property("_psiMamDateSeparatorFallback").toBool());
-        QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        auto *classicDate = chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(classicDate);
+        QCOMPARE(classicDate->foregroundRole(), QPalette::Text);
+        QCOMPARE(classicDate->palette().color(QPalette::Text), QColor("#606060"));
         QVERIFY(!chat.itemWidget(1)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
         QCOMPARE(chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"))->text(),
                  QLocale().toString(nextDay.dateTime().toLocalTime().date(), QLocale::LongFormat));
@@ -6287,7 +6291,14 @@ private slots:
         chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("bubble")));
         QTRY_VERIFY(chat.itemWidget(2) && chat.itemWidget(2)->findChild<QWidget *>(QStringLiteral("mamBubbleDateRow")));
         QVERIFY(!chat.itemWidget(2)->property("_psiMamDateSeparatorFallback").toBool());
-        QVERIFY(chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
+        auto *bubbleDate = chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamDateSeparator"));
+        QVERIFY(bubbleDate);
+        QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#606060"));
+        // A settings change recolors existing date bubbles without rebuilding rows.
+        QWidget *bubbleRow = chat.itemWidget(2);
+        chat.setAdditionalTextColor(QColor("#bbbbbb"));
+        QCOMPARE(chat.itemWidget(2), bubbleRow);
+        QCOMPARE(bubbleDate->palette().color(QPalette::Text), QColor("#bbbbbb"));
 
         // Prepending a same-day page moves the opening divider to the newly
         // inserted row, without leaving a duplicate on the old first row.
