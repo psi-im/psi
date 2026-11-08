@@ -2,6 +2,7 @@
 #define PSITRAYICON_H
 
 #include <QObject>
+#include <QPointer>
 #include <QSystemTrayIcon>
 
 class PsiIcon;
@@ -38,6 +39,7 @@ protected:
 
 private:
     PsiIcon         *icon_;
+    QPointer<PsiIcon> sourceIcon_;
     QSystemTrayIcon *trayicon_;
     int              attentionCount_ = 0;
     bool             unreadMuc_ = false;
