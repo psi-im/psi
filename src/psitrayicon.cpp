@@ -37,6 +37,11 @@ void PsiTrayIcon::setToolTip(const QString &str) { trayicon_->setToolTip(str); }
 
 void PsiTrayIcon::setIcon(const PsiIcon *icon)
 {
+    // Unread changes must not repeatedly restart a status animation or
+    // replace the native tray icon twice (status followed by badge).
+    if (icon_ && sourceIcon_.data() == icon)
+        return;
+    sourceIcon_ = const_cast<PsiIcon *>(icon);
     if (icon_) {
         icon_->disconnect();
         icon_->stop();
@@ -57,10 +62,16 @@ void PsiTrayIcon::setIcon(const PsiIcon *icon)
 void PsiTrayIcon::setBadge(int attentionCount, bool unreadMuc)
 {
     attentionCount = qMax(0, attentionCount);
-    if (attentionCount_ == attentionCount && unreadMuc_ == unreadMuc)
-        return;
+    const auto oldKind = Mattermost::trayBadgeKind(static_cast<std::uint32_t>(attentionCount_), unreadMuc_);
+    const auto oldDisplayCount = qMin(attentionCount_, 100);
+    const auto newKind = Mattermost::trayBadgeKind(static_cast<std::uint32_t>(attentionCount), unreadMuc);
     attentionCount_ = attentionCount;
     unreadMuc_ = unreadMuc;
+    // The blue state may change behind a red badge. Neither that nor a
+    // change from 100 to 101 affects the native icon pixels.
+    if (oldKind == newKind && (oldKind != Mattermost::TrayBadgeKind::Attention
+                               || oldDisplayCount == qMin(attentionCount_, 100)))
+        return;
     animate();
 }
 
