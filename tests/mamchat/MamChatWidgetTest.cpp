@@ -2420,17 +2420,24 @@ private slots:
         auto *clip = preview->findChild<QWidget *>("previewClip");
         QTRY_VERIFY(more->isVisible());
         const int collapsedHeight = clip->height();
+        // A message's trailing newline is not rendered or copied.
+        QString displayedText = text;
+        displayedText.chop(1);
         browser->selectAll();
         browser->copy();
-        QCOMPARE(QApplication::clipboard()->text(), text);
+        QCOMPARE(QApplication::clipboard()->text(), displayedText);
         QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        // Refreshing the same source must not collapse a previously expanded
+        // preview just because its rendered text lost a trailing newline.
+        preview->setContent(QStringLiteral("Author"), text);
         QVERIFY(preview->isExpanded());
         QTRY_VERIFY(clip->height() > collapsedHeight);
         QVERIFY(clip->height() > window.height() / 2);
         // The outer chat timeline owns scrolling once Show more is clicked.
         // The text preview itself must have no independent scrollbar.
         QTRY_COMPARE(browser->verticalScrollBar()->maximum(), 0);
-        QCOMPARE(browser->toPlainText(), text);
+        QCOMPARE(browser->toPlainText(), displayedText);
         QTest::mouseClick(more, Qt::LeftButton);
         QVERIFY(!preview->isExpanded());
         QCOMPARE(clip->height(), collapsedHeight);
