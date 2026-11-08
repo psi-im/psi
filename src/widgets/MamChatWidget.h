@@ -106,9 +106,11 @@ public:
     void cancelMessageSelection();
     // Place the unread boundary after the last currently displayed row.
     void markUnreadBoundary();
+    int  unreadIncomingCount() const { return unreadIncomingCount_; }
     void toggleReaction(const QString &messageId, const QString &emoji);
 
 signals:
+    void unreadIncomingCountChanged(int count);
     void contactMenuRequested(const QString &nick, const QPoint &globalPosition);
     void replyRequested(const ChatReply &reply);
     void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
@@ -216,6 +218,7 @@ private:
     QString                                       unreadReadProgressKey_; // Furthest viewed row after the boundary.
     QVector<int>                                  unreadIncomingSuffix_;
     bool                                          unreadCountsDirty_ = true;
+    int                                           unreadIncomingCount_ = 0;
     void                                          refreshUnreadEdgeBadge();
     QString                                       lastMarkedIncomingRowKey_;
     QDateTime                                     lastMarkedIncomingTime_;
