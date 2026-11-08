@@ -6373,6 +6373,12 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
     chat->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
     connect(chat, &GCMainDlg::aSend, this, [this](Message &msg) { dj_sendMessage(msg); });
     connect(chat, &GCMainDlg::messagesRead, this, &PsiAccount::groupChatMessagesRead);
+    connect(chat, &GCMainDlg::unreadStateChanged, this, &PsiAccount::mucUnreadChanged);
+    connect(chat, &QObject::destroyed, this, [this] {
+        // Let PsiAccount's dialog registry finish removing the destroyed room.
+        QTimer::singleShot(0, this, [this] { emit mucUnreadChanged(); });
+    });
+    emit mucUnreadChanged();
     connect(d->psi, &PsiCon::emitOptionsUpdate, chat, &GCMainDlg::optionsUpdate);
     // This window did not exist when groupChatJoined was emitted. Complete
     // the same transition as a rejoined window, including archive readiness.
