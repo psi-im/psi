@@ -464,6 +464,10 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     // selection so the rows scrolled under the cursor are selected too. This
     // runs after LongListWidget has laid out the new scroll position.
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int) {
+        // The visible row set can remain unchanged during the last few pixels
+        // of scrolling. Recheck the exact bottom only while unread is pending.
+        if (unreadTailPending_)
+            refreshUnreadEdgeBadge();
         if (!mousePressed_ || !QGuiApplication::mouseButtons().testFlag(Qt::LeftButton))
             return;
         updateDragSelection(viewport()->mapFromGlobal(QCursor::pos()));
@@ -1690,6 +1694,11 @@ void MamChatWidget::appendMessage(const MessageView &view)
         return;
 
     const bool followTail = followingInitialTail_ || isAtEnd() || sentNewMessage;
+    // An active reader may be browsing older rows. New MUC traffic is unread
+    // until the live tail is actually viewed, not merely until tab activation.
+    if (groupChat_ && view.type() == MessageView::Message && !view.isLocal() && !view.isSpooled()
+        && !followTail && unreadIncomingCount_ == 0)
+        markUnreadBoundary();
     keys_.insert(key);
     Row row { key, view, {} };
     if (!view.messageId().isEmpty())
@@ -1809,6 +1818,7 @@ void MamChatWidget::clearMessages()
     security_.clear();
     lastDisplayedRowKey_.clear();
     unreadBoundaryKey_.clear();
+    unreadBoundaryAtStart_ = false;
     unreadReadProgressKey_.clear();
     unreadIncomingSuffix_.clear();
     unreadCountsDirty_ = true;
@@ -3275,7 +3285,8 @@ void MamChatWidget::refreshUnreadEdgeBadge()
     // not a new network read marker. A window that is not active must not
     // silently consume unread messages merely because geometry changes.
     const int boundary = indexOfKey(unreadBoundaryKey_);
-    if (boundary >= 0 && isVisible() && window()->isActiveWindow()) {
+    const bool hasBoundary = unreadBoundaryAtStart_ || boundary >= 0;
+    if (hasBoundary && isVisible() && window()->isActiveWindow()) {
         const auto visible = knownVisibleRange();
         const int seen = indexOfKey(unreadReadProgressKey_);
         if (visible.isValid() && visible.last > qMax(boundary, seen))
@@ -3283,7 +3294,7 @@ void MamChatWidget::refreshUnreadEdgeBadge()
     }
 
     int count = 0;
-    if (boundary >= 0) {
+    if (hasBoundary) {
         if (unreadCountsDirty_) {
             // Precompute suffix totals once per model mutation. Scrolling
             // then updates the badge in O(1), even on a long MAM history.
@@ -3300,6 +3311,18 @@ void MamChatWidget::refreshUnreadEdgeBadge()
         const int from = qBound(0, qMax(boundary, seen) + 1, items_.size());
         count = unreadIncomingSuffix_.at(from);
     }
+    if (unreadIncomingCount_ != count) {
+        unreadIncomingCount_ = count;
+        emit unreadIncomingCountChanged(count);
+    }
+    // A partially visible final message is not equivalent to having read
+    // the room to the end. Preserve the tray dot until the actual bottom.
+    const bool atActiveEnd = isVisible() && window()->isActiveWindow() && isAtEnd();
+    const bool pendingTail = !items_.isEmpty() && !atActiveEnd && (count > 0 || unreadTailPending_);
+    if (pendingTail != unreadTailPending_) {
+        unreadTailPending_ = pendingTail;
+        emit unreadTailChanged(pendingTail);
+    }
     const QString label = count > 0 ? QString::number(count) : QString();
     if (property("mattermostOverlayBottomBadgeText").toString() != label)
         setProperty("mattermostOverlayBottomBadgeText", label);
@@ -3307,10 +3330,12 @@ void MamChatWidget::refreshUnreadEdgeBadge()
 
 void MamChatWidget::markUnreadBoundary()
 {
-    const QString next = items_.isEmpty() ? QString() : items_.last().key;
-    if (next == unreadBoundaryKey_)
+    const bool atStart = items_.isEmpty();
+    const QString next = atStart ? QString() : items_.last().key;
+    if (next == unreadBoundaryKey_ && unreadBoundaryAtStart_ == atStart)
         return;
     const int previousIndex = indexOfKey(unreadBoundaryKey_);
+    unreadBoundaryAtStart_ = atStart;
     unreadBoundaryKey_ = next;
     unreadReadProgressKey_ = next;
     // A renderer may put the separator into its layout, not just paint it.

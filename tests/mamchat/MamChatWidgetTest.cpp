@@ -6483,6 +6483,27 @@ private slots:
         QVERIFY(chat.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamDateSeparator")));
     }
 
+    void emptyMucTracksUnreadBeforeItsFirstLiveMessage()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        chat.setHistoryLoading(true);
+        chat.markUnreadBoundary(); // No row exists yet.
+        QCOMPARE(chat.unreadIncomingCount(), 0);
+        QVERIFY(!chat.hasUnreadTail());
+
+        chat.appendMessage(message(QStringLiteral("first"), QStringLiteral("Hello"), 1));
+        QCOMPARE(chat.unreadIncomingCount(), 1);
+        QVERIFY(chat.hasUnreadTail());
+
+        // Changing to a real row boundary resets the unread model.
+        chat.markUnreadBoundary();
+        QCOMPARE(chat.unreadIncomingCount(), 0);
+        chat.clearMessages();
+        QVERIFY(!chat.hasUnreadTail());
+        QCOMPARE(chat.unreadIncomingCount(), 0);
+    }
+
     void unreadEdgeBadgeCountsOnlyUnseenIncomingMessages()
     {
         MamChatWidget chat;

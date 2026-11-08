@@ -140,3 +140,10 @@ target_include_directories(mam_message_styling_test PRIVATE ${CMAKE_CURRENT_LIST
 target_link_libraries(mam_message_styling_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_message_styling COMMAND mam_message_styling_test)
+
+# Reuse MatterLeast's native tray badge painter on Qt 5 and Qt 6.
+add_executable(mam_tray_badge_test TrayBadgePainterTest.cpp
+    ../../src/TrayBadgePainter.cpp ../../src/TrayBadgePainter.h ../../src/TrayBadgePolicy.h)
+target_include_directories(mam_tray_badge_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_tray_badge_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_tray_badge COMMAND mam_tray_badge_test)

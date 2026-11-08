@@ -324,6 +324,9 @@ public:
 
 signals:
     void accountDestroyed();
+#ifdef GROUPCHAT
+    void mucUnreadChanged();
+#endif
     void connectionError(const QString &errorInfo);
     void disconnected();
     void reconnecting();

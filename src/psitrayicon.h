@@ -2,11 +2,11 @@
 #define PSITRAYICON_H
 
 #include <QObject>
+#include <QPointer>
 #include <QSystemTrayIcon>
 
 class PsiIcon;
 class QMenu;
-class QPixmap;
 class QPoint;
 
 class PsiTrayIcon : public QObject {
@@ -17,8 +17,8 @@ public:
 
     void setContextMenu(QMenu *);
     void setToolTip(const QString &);
-    void setIcon(const PsiIcon *, bool alert = false);
-    void setAlert(const PsiIcon *);
+    void setIcon(const PsiIcon *);
+    void setBadge(int attentionCount, bool unreadMuc);
 
 signals:
     void clicked(const QPoint &, int);
@@ -35,13 +35,14 @@ private slots:
     void trayicon_activated(QSystemTrayIcon::ActivationReason);
 
 protected:
-    QPixmap makeIcon();
     bool    eventFilter(QObject *, QEvent *);
 
 private:
     PsiIcon         *icon_;
+    QPointer<PsiIcon> sourceIcon_;
     QSystemTrayIcon *trayicon_;
-    quintptr         realIcon_;
+    int              attentionCount_ = 0;
+    bool             unreadMuc_ = false;
 };
 
 #endif // PSITRAYICON_H

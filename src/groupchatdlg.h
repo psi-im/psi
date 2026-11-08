@@ -90,6 +90,7 @@ public:
     // reimplemented
     virtual TabbableWidget::State state() const;
     virtual int                   unreadMessageCount() const;
+    bool                          hasUnreadIncoming() const;
     const QString                &getDisplayName() const;
     virtual QString               desiredCaption() const;
     virtual void                  setVSplitterPosition(int log, int chat);
@@ -111,6 +112,7 @@ protected:
 signals:
     void aSend(Message &);
     void messagesRead(const Jid &);
+    void unreadStateChanged();
     void messageAppended(const QString &, QWidget *);
 
 public slots:
