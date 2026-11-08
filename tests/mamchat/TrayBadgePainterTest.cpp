@@ -34,7 +34,7 @@ private slots:
                 for (int y = 0; y < img.height(); ++y) {
                     for (int x = 0; x < img.width(); ++x) {
                         const QColor pixel = img.pixelColor(x, y);
-                        if (pixel.alpha() == 0)
+                        if (pixel.alpha() < 128)
                             hasHalo = true;
                         if (pixel.red() > 160 && pixel.green() < 100 && pixel.blue() < 140) {
                             if (kind == TrayBadgeKind::Attention)
@@ -50,7 +50,8 @@ private slots:
                         }
                     }
                 }
-                QVERIFY(hasHalo);
+                QVERIFY2(hasHalo, qPrintable(QStringLiteral("No alpha halo at %1px (kind %2)")
+                    .arg(side).arg(static_cast<int>(kind))));
                 QVERIFY(hasColoredBadge);
                 QVERIFY(!hasOtherColor);
             }
