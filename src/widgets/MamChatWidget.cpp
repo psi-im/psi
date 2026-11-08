@@ -464,6 +464,10 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     // selection so the rows scrolled under the cursor are selected too. This
     // runs after LongListWidget has laid out the new scroll position.
     connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this](int) {
+        // The visible row set can remain unchanged during the last few pixels
+        // of scrolling. Recheck the exact bottom only while unread is pending.
+        if (unreadTailPending_)
+            refreshUnreadEdgeBadge();
         if (!mousePressed_ || !QGuiApplication::mouseButtons().testFlag(Qt::LeftButton))
             return;
         updateDragSelection(viewport()->mapFromGlobal(QCursor::pos()));
@@ -3308,6 +3312,14 @@ void MamChatWidget::refreshUnreadEdgeBadge()
     if (unreadIncomingCount_ != count) {
         unreadIncomingCount_ = count;
         emit unreadIncomingCountChanged(count);
+    }
+    // A partially visible final message is not equivalent to having read
+    // the room to the end. Preserve the tray dot until the actual bottom.
+    const bool atActiveEnd = isVisible() && window()->isActiveWindow() && isAtEnd();
+    const bool pendingTail = !items_.isEmpty() && !atActiveEnd && (count > 0 || unreadTailPending_);
+    if (pendingTail != unreadTailPending_) {
+        unreadTailPending_ = pendingTail;
+        emit unreadTailChanged(pendingTail);
     }
     const QString label = count > 0 ? QString::number(count) : QString();
     if (property("mattermostOverlayBottomBadgeText").toString() != label)
