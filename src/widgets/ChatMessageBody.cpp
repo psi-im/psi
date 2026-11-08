@@ -78,7 +78,11 @@ void ChatMessageBody::clearParts()
 void ChatMessageBody::setPlainText(const QString &text)
 {
     clearParts();
-    this->text()->setPlainMessage(text);
+    auto *prose = this->text();
+    prose->setPlainMessage(text);
+    trimMessageEnd(prose->document());
+    if (prose->document()->isEmpty())
+        prose->hide();
 }
 
 void ChatMessageBody::setRichText(const QString &html, const RichTextOptions &options)
@@ -100,6 +104,8 @@ void ChatMessageBody::setRichText(const QString &html, const RichTextOptions &op
                                   : QList<PsiRichText::ContentPart>();
     if (parts.isEmpty()) {
         first->markQuotedLines();
+        if (first->document()->isEmpty())
+            first->hide();
         return;
     }
     for (int i = 0; i < parts.size(); ++i) {
