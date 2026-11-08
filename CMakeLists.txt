@@ -10,7 +10,6 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 
-include(psi-cmake-functions)
 include(policyRules NO_POLICY_SCOPE)
 
 # Psi or Psi+ detection
@@ -25,6 +24,7 @@ else()
 endif()
 
 include(CTest)
+include(psi-cmake-functions)
 
 # Define LINUX on Linux like and BSD as WIN32 on Windows and APPLE on macOS
 if(UNIX AND (NOT (APPLE OR HAIKU) AND NOT CYGWIN))
