@@ -969,6 +969,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     nativeTimeline_->setGroupChat(true);
     connect(nativeTimeline_, &MamChatWidget::unreadIncomingCountChanged, this,
             [this](int) { emit unreadStateChanged(); });
+    connect(nativeTimeline_, &MamChatWidget::unreadTailChanged, this,
+            [this](bool) { emit unreadStateChanged(); });
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
     ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
     delete ui_.log; // .ui layout placeholder, not a message log.
@@ -3014,7 +3016,8 @@ int GCMainDlg::unreadMessageCount() const { return d->pending; }
 
 bool GCMainDlg::hasUnreadIncoming() const
 {
-    return d->pending > 0 || (nativeTimeline_ && nativeTimeline_->unreadIncomingCount() > 0);
+    return d->pending > 0
+        || (nativeTimeline_ && (nativeTimeline_->unreadIncomingCount() > 0 || nativeTimeline_->hasUnreadTail()));
 }
 
 void GCMainDlg::setStatusTabIcon(int status) { setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon()); }
