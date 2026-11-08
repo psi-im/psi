@@ -1601,7 +1601,7 @@ private slots:
         QVERIFY(!riskCheckbox);
     }
 
-    void fencedCodeDoesNotCreateTrailingBlankProse()
+    void fencedCodeTrimsOnlyTheEndOfTheMessage()
     {
         const QString fence(3, QChar(0x60));
         const QString code = fence + QStringLiteral("txt<br>one<br><br>three<br>") + fence;
@@ -1610,31 +1610,48 @@ private slots:
             body.setRichText(MessageStyling::toHtml(html), {});
         };
 
-        // Empty paragraphs after a closing fence must not create a text view.
-        render(code + QStringLiteral("<br><br><br>"));
+        // Trailing whitespace belongs to the message, not to a new prose
+        // widget. Blank lines inside code must remain untouched.
+        render(code + QStringLiteral("<br><br>   <br>"));
         QCOMPARE(body.codeBlocks().size(), 1);
         QCOMPARE(body.codeBlocks().first()->code(), QStringLiteral("one\n\nthree"));
-        QCOMPARE(body.prose().size(), 1); // The reusable first view is hidden.
+        QCOMPARE(body.prose().size(), 1);
         QVERIFY(body.text()->isHidden());
         QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
 
-        // The same applies when the message has actual prose before the code.
-        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br><br>"));
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br>   <br>"));
         QCOMPARE(body.codeBlocks().size(), 1);
         QCOMPARE(body.prose().size(), 1);
         QCOMPARE(body.prose().first()->toPlainText(), QStringLiteral("before"));
         QVERIFY(!body.text()->isHidden());
 
-        // Nonempty prose survives, but its trailing blank paragraphs do not.
-        render(QStringLiteral("before<br>") + code + QStringLiteral("<br>after<br><br><br>"));
+        // Only the newline separating the fence from the next widget is
+        // consumed. Subsequent whitespace is still ordinary prose.
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br>after<br><br> "));
+        QCOMPARE(body.codeBlocks().size(), 1);
         QCOMPARE(body.prose().size(), 2);
-        QCOMPARE(body.prose().last()->toPlainText(), QStringLiteral("after"));
-
-        // Blank lines between two code blocks are not independent prose.
-        render(code + QStringLiteral("<br><br><br>") + code + QStringLiteral("<br><br>"));
+        QVERIFY(body.prose().last()->toPlainText().contains(QStringLiteral("after")));
+        render(code + QStringLiteral("<br><br><br>") + code);
         QCOMPARE(body.codeBlocks().size(), 2);
-        QCOMPARE(body.prose().size(), 1);
+        QCOMPARE(body.prose().size(), 2);
         QVERIFY(body.text()->isHidden());
+        QVERIFY(!body.prose().last()->isHidden());
+
+        // A closing fence must end its line. A suffix on the same line
+        // cannot terminate the code block, even if a newline follows it.
+        render(fence + QStringLiteral("txt<br>one<br>") + fence + QStringLiteral("suffix<br>after"));
+        QVERIFY(body.codeBlocks().isEmpty());
+        render(fence + QStringLiteral("txt<br>one<br>") + fence + QStringLiteral(" <br>after"));
+        QVERIFY(body.codeBlocks().isEmpty());
+
+        // No leftover whitespace-only text widget, even without code.
+        render(QStringLiteral("  <br>  <br> "));
+        QVERIFY(body.text()->isHidden());
+        body.setPlainText(QStringLiteral("  \n\t  "));
+        QVERIFY(body.text()->isHidden());
+        body.setPlainText(QStringLiteral("  retained  \n\t  "));
+        QVERIFY(!body.text()->isHidden());
+        QCOMPARE(body.text()->toPlainText(), QStringLiteral("  retained"));
     }
 
     void onlyDocumentsWithoutForeignObjectsAreSplit()
