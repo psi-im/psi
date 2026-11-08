@@ -967,6 +967,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     ui_.setupUi(this);
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     nativeTimeline_->setGroupChat(true);
+    connect(nativeTimeline_, &MamChatWidget::unreadIncomingCountChanged, this,
+            [this](int) { emit unreadStateChanged(); });
     const int logIndex = ui_.hsplitter->indexOf(ui_.log);
     ui_.hsplitter->replaceWidget(logIndex, nativeTimeline_);
     delete ui_.log; // .ui layout placeholder, not a message log.
@@ -1433,6 +1435,7 @@ void GCMainDlg::activated()
         }
         emit messagesRead(jid());
         invalidateTab();
+        emit unreadStateChanged();
     }
     doFlash(false);
 
@@ -2722,6 +2725,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
             account()->updateEntry(*u);
         }
         invalidateTab();
+        emit unreadStateChanged();
     }
 
     // if the message spoke to us, alert the user before closing this window
@@ -3007,6 +3011,11 @@ TabbableWidget::State GCMainDlg::state() const
 }
 
 int GCMainDlg::unreadMessageCount() const { return d->pending; }
+
+bool GCMainDlg::hasUnreadIncoming() const
+{
+    return d->pending > 0 || (nativeTimeline_ && nativeTimeline_->unreadIncomingCount() > 0);
+}
 
 void GCMainDlg::setStatusTabIcon(int status) { setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon()); }
 
