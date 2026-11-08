@@ -243,6 +243,8 @@ list(APPEND HEADERS
     psithemeprovider.h
     psitoolbar.h
     psitrayicon.h
+    TrayBadgePainter.h
+    TrayBadgePolicy.h
     pubsubsubscription.h
     rc.h
     registrationdlg.h
@@ -514,6 +516,7 @@ list(APPEND SOURCES
     psithemeprovider.cpp
     psitoolbar.cpp
     psitrayicon.cpp
+    TrayBadgePainter.cpp
     pubsubsubscription.cpp
     rc.cpp
     registrationdlg.cpp
