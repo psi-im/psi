@@ -1613,7 +1613,7 @@ private slots:
         // Empty paragraphs after a closing fence must not create a text view.
         render(code + QStringLiteral("<br><br><br>"));
         QCOMPARE(body.codeBlocks().size(), 1);
-        QCOMPARE(body.codeBlocks().first()->code(), QStringLiteral("one\\n\\nthree"));
+        QCOMPARE(body.codeBlocks().first()->code(), QStringLiteral("one\n\nthree"));
         QCOMPARE(body.prose().size(), 1); // The reusable first view is hidden.
         QVERIFY(body.text()->isHidden());
         QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
