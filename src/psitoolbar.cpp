@@ -118,14 +118,13 @@ void PsiToolBar::initialize()
         }
     }
 
-    if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
-        QMainWindow *mainWindow = dynamic_cast<QMainWindow *>(parentWidget());
-        if (mainWindow) {
-            mainWindow->addToolBar(dockPositionToToolBarArea(Qt3Dock(o->getOption(base_ + ".dock.position").toInt())),
-                                   this);
-            if (o->getOption(base_ + ".dock.nl").toBool())
-                mainWindow->insertToolBarBreak(this);
-        }
+    // All-in-one toolbars live in the roster layout; only toolbars parented
+    // directly to a QMainWindow participate in Qt's docking/state machinery.
+    if (auto *mainWindow = qobject_cast<QMainWindow *>(parentWidget())) {
+        mainWindow->addToolBar(dockPositionToToolBarArea(Qt3Dock(o->getOption(base_ + ".dock.position").toInt())),
+                               this);
+        if (o->getOption(base_ + ".dock.nl").toBool())
+            mainWindow->insertToolBarBreak(this);
     }
 
     updateVisibility();
