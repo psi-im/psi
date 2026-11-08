@@ -579,7 +579,7 @@ MainWin::~MainWin()
     }
 #endif
 
-    if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A'))
+    if (!d->allInOne)
         saveToolbarsState();
 
     if (d->splitter) {
@@ -599,8 +599,7 @@ void MainWin::splitterMoved()
 
 void MainWin::optionChanged(const QString &option)
 {
-    if (option == toolbarsStateOptionPath
-        && !PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+    if (option == toolbarsStateOptionPath && !d->allInOne) {
         loadToolbarsState();
     } else if (option == "options.ui.contactlist.css") {
         const QString css = PsiOptions::instance()->getOption(option).toString();
@@ -849,28 +848,27 @@ void MainWin::loadToolbarsState()
 
 void MainWin::buildToolbars()
 {
-    PsiOptions *options  = PsiOptions::instance();
-    bool        allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
+    PsiOptions *options = PsiOptions::instance();
     setUpdatesEnabled(false);
-    if (toolbars_.count() > 0 && !allInOne) {
+    if (!toolbars_.isEmpty() && !d->allInOne) {
         saveToolbarsState();
     }
 
     qDeleteAll(toolbars_);
     toolbars_.clear();
 
-    if (allInOne && d->viewToolBar) {
+    if (d->allInOne && d->viewToolBar) {
         d->viewToolBar->initialize();
     }
     const auto &bases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
     for (const QString &base : bases) {
         QString toolbarName = options->getOption(base + ".name").toString();
-        if (toolbarName == "Chat" || toolbarName == "Groupchat" || toolbarName == "Event notifier") {
+        if (toolbarName == "Chat" || toolbarName == "Groupchat") {
             continue;
         }
 
         PsiToolBar *tb;
-        if (allInOne) {
+        if (d->allInOne) {
             if (d->viewToolBar && (d->viewToolBar->base() == base))
                 continue;
             tb = new PsiToolBar(base, this, d->psi->actionList());
@@ -886,7 +884,7 @@ void MainWin::buildToolbars()
         connect(tb, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
         toolbars_ << tb;
     }
-    if (!allInOne)
+    if (!d->allInOne)
         loadToolbarsState();
 
     // loadToolbarsState also restores correct toolbar visibility,
@@ -903,7 +901,7 @@ void MainWin::buildToolbars()
         tb->setUpdatesEnabled(true);
     }
 
-    if (allInOne && d->viewToolBar) {
+    if (d->allInOne && d->viewToolBar) {
         d->viewToolBar->updateVisibility();
         d->viewToolBar->setUpdatesEnabled(true);
     }
