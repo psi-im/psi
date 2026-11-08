@@ -6,7 +6,6 @@
 
 class PsiIcon;
 class QMenu;
-class QPixmap;
 class QPoint;
 
 class PsiTrayIcon : public QObject {
@@ -35,7 +34,6 @@ private slots:
     void trayicon_activated(QSystemTrayIcon::ActivationReason);
 
 protected:
-    QPixmap makeIcon();
     bool    eventFilter(QObject *, QEvent *);
 
 private:
