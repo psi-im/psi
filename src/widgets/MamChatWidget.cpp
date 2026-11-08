@@ -1690,6 +1690,11 @@ void MamChatWidget::appendMessage(const MessageView &view)
         return;
 
     const bool followTail = followingInitialTail_ || isAtEnd() || sentNewMessage;
+    // An active reader may be browsing older rows. New MUC traffic is unread
+    // until the live tail is actually viewed, not merely until tab activation.
+    if (groupChat_ && view.type() == MessageView::Message && !view.isLocal() && !view.isSpooled()
+        && !followTail && unreadIncomingCount_ == 0)
+        markUnreadBoundary();
     keys_.insert(key);
     Row row { key, view, {} };
     if (!view.messageId().isEmpty())
@@ -3299,6 +3304,10 @@ void MamChatWidget::refreshUnreadEdgeBadge()
         const int seen = indexOfKey(unreadReadProgressKey_);
         const int from = qBound(0, qMax(boundary, seen) + 1, items_.size());
         count = unreadIncomingSuffix_.at(from);
+    }
+    if (unreadIncomingCount_ != count) {
+        unreadIncomingCount_ = count;
+        emit unreadIncomingCountChanged(count);
     }
     const QString label = count > 0 ? QString::number(count) : QString();
     if (property("mattermostOverlayBottomBadgeText").toString() != label)
