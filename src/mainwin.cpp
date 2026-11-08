@@ -46,6 +46,9 @@
 #include "psitoolbar.h"
 #include "psitooltip.h"
 #include "psitrayicon.h"
+#ifdef GROUPCHAT
+#include "groupchatdlg.h"
+#endif
 #include "rosteravatarframe.h"
 #include "showtextdlg.h"
 #include "statusdlg.h"
@@ -450,6 +453,17 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi) :
 
     d->registerActions();
 
+#ifdef GROUPCHAT
+    // Account-owned MUC read progress is independent of the roster and of
+    // the legacy tab's pending count. Subscribe also to accounts added later.
+    auto watchMuc = [this](PsiAccount *account) {
+        connect(account, &PsiAccount::mucUnreadChanged, this, &MainWin::updateTray);
+    };
+    connect(d->psi->contactList(), &PsiContactList::accountAdded, this, watchMuc);
+    connect(d->psi->contactList(), &PsiContactList::accountCountChanged, this, &MainWin::updateTray);
+    for (PsiAccount *account : d->psi->contactList()->accounts())
+        watchMuc(account);
+#endif
     connect(d->psi->contactList(), SIGNAL(accountFeaturesChanged()), SLOT(accountFeaturesChanged()));
     accountFeaturesChanged();
 
@@ -1676,26 +1690,43 @@ QString MainWin::numEventsString(int x) const
 
 void MainWin::updateTray()
 {
-    if (!d->tray) {
+    if (!d->tray)
         return;
-    }
 
-    if (d->nextAmount > 0) {
-        d->tray->setAlert(d->nextAnim);
-    } else if (d->lastStatus == -1) {
-        d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
-    } else {
-        auto           status = d->lastStatus;
-        const PsiIcon *icon   = nullptr;
-        if (status == STATUS_ONLINE) {
-            auto d = QDateTime::currentDateTime();
-            if ((d.date().month() == 12 && d.date().day() >= 24) || (d.date().month() == 1 && d.date().day() <= 7)) {
-                icon = IconsetFactory::iconPtr(QLatin1String("status/online-christmas"));
+    bool unreadMuc = false;
+#ifdef GROUPCHAT
+    // A MUC remains unread until its incoming tail has actually been viewed,
+    // even if opening the tab cleared the old pending/title counter.
+    for (PsiAccount *account : d->psi->contactList()->enabledAccounts()) {
+        for (GCMainDlg *room : account->findAllDialogs<GCMainDlg *>()) {
+            if (room->hasUnreadIncoming()) {
+                unreadMuc = true;
+                break;
             }
         }
-        d->tray->setIcon(icon ? icon : PsiIconset::instance()->statusPtr(d->lastStatus));
+        if (unreadMuc)
+            break;
+    }
+#endif
+
+    const PsiIcon *icon = nullptr;
+    if (d->lastStatus == -1) {
+        icon = IconsetFactory::iconPtr("psi/connect");
+    } else {
+        const auto status = d->lastStatus;
+        if (status == STATUS_ONLINE) {
+            const auto date = QDateTime::currentDateTime().date();
+            if ((date.month() == 12 && date.day() >= 24) || (date.month() == 1 && date.day() <= 7))
+                icon = IconsetFactory::iconPtr(QLatin1String("status/online-christmas"));
+        }
+        if (!icon)
+            icon = PsiIconset::instance()->statusPtr(status);
     }
 
+    // The old AlertIcon overlays a paper-message glyph. Keep the real status
+    // icon intact and use exactly one MatterLeast-style badge instead.
+    d->tray->setIcon(icon);
+    d->tray->setBadge(d->nextAmount, unreadMuc);
     buildTrayMenu();
     d->tray->setContextMenu(d->trayMenu);
 }
