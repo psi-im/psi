@@ -1601,6 +1601,59 @@ private slots:
         QVERIFY(!riskCheckbox);
     }
 
+    void fencedCodeTrimsOnlyTheEndOfTheMessage()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("txt<br>one<br><br>three<br>") + fence;
+        ChatMessageBody body;
+        const auto render = [&body](const QString &html) {
+            body.setRichText(MessageStyling::toHtml(html), {});
+        };
+
+        // Trailing whitespace belongs to the message, not to a new prose
+        // widget. Blank lines inside code must remain untouched.
+        render(code + QStringLiteral("<br><br>   <br>"));
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.codeBlocks().first()->code(), QStringLiteral("one\n\nthree"));
+        QCOMPARE(body.prose().size(), 1);
+        QVERIFY(body.text()->isHidden());
+        QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
+
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br>   <br>"));
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.prose().size(), 1);
+        QCOMPARE(body.prose().first()->toPlainText(), QStringLiteral("before"));
+        QVERIFY(!body.text()->isHidden());
+
+        // Only the newline separating the fence from the next widget is
+        // consumed. Subsequent whitespace is still ordinary prose.
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br>after<br><br> "));
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.prose().size(), 2);
+        QVERIFY(body.prose().last()->toPlainText().contains(QStringLiteral("after")));
+        render(code + QStringLiteral("<br><br><br>") + code);
+        QCOMPARE(body.codeBlocks().size(), 2);
+        QCOMPARE(body.prose().size(), 2);
+        QVERIFY(body.text()->isHidden());
+        QVERIFY(!body.prose().last()->isHidden());
+
+        // A closing fence must end its line. A suffix on the same line
+        // cannot terminate the code block, even if a newline follows it.
+        render(fence + QStringLiteral("txt<br>one<br>") + fence + QStringLiteral("suffix<br>after"));
+        QVERIFY(body.codeBlocks().isEmpty());
+        render(fence + QStringLiteral("txt<br>one<br>") + fence + QStringLiteral(" <br>after"));
+        QVERIFY(body.codeBlocks().isEmpty());
+
+        // No leftover whitespace-only text widget, even without code.
+        render(QStringLiteral("  <br>  <br> "));
+        QVERIFY(body.text()->isHidden());
+        body.setPlainText(QStringLiteral("  \n\t  "));
+        QVERIFY(body.text()->isHidden());
+        body.setPlainText(QStringLiteral("  retained  \n\t  "));
+        QVERIFY(!body.text()->isHidden());
+        QCOMPARE(body.text()->toPlainText(), QStringLiteral("  retained"));
+    }
+
     void onlyDocumentsWithoutForeignObjectsAreSplit()
     {
         const QString fence(3, QChar(0x60));
@@ -2367,17 +2420,24 @@ private slots:
         auto *clip = preview->findChild<QWidget *>("previewClip");
         QTRY_VERIFY(more->isVisible());
         const int collapsedHeight = clip->height();
+        // A message's trailing newline is not rendered or copied.
+        QString displayedText = text;
+        displayedText.chop(1);
         browser->selectAll();
         browser->copy();
-        QCOMPARE(QApplication::clipboard()->text(), text);
+        QCOMPARE(QApplication::clipboard()->text(), displayedText);
         QTest::mouseClick(more, Qt::LeftButton);
+        QVERIFY(preview->isExpanded());
+        // Refreshing the same source must not collapse a previously expanded
+        // preview just because its rendered text lost a trailing newline.
+        preview->setContent(QStringLiteral("Author"), text);
         QVERIFY(preview->isExpanded());
         QTRY_VERIFY(clip->height() > collapsedHeight);
         QVERIFY(clip->height() > window.height() / 2);
         // The outer chat timeline owns scrolling once Show more is clicked.
         // The text preview itself must have no independent scrollbar.
         QTRY_COMPARE(browser->verticalScrollBar()->maximum(), 0);
-        QCOMPARE(browser->toPlainText(), text);
+        QCOMPARE(browser->toPlainText(), displayedText);
         QTest::mouseClick(more, Qt::LeftButton);
         QVERIFY(!preview->isExpanded());
         QCOMPARE(clip->height(), collapsedHeight);

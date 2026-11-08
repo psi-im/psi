@@ -66,6 +66,7 @@ private:
     QWidget      *clip_ = nullptr;
     ChatMessageBody *body_ = nullptr;
     QString          richText_; // Null for plain content.
+    QString          plainText_; // Original source; rendering trims trailing whitespace.
     bool             updateScheduled_ = false;
     LinkButton   *toggle_ = nullptr;
     QPushButton  *close_ = nullptr;

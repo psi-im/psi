@@ -33,7 +33,9 @@ bool isFence(const QString &line)
 
 bool isClosingFence(const QString &line)
 {
-    return isFence(line) && line.mid(3).trimmed().isEmpty();
+    // A closing fence occupies its entire line: text or spaces after the
+    // backticks cannot be mistaken for the end of a code block.
+    return line == QLatin1String("```");
 }
 
 // XEP-0393 preformatted markers are visible in the original document.
@@ -131,6 +133,9 @@ QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument
         return c == QChar::ParagraphSeparator || c == QChar::LineSeparator;
     };
     const auto addProse = [&parts, doc](int first, int last) {
+        // Preserve every whitespace character in prose. The whole message is
+        // trimmed before splitting, and the separating newline next to a code
+        // widget is handled below.
         if (first >= last)
             return;
         QTextCursor cursor(const_cast<QTextDocument *>(doc));

@@ -157,9 +157,12 @@ void MessagePreview::refreshColors()
 
 void MessagePreview::setContent(const QString &title, const QString &text)
 {
-    if (richText_.isNull() && title_->text() == title && body_->text()->toPlainText() == text)
+    // Compare the original input: the displayed QTextDocument may have had
+    // its trailing whitespace removed, without changing the preview content.
+    if (richText_.isNull() && title_->text() == title && plainText_ == text)
         return;
     richText_.clear();
+    plainText_ = text;
     setTitle(title);
     body_->setPlainText(text);
     updatePreview();
