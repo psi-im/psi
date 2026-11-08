@@ -579,7 +579,7 @@ void OptionsMigration::lateMigration()
     const auto toolbarBases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
     for (const QString &base : toolbarBases) {
         QStringList actions = options->getOption(base + ".actions").toStringList();
-        if (!actions.removeAll(QLatin1String("event_notifier")))
+        if (!actions.removeAll(QStringLiteral("event_notifier")))
             continue;
         if (actions.isEmpty()) {
             options->removeOption(base, true);
