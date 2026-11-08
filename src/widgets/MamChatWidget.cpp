@@ -1818,6 +1818,7 @@ void MamChatWidget::clearMessages()
     security_.clear();
     lastDisplayedRowKey_.clear();
     unreadBoundaryKey_.clear();
+    unreadBoundaryAtStart_ = false;
     unreadReadProgressKey_.clear();
     unreadIncomingSuffix_.clear();
     unreadCountsDirty_ = true;
@@ -3284,7 +3285,8 @@ void MamChatWidget::refreshUnreadEdgeBadge()
     // not a new network read marker. A window that is not active must not
     // silently consume unread messages merely because geometry changes.
     const int boundary = indexOfKey(unreadBoundaryKey_);
-    if (boundary >= 0 && isVisible() && window()->isActiveWindow()) {
+    const bool hasBoundary = unreadBoundaryAtStart_ || boundary >= 0;
+    if (hasBoundary && isVisible() && window()->isActiveWindow()) {
         const auto visible = knownVisibleRange();
         const int seen = indexOfKey(unreadReadProgressKey_);
         if (visible.isValid() && visible.last > qMax(boundary, seen))
@@ -3292,7 +3294,7 @@ void MamChatWidget::refreshUnreadEdgeBadge()
     }
 
     int count = 0;
-    if (boundary >= 0) {
+    if (hasBoundary) {
         if (unreadCountsDirty_) {
             // Precompute suffix totals once per model mutation. Scrolling
             // then updates the badge in O(1), even on a long MAM history.
@@ -3328,10 +3330,12 @@ void MamChatWidget::refreshUnreadEdgeBadge()
 
 void MamChatWidget::markUnreadBoundary()
 {
-    const QString next = items_.isEmpty() ? QString() : items_.last().key;
-    if (next == unreadBoundaryKey_)
+    const bool atStart = items_.isEmpty();
+    const QString next = atStart ? QString() : items_.last().key;
+    if (next == unreadBoundaryKey_ && unreadBoundaryAtStart_ == atStart)
         return;
     const int previousIndex = indexOfKey(unreadBoundaryKey_);
+    unreadBoundaryAtStart_ = atStart;
     unreadBoundaryKey_ = next;
     unreadReadProgressKey_ = next;
     // A renderer may put the separator into its layout, not just paint it.
