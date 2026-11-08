@@ -23,8 +23,9 @@ private slots:
         for (int side : { 16, 22, 32, 64 }) {
             for (auto kind : { TrayBadgeKind::ChannelUnread, TrayBadgeKind::Attention }) {
                 // Deliberately use RGB to exercise alpha conversion as well.
-                QPixmap icon = QPixmap::fromImage(QImage(side, side, QImage::Format_RGB32));
-                icon.fill(Qt::white);
+                QImage base(side, side, QImage::Format_RGB32);
+                base.fill(Qt::white);
+                QPixmap icon = QPixmap::fromImage(base);
                 TrayBadgePainter::paint(icon, kind, 12);
                 const QImage img = icon.toImage().convertToFormat(QImage::Format_ARGB32);
                 bool hasColoredBadge = false;
