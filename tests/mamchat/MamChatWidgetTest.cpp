@@ -1601,6 +1601,42 @@ private slots:
         QVERIFY(!riskCheckbox);
     }
 
+    void fencedCodeDoesNotCreateTrailingBlankProse()
+    {
+        const QString fence(3, QChar(0x60));
+        const QString code = fence + QStringLiteral("txt<br>one<br><br>three<br>") + fence;
+        ChatMessageBody body;
+        const auto render = [&body](const QString &html) {
+            body.setRichText(MessageStyling::toHtml(html), {});
+        };
+
+        // Empty paragraphs after a closing fence must not create a text view.
+        render(code + QStringLiteral("<br><br><br>"));
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.codeBlocks().first()->code(), QStringLiteral("one\\n\\nthree"));
+        QCOMPARE(body.prose().size(), 1); // The reusable first view is hidden.
+        QVERIFY(body.text()->isHidden());
+        QCOMPARE(body.naturalWidth(), body.codeBlocks().first()->naturalWidth());
+
+        // The same applies when the message has actual prose before the code.
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br><br><br>"));
+        QCOMPARE(body.codeBlocks().size(), 1);
+        QCOMPARE(body.prose().size(), 1);
+        QCOMPARE(body.prose().first()->toPlainText(), QStringLiteral("before"));
+        QVERIFY(!body.text()->isHidden());
+
+        // Nonempty prose survives, but its trailing blank paragraphs do not.
+        render(QStringLiteral("before<br>") + code + QStringLiteral("<br>after<br><br><br>"));
+        QCOMPARE(body.prose().size(), 2);
+        QCOMPARE(body.prose().last()->toPlainText(), QStringLiteral("after"));
+
+        // Blank lines between two code blocks are not independent prose.
+        render(code + QStringLiteral("<br><br><br>") + code + QStringLiteral("<br><br>"));
+        QCOMPARE(body.codeBlocks().size(), 2);
+        QCOMPARE(body.prose().size(), 1);
+        QVERIFY(body.text()->isHidden());
+    }
+
     void onlyDocumentsWithoutForeignObjectsAreSplit()
     {
         const QString fence(3, QChar(0x60));
