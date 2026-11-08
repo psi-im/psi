@@ -17,8 +17,8 @@ public:
 
     void setContextMenu(QMenu *);
     void setToolTip(const QString &);
-    void setIcon(const PsiIcon *, bool alert = false);
-    void setAlert(const PsiIcon *);
+    void setIcon(const PsiIcon *);
+    void setBadge(int attentionCount, bool unreadMuc);
 
 signals:
     void clicked(const QPoint &, int);
@@ -41,7 +41,8 @@ protected:
 private:
     PsiIcon         *icon_;
     QSystemTrayIcon *trayicon_;
-    quintptr         realIcon_;
+    int              attentionCount_ = 0;
+    bool             unreadMuc_ = false;
 };
 
 #endif // PSITRAYICON_H
