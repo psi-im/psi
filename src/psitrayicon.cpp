@@ -68,14 +68,6 @@ void PsiTrayIcon::show() { trayicon_->show(); }
 
 void PsiTrayIcon::hide() { trayicon_->hide(); }
 
-QPixmap PsiTrayIcon::makeIcon()
-{
-    if (!icon_)
-        return QPixmap();
-
-    return icon_->pixmap(trayicon_->geometry().size());
-}
-
 void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 {
 #ifdef Q_OS_MACOS
