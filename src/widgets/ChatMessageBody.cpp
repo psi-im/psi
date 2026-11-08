@@ -4,6 +4,7 @@
 #include "CodeBlockWidget.h"
 #include "psirichtext.h"
 
+#include <QTextCursor>
 #include <QTextDocument>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -14,6 +15,26 @@ void installImages(ChatMessageText *prose, const QHash<QString, QPixmap> &images
 {
     for (auto it = images.cbegin(); it != images.cend(); ++it)
         prose->document()->addResource(QTextDocument::ImageResource, QUrl(it.key()), it.value());
+}
+
+// Strip trailing whitespace from the complete rendered message, not from
+// fragments of prose. QTextDocument's final paragraph separator is implicit.
+void trimMessageEnd(QTextDocument *document)
+{
+    const int end = document->characterCount() - 1;
+    int begin = end;
+    while (begin > 0) {
+        const QChar ch = document->characterAt(begin - 1);
+        if (!ch.isSpace() && ch != QChar::ParagraphSeparator && ch != QChar::LineSeparator)
+            break;
+        --begin;
+    }
+    if (begin == end)
+        return;
+    QTextCursor cursor(document);
+    cursor.setPosition(begin);
+    cursor.setPosition(end, QTextCursor::KeepAnchor);
+    cursor.removeSelectedText();
 }
 }
 
@@ -72,6 +93,7 @@ void ChatMessageBody::setRichText(const QString &html, const RichTextOptions &op
     first->setQuoteStylingEnabled(options.quoteStyling);
     if (options.withoutQuotedLines)
         first->removeQuotedLines();
+    trimMessageEnd(first->document());
     installImages(first, options.inlineImages);
 
     const auto parts = mayBeSplit ? PsiRichText::splitCodeBlocks(first->document(), options.inlineImages.keys())
