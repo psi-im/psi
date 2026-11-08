@@ -131,6 +131,11 @@ QList<PsiRichText::ContentPart> PsiRichText::splitCodeBlocks(const QTextDocument
         return c == QChar::ParagraphSeparator || c == QChar::LineSeparator;
     };
     const auto addProse = [&parts, doc](int first, int last) {
+        // A code fence can be followed by one or more empty paragraphs. Do not
+        // turn those into a separate QTextEdit with a nonzero minimum height.
+        // Trim only prose at part boundaries: whitespace inside code is literal.
+        while (last > first && doc->characterAt(last - 1).isSpace())
+            --last;
         if (first >= last)
             return;
         QTextCursor cursor(const_cast<QTextDocument *>(doc));
