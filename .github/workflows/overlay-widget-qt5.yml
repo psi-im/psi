@@ -1,10 +1,14 @@
-name: Overlay widgets Qt5 regressions
+name: Qt5 widget regressions
 
 on:
   pull_request:
     paths:
       - 'src/widgets/OverlayScrollBarManager.*'
       - 'src/widgets/ThinSplitter.*'
+      - 'src/widgets/tabbar.*'
+      - 'src/widgets/psitabwidget.*'
+      - 'src/tabs/tabdlg.*'
+      - 'tests/mamchat/TabCloseTest.cpp'
       - 'tests/mamchat/OverlayScrollBarManagerTest.cpp'
       - 'tests/mamchat/ThinSplitterTest.cpp'
       - 'tests/mamchat/CMakeLists.txt'
@@ -20,7 +24,7 @@ concurrency:
 
 jobs:
   overlay-and-splitter:
-    name: Overlay scrollbar and splitter (Qt5)
+    name: Overlay scrollbar, splitter and tab close (Qt5)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -39,10 +43,10 @@ jobs:
       - name: Build focused widget regressions
         run: |
           cmake --build build-mam-widgets-qt5 \
-            --target mam_overlay_scrollbar_test mam_thin_splitter_test --parallel 4
-      - name: Test overlay and splitter
+            --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test --parallel 4
+      - name: Test overlay, splitter and tab close
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
           ctest --test-dir build-mam-widgets-qt5 --output-on-failure \
-            -R "^(mam_overlay_scrollbar|mam_thin_splitter)$"
+            -R "^(mam_overlay_scrollbar|mam_thin_splitter|mam_tab_close)$"

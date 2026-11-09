@@ -16,6 +16,10 @@ public:
         static PsiIcon smile;
         return name == QLatin1String("test/smile") ? &smile : nullptr;
     }
+    static QPixmap iconPixmap(const QString &name, int pixels)
+    {
+        return iconPixmap(name, QSize(pixels, pixels));
+    }
     static QPixmap iconPixmap(const QString &, const QSize &size)
     {
         QPixmap pixmap(size);
