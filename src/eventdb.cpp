@@ -198,6 +198,45 @@ void EDB::requestLocalHistoryPage(const QString &account, const XMPP::Jid &peer,
     });
 }
 
+void EDB::requestArchivePage(
+    ArchiveReadMode mode, const HistoryArchive::Key &key, const QString &cursor, int index, int limit,
+    int snapshotCount, QObject *receiver,
+    std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished)
+{
+    if (!receiver)
+        return;
+    QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, mode, key, cursor, index, limit, snapshotCount, finished] {
+        if (!database)
+            return;
+        const auto snapshot = database->archiveSnapshot(key);
+        HistoryArchive::Page page;
+        if (mode == ArchiveReadMode::Before)
+            page = database->archivePage(key, cursor, limit);
+        else if (mode == ArchiveReadMode::After)
+            page = database->archivePageAfter(key, cursor, limit, snapshotCount);
+        else
+            page = database->archivePageAtIndex(key, index, limit, snapshotCount);
+        finished(page, snapshot, true);
+    });
+}
+
+void EDB::requestStoreArchivePage(
+    const HistoryArchive::Key &key, const QString &before, int limit, HistoryArchive::Page page,
+    QObject *receiver, std::function<void(HistoryArchive::Page, bool)> finished)
+{
+    if (!receiver)
+        return;
+    QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, before, limit, page, finished]() mutable {
+        if (!database)
+            return;
+        bool ok = page.checkpoint ? database->mergeArchivePage(key, before, limit, page)
+                                  : database->mergeArchiveIsland(key, limit, page);
+        finished(page, ok);
+    });
+}
+
 int EDB::genUniqueId() const { return d->reqid_base++; }
 
 void EDB::reg(EDBHandle *h) { d->list.append(h); }
