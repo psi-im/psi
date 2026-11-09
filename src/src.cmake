@@ -71,6 +71,7 @@ list(APPEND HEADERS
     historyarchive.h
     historysqlitepolicy.h
     historywalcheckpoint.h
+    historyeventfactory.h
     aboutdlg.h
     abstracttreeitem.h
     abstracttreemodel.h
@@ -401,6 +402,7 @@ list(APPEND SOURCES
     discodlg.cpp
     discoitems.cpp
     dummystream.cpp
+    historyeventfactory.cpp
     historyarchive.cpp
     historymessagestate.cpp
     historysync.cpp
