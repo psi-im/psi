@@ -20,7 +20,8 @@ MessageView nativeHistoryMessage(PsiAccount *, const XMPP::Jid &peer, const XMPP
 void prependLocalChatHistoryAsync(MamChatWidget *, PsiAccount *, const QString &peer, bool room,
                                   const QString &ownNick, qint64 before, bool exhausted,
                                   const std::function<void(qint64 nextBefore, bool exhausted, bool success)> &finished,
-                                  const std::function<QString(bool)> &nickname = {});
+                                  const std::function<QString(bool)> &nickname = {},
+                                  const std::function<bool()> &stillCurrent = {});
 
 #include "messageview.h"
 #include <QStringList>
