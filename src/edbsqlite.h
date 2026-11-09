@@ -144,12 +144,13 @@ private:
         int           len;
         int           dir;
         int           id;
+        qint64        localBefore = 0;
         QDateTime     date;
         QString       findStr;
         PsiEvent::Ptr event; // GUI-side media registration on write completion.
         HistoryEventFactory::Encoded encoded;
 
-        enum Type { Type_get, Type_append, Type_find, Type_erase };
+        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local };
     };
     int                     status;
     unsigned int            transactionsCounter;
