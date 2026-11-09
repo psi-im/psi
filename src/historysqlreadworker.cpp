@@ -49,9 +49,13 @@ void HistorySqlReadWorker::open()
         qWarning() << "[history-db] Cannot open worker SQLite connection:" << db_.lastError().text();
         return;
     }
-    QSqlQuery foreignKeys(db_);
-    if (!foreignKeys.exec(QStringLiteral("PRAGMA foreign_keys=ON")))
-        qWarning() << "[history-db] Cannot enable foreign keys:" << foreignKeys.lastError().text();
+    QSqlQuery policy(db_);
+    // Each SQLite connection has its own synchronous setting. FULL commits
+    // can now wait for disk on the worker without freezing Qt's GUI thread.
+    if (!policy.exec(QStringLiteral("PRAGMA synchronous=FULL")))
+        qWarning() << "[history-db] Could not enable FULL synchronization:" << policy.lastError().text();
+    if (!policy.exec(QStringLiteral("PRAGMA foreign_keys=ON")))
+        qWarning() << "[history-db] Cannot enable foreign keys:" << policy.lastError().text();
 }
 
 void HistorySqlReadWorker::read(HistoryReadRequest request)
