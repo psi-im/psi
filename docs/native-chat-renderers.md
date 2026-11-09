@@ -21,6 +21,7 @@ code, see [native-chat-themes.md](native-chat-themes.md).
 | `Body`      | `mamBodyPart`: reply preview, text (`mamBody`), file cards, reactions | every row |
 | `UnreadSeparator` | `QFrame#mamUnreadSeparator`, a theme-placeable unread boundary rule | only on the row immediately before unread messages |
 | `DateSeparator` | `QLabel#mamDateSeparator`, localized calendar date | before the first row of each local calendar day |
+| `NoticeTimestamp` | `QLabel#mamNoticeHoverTimestamp`, hover-only `HH:mm` | join/part and /me notices in themes enabling `noticeHoverTime` |
 
 Psi owns selection, hover highlighting and the hover actions toolbar, context
 menus, link and media handling, reply resolution, relative-time refresh,
@@ -41,7 +42,7 @@ public:
     {
         NativeChatPartOptions options;
         options.avatarSize = 32;
-        options.timeFormat = QStringLiteral("HH:mm"); // Empty: "5 minutes ago".
+        options.timeFormat = QStringLiteral("HH:mm:ss"); // Force seconds regardless of user setting.
         return options;
     }
 
@@ -61,8 +62,14 @@ public:
 };
 ```
 
-- `partOptions()` is asked before the parts are built. Besides the avatar size
-  and the time format it sets the nickname suffix and weight and the
+- `partOptions()` is asked before the parts are built. A renderer can set
+  `noticeHoverTime = true` to show a fading clock on join/part and /me
+  notices (enabled by Bubble). Other themes do not get an extra label.
+  Its `timeFormat`
+  overrides the theme's `timestampFormat` for a message; empty delegates to
+  the theme and then the user's preference. The format uses Qt date/time
+  patterns such as `HH:mm:ss`, optionally with `{relative}`. Besides avatar
+  size it sets the nickname suffix and weight and the
   timestamp's size, opacity and colour. Psi applies these when the row is
   built and again, in place, whenever the chat font, palette or nickname
   colours change.
@@ -74,8 +81,8 @@ public:
   (direction, delivery and encryption, following the "use message icons"
   option) before the time, wraps the nickname in `authorPrefix` and
   `authorSuffix`, makes it insert itself into the composer when clicked,
-  and recolours it in place. The time is not refreshed there: give a clock
-  `timeFormat`. Notices get an information icon instead.
+  and recolours it in place. Inline timestamps refresh in place when their
+  format contains `{relative}`. Notices get an information icon instead.
 - `directionColors` paints the nickname, in a conversation (not a group
   chat), in the colour of sent or received messages from Psi's options, as
   the legacy text log did; with the header in the text, the time too.
@@ -102,7 +109,9 @@ public:
   without changing the renderer's vtable.
   `setActionAnchor()` attaches the hover actions toolbar to a widget other
   than the row, and `setBodyTextColor()` overrides the text colour of the body,
-  e.g. on a dark bubble.
+  e.g. on a dark bubble. A renderer may also request
+  `NativeChatPartOptions::boldBody` to make every prose section bold, while
+  keeping inline monospace, rich-text spans, and fenced code intact.
 - `restyle()` is optional. Psi calls it after restyling the parts of an
   existing row in place. Widgets that read `palette()` and `font()` while
   painting need nothing here.
@@ -110,7 +119,9 @@ public:
   changes. Psi never calls a renderer for rows built by another renderer.
 - `NativeChatMessageInfo` says what is being rendered: the kind (message,
   notice or subject), whether it is our own message, a group chat, an emote or
-  retracted, the sender's nickname and the time.
+  retracted, the sender's nickname and the time. `alert` covers MUC mentions
+  and recognized replies to our messages, including legacy plain-text quotes.
+  Declarative themes can use `#mamMessageRow[alert="true"]` QSS selectors.
 
 The row itself is Psi's `mamMessageRow` frame. Psi paints its hover/selection
 surface and applies the theme's style sheet to it; keep it as the root of the
@@ -156,8 +167,9 @@ description-only plugins do not have that restriction.
 ## Built-in themes
 
 - **Modern**: avatar, a bold nickname with a smaller relative time, and the
-  body below them.
-- **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document
+  body below them. Alerts use bold red prose without extra layout markers.
+- **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document,
+  without whole-row hover background tint,
   (`HeaderInText`), with the legacy message icons before the time, the
   time painted in the nickname colour in group chats, and notices left
   aligned after an information icon.

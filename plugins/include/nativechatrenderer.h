@@ -36,6 +36,8 @@ struct NativeChatMessageInfo {
     bool      local     = false; // Sent by this account.
     bool      groupChat = false;
     bool      emote     = false; // A /me message. The body already starts with "*nick".
+    bool      alert     = false; // MUC nick mention, quote of own message, or configured highlight.
+                                   // C++ renderers and declarative QSS can style it.
     bool      retracted = false;
     QString   nick;              // Display name of the sender; empty for notices.
     QDateTime time;
@@ -48,11 +50,14 @@ struct NativeChatMessageInfo {
 // NativeChatMessageRenderer::restyle() to reapply anything else.
 struct NativeChatPartOptions {
     int     avatarSize = 0;      // Pixels; 0 builds no avatar.
-    QString timeFormat;          // Per-row output format, set by Psi's global
-                                 // timestamp preference (clock or relative).
-                                 // Theme renderers must not override that preference.
+    QString timeFormat;          // Optional per-message Qt date/time pattern,
+                                 // optionally containing {relative}. Empty:
+                                 // theme format, then the global preference.
+    bool    noticeHoverTime = false; // Show an HH:mm clock on hovered notices.
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
+    bool    boldBody       = false; // Bold message prose, including text after code blocks.
+                                    // Rich-text emphasis and code fonts are preserved.
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.
     int     timeAlpha      = 255; // Opacity of the timestamp text colour.
     bool    timeInNickColor = false; // Paint the timestamp in the nickname colour.
@@ -82,6 +87,7 @@ public:
         Body,      // Text with reply preview, file cards and reactions. Always present.
         UnreadSeparator, // Optional boundary frame; Psi places it below the row if not taken.
         DateSeparator, // Optional local calendar date label before the first row of a day.
+        NoticeTimestamp, // Hover-only HH:mm time on join/part and /me notices.
     };
 
     // The row widget. Psi owns it, paints its hover/selection surface and

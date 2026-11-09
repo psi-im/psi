@@ -19,7 +19,7 @@ public:
         NativeChatTheme coded(QStringLiteral("org.example.coded"), QStringLiteral("Coded"));
         coded.setRenderer(renderer);
         NativeChatTheme described(QStringLiteral("org.example.described"), QStringLiteral("Described"));
-        described.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body"]})");
+        described.layoutSpec = QStringLiteral(R"({"direction":"vertical","items":["body"],"timestampFormat":"HH:mm {relative}"})");
         return { coded, described };
     }
 };
@@ -43,6 +43,7 @@ private slots:
         plugin.description = QStringLiteral("Example theme");
         plugin.layoutSpec = QStringLiteral(R"({"direction":"horizontal","items":["body","author"]})");
         plugin.hoverHighlight = false;
+        plugin.timestampFormat = QStringLiteral("HH:mm:ss");
         plugin.background = QColor(0x10, 0x20, 0x30);
         plugin.backgroundImage = QStringLiteral(":/example/paper.png");
         plugin.backgroundImageMode = NativeChatTheme::Scale;
@@ -63,6 +64,7 @@ private slots:
         QVERIFY(copied.layoutSpec.constData() != plugin.layoutSpec.constData());
         QVERIFY(copied.backgroundImage.constData() != plugin.backgroundImage.constData());
         QCOMPARE(copied.backgroundImage, plugin.backgroundImage);
+        QCOMPARE(copied.timestampFormat, QStringLiteral("HH:mm:ss"));
         QVERIFY(!copied.hoverHighlight);
         QCOMPARE(copied.background, plugin.background);
         QCOMPARE(copied.backgroundImageMode, NativeChatTheme::Scale);
@@ -91,10 +93,11 @@ private slots:
         QVERIFY(bubble.renderer());
         QCOMPARE(modern.renderer()->partOptions({}).avatarSize, 40);
         QCOMPARE(classic.renderer()->partOptions({}).header, NativeChatPartOptions::HeaderInText);
+        QCOMPARE(classic.timestampFormat, QStringLiteral("HH:mm:ss"));
         QCOMPARE(bubble.renderer()->partOptions({}).avatarSize, 40);
         QVERIFY(!bubble.hoverHighlight);
         QVERIFY(modern.hoverHighlight);
-        QVERIFY(classic.hoverHighlight);
+        QVERIFY(!classic.hoverHighlight);
         QVERIFY(!modern.description.isEmpty());
         QVERIFY(!classic.description.isEmpty());
         QVERIFY(!bubble.description.isEmpty());
@@ -117,6 +120,7 @@ private slots:
         QVERIFY(coded.hasCustomRenderer());
         QVERIFY(!described.hasCustomRenderer());
         QVERIFY(described.renderer());
+        QCOMPARE(described.renderer()->partOptions({}).timeFormat, QStringLiteral("HH:mm {relative}"));
         QVERIFY(registry->hasCustomRenderers(&owner));
         registry->remove(&owner);
         QCOMPARE(registry->theme(QStringLiteral("org.example.coded")).id, QStringLiteral("modern"));

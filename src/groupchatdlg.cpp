@@ -41,6 +41,7 @@
 #include "mcmdmanager.h"
 #include "mcmdsimplesite.h"
 #include "messageview.h"
+#include "mucalertpolicy.h"
 #include "historysync.h"
 #include "nativechathistory.h"
 #include "nativechattheme.h"
@@ -2408,19 +2409,41 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     if (dm.body().isEmpty() && dm.references().isEmpty() && dm.urlList().isEmpty())
         return;
 
-    // code to determine if the speaker was addressing this client in chat
-    if (dm.body().contains(d->self))
-        d->alert = true;
+    // Do not mistake a nickname mentioned inside somebody else's quote for
+    // a direct mention in the new message.
+    ChatReply quoted = messageReply(dm);
+    QString visibleBody = dm.reply().isValid() ? messageReplyBody(dm) : dm.body();
+    if (!dm.reply().isValid()) {
+        // Old rooms without XEP-0359/MAM may send a plain-text quote instead
+        // of a protocol reference. Extract its author before highlighting.
+        const bool media = !dm.urlList().isEmpty() || !dm.fileSharings().isEmpty();
+        const int quoteEnd = plainQuotePrefix(dm.body(), &quoted, media);
+        if (quoteEnd > 0)
+            visibleBody.remove(0, quoteEnd);
+    }
 
-    if (dm.body().left(d->self.length()) == d->self)
+    if (!d->self.isEmpty() && from != d->self) {
+        if (visibleBody.contains(d->self, Qt::CaseInsensitive))
+            d->alert = true;
+        if (quoted.isValid()) {
+            const XMPP::Jid target(quoted.to);
+            const bool addressedToSelf = !quoted.to.isEmpty() && target.isValid()
+                && (target.compare(jid().withResource(d->self)) || target.compare(account()->jid(), false));
+            const bool referencesOwnMessage = quoted.hasReference() && nativeTimeline_
+                && nativeTimeline_->replyReferencesLocalMessage(quoted);
+            if (MucAlertPolicy::quotesSelf(quoted, d->self, addressedToSelf, referencesOwnMessage))
+                d->alert = true;
+        }
+    }
+
+    if (!d->self.isEmpty() && visibleBody.startsWith(d->self))
         d->lastReferrer = dm.from().resource();
 
     if (options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
         for (const QString &word : std::as_const(highlightWords)) {
-            if (dm.body().contains((word), Qt::CaseInsensitive)) {
+            if (!word.isEmpty() && from != d->self && visibleBody.contains(word, Qt::CaseInsensitive))
                 d->alert = true;
-            }
         }
     }
 

@@ -1429,6 +1429,53 @@ private slots:
         QCOMPARE(body.text()->toPlainText(), QStringLiteral("Answer"));
     }
 
+    void settingsFontChangeUpdatesVisibleAlertsWithoutScrolling()
+    {
+        for (const QString &themeId : { QStringLiteral("modern"), QStringLiteral("classic") }) {
+            MamChatWidget chat;
+            chat.setHistoryLoading(true);
+            chat.resize(720, 500);
+            chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            QFont small = chat.font();
+            small.setPointSize(9);
+            chat.setFont(small);
+            auto alert = message(QStringLiteral("alert-font"), QStringLiteral("Alert with `code`"));
+            alert.setAlert();
+            chat.appendMessage(alert);
+            chat.appendMessage(message(QStringLiteral("prose"), proseAroundFencedCode(
+                QStringLiteral("cpp"), { QStringLiteral("int value = 42;") }), 1));
+            chat.show();
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+            auto *alertRow = chat.itemWidget(0);
+            auto *regularRow = chat.itemWidget(1);
+            auto *alertText = alertRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            auto *regularText = regularRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            auto *code = regularRow->findChild<CodeBlockWidget *>();
+            QVERIFY(alertText && regularText && code);
+            const int scroll = chat.verticalScrollBar()->value();
+            for (int size : { 17, 12, 20 }) {
+                QFont configured = small;
+                configured.setPointSize(size);
+                chat.setFont(configured); // The same path as chat Settings.
+                // Reapply the surrounding palette/look without evicting rows.
+                chat.setStyleBackgroundColor(QColor(248, 248, 248));
+                QCOMPARE(chat.itemWidget(0), alertRow);
+                QCOMPARE(chat.itemWidget(1), regularRow);
+                QCOMPARE(chat.verticalScrollBar()->value(), scroll);
+                for (auto *prose : { alertText, regularText }) {
+                    QCOMPARE(prose->font().pointSize(), size);
+                    QCOMPARE(prose->document()->defaultFont().pointSize(), size);
+                    for (auto block = prose->document()->begin(); block.isValid(); block = block.next())
+                        for (auto it = block.begin(); !it.atEnd(); ++it)
+                            QCOMPARE(it.fragment().charFormat().fontPointSize(), qreal(size));
+                }
+                QVERIFY(alertText->font().bold());
+                QVERIFY(!regularText->font().bold());
+                QCOMPARE(code->font().pointSize(), size);
+            }
+        }
+    }
+
     void fontChangeReachesEveryPartOfTheBody()
     {
         MamChatWidget chat;
@@ -2494,7 +2541,8 @@ private slots:
         enterWidget(first);
         const auto hover = chat.hoverHighlightSurfaceColor();
         QVERIFY(hover != base);
-        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        const QColor expectedHover = classic ? base : hover;
+        QCOMPARE(first->palette().color(QPalette::Base), expectedHover);
         QCOMPARE(second->palette().color(QPalette::Base), base);
         QCOMPARE(body->textCursor().selectedText(), selection);
         QCOMPARE(body->document()->revision(), revision);
@@ -2504,19 +2552,19 @@ private slots:
                                                                 body->viewport()->height() - 3));
         const auto image = chat.grab().toImage();
         QCOMPARE(image.pixelColor(qRound(point.x() * image.devicePixelRatio()),
-                                  qRound(point.y() * image.devicePixelRatio())).rgba(), hover.rgba());
+                                  qRound(point.y() * image.devicePixelRatio())).rgba(), expectedHover.rgba());
         auto *actions = chat.findChild<QFrame *>("mamMessageActions");
         QVERIFY(actions);
         QTRY_VERIFY(actions->isVisible());
         QApplication::sendEvent(first, &leave);
         enterWidget(actions);
-        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        QCOMPARE(first->palette().color(QPalette::Base), expectedHover);
         enterWidget(second);
         QCOMPARE(first->palette().color(QPalette::Base), base);
-        QCOMPARE(second->palette().color(QPalette::Base), hover);
+        QCOMPARE(second->palette().color(QPalette::Base), expectedHover);
         chat.selectMessageRange(1, 1);
         const auto selected = second->palette().color(QPalette::Base);
-        QVERIFY(selected != hover);
+        QVERIFY(selected != expectedHover);
         QApplication::sendEvent(chat.viewport(), &leave);
         QCOMPARE(second->palette().color(QPalette::Base), selected);
         chat.cancelMessageSelection();
@@ -2524,12 +2572,153 @@ private slots:
         enterWidget(first);
         palette.setColor(QPalette::Highlight, QColor(200, 80, 20));
         chat.setPalette(palette);
-        QTRY_COMPARE(first->palette().color(QPalette::Base), chat.hoverHighlightSurfaceColor());
+        const QColor expectedAfterPaletteChange = classic ? base : chat.hoverHighlightSurfaceColor();
+        QTRY_COMPARE(first->palette().color(QPalette::Base), expectedAfterPaletteChange);
         QApplication::setActiveWindow(nullptr);
         QTRY_COMPARE(first->palette().color(QPalette::Base), base);
         enterWidget(first);
         chat.hide();
         QCOMPARE(first->palette().color(QPalette::Base), base);
+    }
+
+    void classicAbsoluteTimeDoesNotDuplicate()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 280);
+        chat.setHistoryLoading(true);
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
+        auto view = message(QStringLiteral("classic-clock"), QStringLiteral("Clock text"));
+        view.setDateTime(QDateTime::fromString(QStringLiteral("2026-10-18T10:08:51Z"), Qt::ISODate));
+        chat.appendMessage(view);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const QString clock = view.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"));
+        const auto bodyText = [&chat] {
+            auto *row = chat.itemWidget(0);
+            auto *body = row ? row->findChild<ChatMessageText *>(QStringLiteral("mamBody")) : nullptr;
+            return body ? body->toPlainText() : QString();
+        };
+        QTRY_VERIFY(bodyText().contains(QStringLiteral("[") + clock + QStringLiteral("] <Peer> Clock text")));
+        chat.setTimestampMode(ChatTimestamp::Mode::Clock);
+        chat.setTimestampMode(ChatTimestamp::Mode::Relative);
+        chat.hide();
+        chat.show();
+        QTRY_VERIFY(bodyText().contains(QStringLiteral("[") + clock + QStringLiteral("] <Peer> Clock text")));
+        QCOMPARE(bodyText().count(clock), 1);
+    }
+
+    void quotedOwnMessageResolvesByMucStanzaId()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        chat.setHistoryLoading(true);
+        auto mine = message(QStringLiteral("my-client-id"), QStringLiteral("Mine"), 0, true);
+        mine.setUserId(QStringLiteral("room@example.org/My Nick"));
+        mine.setReactionTargetId(QStringLiteral("room-stanza-123"));
+        chat.appendMessage(mine);
+        auto other = message(QStringLiteral("other-id"), QStringLiteral("Other"), 1);
+        other.setUserId(QStringLiteral("room@example.org/Other"));
+        other.setReactionTargetId(QStringLiteral("room-stanza-456"));
+        chat.appendMessage(other);
+        QVERIFY(chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"), {}, {}, {} }));
+        QVERIFY(chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"),
+                                                   QStringLiteral("room@example.org/My Nick"), {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"),
+                                                    QStringLiteral("room@example.org/Other"), {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-456"), {}, {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("my-client-id"), {}, {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("unknown"), {}, {}, {} }));
+    }
+
+    void hoverClockOnNoticesAndThemeAlerts()
+    {
+        for (const QString &themeId : { QStringLiteral("classic"), QStringLiteral("modern"),
+                                        QStringLiteral("bubble") }) {
+            const bool bubble = themeId == QLatin1String("bubble");
+            MamChatWidget chat;
+            chat.resize(700, 440);
+            chat.setHistoryLoading(true);
+            chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            auto join = MessageView::mucJoinMessage(QStringLiteral("Peer"), 0, QStringLiteral("Peer joined"));
+            const auto when = QDateTime::fromString(QStringLiteral("2026-10-18T10:42:00Z"), Qt::ISODate);
+            join.setDateTime(when);
+            chat.appendMessage(join);
+            auto action = message(QStringLiteral("action"), QStringLiteral("waves"), 1);
+            action.setEmote();
+            chat.appendMessage(action);
+            auto highlighted = message(QStringLiteral("alert"), QStringLiteral("please look"), 2);
+            highlighted.setAlert();
+            chat.appendMessage(highlighted);
+            chat.appendMessage(message(QStringLiteral("plain"), QStringLiteral("ordinary message"), 3));
+            chat.show();
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2) && chat.itemWidget(3));
+
+            auto *row = chat.itemWidget(0);
+            auto *time = row->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
+            if (bubble) {
+                QVERIFY(time);
+                QCOMPARE(time->text(), when.toLocalTime().toString(QStringLiteral("HH:mm")));
+                auto *effect = qobject_cast<QGraphicsOpacityEffect *>(time->graphicsEffect());
+                QVERIFY(effect);
+                QCOMPARE(effect->opacity(), 0.0);
+                auto *noticeBubble = row->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *regularTime = chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+                QVERIFY(noticeBubble && regularTime);
+                QCOMPARE(time->font().family(), regularTime->font().family());
+                QCOMPARE(time->font().pointSizeF(), regularTime->font().pointSizeF());
+                QCOMPARE(time->palette().color(QPalette::Text), regularTime->palette().color(QPalette::Text));
+                const auto centred = [row, noticeBubble] {
+                    const int centre = noticeBubble->mapTo(row, QPoint(noticeBubble->width() / 2, 0)).x();
+                    return qAbs(centre - row->width() / 2) <= 2;
+                };
+                QTRY_VERIFY(centred());
+                QVERIFY(time->x() + time->width() <= noticeBubble->mapTo(row, QPoint()).x());
+                enterWidget(row);
+                QTRY_VERIFY(effect->opacity() > 0.99);
+                QEvent leave(QEvent::Leave);
+                QApplication::sendEvent(row, &leave);
+                QTRY_VERIFY(effect->opacity() < 0.01);
+                QVERIFY(centred());
+                chat.setLayoutDirection(Qt::RightToLeft);
+                QTRY_VERIFY(centred());
+                QTRY_VERIFY(time->x() >= noticeBubble->mapTo(row, QPoint()).x() + noticeBubble->width());
+            } else {
+                QVERIFY(!time);
+            }
+
+            auto *emoteRow = chat.itemWidget(1);
+            QCOMPARE(bool(emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"))), bubble);
+            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAuthor")));
+            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+            auto *alertRow = chat.itemWidget(2);
+            QCOMPARE(alertRow->property("alert").toBool(), true);
+            if (themeId == QLatin1String("bubble")) {
+                auto *emoteBubble = emoteRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *alertBubble = alertRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                QVERIFY(emoteBubble && alertBubble);
+                QCOMPARE(emoteBubble->property("tone").toString(), QStringLiteral("notice"));
+                QCOMPARE(alertBubble->property("tone").toString(), QStringLiteral("alert"));
+            } else {
+                auto *body = alertRow->findChild<ChatMessageText *>();
+                auto *plainRow = chat.itemWidget(3);
+                auto *plainBody = plainRow->findChild<ChatMessageText *>();
+                QVERIFY(body && plainBody);
+                QVERIFY(body->font().bold());
+                QVERIFY(body->document()->defaultFont().bold());
+                QVERIFY(!plainBody->font().bold());
+                const QColor color = body->palette().color(QPalette::Text);
+                QVERIFY(color.red() > color.green());
+                if (themeId == QLatin1String("modern")) {
+                    // No extra marker or indentation compared with an ordinary message.
+                    QVERIFY(!alertRow->findChild<QFrame *>(QStringLiteral("mamAlertMarker")));
+                    QCOMPARE(body->mapTo(alertRow, QPoint()).x(), plainBody->mapTo(plainRow, QPoint()).x());
+                }
+                QFont changed = chat.font();
+                changed.setPointSizeF(qMax(8.0, changed.pointSizeF() + 1.0));
+                chat.setFont(changed);
+                QTRY_VERIFY(body->font().bold());
+            }
+        }
     }
 
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
@@ -4326,7 +4515,7 @@ private slots:
         QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
         const QString hhmm = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
-                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm"));
+                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm:ss"));
         QCOMPARE(body->toPlainText(), QString(QChar::ObjectReplacementCharacter) + QStringLiteral(" [") + hhmm
                      + QStringLiteral("] <Peer> Message body"));
 
@@ -5093,6 +5282,8 @@ private slots:
         for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
                                    QStringLiteral("classic") }) {
             const bool classic = id == QLatin1String("classic");
+            const QString themeClock = classic ? original.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"))
+                                               : clock;
             // Set the preference before recreating the theme rows: the new
             // renderer then materializes the preferred presentation directly.
             list.setTimestampMode(ChatTimestamp::Mode::Clock);
@@ -5108,14 +5299,14 @@ private slots:
             else
                 QTRY_VERIFY(list.itemWidget(0)
                             && !list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
-            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == themeClock);
             QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
-            QTRY_VERIFY(sourceTime(classic).contains(clock));
+            QTRY_VERIFY(sourceTime(classic).contains(themeClock));
 
             list.setTimestampMode(ChatTimestamp::Mode::Relative);
-            const QString relative = ChatTimestamp::relative(original.dateTime());
-            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == relative);
-            QTRY_VERIFY(sourceTime(classic).contains(relative));
+            const QString themeRelative = classic ? themeClock : ChatTimestamp::relative(original.dateTime());
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == themeRelative);
+            QTRY_VERIFY(sourceTime(classic).contains(themeRelative));
         }
     }
 
@@ -5135,6 +5326,17 @@ private slots:
         QCOMPARE(ChatTimestamp::format(now.addDays(-2), ChatTimestamp::Mode::Relative, now),
                  QStringLiteral("2 days ago"));
         QVERIFY(ChatTimestamp::nextChangeMs(now.addSecs(-61), now) > 0);
+        QVERIFY(!ChatTimestamp::usesRelative(QStringLiteral("HH:mm:ss"), ChatTimestamp::Mode::Relative));
+        QVERIFY(ChatTimestamp::usesRelative(QStringLiteral("HH:mm:ss {relative}"), ChatTimestamp::Mode::Clock));
+        QVERIFY(ChatTimestamp::usesRelative({}, ChatTimestamp::Mode::Relative));
+        const QString mixed = ChatTimestamp::formatPattern(now.addSecs(-120),
+                                                           QStringLiteral("HH:mm:ss {relative}"),
+                                                           ChatTimestamp::Mode::Clock, now);
+        QVERIFY(mixed.startsWith(now.addSecs(-120).toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
+        QVERIFY(mixed.contains(QStringLiteral("2 minutes ago")));
+        QCOMPARE(ChatTimestamp::formatPattern(now, QStringLiteral("HH:mm:ss"),
+                                              ChatTimestamp::Mode::Relative, now),
+                 now.toLocalTime().toString(QStringLiteral("HH:mm:ss")));
         QVERIFY(MamChatWidget::fullTimestamp(now).contains(now.toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
     }
 
@@ -5170,10 +5372,14 @@ private slots:
         NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
-        // Classic text is now refreshed without rebuilding its QTextDocument.
-        QTRY_VERIFY(clock->isActive());
+        // Classic has absolute time, so no periodic relative-time polling.
+        QTRY_VERIFY(!clock->isActive());
         list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
+        // Switching back from a fixed theme restores relative refresh.
+        list.setTimestampMode(ChatTimestamp::Mode::Relative);
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("modern")));
+        QTRY_VERIFY(clock->isActive());
     }
 
     void avatarClickRequestsContactCard()

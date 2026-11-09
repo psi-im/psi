@@ -4,7 +4,9 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QFontMetricsF>
+#include <QLabel>
 #include <QPaintEvent>
+#include <QPointer>
 #include <QPainter>
 #include <QPainterPath>
 #include <QTransform>
@@ -38,7 +40,7 @@ class BubbleFrame final : public QWidget {
 
 public:
     enum Side { Left, Right, NoTail };
-    enum Tone { Incoming, Own, Notice };
+    enum Tone { Incoming, Own, Notice, Alert };
     static constexpr int TailWidth  = 9;
     static constexpr int TailTop    = 11; // From the top of the bubble to where the tail leaves it.
     static constexpr int TailHeight = 16; // Along the bubble's edge.
@@ -49,8 +51,9 @@ public:
         setProperty("tailSide", tail == Left    ? QStringLiteral("left")
                                 : tail == Right ? QStringLiteral("right")
                                                 : QStringLiteral("none"));
-        setProperty("tone", tone == Own    ? QStringLiteral("own")
+        setProperty("tone", tone == Own      ? QStringLiteral("own")
                             : tone == Notice ? QStringLiteral("notice")
+                            : tone == Alert  ? QStringLiteral("alert")
                                              : QStringLiteral("incoming"));
         setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         auto *column = new QVBoxLayout(this);
@@ -113,13 +116,16 @@ protected:
         }
         const QColor surface = colors.color(QPalette::Base);
         const QColor text    = colors.color(QPalette::Text);
+        const QColor warning = surface.lightness() > 128 ? QColor(185, 35, 45) : QColor(255, 120, 125);
         const QColor fill    = fillColor_.isValid() ? fillColor_
                : tone_ == Own                       ? mix(surface, colors.color(QPalette::Highlight), 0.18)
                : tone_ == Notice                    ? mix(surface, text, 0.035)
+               : tone_ == Alert                     ? mix(surface, warning, 0.13)
                                                     : mix(surface, text, 0.07);
         const QColor border  = borderColor_.isValid()
              ? borderColor_
-             : mix(surface, text, tone_ == Own ? 0.20 : tone_ == Notice ? 0.12 : 0.16);
+             : tone_ == Alert ? mix(surface, warning, 0.75)
+                              : mix(surface, text, tone_ == Own ? 0.20 : tone_ == Notice ? 0.12 : 0.16);
 
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -237,6 +243,60 @@ QHBoxLayout *bubbleRowLayout(Canvas &canvas)
     return outer;
 }
 
+// The clock is an absolute-positioned sibling of the bubble. It must not
+// participate in the layout, or a hidden clock shifts centred notice bubbles.
+class NoticeClockPositioner final : public QObject {
+public:
+    NoticeClockPositioner(QLabel *clock, QWidget *bubble, QWidget *row)
+        : QObject(clock), clock_(clock), bubble_(bubble), row_(row)
+    {
+        clock_->setParent(row_);
+        bubble_->installEventFilter(this);
+        row_->installEventFilter(this);
+        clock_->show();
+        reposition();
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (watched == bubble_ || watched == row_) {
+            switch (event->type()) {
+            case QEvent::Move:
+            case QEvent::Resize:
+            case QEvent::Show:
+            case QEvent::LayoutRequest:
+            case QEvent::LayoutDirectionChange:
+            case QEvent::ParentChange:
+                reposition();
+                break;
+            default:
+                break;
+            }
+        }
+        return QObject::eventFilter(watched, event);
+    }
+
+private:
+    void reposition()
+    {
+        if (!clock_ || !bubble_ || !row_)
+            return;
+        clock_->adjustSize();
+        const QPoint origin = bubble_->mapTo(row_, QPoint());
+        const bool rtl = bubble_->layoutDirection() == Qt::RightToLeft;
+        constexpr int gap = 6;
+        const int x = rtl ? origin.x() + bubble_->width() + gap
+                          : origin.x() - clock_->width() - gap;
+        clock_->move(x, origin.y() + (bubble_->height() - clock_->height()) / 2);
+        clock_->raise();
+    }
+
+    QPointer<QLabel>  clock_;
+    QPointer<QWidget> bubble_;
+    QPointer<QWidget> row_;
+};
+
 // Messages in speech bubbles, based on Modern. Incoming messages sit on the
 // left and our own on the right, each with the avatar on its outer side and
 // the bubble's tail pointing at it.
@@ -249,6 +309,7 @@ public:
         options.boldAuthor     = true;
         options.timePointDelta = -1.0;
         options.timeAlpha      = 188;
+        options.noticeHoverTime = true;
         return options;
     }
 
@@ -262,13 +323,17 @@ public:
             outer->addStretch(1);
             outer->addWidget(bubble, 0, Qt::AlignTop);
             outer->addStretch(1);
+            if (auto *clock = qobject_cast<QLabel *>(canvas.take(Canvas::NoticeTimestamp)))
+                new NoticeClockPositioner(clock, bubble, canvas.row());
             canvas.setActionAnchor(bubble);
             return;
         }
         auto *outer  = bubbleRowLayout(canvas);
         auto *avatar = canvas.take(Canvas::Avatar);
         auto *bubble = new BubbleFrame(info.local ? BubbleFrame::Right : BubbleFrame::Left,
-                                       info.local ? BubbleFrame::Own : BubbleFrame::Incoming, canvas.row());
+                                       info.alert ? BubbleFrame::Alert
+                                                  : info.local ? BubbleFrame::Own : BubbleFrame::Incoming,
+                                       canvas.row());
         bubble->column()->addWidget(messageHeader(canvas, bubble), 0, Qt::AlignTop);
         bubble->column()->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
         if (info.local) {

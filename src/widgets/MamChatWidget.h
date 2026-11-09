@@ -62,6 +62,9 @@ public:
     void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    // Resolve an XEP-0461 reference against cached room messages. Returns
+    // false for unknown or ambiguous references, including old room id values.
+    bool replyReferencesLocalMessage(const ChatReply &reply) const;
     const MamHistorySource &historySource() const { return historySource_; }
     void                    restoreArchiveSnapshot(int count, const QString &lastUid);
     void observeArchivePage(const QStringList &uids, int count, int firstIndex, const QString &before = {},
@@ -92,7 +95,8 @@ public:
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString timestampText(const QDateTime &when, const NativeChatPartOptions &options,
-                                 const QDateTime &now = QDateTime::currentDateTime());
+                                 const QDateTime &now = QDateTime::currentDateTime(),
+                                 ChatTimestamp::Mode fallback = ChatTimestamp::Mode::Relative);
     static QString fullTimestamp(const QDateTime &when);
     // Most recent actually visible incoming message requesting a read marker.
     QString takeVisibleMarkableIncomingId();
@@ -235,7 +239,7 @@ private:
     int                                           displayedTargetIndex() const;
     void                                          resolveDisplayedMarkers();
     void                                          rememberDisplayedIncoming(int index);
-    void                                          updateTimestamps();
+    void                                          updateTimestamps(bool forcePreferenceChange = false);
     NativeChatMessageInfo                         messageInfo(int index) const;
     bool                                          startsNewDate(int index) const;
     void                                          updateAdjacentDateDivider(int index);
@@ -256,6 +260,8 @@ private:
     QString richMessage(const Row &row) const;
     void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
+    void                                          setHoveredNoticeTimestamp(QFrame *row);
+    QPointer<QFrame>                              hoveredNoticeTimestampRow_;
     QColor                                        informationalColor_;
     QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);

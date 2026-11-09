@@ -5705,17 +5705,21 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
         } // /headline
 #ifdef GROUPCHAT
         else if (dm.type() == Message::Type::Groupchat) {
-            putToQueue          = false;
-            bool allowMucEvents = o->getOption("options.ui.muc.allow-highlight-events").toBool();
+            putToQueue = false;
             if (activationType != FromXml) {
                 GCMainDlg *c = findDialog<GCMainDlg *>(e->from());
                 if (c) {
                     c->message(m, e);
-                    if (!c->isActiveTab() && c->isLastMessageAlert() && !dm.spooled() && allowMucEvents)
+                    // Unread highlights feed the same EventNotifier/tray queue
+                    // as other unread messages. The dialog owns alert matching.
+                    if (!c->isActiveTab() && c->isLastMessageAlert() && !dm.spooled()
+                        && !dm.from().resource().isEmpty() && dm.from().resource() != c->nick())
                         putToQueue = true;
                 }
-            } else if (allowMucEvents)
+            } else {
+                // Only previously queued MUC events are restored from profile.
                 putToQueue = true;
+            }
         } // /groupchat
 #endif
         else if (dm.type() == Message::Type::Normal) {

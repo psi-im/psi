@@ -27,7 +27,9 @@ struct NativeChatTheme {
     int     spacing    = 10;
     QString styleSheet;     // Scoped to each message row.
     QString layoutSpec;     // Optional JSON slot tree (author, timestamp, avatar, body, unreadSeparator).
-    bool    hoverHighlight = true;
+    QString timestampFormat; // Empty: global setting; Qt date/time pattern or {relative}.
+    bool    hoverHighlight = true; // Default hover tint; false for Classic/Bubble.
+                                   // User chat CSS may override this.
     QColor  background;
     QString backgroundImage;
     enum ImageMode { Tile, Scale };
