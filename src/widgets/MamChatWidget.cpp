@@ -3437,19 +3437,22 @@ QString MamChatWidget::copiedMessage(const Row &row) const
 
 void MamChatWidget::showReply(MessagePreview *preview, const ChatReply &reply) const
 {
-    // The quoted message as it is shown in its own row, but without quotes of
-    // its own: no chain of quotes. Without the message itself, the quoting
-    // client's fallback text.
-    QString    author = reply.author;
-    QString    html;
-    const bool resolved = resolveReply(reply, author, html);
+    // An XEP-0461 fallback has no authoritative time. Resolve the actual
+    // source message whenever possible; otherwise use local composer context.
+    QString   author = reply.author;
+    QString   html;
+    QDateTime when = reply.timestamp;
+    const bool resolved = resolveReply(reply, author, html, when);
     if (!resolved)
         html = reply.text.isEmpty() ? tr("Referenced message is not available locally").toHtmlEscaped()
                                     : TextUtil::linkify(TextUtil::plain2rich(reply.text));
     preview->setProperty("replyResolved", resolved);
     preview->setActivatable(resolved);
-    // An unknown author gets no title: the quote styling says enough.
     preview->setRichContent(author, html, true);
+    const QString full = ChatTimestamp::full(when);
+    preview->setProperty("_psiQuotedAt", when);
+    preview->setProperty("_psiQuotedFullTime", full);
+    preview->setTimestamp(ChatTimestamp::format(when, timestampMode_), full);
 }
 
 int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
