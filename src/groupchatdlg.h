@@ -61,6 +61,8 @@ class GCMainDlg : public TabbableWidget {
     bool mamRefreshTail_ = false;
     qint64 localBeforeId_ = 0;
     bool localExhausted_ = false;
+    bool localHistoryLoading_ = false;
+    quint64 localHistoryGeneration_ = 0;
     bool mamExhausted_ = false;
     bool mamArchiveReady_ = false;
 public:
