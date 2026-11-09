@@ -25,6 +25,8 @@
 #include "historyeventfactory.h"
 #include "historysqlitepolicy.h"
 #include "historywalcheckpoint.h"
+#include "historysqlreadworker.h"
+#include <QThread>
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
@@ -150,6 +152,21 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
 EDBSqLite::~EDBSqLite()
 {
     commit();
+    // All pending reads finish or are discarded before the database is
+    // closed. The worker owns a distinct, read-only SQLite connection.
+    if (historyReadThread_) {
+        if (historyReadThread_->isRunning()) {
+            emit historyReadStopRequested();
+            historyReadThread_->wait();
+        } else {
+            delete historyReader_;
+        }
+        historyReader_ = nullptr;
+    }
+    qDeleteAll(pendingReads_);
+    pendingReads_.clear();
+    qDeleteAll(rlist);
+    rlist.clear();
     if (checkpointTimer_)
         checkpointTimer_->stop();
     // A final WAL sync may take time on a slow disk, but only the background
@@ -359,6 +376,26 @@ bool EDBSqLite::init()
         });
         checkpointWorker_->start();
     }
+    // Keep EDB and PsiEvent reconstruction in the GUI thread. SQL reads run
+    // on a separate read-only connection and return plain QSqlRecord values.
+    if (!historyReadThread_) {
+        qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
+        qRegisterMetaType<HistoryReadResult>("HistoryReadResult");
+        historyReadThread_ = new QThread(this);
+        historyReader_ = new HistorySqlReadWorker(db.databaseName());
+        historyReader_->moveToThread(historyReadThread_);
+        connect(historyReadThread_, &QThread::started, historyReader_, &HistorySqlReadWorker::open);
+        connect(this, &EDBSqLite::historyReadRequested, historyReader_,
+                &HistorySqlReadWorker::read, Qt::QueuedConnection);
+        connect(historyReader_, &HistorySqlReadWorker::completed, this,
+                &EDBSqLite::onHistoryReadCompleted, Qt::QueuedConnection);
+        connect(this, &EDBSqLite::historyReadStopRequested, historyReader_,
+                &HistorySqlReadWorker::close, Qt::QueuedConnection);
+        connect(historyReader_, &HistorySqlReadWorker::stopped,
+                historyReadThread_, &QThread::quit, Qt::DirectConnection);
+        connect(historyReadThread_, &QThread::finished, historyReader_, &QObject::deleteLater);
+        historyReadThread_->start(QThread::LowPriority);
+    }
     return true;
 }
 
@@ -511,6 +548,26 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
     commit();
 }
 
+void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
+{
+    auto *r = pendingReads_.take(read.id);
+    if (!r)
+        return; // A cancelled request must never reach a stale UI handle.
+    EDBResult events;
+    for (const auto &row : read.rows) {
+        const auto event = HistoryEventFactory::decode(psi(), row);
+        if (!event)
+            continue;
+        events.append(EDBItemPtr(new EDBItem(
+            event, row.value("id").toString(), row.value("history_state").toInt(),
+            row.value("archive_uid").toString(), {},
+            protocolOnlyRecord(row), {}, {},
+            MessageState::Flags(row.value("message_flags").toInt()))));
+    }
+    resultReady(r->id, events, read.beginRow);
+    delete r;
+}
+
 void EDBSqLite::performRequests()
 {
     if (rlist.isEmpty())
@@ -518,6 +575,29 @@ void EDBSqLite::performRequests()
 
     item_query_req *r    = rlist.takeFirst();
     const int       type = r->type;
+
+    if ((type == item_query_req::Type_get || type == item_query_req::Type_find) && historyReadThread_) {
+        // Commit the preceding GUI-thread appends before the separate SQLite
+        // reader takes its snapshot. Avoid a stale database snapshot.
+        if (!commit()) {
+            resultReady(r->id, {}, 0);
+            delete r;
+            return;
+        }
+        HistoryReadRequest read;
+        read.id = r->id;
+        read.type = type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
+        read.account = r->accId;
+        read.peer = r->j.full();
+        read.text = r->findStr;
+        read.date = r->date;
+        read.direction = r->dir;
+        read.start = r->start;
+        read.limit = r->len;
+        pendingReads_.insert(r->id, r);
+        emit historyReadRequested(read);
+        return;
+    }
 
     if (type == item_query_req::Type_append) {
         bool inserted = false;
