@@ -69,6 +69,20 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    if (request.type == HistoryReadRequest::ResolveBatch) {
+        for (const auto id : request.eventIds) {
+            if (id <= 0 || result.resolvedRows.contains(id))
+                continue;
+            const auto row = HistoryArchive::resolvedRecord(db_, id);
+            if (!row.isEmpty())
+                result.resolvedRows.insert(id, row);
+        }
+        result.success = snapshot.commit();
+        if (!result.success)
+            result.resolvedRows.clear();
+        emit completed(result);
+        return;
+    }
     if (request.type == HistoryReadRequest::ArchiveBefore
         || request.type == HistoryReadRequest::ArchiveAfter
         || request.type == HistoryReadRequest::ArchiveIndex) {
