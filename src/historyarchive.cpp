@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historyarchive.h"
 
+#include <QElapsedTimer>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -796,6 +797,8 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
 
 bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page)
 {
+    QElapsedTimer elapsed;
+    elapsed.start();
     if (key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty() || limit <= 0
         || page.entries.size() > limit || !db.transaction())
         return false;
@@ -1088,6 +1091,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         return fail();
     if (!db.commit())
         return fail();
+    if (elapsed.elapsed() > 1000)
+        qWarning() << "[history-cache] GUI-thread archive transaction took" << elapsed.elapsed() << "ms"
+                   << "entries=" << page.entries.size();
     return true;
 }
 
