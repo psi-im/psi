@@ -12,6 +12,111 @@
 class HistorySqlReadWorkerTest final : public QObject {
     Q_OBJECT
 private slots:
+    void serialWritesAndReadsOnOldServer()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const QString path = directory.filePath(QStringLiteral("history.db"));
+        const QString name = QStringLiteral("history-single-worker-test");
+        {
+            auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral("PRAGMA foreign_keys=ON")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE system(key TEXT,value TEXT)")));
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO system VALUES('version','0.1')")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,type INTEGER,"
+                                          "jid TEXT,lifetime INTEGER)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE events(id INTEGER PRIMARY KEY,contact_id INTEGER "
+                                          "REFERENCES contacts(id) ON DELETE CASCADE,resource TEXT,date TEXT,"
+                                          "type INTEGER,direction INTEGER,subject TEXT,m_text TEXT,lang TEXT,"
+                                          "extra_data TEXT)")));
+            QVERIFY(HistoryArchive::migrate(db));
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(name);
+        qRegisterMetaType<HistoryWriteRequest>("HistoryWriteRequest");
+        qRegisterMetaType<HistoryWriteResult>("HistoryWriteResult");
+        qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
+        qRegisterMetaType<HistoryReadResult>("HistoryReadResult");
+
+        QThread thread;
+        auto *worker = new HistorySqlReadWorker(path);
+        worker->moveToThread(&thread);
+        connect(&thread, &QThread::started, worker, &HistorySqlReadWorker::open);
+        connect(worker, &HistorySqlReadWorker::stopped, &thread, &QThread::quit, Qt::DirectConnection);
+        connect(&thread, &QThread::finished, worker, &QObject::deleteLater);
+        QSignalSpy wrote(worker, &HistorySqlReadWorker::writeCompleted);
+        QSignalSpy read(worker, &HistorySqlReadWorker::completed);
+        QVERIFY(wrote.isValid());
+        QVERIFY(read.isValid());
+        thread.start();
+
+        const auto enqueueWrite = [worker](HistoryWriteRequest request) {
+            return QMetaObject::invokeMethod(worker, "write", Qt::QueuedConnection,
+                                             Q_ARG(HistoryWriteRequest, request));
+        };
+        const auto enqueueRead = [worker](HistoryReadRequest request) {
+            return QMetaObject::invokeMethod(worker, "read", Qt::QueuedConnection,
+                                             Q_ARG(HistoryReadRequest, request));
+        };
+        HistoryWriteRequest append;
+        append.type = HistoryWriteRequest::Append;
+        append.account = QStringLiteral("account");
+        append.peer = QStringLiteral("bob@example.test/resource");
+        append.jidType = 1;
+        append.encoded.valid = true;
+        append.encoded.isMessage = true;
+        append.encoded.type = 1;
+        append.encoded.direction = 2;
+        append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(1000, Qt::UTC);
+        append.encoded.body = QStringLiteral("same text");
+        append.encoded.matchBody = append.encoded.body;
+        append.encoded.sender = append.peer;
+        // Neither the server nor the legacy message supplies an ID. Two
+        // distinct deliveries with equal timestamp/text must both be stored.
+        append.id = 1;
+        QVERIFY(enqueueWrite(append));
+        append.id = 2;
+        QVERIFY(enqueueWrite(append));
+        HistoryReadRequest page;
+        page.id = 3;
+        page.account = append.account;
+        page.peer = QStringLiteral("bob@example.test");
+        page.type = HistoryReadRequest::LocalPage;
+        page.limit = 40;
+        QVERIFY(enqueueRead(page)); // Must observe both preceding writes.
+        QTRY_COMPARE(wrote.count(), 2);
+        auto first = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        auto second = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QVERIFY(first.success && first.inserted);
+        QVERIFY(second.success && second.inserted);
+        QTRY_COMPARE(read.count(), 1);
+        auto rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QCOMPARE(rows.rows.size(), 2);
+        QVERIFY(rows.rows.first().value(QStringLiteral("id")).toLongLong()
+                != rows.rows.last().value(QStringLiteral("id")).toLongLong());
+
+        HistoryWriteRequest erase;
+        erase.id = 4;
+        erase.type = HistoryWriteRequest::Erase;
+        erase.account = append.account;
+        erase.peer = page.peer;
+        QVERIFY(enqueueWrite(erase));
+        page.id = 5;
+        QVERIFY(enqueueRead(page));
+        QTRY_COMPARE(wrote.count(), 1);
+        QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first()).success);
+        QTRY_COMPARE(read.count(), 1);
+        rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QVERIFY(rows.rows.isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(worker, "close", Qt::QueuedConnection));
+        QVERIFY(thread.wait(5000));
+    }
+
     void queuedReadsPreserveLegacyMessagesAndOrdering()
     {
         QTemporaryDir directory;
