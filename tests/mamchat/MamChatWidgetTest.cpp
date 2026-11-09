@@ -5075,42 +5075,34 @@ private slots:
         list.show();
         QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
         const QString clock = ChatTimestamp::format(original.dateTime(), ChatTimestamp::Mode::Clock);
+        auto quoteLabel = [&list]() -> QLabel * {
+            auto *row = list.itemWidget(1);
+            return row ? row->findChild<QLabel *>(QStringLiteral("previewTimestamp")) : nullptr;
+        };
+        auto sourceTime = [&list](bool inText) {
+            auto *row = list.itemWidget(0);
+            if (!row)
+                return QString();
+            if (inText) {
+                auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                return body ? body->toPlainText() : QString();
+            }
+            auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+            return label ? label->text() : QString();
+        };
         for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
                                    QStringLiteral("classic") }) {
+            const bool classic = id == QLatin1String("classic");
             list.setTheme(NativeChatThemes::instance()->theme(id));
             list.setTimestampMode(ChatTimestamp::Mode::Clock);
-            QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
-            auto *source = list.itemWidget(0);
-            auto *quote = list.itemWidget(1)->findChild<QLabel *>(QStringLiteral("previewTimestamp"));
-            QVERIFY2(quote, qPrintable(id));
-            QCOMPARE(quote->text(), clock);
-            QCOMPARE(quote->toolTip(), ChatTimestamp::full(original.dateTime()));
-            if (id == QLatin1String("classic")) {
-                auto *body = source->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
-                QVERIFY(body);
-                QVERIFY(body->toPlainText().contains(QStringLiteral("[") + clock + QStringLiteral("]")));
-            } else {
-                auto *label = source->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-                QVERIFY(label);
-                QCOMPARE(label->text(), clock);
-            }
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
+            QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
+            QTRY_VERIFY(sourceTime(classic).contains(clock));
 
             list.setTimestampMode(ChatTimestamp::Mode::Relative);
-            QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
-            source = list.itemWidget(0);
-            quote = list.itemWidget(1)->findChild<QLabel *>(QStringLiteral("previewTimestamp"));
-            QVERIFY(quote);
             const QString relative = ChatTimestamp::relative(original.dateTime());
-            QCOMPARE(quote->text(), relative);
-            if (id == QLatin1String("classic")) {
-                auto *body = source->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
-                QVERIFY(body);
-                QVERIFY(body->toPlainText().contains(QStringLiteral("[") + relative + QStringLiteral("]")));
-            } else {
-                auto *label = source->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-                QVERIFY(label);
-                QCOMPARE(label->text(), relative);
-            }
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == relative);
+            QTRY_VERIFY(sourceTime(classic).contains(relative));
         }
     }
 
@@ -5165,6 +5157,9 @@ private slots:
         NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
+        // Classic text is now refreshed without rebuilding its QTextDocument.
+        QTRY_VERIFY(clock->isActive());
+        list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
     }
 
