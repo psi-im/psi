@@ -17,8 +17,11 @@ MessageView nativeHistoryMessage(PsiAccount *, const XMPP::Jid &peer, const XMPP
 // cursor. Local-only originals remain reachable after MAM reaches its start.
 // In a conversation, `nickname` names the sender as the dialog does (its own
 // nick or the contact's name); without it, the peer's address is used.
-void prependLocalChatHistory(MamChatWidget *, PsiAccount *, const QString &peer, bool room, const QString &ownNick,
-                             qint64 &before, bool &exhausted, const std::function<QString(bool)> &nickname = {});
+void prependLocalChatHistoryAsync(MamChatWidget *, PsiAccount *, const QString &peer, bool room,
+                                  const QString &ownNick, qint64 before, bool exhausted,
+                                  const std::function<void(qint64 nextBefore, bool exhausted, bool success)> &finished,
+                                  const std::function<QString(bool)> &nickname = {},
+                                  const std::function<bool()> &stillCurrent = {});
 
 #include "messageview.h"
 #include <QStringList>

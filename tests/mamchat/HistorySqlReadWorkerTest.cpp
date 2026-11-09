@@ -1,0 +1,375 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "historysqlreadworker.h"
+
+#include <QCoreApplication>
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QTest>
+#include <QThread>
+#include <QTimer>
+
+class HistorySqlReadWorkerTest final : public QObject {
+    Q_OBJECT
+private slots:
+    void serialWritesAndReadsOnOldServer()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const QString path = directory.filePath(QStringLiteral("history.db"));
+        const QString name = QStringLiteral("history-single-worker-test");
+        {
+            auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral("PRAGMA foreign_keys=ON")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE system(key TEXT,value TEXT)")));
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO system VALUES('version','0.1')")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,type INTEGER,"
+                                          "jid TEXT,lifetime INTEGER)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE events(id INTEGER PRIMARY KEY,contact_id INTEGER "
+                                          "REFERENCES contacts(id) ON DELETE CASCADE,resource TEXT,date TEXT,"
+                                          "type INTEGER,direction INTEGER,subject TEXT,m_text TEXT,lang TEXT,"
+                                          "extra_data TEXT)")));
+            QVERIFY(HistoryArchive::migrate(db));
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(name);
+        qRegisterMetaType<HistoryWriteRequest>("HistoryWriteRequest");
+        qRegisterMetaType<HistoryWriteResult>("HistoryWriteResult");
+        qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
+        qRegisterMetaType<HistoryReadResult>("HistoryReadResult");
+
+        QThread thread;
+        auto *worker = new HistorySqlReadWorker(path);
+        worker->moveToThread(&thread);
+        connect(&thread, &QThread::started, worker, &HistorySqlReadWorker::open);
+        connect(worker, &HistorySqlReadWorker::stopped, &thread, &QThread::quit, Qt::DirectConnection);
+        connect(&thread, &QThread::finished, worker, &QObject::deleteLater);
+        QSignalSpy wrote(worker, &HistorySqlReadWorker::writeCompleted);
+        QSignalSpy read(worker, &HistorySqlReadWorker::completed);
+        QVERIFY(wrote.isValid());
+        QVERIFY(read.isValid());
+        thread.start();
+
+        const auto enqueueWrite = [worker](HistoryWriteRequest request) {
+            return QMetaObject::invokeMethod(worker, "write", Qt::QueuedConnection,
+                                             Q_ARG(HistoryWriteRequest, request));
+        };
+        const auto enqueueRead = [worker](HistoryReadRequest request) {
+            return QMetaObject::invokeMethod(worker, "read", Qt::QueuedConnection,
+                                             Q_ARG(HistoryReadRequest, request));
+        };
+        HistoryWriteRequest append;
+        append.type = HistoryWriteRequest::Append;
+        append.account = QStringLiteral("account");
+        append.peer = QStringLiteral("bob@example.test/resource/with/slash");
+        append.contactPeer = QStringLiteral("bob@example.test");
+        append.resource = QStringLiteral("resource/with/slash");
+        append.jidType = 1;
+        append.encoded.valid = true;
+        append.encoded.isMessage = true;
+        append.encoded.type = 1;
+        append.encoded.direction = 2;
+        append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(1000, Qt::UTC);
+        append.encoded.body = QStringLiteral("same text");
+        append.encoded.matchBody = append.encoded.body;
+        append.encoded.sender = append.peer;
+        // Neither the server nor the legacy message supplies an ID. Two
+        // distinct deliveries with equal timestamp/text must both be stored.
+        append.id = 1;
+        QVERIFY(enqueueWrite(append));
+        append.id = 2;
+        QVERIFY(enqueueWrite(append));
+        HistoryReadRequest page;
+        page.id = 3;
+        page.account = append.account;
+        page.peer = QStringLiteral("bob@example.test");
+        page.type = HistoryReadRequest::LocalPage;
+        page.limit = 40;
+        QVERIFY(enqueueRead(page)); // Must observe both preceding writes.
+        QTRY_COMPARE(wrote.count(), 2);
+        auto first = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        auto second = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QVERIFY(first.success && first.inserted);
+        QVERIFY(second.success && second.inserted);
+        QTRY_COMPARE(read.count(), 1);
+        auto rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QCOMPARE(rows.rows.size(), 2);
+        QVERIFY(rows.rows.first().value(QStringLiteral("id")).toLongLong()
+                != rows.rows.last().value(QStringLiteral("id")).toLongLong());
+
+        // The MAM cache page is written atomically on the same worker as
+        // live messages and read again without a separate SQL owner.
+        HistoryWriteRequest store;
+        store.id = 7;
+        store.type = HistoryWriteRequest::StorePage;
+        store.archiveKey = { QStringLiteral("account"), QStringLiteral("alice@example.test"),
+                             QStringLiteral("bob@example.test"), false };
+        store.limit = 40;
+        HistoryArchive::Entry entry;
+        entry.uid = QStringLiteral("archive-seven");
+        entry.timestamp = QDateTime::fromMSecsSinceEpoch(2000, Qt::UTC);
+        entry.messageId = QStringLiteral("client-seven");
+        entry.sender = append.peer;
+        entry.body = QStringLiteral("archived message");
+        entry.xml = QStringLiteral("<result id='archive-seven' xmlns='urn:xmpp:mam:2'>"
+                                   "<forwarded xmlns='urn:xmpp:forward:0'><delay "
+                                   "xmlns='urn:xmpp:delay' stamp='1970-01-01T00:00:02Z'/>"
+                                   "<message xmlns='jabber:client' id='client-seven' type='chat' "
+                                   "from='bob@example.test/resource' to='alice@example.test'>"
+                                   "<body>archived message</body></message></forwarded></result>");
+        store.archivePage.entries.append(entry);
+        store.archivePage.stable = true;
+        store.archivePage.complete = true;
+        QVERIFY(enqueueWrite(store));
+        QTRY_COMPARE(wrote.count(), 1);
+        const auto stored = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QVERIFY(stored.success);
+        QCOMPARE(stored.archivePage.entries.size(), 1);
+        QVERIFY(stored.archivePage.entries.first().eventId > 0);
+
+        HistoryReadRequest archiveRead;
+        archiveRead.id = 8;
+        archiveRead.type = HistoryReadRequest::ArchiveBefore;
+        archiveRead.archiveKey = store.archiveKey;
+        archiveRead.limit = 40;
+        QVERIFY(enqueueRead(archiveRead));
+        QTRY_COMPARE(read.count(), 1);
+        const auto loaded = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(loaded.success);
+        QVERIFY(loaded.archivePage.found);
+        QCOMPARE(loaded.archivePage.entries.size(), 1);
+        QCOMPARE(loaded.archivePage.entries.first().uid, entry.uid);
+        QCOMPARE(loaded.archivePage.entries.first().eventId, stored.archivePage.entries.first().eventId);
+
+        // Reproduce a busy history database without freezing the GUI event
+        // loop. This is the critical regression on slow disks / checkpoints.
+        const QString lockName = QStringLiteral("history-worker-lock-test");
+        {
+            auto blocker = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), lockName);
+            blocker.setDatabaseName(path);
+            QVERIFY(blocker.open());
+            QVERIFY(blocker.transaction());
+            QSqlQuery lock(blocker);
+            QVERIFY(lock.exec(QStringLiteral("UPDATE system SET value='busy' WHERE key='version'")));
+            append.id = 9;
+            append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(3000, Qt::UTC);
+            QVERIFY(enqueueWrite(append));
+
+            bool guiDelivered = false;
+            QTimer::singleShot(0, this, [&guiDelivered] { guiDelivered = true; });
+            QTRY_VERIFY(guiDelivered);
+            // The worker must be waiting on the locked database, but this
+            // Qt event loop has remained responsive.
+            QCOMPARE(wrote.count(), 0);
+            QVERIFY(blocker.commit());
+            QTRY_COMPARE(wrote.count(), 1);
+            QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first()).success);
+            blocker.close();
+        }
+        QSqlDatabase::removeDatabase(lockName);
+
+        HistoryWriteRequest erase;
+        erase.id = 4;
+        erase.type = HistoryWriteRequest::Erase;
+        erase.account = append.account;
+        erase.peer = page.peer;
+        QVERIFY(enqueueWrite(erase));
+        page.id = 5;
+        QVERIFY(enqueueRead(page));
+        QTRY_COMPARE(wrote.count(), 1);
+        QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first()).success);
+        QTRY_COMPARE(read.count(), 1);
+        rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QVERIFY(rows.rows.isEmpty());
+
+        // An invalid second append must roll back the first one in the same
+        // batch. Neither handle may be told "success" before COMMIT.
+        append.id = 10;
+        append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(4000, Qt::UTC);
+        HistoryWriteRequest invalid = append;
+        invalid.id = 11;
+        invalid.account.clear();
+        QVERIFY(enqueueWrite(append));
+        QVERIFY(enqueueWrite(invalid));
+        QTRY_COMPARE(wrote.count(), 2);
+        const auto rolledBack = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        const auto rejected = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QCOMPARE(rolledBack.id, 10);
+        QCOMPARE(rejected.id, 11);
+        QVERIFY(!rolledBack.success);
+        QVERIFY(!rejected.success);
+        page.id = 12;
+        QVERIFY(enqueueRead(page));
+        QTRY_COMPARE(read.count(), 1);
+        rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QVERIFY(rows.rows.isEmpty());
+
+        QVERIFY(QMetaObject::invokeMethod(worker, "close", Qt::QueuedConnection));
+        QVERIFY(thread.wait(5000));
+    }
+
+    void queuedReadsPreserveLegacyMessagesAndOrdering()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const QString path = directory.filePath(QStringLiteral("history.db"));
+        const QString connection = QStringLiteral("history-reader-test-write");
+        {
+            QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connection);
+            db.setDatabaseName(path);
+            QVERIFY2(db.open(), qPrintable(db.lastError().text()));
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral("PRAGMA journal_mode=WAL")));
+            q.finish();
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,jid TEXT)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE events("
+                "id INTEGER PRIMARY KEY,contact_id INTEGER,date TEXT,history_date_ms INTEGER,"
+                "type INTEGER,direction INTEGER,subject TEXT,m_text TEXT,lang TEXT,extra_data TEXT,"
+                "history_state INTEGER DEFAULT 0,message_flags INTEGER DEFAULT 0)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE message_revisions(event_id INTEGER,root_id INTEGER)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE message_state_refs(event_id INTEGER,kind INTEGER,target TEXT)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE archive_items(event_id INTEGER,uid TEXT,archive TEXT,xml TEXT)")));
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO contacts VALUES (1,'account','old.example/peer')")));
+            // A legacy server has no MAM, origin-id or stanza-id. Three
+            // identical messages (including their timestamp) remain separate.
+            QVERIFY(db.transaction());
+            for (int i = 1; i <= 3; ++i) {
+                q.prepare(QStringLiteral("INSERT INTO events(id,contact_id,date,history_date_ms,type,direction,"
+                    "m_text,extra_data) VALUES(:id,1,'2026-11-09T19:00:00Z',1000,1,2,'hello','{}')"));
+                q.bindValue(QStringLiteral(":id"), i);
+                QVERIFY(q.exec());
+            }
+            QVERIFY(q.exec(QStringLiteral("UPDATE events SET message_flags=1 WHERE id=3")));
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO message_state_refs VALUES(3,1,'client-id-3')")));
+            QVERIFY(db.commit());
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(connection);
+
+        qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
+        qRegisterMetaType<HistoryReadResult>("HistoryReadResult");
+        QThread thread;
+        auto *reader = new HistorySqlReadWorker(path);
+        reader->moveToThread(&thread);
+        connect(&thread, &QThread::started, reader, &HistorySqlReadWorker::open);
+        connect(reader, &HistorySqlReadWorker::stopped, &thread, &QThread::quit, Qt::DirectConnection);
+        connect(&thread, &QThread::finished, reader, &QObject::deleteLater);
+        QSignalSpy spy(reader, &HistorySqlReadWorker::completed);
+        QVERIFY(spy.isValid());
+        thread.start();
+
+        const auto send = [reader](HistoryReadRequest request) {
+            return QMetaObject::invokeMethod(reader, "read", Qt::QueuedConnection,
+                                             Q_ARG(HistoryReadRequest, request));
+        };
+        HistoryReadRequest local;
+        local.id = 1;
+        local.type = HistoryReadRequest::LocalPage;
+        local.account = QStringLiteral("account");
+        local.peer = QStringLiteral("old.example/peer");
+        local.limit = 3;
+        QVERIFY(send(local));
+        QTRY_COMPARE(spy.count(), 1);
+        auto result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.rows.size(), 3);
+        for (int i = 0; i < 3; ++i)
+            QCOMPARE(result.rows.at(i).value(QStringLiteral("id")).toInt(), i + 1);
+
+        // Requesting the next page with the oldest local ID cannot replay
+        // the same three records. No server-provided identity is necessary.
+        local.id = 2;
+        local.before = 1;
+        QVERIFY(send(local));
+        QTRY_COMPARE(spy.count(), 1);
+        result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QVERIFY(result.rows.isEmpty());
+
+        HistoryReadRequest get;
+        get.id = 3;
+        get.type = HistoryReadRequest::Get;
+        get.account = local.account;
+        get.peer = local.peer;
+        get.direction = 1; // EDB::Backward
+        get.limit = 2;
+        QVERIFY(send(get));
+        QTRY_COMPARE(spy.count(), 1);
+        result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.rows.size(), 2);
+        QCOMPARE(result.rows.first().value(QStringLiteral("id")).toInt(), 3);
+        QCOMPARE(result.rows.last().value(QStringLiteral("id")).toInt(), 2);
+        QCOMPARE(result.beginRow, 2);
+
+        HistoryReadRequest find;
+        find.id = 4;
+        find.type = HistoryReadRequest::Find;
+        find.account = local.account;
+        find.peer = local.peer;
+        find.text = QStringLiteral("HELLO");
+        QVERIFY(send(find));
+        QTRY_COMPARE(spy.count(), 1);
+        result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.rows.size(), 3);
+
+        // The persisted XEP-0333 cursor is restored through the same
+        // worker, without blocking an activated chat's GUI thread.
+        HistoryReadRequest displayed;
+        displayed.id = 7;
+        displayed.type = HistoryReadRequest::DisplayedCursor;
+        displayed.account = local.account;
+        displayed.peer = local.peer;
+        QVERIFY(send(displayed));
+        QTRY_COMPARE(spy.count(), 1);
+        result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.cursor.eventId, qint64(3));
+        QCOMPARE(result.cursor.messageId, QStringLiteral("client-id-3"));
+
+        // A writer can commit another live message concurrently. A worker
+        // snapshot never leaks an uncommitted row or loses earlier messages.
+        const QString concurrentName = QStringLiteral("history-reader-concurrent-writer");
+        {
+            auto writer = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), concurrentName);
+            writer.setDatabaseName(path);
+            QVERIFY(writer.open());
+            QVERIFY(writer.transaction());
+            QSqlQuery q(writer);
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO events(id,contact_id,date,history_date_ms,type,direction,"
+                "m_text,extra_data) VALUES(4,1,'2026-11-09T19:00:00Z',1000,1,2,'hello','{}')")));
+            get.id = 5;
+            get.limit = 10;
+            QVERIFY(send(get));
+            QTRY_COMPARE(spy.count(), 1);
+            result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+            QVERIFY(result.success);
+            QCOMPARE(result.rows.size(), 3);
+            QVERIFY(writer.commit());
+
+            get.id = 6;
+            QVERIFY(send(get));
+            QTRY_COMPARE(spy.count(), 1);
+            result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+            QVERIFY(result.success);
+            QCOMPARE(result.rows.size(), 4);
+            QCOMPARE(result.rows.first().value(QStringLiteral("id")).toInt(), 4);
+            writer.close();
+        }
+        QSqlDatabase::removeDatabase(concurrentName);
+
+        QVERIFY(QMetaObject::invokeMethod(reader, "close", Qt::QueuedConnection));
+        QVERIFY(thread.wait(5000));
+    }
+};
+
+QTEST_GUILESS_MAIN(HistorySqlReadWorkerTest)
+#include "HistorySqlReadWorkerTest.moc"

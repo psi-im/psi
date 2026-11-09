@@ -275,7 +275,10 @@ void PsiChatDlg::clearNativeHistory()
     }
     if (nativeTimeline_)
         nativeTimeline_->clearMessages();
+    ++localHistoryGeneration_; // Invalidate any late queued EDB page.
+    localHistoryLoading_ = false;
     displayedCursorRestored_ = false;
+    displayedCursorPending_ = false;
     resetLocalHistorySource();
     mamBeforeId_.clear();
     mamRefreshTail_        = false;
@@ -287,101 +290,122 @@ void PsiChatDlg::clearNativeHistory()
 
 void PsiChatDlg::loadOlderMamMessages()
 {
-    if (!nativeTimeline_ || mamTask_
+    if (!nativeTimeline_ || mamTask_ || localHistoryLoading_
         || !PsiMam::mayFetchArchive(mamBeforeId_.isEmpty(), localHistoryPreloadPending(), localHistoryPopulated()))
         return;
 
     nativeTimeline_->setHistoryLoading(true);
     const bool atEndBeforeLocal = nativeTimeline_->isAtEnd();
     const bool occupantPrivate  = account()->findGCContact(jid());
-    prependLocalChatHistory(nativeTimeline_, account(), occupantPrivate ? jid().full() : jid().bare(), false,
-                            account()->nick(), localBeforeId_, localExhausted_,
-                            [this](bool local) { return whoNick(local); });
-    const bool localOnly = occupantPrivate || account()->isServerless();
-    if (localOnly)
-        mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
-    if (atEndBeforeLocal && mamBeforeId_.isEmpty())
-        nativeTimeline_->scrollToEnd();
-    if (localOnly || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
-        nativeTimeline_->setHistoryLoading(false);
-        nativeTimeline_->setHistoryExhausted(localExhausted_);
-        sendDisplayedMarkerForVisibleMessage();
-        return;
-    }
-    const bool    refreshTail     = mamRefreshTail_ && account()->isConnected();
-    const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
-    if (account()->isConnected())
-        mamRefreshTail_ = false;
-    if (requestedBefore.isEmpty())
-        mamSeenBeforeIds_.clear();
-    auto *task                = new HistorySync(account(), jid().bare(), false, requestedBefore, this,
-                                                nativeTimeline_->suggestedOlderHistoryPageSize());
-    mamTask_                  = task;
-    const QString peer        = jid().bare();
-    const bool    initialPage = requestedBefore.isEmpty();
-    connect(task, &HistorySync::finished, this, [this, task, peer, initialPage, requestedBefore] {
-        if (mamTask_ != task)
-            return;
-        mamTask_.clear();
-        if (jid().bare() != peer || !task->success()) {
-            // If the authenticated stream drops before the completion signal,
-            // resume the same opaque cursor on the next successful login.
-            if (!account()->isConnected() && jid().bare() == peer)
-                mamResumeAfterConnect_ = true;
-            nativeTimeline_->stopHistoryFill();
-            if (!task->success())
-                qWarning().noquote() << "[mam-history] Query failed:" << task->statusString();
-            nativeTimeline_->setHistoryLoading(false);
-            task->deleteLater();
-            if (jid().bare() == peer) {
-                // Do not retry a failed page in a tight viewport-fill loop.
-                // Offline pagination resumes after login; local rows remain
-                // independently pageable even without a usable server cursor.
-                mamExhausted_ = true;
-                nativeTimeline_->setHistoryExhausted(localExhausted_);
-                if (initialPage && nativeTimeline_->messageCount() == 0 && !localHistoryPopulated())
-                    preloadHistory(true);
-                sendDisplayedMarkerForVisibleMessage();
+    localHistoryLoading_ = true;
+    const quint64 generation = localHistoryGeneration_;
+    const QString localPeer = occupantPrivate ? jid().full() : jid().bare();
+    prependLocalChatHistoryAsync(
+        nativeTimeline_, account(), localPeer, false, account()->nick(), localBeforeId_, localExhausted_,
+        [this, generation, localPeer, occupantPrivate, atEndBeforeLocal](qint64 before, bool exhausted, bool success) {
+            if (generation != localHistoryGeneration_)
+                return;
+            localHistoryLoading_ = false;
+            if (!success) {
+                nativeTimeline_->setHistoryLoading(false);
+                nativeTimeline_->stopHistoryFill();
+                return; // A failed SQL read must not mark local history exhausted.
             }
-            return;
-        }
+            localBeforeId_ = before;
+            localExhausted_ = exhausted;
+            if (mamTask_)
+                return; // A range request started while the local page was loading.
+            const bool localOnly = occupantPrivate || account()->isServerless();
+            if (localOnly)
+                mamExhausted_ = true; // Occupant private messages keep their existing local-only history path.
+            if (atEndBeforeLocal && mamBeforeId_.isEmpty())
+                nativeTimeline_->scrollToEnd();
+            if (localOnly || (mamExhausted_ && !(mamRefreshTail_ && account()->isConnected()))) {
+                nativeTimeline_->setHistoryLoading(false);
+                nativeTimeline_->setHistoryExhausted(localExhausted_);
+                sendDisplayedMarkerForVisibleMessage();
+                return;
+            }
+            const bool    refreshTail     = mamRefreshTail_ && account()->isConnected();
+            const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
+            if (account()->isConnected())
+                mamRefreshTail_ = false;
+            if (requestedBefore.isEmpty())
+                mamSeenBeforeIds_.clear();
+            auto *task                = new HistorySync(account(), jid().bare(), false, requestedBefore, this,
+                                                        nativeTimeline_->suggestedOlderHistoryPageSize());
+            mamTask_                  = task;
+            const QString peer        = jid().bare();
+            const bool    initialPage = requestedBefore.isEmpty();
+            connect(task, &HistorySync::finished, this, [this, task, peer, initialPage, requestedBefore] {
+                if (mamTask_ != task)
+                    return;
+                mamTask_.clear();
+                if (jid().bare() != peer || !task->success()) {
+                    // If the authenticated stream drops before the completion signal,
+                    // resume the same opaque cursor on the next successful login.
+                    if (!account()->isConnected() && jid().bare() == peer)
+                        mamResumeAfterConnect_ = true;
+                    nativeTimeline_->stopHistoryFill();
+                    if (!task->success())
+                        qWarning().noquote() << "[mam-history] Query failed:" << task->statusString();
+                    nativeTimeline_->setHistoryLoading(false);
+                    task->deleteLater();
+                    if (jid().bare() == peer) {
+                        // Do not retry a failed page in a tight viewport-fill loop.
+                        // Offline pagination resumes after login; local rows remain
+                        // independently pageable even without a usable server cursor.
+                        mamExhausted_ = true;
+                        nativeTimeline_->setHistoryExhausted(localExhausted_);
+                        if (initialPage && nativeTimeline_->messageCount() == 0 && !localHistoryPopulated())
+                            preloadHistory(true);
+                        sendDisplayedMarkerForVisibleMessage();
+                    }
+                    return;
+                }
 
-        const auto    loaded   = nativeArchivePage(account(), task, XMPP::Jid(peer), false, account()->nick(),
-                                                   [this](bool local) { return whoNick(local); });
-        const auto   &page     = loaded.messages;
-        const QString oldestId = loaded.uids.value(0);
-        // The non-flipped MAM page is in chronological order, so its first
-        // archive UID is the RSM 'before' cursor for the next older page.
-        // Honor <fin complete='true'/> even when the last page has messages.
-        const bool repeated
-            = !oldestId.isEmpty() && (oldestId == requestedBefore || mamSeenBeforeIds_.contains(oldestId));
-        mamExhausted_ = task->isComplete() || oldestId.isEmpty() || repeated;
-        if (repeated)
-            nativeTimeline_->stopHistoryFill();
-        if (!oldestId.isEmpty()) {
-            mamSeenBeforeIds_.insert(oldestId);
-            mamBeforeId_ = oldestId;
-        }
-        if (initialPage && !account()->isConnected()) {
-            mamRefreshTail_        = true;
-            mamResumeAfterConnect_ = true;
-        }
-        const bool wasAtEnd = nativeTimeline_->isAtEnd();
-        nativeTimeline_->prependArchivePage(page);
-        nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
-        nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
-                                            {}, true, task->isStable());
-        if (initialPage && page.isEmpty() && mamExhausted_ && nativeTimeline_->messageCount() == 0)
-            preloadHistory(true); // Empty/textless server archive: show saved local history.
-        if (initialPage && wasAtEnd)
-            nativeTimeline_->scrollToEnd();
-        nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
-        nativeTimeline_->setHistoryLoading(false);
-        nativeTimeline_->maybeContinueInitialHistoryFill();
-        task->deleteLater();
-        sendDisplayedMarkerForVisibleMessage();
-    });
-    task->go();
+                const auto    loaded   = nativeArchivePage(account(), task, XMPP::Jid(peer), false, account()->nick(),
+                                                           [this](bool local) { return whoNick(local); });
+                const auto   &page     = loaded.messages;
+                const QString oldestId = loaded.uids.value(0);
+                // The non-flipped MAM page is in chronological order, so its first
+                // archive UID is the RSM 'before' cursor for the next older page.
+                // Honor <fin complete='true'/> even when the last page has messages.
+                const bool repeated
+                    = !oldestId.isEmpty() && (oldestId == requestedBefore || mamSeenBeforeIds_.contains(oldestId));
+                mamExhausted_ = task->isComplete() || oldestId.isEmpty() || repeated;
+                if (repeated)
+                    nativeTimeline_->stopHistoryFill();
+                if (!oldestId.isEmpty()) {
+                    mamSeenBeforeIds_.insert(oldestId);
+                    mamBeforeId_ = oldestId;
+                }
+                if (initialPage && !account()->isConnected()) {
+                    mamRefreshTail_        = true;
+                    mamResumeAfterConnect_ = true;
+                }
+                const bool wasAtEnd = nativeTimeline_->isAtEnd();
+                nativeTimeline_->prependArchivePage(page);
+                nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
+                nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
+                                                    {}, true, task->isStable());
+                if (initialPage && page.isEmpty() && mamExhausted_ && nativeTimeline_->messageCount() == 0)
+                    preloadHistory(true); // Empty/textless server archive: show saved local history.
+                if (initialPage && wasAtEnd)
+                    nativeTimeline_->scrollToEnd();
+                nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+                nativeTimeline_->setHistoryLoading(false);
+                nativeTimeline_->maybeContinueInitialHistoryFill();
+                task->deleteLater();
+                sendDisplayedMarkerForVisibleMessage();
+            });
+            task->go();
+        },
+        [this](bool local) { return whoNick(local); },
+        [this, generation, localPeer, occupantPrivate] {
+            return generation == localHistoryGeneration_
+                && localPeer == (occupantPrivate ? jid().full() : jid().bare());
+        });
 }
 
 void PsiChatDlg::loadMamRange(const MamHistorySource::Request &request)
@@ -1028,10 +1052,27 @@ void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
     if (mamBeforeId_.isEmpty() && !mamExhausted_)
         return;
     if (!displayedCursorRestored_) {
-        const auto peer   = roomOccupantChat_ ? jid() : XMPP::Jid(jid().bare());
-        const auto cursor = account()->edb()->sentDisplayedCursor(account()->id(), peer);
-        nativeTimeline_->restoreDisplayedIncoming(cursor.messageId, cursor.time, cursor.eventId);
-        displayedCursorRestored_ = true;
+        if (!displayedCursorPending_) {
+            displayedCursorPending_ = true;
+            const auto peer = roomOccupantChat_ ? jid() : XMPP::Jid(jid().bare());
+            const quint64 generation = localHistoryGeneration_;
+            account()->edb()->requestSentDisplayedCursor(
+                account()->id(), peer, this,
+                [this, peer, generation](HistoryArchive::DisplayedCursor cursor, bool success) {
+                    displayedCursorPending_ = false;
+                    if (generation != localHistoryGeneration_
+                        || peer.full() != (roomOccupantChat_ ? jid().full() : jid().bare()))
+                        return; // The conversation changed while SQLite was reading.
+                    if (!success) {
+                        qWarning() << "[history-db] Could not restore displayed cursor";
+                        return; // Do not spin in an immediate retry loop.
+                    }
+                    nativeTimeline_->restoreDisplayedIncoming(cursor.messageId, cursor.time, cursor.eventId);
+                    displayedCursorRestored_ = true;
+                    QTimer::singleShot(0, this, &PsiChatDlg::sendDisplayedMarkerForVisibleMessage);
+                });
+        }
+        return; // Never send a marker before the saved read cursor is restored.
     }
 
     // Read markers reveal that we're present. For ordinary 1:1 conversations

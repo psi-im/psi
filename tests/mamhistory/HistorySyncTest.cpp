@@ -6,6 +6,7 @@
 #include <QSignalSpy>
 #include <QSqlQuery>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <QtCrypto>
 #include <QtTest>
 #include <iris/xmpp.h>
@@ -536,6 +537,66 @@ private slots:
         QTRY_COMPARE(done.size(), 1);
         QVERIFY(sync.success());
         QCOMPARE(sync.archive().size(), 1);
+    }
+    void offlineCacheWithQueuedReadAndWrite()
+    {
+        Fixture f;
+        f.seed();
+        f.online = false;
+        f.client.close();
+        auto context = f.context();
+        int reads = 0, writes = 0;
+        context.readAsync = [&f, &reads](const HistoryArchive::Key &key, HistorySync::Query query,
+                                          QObject *receiver,
+                                          std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> done) {
+            ++reads;
+            QTimer::singleShot(0, receiver, [&f, key, query, done] {
+                done(HistoryArchive::readPage(f.db, key, query.cursor, query.limit),
+                     HistoryArchive::readSnapshot(f.db, key), true);
+            });
+        };
+        context.mergeAsync = [&f, &writes](const HistoryArchive::Key &key, const QString &before, int limit,
+                                            HistoryArchive::Page page, QObject *receiver,
+                                            std::function<void(HistoryArchive::Page, bool)> done) {
+            ++writes;
+            QTimer::singleShot(0, receiver, [&f, key, before, limit, page, done]() mutable {
+                const bool ok = HistoryArchive::storePage(f.db, key, before, limit, page);
+                done(std::move(page), ok);
+            });
+        };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy done(&sync, &HistorySync::finished);
+        sync.go();
+        // Completion must wait for asynchronous cache read and atomic repair.
+        QCOMPARE(done.count(), 0);
+        QTRY_COMPARE(done.count(), 1);
+        QVERIFY(sync.success());
+        QVERIFY(sync.fromCache());
+        QCOMPARE(reads, 1);
+        QCOMPARE(writes, 1);
+        QVERIFY(f.wire.sent.isEmpty());
+    }
+
+    void failedQueuedArchiveStoreNeverCertifiesPage()
+    {
+        Fixture f;
+        auto context = f.context();
+        int writes = 0;
+        context.mergeAsync = [&writes](const HistoryArchive::Key &, const QString &, int,
+                                        HistoryArchive::Page page, QObject *receiver,
+                                        std::function<void(HistoryArchive::Page, bool)> done) {
+            ++writes;
+            QTimer::singleShot(0, receiver, [page, done] { done(page, false); });
+        };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_VERIFY(!f.wire.sent.isEmpty());
+        QVERIFY(f.reply(f.wire.sent.last(), { f.result("new-uid", 1) }));
+        QTRY_COMPARE(done.count(), 1);
+        QVERIFY(!sync.success());
+        QCOMPARE(writes, 1);
+        QVERIFY(HistoryArchive::readPage(f.db, f.key, {}, 40).entries.isEmpty());
     }
     void offlineCacheNeedsNoQuery()
     {

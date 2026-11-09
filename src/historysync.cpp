@@ -87,6 +87,11 @@ qint64 HistorySync::eventId(const QString &uid) const
     return 0;
 }
 
+HistorySync::ResolvedMessage HistorySync::resolvedMessage(const QString &uid) const
+{
+    return resolved_.value(eventId(uid));
+}
+
 bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive::Page &page)
 {
     QSet<QString> ids;
@@ -155,6 +160,9 @@ XMPP::Message HistorySync::message(const QString &uid) const
 {
     if (decoded_.contains(uid))
         return decoded_.value(uid);
+    const auto resolved = resolvedMessage(uid);
+    if (resolved.found)
+        return resolved.message;
     for (const auto &entry : page_.entries) {
         if (entry.uid != uid)
             continue;
@@ -164,8 +172,11 @@ XMPP::Message HistorySync::message(const QString &uid) const
         const auto forwarded = element.firstChildElement("forwarded");
         // A cached plaintext revision can be replayed without decrypting the
         // same OMEMO ciphertext a second time (ratchets may reject duplicates).
-        const auto saved = context_.lookup(
-            key_, uid, QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate));
+        const auto saved = context_.lookupAsync
+            ? cachedLookups_.value(uid)
+            : context_.lookup(key_, uid,
+                              QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"),
+                                                    Qt::ISODate));
         const auto &plain = saved.message;
         if (!plain.isNull()
             && (!plain.body().isEmpty() || saved.protocolOnly || plain.messageReceipt() == XMPP::ReceiptReceived
@@ -192,17 +203,72 @@ void HistorySync::go()
     QTimer::singleShot(0, this, [this] {
         if (cancelled_)
             return;
-        const bool logging = context_.logging();
-        if (logging) {
+        if (context_.logging() && context_.readAsync) {
+            Query query = query_;
+            query.limit = pageSize_;
+            context_.readAsync(
+                key_, query, this,
+                [this](HistoryArchive::Page saved, HistoryArchive::Snapshot snapshot, bool ok) {
+                    if (cancelled_)
+                        return;
+                    if (!ok) {
+                        // A cache read error must not certify a page or its
+                        // cursor. Fetch from the server if still connected.
+                        if (context_.connected())
+                            requestPage();
+                        else
+                            finishError(tr("Could not read cached archive page"));
+                        return;
+                    }
+                    snapshot_ = snapshot;
+                    processSavedPage(std::move(saved));
+                });
+            return;
+        }
+
+        HistoryArchive::Page saved;
+        if (context_.logging()) {
             if (context_.readSnapshot)
                 snapshot_ = context_.readSnapshot(key_);
-            HistoryArchive::Page saved;
             if (query_.mode == Query::Before)
                 saved = context_.read(key_, before_, pageSize_);
             else if (query_.mode == Query::Index && context_.readIndex && query_.snapshotCount >= 0)
                 saved = context_.readIndex(key_, query_.index, pageSize_, query_.snapshotCount);
             else if (query_.mode == Query::After && context_.readAfter)
                 saved = context_.readAfter(key_, after_, pageSize_, query_.snapshotCount);
+        }
+        processSavedPage(std::move(saved));
+    });
+}
+
+void HistorySync::processSavedPage(HistoryArchive::Page saved)
+{
+    if (cancelled_)
+        return;
+    if (context_.logging()) {
+        if (context_.lookupAsync && saved.found && saved.stable && !saved.entries.isEmpty()
+            && !savedLookupsStarted_) {
+            savedLookupsStarted_ = true;
+            pendingSavedPage_ = std::move(saved);
+            savedLookupsRemaining_ = pendingSavedPage_.entries.size();
+            // Every read runs on the same SQL worker. Collect all decoded
+            // projections before validating/replaying the cached MAM page.
+            for (const auto &entry : pendingSavedPage_.entries) {
+                const auto element = readResult(entry.xml);
+                const QDateTime stamp = QDateTime::fromString(
+                    element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
+                    Qt::ISODate);
+                context_.lookupAsync(
+                    key_, entry.uid, stamp, this, [this, uid = entry.uid](CachedMessage cached) {
+                        if (cancelled_)
+                            return;
+                        cachedLookups_.insert(uid, std::move(cached));
+                        if (--savedLookupsRemaining_ == 0)
+                            processSavedPage(std::move(pendingSavedPage_));
+                    });
+            }
+            return;
+        }
             qCDebug(PsiMam::historyLog) << "cache account=" << key_.account << "peer=" << key_.peer
                                         << "mode=" << query_.mode << "index=" << query_.index << "before=" << before_
                                         << "after=" << after_ << "limit=" << pageSize_ << "hit=" << saved.found
@@ -216,11 +282,13 @@ void HistorySync::go()
                     break;
                 }
                 xml.append(element);
-                const auto row = context_.lookup(
-                    key_, entry.uid,
-                    QDateTime::fromString(
-                        element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
-                        Qt::ISODate));
+                const auto row = context_.lookupAsync
+                    ? cachedLookups_.value(entry.uid)
+                    : context_.lookup(
+                          key_, entry.uid,
+                          QDateTime::fromString(
+                              element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
+                              Qt::ISODate));
                 if (!row.message.isNull()) {
                     decoded_.insert(entry.uid, row.message);
                     if (!row.message.body().isNull())
@@ -260,13 +328,12 @@ void HistorySync::go()
                     return;
                 }
             }
-        }
-        if (!context_.connected()) {
-            finishError(tr("Account is offline"));
-            return;
-        }
-        requestPage();
-    });
+    }
+    if (!context_.connected()) {
+        finishError(tr("Account is offline"));
+        return;
+    }
+    requestPage();
 }
 
 void HistorySync::finishError(const QString &error)
@@ -358,7 +425,17 @@ void HistorySync::decodeNext()
             && encrypted.namespaceURI() != QLatin1String("eu.siacs.conversations.axolotl"))
             continue;
         const auto stamp = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
-        const auto saved = context_.lookup(key_, uid, stamp);
+        if (context_.lookupAsync && !cachedLookups_.contains(uid)) {
+            context_.lookupAsync(key_, uid, stamp, this, [this, uid](CachedMessage cached) {
+                if (cancelled_)
+                    return;
+                cachedLookups_.insert(uid, std::move(cached));
+                --decodeIndex_;
+                QTimer::singleShot(0, this, &HistorySync::decodeNext);
+            });
+            return;
+        }
+        const auto saved = context_.lookupAsync ? cachedLookups_.value(uid) : context_.lookup(key_, uid, stamp);
         if (!saved.message.isNull()) {
             decoded_.insert(uid, saved.message);
             if (!saved.message.body().isNull())
@@ -372,13 +449,27 @@ void HistorySync::decodeNext()
         // recorded outgoing plaintext. The account JID is bare, and a restart
         // can bind a different resource. Storage checks the recorded sender;
         // peers' unverified client IDs must never use this fallback.
-        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, false) && context_.ownPlaintext
+        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, false) && (context_.ownPlaintext || context_.ownPlaintextAsync)
             && PsiMam::belongsToConversation(context_.owner.bare(), key_.peer,
                                              XMPP::Jid(stanza.attribute("from")).bare(),
                                              XMPP::Jid(stanza.attribute("to")).bare())) {
             const auto time
                 = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
-            const auto own = context_.ownPlaintext(key_, stanza.attribute("id"), stanza.attribute("from"), time);
+            if (context_.ownPlaintextAsync && !ownLookups_.contains(uid)) {
+                context_.ownPlaintextAsync(
+                    key_, stanza.attribute("id"), stanza.attribute("from"), time, this,
+                    [this, uid](CachedMessage cached) {
+                        if (cancelled_)
+                            return;
+                        ownLookups_.insert(uid, std::move(cached));
+                        --decodeIndex_;
+                        QTimer::singleShot(0, this, &HistorySync::decodeNext);
+                    });
+                return;
+            }
+            const auto own = context_.ownPlaintextAsync
+                ? ownLookups_.value(uid)
+                : context_.ownPlaintext(key_, stanza.attribute("id"), stanza.attribute("from"), time);
             if (!own.message.isNull()) {
                 decoded_.insert(uid, own.message);
                 if (!own.message.body().isNull())
@@ -463,21 +554,31 @@ void HistorySync::acceptPage()
         received.previous      = tail_.previous;
         for (int i = 0; i < received.entries.size(); ++i)
             received.entries[i].eventId = tail_.entries.at(i).eventId;
-        // Repair old cache projections through the same transaction as a
-        // network page; no message/receipt notifications are emitted.
-        if (context_.logging() && !context_.merge(key_, before_, pageSize_, received)) {
-            finishError(tr("Could not repair cached archive page"));
+        // Repair the saved projection through the same atomic worker
+        // transaction as a network MAM page, without emitting notifications.
+        auto repaired = [this](HistoryArchive::Page page, bool ok) {
+            if (cancelled_)
+                return;
+            if (!ok) {
+                finishError(tr("Could not repair cached archive page"));
+                return;
+            }
+            if (replaySaved_) {
+                page_ = std::move(page);
+                cached_ = true;
+                finishResolvedPage();
+            } else {
+                tail_ = std::move(page);
+                after_ = tail_.entries.last().uid;
+                requestPage();
+            }
+        };
+        if (context_.logging() && context_.mergeAsync) {
+            context_.mergeAsync(key_, before_, pageSize_, std::move(received), this, std::move(repaired));
             return;
         }
-        if (replaySaved_) {
-            page_    = received;
-            success_ = cached_ = true;
-            emit finished();
-        } else {
-            tail_  = received;
-            after_ = received.entries.last().uid;
-            requestPage();
-        }
+        const bool ok = !context_.logging() || context_.merge(key_, before_, pageSize_, received);
+        repaired(std::move(received), ok);
         return;
     }
     const bool latest = (query_.mode == Query::Before && before_.isEmpty() && after_.isEmpty())
@@ -531,13 +632,33 @@ void HistorySync::acceptPage()
             page_.complete = false; // Forward fin does not certify the archive's beginning.
         }
     }
-    if (context_.logging()) {
-        if (!context_.merge(key_, before_, pageSize_, page_)) {
-            // A failed write must never advance a persistent watermark.
-            finishError(tr("Could not persist archive page"));
-            return;
-        }
+    if (context_.logging() && context_.mergeAsync) {
+        context_.mergeAsync(key_, before_, pageSize_, page_, this,
+                            [this](HistoryArchive::Page page, bool ok) {
+                                if (cancelled_)
+                                    return;
+                                if (!ok) {
+                                    // Never advance the persistent cursor on a failed write.
+                                    finishError(tr("Could not persist archive page"));
+                                    return;
+                                }
+                                page_ = std::move(page); // Worker supplies permanent event IDs.
+                                finishAcceptedPage();
+                            });
+        return;
     }
+    if (context_.logging() && !context_.merge(key_, before_, pageSize_, page_)) {
+        finishError(tr("Could not persist archive page"));
+        return;
+    }
+    finishAcceptedPage();
+}
+
+void HistorySync::finishAcceptedPage()
+{
+    if (cancelled_)
+        return;
+    const bool forward = !after_.isEmpty();
     if (query_.mode == Query::Before && forward && !networkComplete_ && networkStable_) {
         // A large offline gap is not a request to scan the entire archive.
         // The bounded delta is now persisted with real adjacency. Jump once
@@ -548,6 +669,39 @@ void HistorySync::acceptPage()
         QTimer::singleShot(0, this, &HistorySync::requestPage);
         return;
     }
-    success_ = true;
-    emit finished();
+    finishResolvedPage();
+}
+
+void HistorySync::finishResolvedPage()
+{
+    if (cancelled_)
+        return;
+    if (!context_.resolveAsync) {
+        success_ = true;
+        emit finished();
+        return;
+    }
+    QList<qint64> ids;
+    QSet<qint64> known;
+    for (const auto &entry : page_.entries) {
+        if (entry.eventId > 0 && !known.contains(entry.eventId)) {
+            known.insert(entry.eventId);
+            ids.append(entry.eventId);
+        }
+    }
+    if (ids.isEmpty()) {
+        success_ = true;
+        emit finished();
+        return;
+    }
+    context_.resolveAsync(ids, this, [this](QHash<qint64, ResolvedMessage> resolved, bool ok) {
+        if (cancelled_)
+            return;
+        if (ok)
+            resolved_ = std::move(resolved);
+        // The page itself remains usable if revision-resolution fails.
+        // Never claim that its persisted cursor was rolled back.
+        success_ = true;
+        emit finished();
+    });
 }

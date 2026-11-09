@@ -1003,6 +1003,37 @@ private slots:
         QVERIFY(migrate(db));
         QCOMPARE(scalar("SELECT COUNT(*) FROM events").toInt(),2);
     }
+    void idlessDeliveriesWithIdenticalBodiesAndTimestampsRemainDistinct()
+    {
+        // A MAM server need not provide client message@id, origin-id or
+        // stanza-id. The archive UID identifies its stored event, not the
+        // message payload. Two legitimate identical deliveries must survive.
+        QVERIFY(migrate(db));
+        Page deliveries;
+        deliveries.stable = deliveries.complete = true;
+        auto first = entry(QStringLiteral("archive-one"));
+        first.messageId.clear();
+        first.extra = QStringLiteral("{}"); // No legacy client ID hiding in the persisted envelope.
+        auto second = entry(QStringLiteral("archive-two"));
+        second.messageId.clear();
+        second.extra = QStringLiteral("{}");
+        second.timestamp = first.timestamp;
+        second.body = first.body;
+        deliveries.entries = { first, second };
+        QVERIFY(storePage(db, key, QString(), 2, deliveries));
+        QCOMPARE(scalar(QStringLiteral("SELECT COUNT(*) FROM events")).toInt(), 2);
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 10).size(), 2);
+        const auto firstEventId = deliveries.entries.at(0).eventId;
+        const auto secondEventId = deliveries.entries.at(1).eventId;
+        QVERIFY(firstEventId > 0);
+        QVERIFY(secondEventId > 0);
+        QVERIFY(firstEventId != secondEventId);
+        // Re-reading exactly the same archive UIDs must not insert again.
+        QVERIFY(storePage(db, key, QString(), 2, deliveries));
+        QCOMPARE(scalar(QStringLiteral("SELECT COUNT(*) FROM events")).toInt(), 2);
+        QCOMPARE(deliveries.entries.at(0).eventId, firstEventId);
+        QCOMPARE(deliveries.entries.at(1).eventId, secondEventId);
+    }
     void privacyOmissionDoesNotCertifyPage()
     {
         QVERIFY(migrate(db));

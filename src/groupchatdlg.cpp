@@ -1782,6 +1782,8 @@ void GCMainDlg::doClear()
         nativeTimeline_->setHistoryLoading(false);
         nativeTimeline_->setHistoryExhausted(true);
     }
+    ++localHistoryGeneration_; // Discard any in-flight local SQL page after clearing the log.
+    localHistoryLoading_ = false;
     mamBeforeId_.clear();
     localBeforeId_ = 0;
     localExhausted_ = true;
@@ -2541,7 +2543,7 @@ void GCMainDlg::dispatchMessage(const MessageView &mv)
 
 void GCMainDlg::loadOlderMamMessages()
 {
-    if (!nativeTimeline_ || mamTask_)
+    if (!nativeTimeline_ || mamTask_ || localHistoryLoading_)
         return;
     qCDebug(PsiMam::historyLog) << "room-load account=" << account()->id() << "peer=" << jid().bare()
                                 << "ready=" << mamArchiveReady_ << "mamExhausted=" << mamExhausted_
@@ -2549,78 +2551,100 @@ void GCMainDlg::loadOlderMamMessages()
                                 << "before=" << mamBeforeId_;
     nativeTimeline_->setHistoryLoading(true);
     const bool initialAtEnd = mamBeforeId_.isEmpty() && nativeTimeline_->isAtEnd();
-    prependLocalChatHistory(nativeTimeline_, account(), jid().bare(), true, nick(), localBeforeId_, localExhausted_);
-    if (initialAtEnd)
-        nativeTimeline_->scrollToEnd();
-    if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
-        nativeTimeline_->setHistoryLoading(false);
-        nativeTimeline_->setHistoryExhausted(localExhausted_);
-        if (mamExhausted_ && !localExhausted_)
-            nativeTimeline_->maybeContinueInitialHistoryFill();
-        return;
-    }
-    const auto room = jid().withResource({});
-    const bool refreshTail = mamRefreshTail_;
-    const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
-    mamRefreshTail_ = false;
-    if (requestedBefore.isEmpty())
-        mamSeenBeforeIds_.clear();
-    const int stanzaLimit = nativeTimeline_->suggestedOlderHistoryPageSize();
-    qCDebug(PsiMam::historyLog).noquote()
-        << " room request" << room.bare() << "before=" << requestedBefore << "refreshTail=" << refreshTail
-        << "visibleRows=" << nativeTimeline_->messageCount() << "stanzas=" << stanzaLimit
-        << "localExhausted=" << localExhausted_;
-    auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this, stanzaLimit);
-    mamTask_ = task;
-    connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
-        if (mamTask_ != task)
-            return;
-        mamTask_.clear();
-        nativeTimeline_->setHistoryLoading(false);
-        if (!task->success() || !room.compare(jid(), false)) {
-            qCWarning(PsiMam::historyLog) << "room-query-failed account=" << account()->id() << "peer=" << room.bare()
-                                          << "before=" << requestedBefore << "error=" << task->statusString();
-            nativeTimeline_->stopHistoryFill();
-            // A missing/forbidden archive leaves the ordinary live room history intact.
-            // A reconnect retries from the same cursor after joining the room again.
-            // Failure is not proof of the archive boundary. Pause automatic
-            // filling, but let a later user gesture/rejoin retry this cursor.
-            nativeTimeline_->setHistoryExhausted(false);
-            task->deleteLater();
-            return;
-        }
-        const auto    loaded   = nativeArchivePage(account(), task, room, true, nick());
-        const auto   &page     = loaded.messages;
-        const QString oldest   = loaded.uids.value(0);
-        const bool initial = requestedBefore.isEmpty();
-        const bool atEnd = nativeTimeline_->isAtEnd();
-        const bool repeated = !oldest.isEmpty() && (oldest == requestedBefore || mamSeenBeforeIds_.contains(oldest));
-        mamExhausted_       = task->isComplete() || oldest.isEmpty() || repeated;
-        if (repeated) {
-            qCWarning(PsiMam::historyLog) << "room-cursor-cycle peer=" << room.bare() << "cursor=" << oldest;
-            nativeTimeline_->stopHistoryFill();
-        }
-        if (!oldest.isEmpty()) {
-            mamSeenBeforeIds_.insert(oldest);
-            mamBeforeId_ = oldest;
-        }
-        const int added = nativeTimeline_->prependArchivePage(page);
-        nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
-        nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
-                                            {}, true, task->isStable());
-        nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
-        if (initial && atEnd)
-            nativeTimeline_->scrollToEnd();
-        qCDebug(PsiMam::historyLog).noquote()
-            << " room result" << room.bare() << "before=" << requestedBefore << "events=" << task->archive().size()
-            << "visibleCandidates=" << loaded.visibleMessages << "protocolEvents=" << loaded.protocolEvents
-            << "addedRows=" << added << "totalRows=" << nativeTimeline_->messageCount()
-            << "fromCache=" << task->fromCache() << "mamExhausted=" << mamExhausted_
-            << "localExhausted=" << localExhausted_;
-        nativeTimeline_->maybeContinueInitialHistoryFill();
-        task->deleteLater();
-    });
-    task->go();
+    localHistoryLoading_ = true;
+    const quint64 generation = localHistoryGeneration_;
+    const QString localPeer = jid().bare();
+    prependLocalChatHistoryAsync(
+        nativeTimeline_, account(), localPeer, true, nick(), localBeforeId_, localExhausted_,
+        [this, generation, localPeer, initialAtEnd](qint64 before, bool exhausted, bool success) {
+            if (generation != localHistoryGeneration_)
+                return;
+            localHistoryLoading_ = false;
+            if (!success) {
+                nativeTimeline_->setHistoryLoading(false);
+                nativeTimeline_->stopHistoryFill();
+                return;
+            }
+            localBeforeId_ = before;
+            localExhausted_ = exhausted;
+            if (mamTask_)
+                return;
+            if (initialAtEnd)
+                nativeTimeline_->scrollToEnd();
+            if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
+                nativeTimeline_->setHistoryLoading(false);
+                nativeTimeline_->setHistoryExhausted(localExhausted_);
+                if (mamExhausted_ && !localExhausted_)
+                    nativeTimeline_->maybeContinueInitialHistoryFill();
+                return;
+            }
+            const auto room = jid().withResource({});
+            const bool refreshTail = mamRefreshTail_;
+            const QString requestedBefore = refreshTail ? QString() : mamBeforeId_;
+            mamRefreshTail_ = false;
+            if (requestedBefore.isEmpty())
+                mamSeenBeforeIds_.clear();
+            const int stanzaLimit = nativeTimeline_->suggestedOlderHistoryPageSize();
+            qCDebug(PsiMam::historyLog).noquote()
+                << " room request" << room.bare() << "before=" << requestedBefore << "refreshTail=" << refreshTail
+                << "visibleRows=" << nativeTimeline_->messageCount() << "stanzas=" << stanzaLimit
+                << "localExhausted=" << localExhausted_;
+            auto *task = new HistorySync(account(), room.bare(), true, requestedBefore, this, stanzaLimit);
+            mamTask_ = task;
+            connect(task, &HistorySync::finished, this, [this, task, room, requestedBefore] {
+                if (mamTask_ != task)
+                    return;
+                mamTask_.clear();
+                nativeTimeline_->setHistoryLoading(false);
+                if (!task->success() || !room.compare(jid(), false)) {
+                    qCWarning(PsiMam::historyLog) << "room-query-failed account=" << account()->id() << "peer=" << room.bare()
+                                                  << "before=" << requestedBefore << "error=" << task->statusString();
+                    nativeTimeline_->stopHistoryFill();
+                    // A missing/forbidden archive leaves the ordinary live room history intact.
+                    // A reconnect retries from the same cursor after joining the room again.
+                    // Failure is not proof of the archive boundary. Pause automatic
+                    // filling, but let a later user gesture/rejoin retry this cursor.
+                    nativeTimeline_->setHistoryExhausted(false);
+                    task->deleteLater();
+                    return;
+                }
+                const auto    loaded   = nativeArchivePage(account(), task, room, true, nick());
+                const auto   &page     = loaded.messages;
+                const QString oldest   = loaded.uids.value(0);
+                const bool initial = requestedBefore.isEmpty();
+                const bool atEnd = nativeTimeline_->isAtEnd();
+                const bool repeated = !oldest.isEmpty() && (oldest == requestedBefore || mamSeenBeforeIds_.contains(oldest));
+                mamExhausted_       = task->isComplete() || oldest.isEmpty() || repeated;
+                if (repeated) {
+                    qCWarning(PsiMam::historyLog) << "room-cursor-cycle peer=" << room.bare() << "cursor=" << oldest;
+                    nativeTimeline_->stopHistoryFill();
+                }
+                if (!oldest.isEmpty()) {
+                    mamSeenBeforeIds_.insert(oldest);
+                    mamBeforeId_ = oldest;
+                }
+                const int added = nativeTimeline_->prependArchivePage(page);
+                nativeTimeline_->restoreArchiveSnapshot(task->archiveSnapshot().resultCount, task->archiveSnapshot().lastUid);
+                nativeTimeline_->observeArchivePage(loaded.uids, task->resultCount(), task->firstResultIndex(), requestedBefore,
+                                                    {}, true, task->isStable());
+                nativeTimeline_->setHistoryExhausted(mamExhausted_ && localExhausted_);
+                if (initial && atEnd)
+                    nativeTimeline_->scrollToEnd();
+                qCDebug(PsiMam::historyLog).noquote()
+                    << " room result" << room.bare() << "before=" << requestedBefore << "events=" << task->archive().size()
+                    << "visibleCandidates=" << loaded.visibleMessages << "protocolEvents=" << loaded.protocolEvents
+                    << "addedRows=" << added << "totalRows=" << nativeTimeline_->messageCount()
+                    << "fromCache=" << task->fromCache() << "mamExhausted=" << mamExhausted_
+                    << "localExhausted=" << localExhausted_;
+                nativeTimeline_->maybeContinueInitialHistoryFill();
+                task->deleteLater();
+            });
+            task->go();
+        },
+        {},
+        [this, generation, localPeer] {
+            return generation == localHistoryGeneration_ && jid().bare() == localPeer;
+        });
 }
 
 void GCMainDlg::loadMamRange(const MamHistorySource::Request &request)

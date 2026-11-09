@@ -18,6 +18,7 @@
  */
 
 #include "eventdb.h"
+#include <QPointer>
 
 #include "jidutil.h"
 #include "psievent.h"
@@ -167,6 +168,118 @@ EDB::~EDB()
     qDeleteAll(d->list);
     d->list.clear();
     delete d;
+}
+
+void EDB::requestSentDisplayedCursor(const QString &account, const XMPP::Jid &peer,
+                                     QObject *receiver,
+                                     std::function<void(HistoryArchive::DisplayedCursor, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, account, peer, finished] {
+        if (database)
+            finished(database->sentDisplayedCursor(account, peer), true);
+    });
+}
+
+void EDB::requestLocalHistoryPage(const QString &account, const XMPP::Jid &peer, qint64 before, int limit,
+                                  QObject *receiver, std::function<void(EDBResult, bool)> finished)
+{
+    if (!receiver)
+        return;
+    // Compatibility for EDB providers that do not implement the worker API.
+    // Qt schedules this on the receiver; the SQLite provider overrides it
+    // with a genuinely asynchronous disk read.
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, account, peer, before, limit, finished] {
+        if (database)
+            finished(database->localHistoryPage(account, peer, before, limit), true);
+    });
+}
+
+void EDB::requestArchivedEvent(
+    const HistoryArchive::Key &key, const QString &uid, const QDateTime &time, QObject *receiver,
+    std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, uid, time, finished] {
+        if (database)
+            finished(database->archivedEvent(key, uid, time), true);
+    });
+}
+
+void EDB::requestOwnPlaintext(
+    const HistoryArchive::Key &key, const QString &id, const QString &sender, const QDateTime &time,
+    QObject *receiver, std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, id, sender, time, finished] {
+        if (database)
+            finished(database->ownPlaintext(key, id, sender, time), true);
+    });
+}
+
+void EDB::requestResolvedHistoryEvents(
+    const QList<qint64> &ids, QObject *receiver,
+    std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, ids, finished] {
+        if (!database)
+            return;
+        QHash<qint64, EDBItemPtr> values;
+        for (auto id : ids) {
+            if (const auto item = database->resolvedHistoryEvent(id))
+                values.insert(id, item);
+        }
+        finished(std::move(values), true);
+    });
+}
+
+void EDB::requestArchivePage(
+    ArchiveReadMode mode, const HistoryArchive::Key &key, const QString &cursor, int index, int limit,
+    int snapshotCount, QObject *receiver,
+    std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished)
+{
+    if (!receiver)
+        return;
+    QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, mode, key, cursor, index, limit, snapshotCount, finished] {
+        if (!database)
+            return;
+        const auto snapshot = database->archiveSnapshot(key);
+        HistoryArchive::Page page;
+        if (mode == ArchiveReadMode::Before)
+            page = database->archivePage(key, cursor, limit);
+        else if (mode == ArchiveReadMode::After)
+            page = database->archivePageAfter(key, cursor, limit, snapshotCount);
+        else
+            page = database->archivePageAtIndex(key, index, limit, snapshotCount);
+        finished(page, snapshot, true);
+    });
+}
+
+void EDB::requestStoreArchivePage(
+    const HistoryArchive::Key &key, const QString &before, int limit, HistoryArchive::Page page,
+    QObject *receiver, std::function<void(HistoryArchive::Page, bool)> finished)
+{
+    if (!receiver)
+        return;
+    QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, before, limit, page, finished]() mutable {
+        if (!database)
+            return;
+        bool ok = page.checkpoint ? database->mergeArchivePage(key, before, limit, page)
+                                  : database->mergeArchiveIsland(key, limit, page);
+        finished(page, ok);
+    });
 }
 
 int EDB::genUniqueId() const { return d->reqid_base++; }

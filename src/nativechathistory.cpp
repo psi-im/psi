@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nativechathistory.h"
+#include <QPointer>
 #include "eventdb.h"
 #include "filesharingmanager.h"
 #include "historysync.h"
@@ -35,18 +36,12 @@ MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, con
     return view;
 }
 
-void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const QString &peer, bool room,
-                             const QString &ownNick, qint64 &before, bool &exhausted,
-                             const std::function<QString(bool)> &nickname)
+namespace {
+void applyLocalHistoryPage(MamChatWidget *timeline, PsiAccount *account, const QString &peer, bool room,
+                           const QString &ownNick, const EDBResult &entries,
+                           const std::function<QString(bool)> &nickname)
 {
-    if (exhausted)
-        return;
-    const auto entries
-        = account->edb()->localHistoryPage(account->id(), XMPP::Jid(peer), before, HistorySync::PageSize);
     QList<QPair<QString, MessageView>> page;
-    exhausted = entries.size() < HistorySync::PageSize;
-    if (!entries.isEmpty())
-        before = entries.first()->id().toLongLong(); // Ascending order, deterministic timestamp/id cursor.
     for (const auto &entry : entries) {
         const auto event = entry->event();
         if (event->type() != PsiEvent::Message)
@@ -88,6 +83,40 @@ void prependLocalChatHistory(MamChatWidget *timeline, PsiAccount *account, const
     }
     timeline->prependArchivePage(page);
 }
+}
+
+// A local page is read without executing SQLite on the GUI thread. Its
+// presentation projection still runs on the GUI, where account and plugin
+// objects are valid. Completion is tied to the lifetime of the timeline.
+void prependLocalChatHistoryAsync(MamChatWidget *timeline, PsiAccount *account, const QString &peer, bool room,
+                                  const QString &ownNick, qint64 before, bool exhausted,
+                                  const std::function<void(qint64, bool, bool)> &finished,
+                                  const std::function<QString(bool)> &nickname,
+                                  const std::function<bool()> &stillCurrent)
+{
+    if (!timeline || !account)
+        return;
+    if (exhausted) {
+        finished(before, true, true);
+        return;
+    }
+    QPointer<MamChatWidget> target(timeline);
+    QPointer<PsiAccount> owner(account);
+    account->edb()->requestLocalHistoryPage(
+        account->id(), XMPP::Jid(peer), before, HistorySync::PageSize, timeline,
+        [target, owner, peer, room, ownNick, before, finished, nickname, stillCurrent](EDBResult entries, bool success) {
+            if (!target || !owner || (stillCurrent && !stillCurrent()))
+                return;
+            if (!success) {
+                finished(before, false, false);
+                return; // A failed read is not an archive boundary.
+            }
+            const bool done = entries.size() < HistorySync::PageSize;
+            const qint64 nextBefore = entries.isEmpty() ? before : entries.first()->id().toLongLong();
+            applyLocalHistoryPage(target, owner, peer, room, ownNick, entries, nickname);
+            finished(nextBefore, done, true);
+        });
+}
 
 NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, const XMPP::Jid &peer, bool room,
                                     const QString &ownNick, const std::function<QString(bool)> &nickname)
@@ -113,17 +142,18 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
             reactionTarget = uid;
         if (retractionTarget.isEmpty())
             retractionTarget = uid;
-        if (auto resolved = account->edb()->resolvedHistoryEvent(task->eventId(uid))) {
-            if (resolved->event()->type() == PsiEvent::Message) {
-                archived     = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                historyId    = resolved->id().toLongLong(); // Same original position as the local EDB projection.
-                messageState = resolved->messageFlags();
-                revisionTime = resolved->revisionTime();
-                if (!resolved->reactionTarget().isEmpty())
-                    reactionTarget = resolved->reactionTarget();
-                if (!resolved->retractionTarget().isEmpty())
-                    retractionTarget = resolved->retractionTarget();
-            }
+        // HistorySync has already resolved the entire page in the SQL
+        // worker. Never synchronously query SQLite while painting 40 rows.
+        const auto resolved = task->resolvedMessage(uid);
+        if (resolved.found) {
+            archived = resolved.message;
+            historyId = resolved.historyId; // Root ID preserves the original position.
+            messageState = resolved.messageState;
+            revisionTime = resolved.revisionTime;
+            if (!resolved.reactionTarget.isEmpty())
+                reactionTarget = resolved.reactionTarget;
+            if (!resolved.retractionTarget.isEmpty())
+                retractionTarget = resolved.retractionTarget;
         }
         const bool local
             = room ? archived.from().resource() == ownNick : archived.from().compare(account->jid(), false);

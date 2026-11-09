@@ -7,6 +7,38 @@ plans below are retained as design context; the implementation section describes
 what is currently active. No automatic pruning or whole-archive background sweep
 is enabled.
 
+## History disk I/O and slow-HDD responsiveness (2026-11-09)
+
+The system backtrace captured during a connection stall shows the **GUI thread**
+inside `fdatasync → sqlite3_step → QSQLITE`. The newer MAM cache path added
+page transactions on the same legacy EDB GUI-thread connection, including
+`HistoryArchive::storePage()` (one durable commit per page), amplifying the
+old synchronous-history limitation. The backtrace lacks Psi symbols, so the
+specific SQL statement cannot be inferred from it.
+
+For `history.db` the connection now uses **SQLite WAL + synchronous=NORMAL**,
+matching the file metadata database policy. A dedicated `QThread` holds its
+own SQLite connection and periodically invokes `wal_checkpoint(PASSIVE)`.
+Only after that worker has opened successfully does Psi disable the foreground
+connection's automatic checkpoint. SQLite's `PASSIVE` checkpoint does not wait
+for busy readers/writers; subsequent passes continue from the WAL. The GUI
+must not take this checkpoint, because it can perform an expensive `fdatasync`
+on a mechanical disk.
+
+**Durability trade-off:** WAL/NORMAL preserves transactional consistency and
+survives an ordinary application crash, but on OS crash or sudden power loss
+some recently committed events may be lost before the next checkpoint.
+There is no such concession with WAL/FULL. MAM content can be fetched again,
+but local-only history cannot always be reconstructed. Until EDB is moved to
+a dedicated database thread, this is a responsiveness/durability compromise.
+
+**Still to do:** The legacy EDB read/write API and MAM page materialization
+remain synchronous on the GUI thread. Large SQLite queries and filesystem
+pressure can still pause rendering. The complete fix is a single database
+worker/queue with request IDs, cancellation/generation-aware delivery and
+stable ordering of appends, MAM merges and reads. A `QTimer::singleShot(0)`
+does **not** make EDB I/O asynchronous.
+
 ## Native scrollback design: MatterLeast implementation audit (2026-10-20)
 
 The native Psi `LongListWidget.cpp` is **identical** to MatterLeast's

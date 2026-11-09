@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historyarchive.h"
 
+#include <QElapsedTimer>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -796,9 +797,18 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
 
 bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page)
 {
+    QElapsedTimer elapsed;
+    elapsed.start();
     if (key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty() || limit <= 0
-        || page.entries.size() > limit || !db.transaction())
+        || page.entries.size() > limit)
         return false;
+    // A MAM page reads several identity tables before updating them. Acquire
+    // the writer lock first, avoiding a stale WAL read snapshot when another
+    // (legacy/admin) connection has an outstanding write.
+    QSqlQuery begin(db);
+    if (!begin.exec(QStringLiteral("BEGIN IMMEDIATE TRANSACTION")))
+        return false;
+    begin.finish();
     QSqlQuery  q(db);
     const auto fail = [&db, &page, &q] {
         if (q.lastError().isValid())
@@ -1088,6 +1098,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         return fail();
     if (!db.commit())
         return fail();
+    if (elapsed.elapsed() > 1000)
+        qWarning() << "[history-cache] GUI-thread archive transaction took" << elapsed.elapsed() << "ms"
+                   << "entries=" << page.entries.size();
     return true;
 }
 

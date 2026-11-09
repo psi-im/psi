@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 enable_testing()
 set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt major version")
-find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test Multimedia Network)
+find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Widgets Test Multimedia Network Sql)
 set(PSI_WIDGETS ${CMAKE_CURRENT_LIST_DIR}/../../src/widgets)
 if(NOT TARGET qsourcehighlite)
     include(${CMAKE_CURRENT_LIST_DIR}/../../3rdparty/qsourcehighlite.cmake)
@@ -159,3 +159,22 @@ target_include_directories(mam_tab_close_test BEFORE PRIVATE
 target_link_libraries(mam_tab_close_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_tab_close COMMAND mam_tab_close_test)
+
+# The history journal must never call fdatasync on the GUI thread during
+# ordinary commits. Exercise WAL/NORMAL and the separate checkpoint connection.
+add_executable(mam_history_sqlite_policy_test HistorySqlitePolicyTest.cpp
+    ../../src/historysqlitepolicy.h)
+target_include_directories(mam_history_sqlite_policy_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_history_sqlite_policy_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_history_sqlite_policy COMMAND mam_history_sqlite_policy_test)
+
+# Native EDBHandle get/find and legacy local pages must execute SQLite on a
+# worker thread and return only value records to GUI-side event reconstruction.
+add_executable(mam_history_sql_read_test HistorySqlReadWorkerTest.cpp
+    ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
+    ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
+target_include_directories(mam_history_sql_read_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_history_sql_read_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_history_sql_read COMMAND mam_history_sql_read_test)

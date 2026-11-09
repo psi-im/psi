@@ -21,89 +21,40 @@
 #define EDBSQLITE_H
 
 #include "eventdb.h"
+#include "historyeventfactory.h"
+#include "historysqlreadworker.h"
 #include "iris/xmpp_jid.h"
 #include "psievent.h"
 
 #include <QDateTime>
+
+class QThread;
 #include <QHash>
 #include <QObject>
+#include <QPointer>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QTimer>
 #include <QVariant>
 
-enum QueryType {
-    QueryContactsList,
-    QueryLatest,
-    QueryOldest,
-    QueryDateForward,
-    QueryDateBackward,
-    QueryFindText,
-    QueryRowCount,
-    QueryRowCountBefore,
-    QueryJidRowId,
-    QueryInsertEvent
-};
-
-struct QueryProperty {
-    QueryType type;
-    bool      allAccounts;
-    bool      allContacts;
-    QueryProperty(QueryType tp, bool allAcc, bool allCont)
-    {
-        type        = tp;
-        allAccounts = allAcc;
-        allContacts = allCont;
-    }
-    bool operator==(const QueryProperty &other) const
-    {
-        return (type == other.type && allAccounts == other.allAccounts && allContacts == other.allContacts);
-    }
-};
-uint qHash(const QueryProperty &struc);
-
 class EDBSqLite : public EDB {
     Q_OBJECT
 
-    class QueryStorage;
-    class PreparedQuery : private QSqlQuery {
-    public:
-        void bindValue(const QString &placeholder, const QVariant &val) { QSqlQuery::bindValue(placeholder, val); }
-        bool exec() { return QSqlQuery::exec(); }
-        bool first() { return QSqlQuery::first(); }
-        bool next() { return QSqlQuery::next(); }
-        QSqlRecord record() const { return QSqlQuery::record(); }
-        QVariant lastInsertId() const { return QSqlQuery::lastInsertId(); }
-        void       freeResult() { QSqlQuery::finish(); }
-
-    private:
-        friend class QueryStorage;
-        PreparedQuery(QSqlDatabase db);
-        ~PreparedQuery() { }
-    };
-    //--------
-    class QueryStorage {
-    public:
-        QueryStorage();
-        ~QueryStorage();
-        PreparedQuery *getPreparedQuery(QueryType type, bool allAccounts, bool allContacts);
-
-    private:
-        QString getQueryString(QueryType type, bool allAccounts, bool allContacts);
-
-    private:
-        QHash<QueryProperty, PreparedQuery *> queryList;
-    };
-    //--------
 
 public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
     bool init();
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
+    void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
+                              std::function<void(EDBItemPtr, bool)>) override;
+    void requestOwnPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                             QObject *, std::function<void(EDBItemPtr, bool)>) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
     HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) override;
+    void requestSentDisplayedCursor(const QString &, const XMPP::Jid &, QObject *,
+                                    std::function<void(HistoryArchive::DisplayedCursor, bool)>) override;
 
     int features() const override;
     int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len) override;
@@ -116,7 +67,11 @@ public:
     void               setStorageParam(const QString &key, const QString &val) override;
 
     EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
+    void                 requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *,
+                                                 std::function<void(EDBResult, bool)>) override;
     EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
+    void                  requestResolvedHistoryEvents(const QList<qint64> &, QObject *,
+                                                      std::function<void(QHash<qint64, EDBItemPtr>, bool)>) override;
     HistoryArchive::Snapshot archiveSnapshot(const HistoryArchive::Key &) override;
     bool                 saveArchiveSnapshot(const HistoryArchive::Key &, const HistoryArchive::Snapshot &) override;
     HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
@@ -124,49 +79,96 @@ public:
     HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) override;
     bool                 mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
+    void requestArchivePage(ArchiveReadMode, const HistoryArchive::Key &, const QString &, int, int, int, QObject *,
+                            std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)>) override;
+    void requestStoreArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page, QObject *,
+                                 std::function<void(HistoryArchive::Page, bool)>) override;
 
 private:
-    enum { NotActive, NotCommited, Commited };
     struct item_query_req {
         QString       accId;
         XMPP::Jid     j;
-        int           jidType;
-        int           type; // 0 = latest, 1 = oldest, 2 = random, 3 = write
-        int           start;
-        int           len;
-        int           dir;
-        int           id;
+        int           jidType = 0;
+        int           type = 0;
+        int           start = 0;
+        int           len = 0;
+        int           dir = 0;
+        int           id = 0;
+        qint64        localBefore = 0;
         QDateTime     date;
         QString       findStr;
-        PsiEvent::Ptr event;
+        PsiEvent::Ptr event; // GUI-side media registration on write completion.
+        HistoryEventFactory::Encoded encoded;
+        HistoryArchive::Key archiveKey;
+        HistoryArchive::Page archivePage;
+        QList<qint64> eventIds;
+        QString archiveCursor;
+        QString ownSender, ownMessageId;
+        QDateTime ownTime;
+        ArchiveReadMode archiveMode = ArchiveReadMode::Before;
+        int archiveIndex = -1, snapshotCount = -1;
 
-        enum Type { Type_get, Type_append, Type_find, Type_erase };
+        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
+                    Type_archiveRead, Type_archiveWrite, Type_resolved, Type_lookup, Type_plaintext };
     };
-    int                     status;
     unsigned int            transactionsCounter;
     QDateTime               lastCommitTime;
     unsigned int            maxUncommitedRecs;
     int                     maxUncommitedSecs;
     unsigned int            commitByTimeoutSecs;
     QTimer                 *commitTimer;
+    bool                    active_ = false;
     QList<item_query_req *> rlist;
-    QHash<QString, qint64>  jidsCache;
-    QueryStorage            queryes;
+    QThread                 *historyReadThread_ = nullptr;
+    HistorySqlReadWorker    *historyReader_ = nullptr;
+    QHash<int, item_query_req *> pendingReads_;
+    QHash<int, item_query_req *> pendingWrites_;
+    struct PendingLocalPage {
+        QPointer<QObject> receiver;
+        std::function<void(EDBResult, bool)> finished;
+    };
+    QHash<int, PendingLocalPage> pendingLocalPages_;
+    struct PendingDisplayedCursor {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::DisplayedCursor, bool)> finished;
+    };
+    QHash<int, PendingDisplayedCursor> pendingDisplayedCursors_;
+    struct PendingArchiveRead {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished;
+    };
+    struct PendingArchiveWrite {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::Page, bool)> finished;
+    };
+    QHash<int, PendingArchiveRead> pendingArchiveReads_;
+    QHash<int, PendingArchiveWrite> pendingArchiveWrites_;
+    struct PendingResolved {
+        QPointer<QObject> receiver;
+        std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished;
+    };
+    QHash<int, PendingResolved> pendingResolved_;
+    struct PendingMessageLookup {
+        QPointer<QObject> receiver;
+        std::function<void(EDBItemPtr, bool)> finished;
+        HistoryArchive::Key key;
+        QString uid;
+        bool own = false;
+    };
+    QHash<int, PendingMessageLookup> pendingMessageLookups_;
 
 private:
-    bool          appendEvent(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
-    PsiEvent::Ptr getEvent(const QSqlRecord &record);
-    qint64        ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type);
-    int           rowCount(const QString &accId, const XMPP::Jid &jid, const QDateTime before);
-    bool          eraseHistory(const QString &accId, const XMPP::Jid &);
-    bool          transaction(bool now);
-    bool          rollback();
-    void          startAutocommitTimer();
-    void          stopAutocommitTimer();
+    EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
+
+signals:
+    void historyReadRequested(HistoryReadRequest request);
+    void historyWriteRequested(HistoryWriteRequest request);
+    void historyReadStopRequested();
 
 private slots:
+    void onHistoryReadCompleted(HistoryReadResult result);
+    void onHistoryWriteCompleted(HistoryWriteResult result);
     void performRequests();
-    bool commit();
 };
 
 #endif // EDBSQLITE_H

@@ -2742,6 +2742,38 @@ private slots:
         QCOMPARE(chat.itemWidget(1)->findChild<ChatMessageText *>()->toPlainText(), QStringLiteral("танцует"));
     }
 
+    void legacyHistoryWithoutServerIdsPreservesLiveTailAndSeparateMessages()
+    {
+        // Old XMPP servers may have neither MAM nor XEP-0359 IDs. History
+        // loading must never replace the live tail or deduplicate equal text
+        // and timestamps without a proven local identity.
+        for (bool room : { false, true }) {
+            MamChatWidget chat;
+            chat.setGroupChat(room);
+            chat.setHistoryLoading(true);
+            auto live = message(QString(), QStringLiteral("same text"), 20);
+            chat.appendMessage(live);
+
+            auto older1 = message(QString(), QStringLiteral("same text"), 0);
+            older1.setHistoryId(101);
+            older1.setSpooled(true);
+            auto older2 = message(QString(), QStringLiteral("same text"), 0);
+            older2.setHistoryId(102);
+            older2.setSpooled(true);
+            QCOMPARE(chat.prependArchivePage({ { QString(), older1 }, { QString(), older2 } }), 2);
+            QCOMPARE(chat.messageCount(), 3);
+
+            // The same local records can arrive again from a delayed read.
+            QCOMPARE(chat.prependArchivePage({ { QString(), older1 }, { QString(), older2 } }), 0);
+            QCOMPARE(chat.messageCount(), 3);
+
+            // No server ID: a genuinely new delivery with the same payload
+            // cannot be mistaken for a known archived message.
+            chat.appendMessage(message(QString(), QStringLiteral("same text"), 20));
+            QCOMPARE(chat.messageCount(), 4);
+        }
+    }
+
     void distinctPayloadsWithReusedClientIdAreNotDiscarded()
     {
         MamChatWidget chat;

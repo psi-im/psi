@@ -26,7 +26,9 @@
 #include "psievent.h"
 
 #include <QDateTime>
+#include <functional>
 #include <QFile>
+#include <QHash>
 #include <QObject>
 #include <QSharedPointer>
 #include <QTimer>
@@ -121,14 +123,26 @@ public:
     virtual void               setStorageParam(const QString &key, const QString &val) = 0;
 
     virtual EDBResult localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) { return {}; }
+    // Completion always runs on receiver's thread. Dropping the receiver
+    // cancels delivery without cancelling an already executing database read.
+    virtual void requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *receiver,
+                                         std::function<void(EDBResult, bool)> finished);
     virtual HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) { return {}; }
+    virtual void requestSentDisplayedCursor(const QString &, const XMPP::Jid &, QObject *receiver,
+                                            std::function<void(HistoryArchive::DisplayedCursor, bool)> finished);
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
     virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }
+    virtual void requestResolvedHistoryEvents(const QList<qint64> &, QObject *receiver,
+                                               std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished);
     virtual EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {})
     {
         return {};
     }
+    virtual void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
+                                      std::function<void(EDBItemPtr, bool)> finished);
+    virtual void requestOwnPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                                     QObject *, std::function<void(EDBItemPtr, bool)> finished);
     virtual EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &)
     {
         return {};
@@ -145,6 +159,14 @@ public:
 
     virtual HistoryArchive::Page archivePageAtIndex(const HistoryArchive::Key &, int, int, int) { return {}; }
     virtual HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) { return {}; }
+    enum class ArchiveReadMode { Before, After, Index };
+    virtual void requestArchivePage(ArchiveReadMode mode, const HistoryArchive::Key &key, const QString &cursor,
+                                    int index, int limit, int snapshotCount, QObject *receiver,
+                                    std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished);
+    virtual void requestStoreArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
+                                         HistoryArchive::Page page, QObject *receiver,
+                                         std::function<void(HistoryArchive::Page, bool)> finished);
+
     // Older storage providers may omit island persistence while still displaying
     // them. Never reinterpret an island as their legacy tail checkpoint.
     virtual bool mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) { return true; }

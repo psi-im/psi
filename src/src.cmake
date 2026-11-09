@@ -69,6 +69,9 @@ list(APPEND FORMS
 list(APPEND HEADERS
     messagestate.h
     historyarchive.h
+    historysqlitepolicy.h
+    historysqlreadworker.h
+    historyeventfactory.h
     aboutdlg.h
     abstracttreeitem.h
     abstracttreemodel.h
@@ -399,6 +402,8 @@ list(APPEND SOURCES
     discodlg.cpp
     discoitems.cpp
     dummystream.cpp
+    historyeventfactory.cpp
+    historysqlreadworker.cpp
     historyarchive.cpp
     historymessagestate.cpp
     historysync.cpp
