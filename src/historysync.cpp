@@ -494,21 +494,31 @@ void HistorySync::acceptPage()
         received.previous      = tail_.previous;
         for (int i = 0; i < received.entries.size(); ++i)
             received.entries[i].eventId = tail_.entries.at(i).eventId;
-        // Repair old cache projections through the same transaction as a
-        // network page; no message/receipt notifications are emitted.
-        if (context_.logging() && !context_.merge(key_, before_, pageSize_, received)) {
-            finishError(tr("Could not repair cached archive page"));
+        // Repair the saved projection through the same atomic worker
+        // transaction as a network MAM page, without emitting notifications.
+        auto repaired = [this](HistoryArchive::Page page, bool ok) {
+            if (cancelled_)
+                return;
+            if (!ok) {
+                finishError(tr("Could not repair cached archive page"));
+                return;
+            }
+            if (replaySaved_) {
+                page_ = std::move(page);
+                success_ = cached_ = true;
+                emit finished();
+            } else {
+                tail_ = std::move(page);
+                after_ = tail_.entries.last().uid;
+                requestPage();
+            }
+        };
+        if (context_.logging() && context_.mergeAsync) {
+            context_.mergeAsync(key_, before_, pageSize_, std::move(received), this, std::move(repaired));
             return;
         }
-        if (replaySaved_) {
-            page_    = received;
-            success_ = cached_ = true;
-            emit finished();
-        } else {
-            tail_  = received;
-            after_ = received.entries.last().uid;
-            requestPage();
-        }
+        const bool ok = !context_.logging() || context_.merge(key_, before_, pageSize_, received);
+        repaired(std::move(received), ok);
         return;
     }
     const bool latest = (query_.mode == Query::Before && before_.isEmpty() && after_.isEmpty())
@@ -562,13 +572,33 @@ void HistorySync::acceptPage()
             page_.complete = false; // Forward fin does not certify the archive's beginning.
         }
     }
-    if (context_.logging()) {
-        if (!context_.merge(key_, before_, pageSize_, page_)) {
-            // A failed write must never advance a persistent watermark.
-            finishError(tr("Could not persist archive page"));
-            return;
-        }
+    if (context_.logging() && context_.mergeAsync) {
+        context_.mergeAsync(key_, before_, pageSize_, page_, this,
+                            [this](HistoryArchive::Page page, bool ok) {
+                                if (cancelled_)
+                                    return;
+                                if (!ok) {
+                                    // Never advance the persistent cursor on a failed write.
+                                    finishError(tr("Could not persist archive page"));
+                                    return;
+                                }
+                                page_ = std::move(page); // Worker supplies permanent event IDs.
+                                finishAcceptedPage();
+                            });
+        return;
     }
+    if (context_.logging() && !context_.merge(key_, before_, pageSize_, page_)) {
+        finishError(tr("Could not persist archive page"));
+        return;
+    }
+    finishAcceptedPage();
+}
+
+void HistorySync::finishAcceptedPage()
+{
+    if (cancelled_)
+        return;
+    const bool forward = !after_.isEmpty();
     if (query_.mode == Query::Before && forward && !networkComplete_ && networkStable_) {
         // A large offline gap is not a request to scan the entire archive.
         // The bounded delta is now persisted with real adjacency. Jump once
