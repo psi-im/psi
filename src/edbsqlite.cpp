@@ -767,6 +767,8 @@ void EDBSqLite::performRequests()
                                                                  : HistoryWriteRequest::Erase;
         write.account = r->accId;
         write.peer = r->j.full();
+        write.contactPeer = r->jidType == GroupChatContact ? r->j.full() : r->j.bare();
+        write.resource = r->j.resource();
         write.jidType = r->jidType;
         write.encoded = r->encoded;
         write.archiveKey = r->archiveKey;
