@@ -206,6 +206,9 @@ private:
     struct PendingMessageLookup {
         QPointer<QObject> receiver;
         std::function<void(EDBItemPtr, bool)> finished;
+        HistoryArchive::Key key;
+        QString uid;
+        bool own = false;
     };
     QHash<int, PendingMessageLookup> pendingMessageLookups_;
 
