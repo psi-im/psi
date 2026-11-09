@@ -26,9 +26,15 @@ public:
         return options;
     }
 
-    void arrange(NativeChatMessageCanvas &canvas, const NativeChatMessageInfo &) const override
+    void arrange(NativeChatMessageCanvas &canvas, const NativeChatMessageInfo &info) const override
     {
         auto *row = NativeChatThemeLayout::rowLayout(canvas, QMargins(12, 2, 12, 2), spacing_);
+        if (info.alert) {
+            const bool light = canvas.row()->palette().color(QPalette::Base).lightness() > 128;
+            canvas.setBodyTextColor(light ? QColor(185, 35, 45) : QColor(255, 120, 125));
+        }
+        if (auto *time = canvas.take(NativeChatMessageCanvas::NoticeTimestamp))
+            row->addWidget(time, 0, Qt::AlignVCenter);
         row->addWidget(canvas.take(NativeChatMessageCanvas::Body), 1, Qt::AlignTop);
     }
 

@@ -256,6 +256,8 @@ private:
     QString richMessage(const Row &row) const;
     void refreshReplyPreviews(bool force = false);
     void                                          setHoveredRow(QFrame *row);
+    void                                          setHoveredNoticeTimestamp(QFrame *row);
+    QPointer<QFrame>                              hoveredNoticeTimestampRow_;
     QColor                                        informationalColor_;
     QColor                                        quoteColor_;
     void                                          updateAvatar(QLabel *label, const MessageView &message);

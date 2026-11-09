@@ -13,10 +13,10 @@ private slots:
         QTest::newRow("emphasis") << QString("_emphasis_") << QString("<i>_emphasis_</i>");
         QTest::newRow("strike") << QString("~deleted~") << QString("<s>~deleted~</s>");
         QTest::newRow("code") << QString("a ") + QChar(0x60) + QString("*literal*") + QChar(0x60)
-                               << QString("a <code>") + QChar(0x60) + QString("*literal*") + QChar(0x60) + QString("</code>");
+                               << QString("a <code style=\"font-family:monospace\">") + QChar(0x60) + QString("*literal*") + QChar(0x60) + QString("</code>");
         QTest::newRow("double-backtick") << QString("Here ") + QString(2, QChar(0x60))
                                            + QString("*literal*") + QString(2, QChar(0x60))
-                                           << QString("Here <code>") + QString(2, QChar(0x60))
+                                           << QString("Here <code style=\"font-family:monospace\">") + QString(2, QChar(0x60))
                                            + QString("*literal*") + QString(2, QChar(0x60)) + QString("</code>");
         QTest::newRow("xep-adjacent") << QString("*_both_*")
                                       << QString("<b>*<i>_both_</i>*</b>");

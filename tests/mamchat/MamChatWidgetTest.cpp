@@ -2532,6 +2532,63 @@ private slots:
         QCOMPARE(first->palette().color(QPalette::Base), base);
     }
 
+    void hoverClockOnNoticesAndThemeAlerts()
+    {
+        for (const QString &themeId : { QStringLiteral("classic"), QStringLiteral("modern"),
+                                        QStringLiteral("bubble") }) {
+            MamChatWidget chat;
+            chat.resize(700, 440);
+            chat.setHistoryLoading(true);
+            chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            auto join = MessageView::mucJoinMessage(QStringLiteral("Peer"), 0, QStringLiteral("Peer joined"));
+            const auto when = QDateTime::fromString(QStringLiteral("2026-10-18T10:42:00Z"), Qt::ISODate);
+            join.setDateTime(when);
+            chat.appendMessage(join);
+            auto action = message(QStringLiteral("action"), QStringLiteral("waves"), 1);
+            action.setEmote();
+            chat.appendMessage(action);
+            auto highlighted = message(QStringLiteral("alert"), QStringLiteral("please look"), 2);
+            highlighted.setAlert();
+            chat.appendMessage(highlighted);
+            chat.show();
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+
+            auto *row = chat.itemWidget(0);
+            auto *time = row->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
+            QVERIFY(time);
+            QCOMPARE(time->text(), when.toLocalTime().toString(QStringLiteral("HH:mm")));
+            auto *effect = qobject_cast<QGraphicsOpacityEffect *>(time->graphicsEffect());
+            QVERIFY(effect);
+            QCOMPARE(effect->opacity(), 0.0);
+            enterWidget(row);
+            QTRY_VERIFY(effect->opacity() > 0.99);
+            QEvent leave(QEvent::Leave);
+            QApplication::sendEvent(row, &leave);
+            QTRY_VERIFY(effect->opacity() < 0.01);
+
+            auto *emoteRow = chat.itemWidget(1);
+            QVERIFY(emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp")));
+            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAuthor")));
+            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+            auto *alertRow = chat.itemWidget(2);
+            QCOMPARE(alertRow->property("alert").toBool(), true);
+            if (themeId == QLatin1String("bubble")) {
+                auto *emoteBubble = emoteRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *alertBubble = alertRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                QVERIFY(emoteBubble && alertBubble);
+                QCOMPARE(emoteBubble->property("tone").toString(), QStringLiteral("notice"));
+                QCOMPARE(alertBubble->property("tone").toString(), QStringLiteral("alert"));
+            } else if (themeId == QLatin1String("modern")) {
+                QVERIFY(alertRow->findChild<QFrame *>(QStringLiteral("mamAlertMarker")));
+            } else {
+                auto *body = alertRow->findChild<ChatMessageText *>();
+                QVERIFY(body);
+                const QColor color = body->palette().color(QPalette::Text);
+                QVERIFY(color.red() > color.green());
+            }
+        }
+    }
+
     void emoteUsesSenderPrefixWithoutChangingStoredMessage()
     {
         MamChatWidget chat;

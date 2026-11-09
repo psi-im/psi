@@ -129,9 +129,12 @@ static void parseStylingSpans(const QList<StylingGlyph> &g, int first, int last,
         else if (ch == QLatin1Char('_')) element = QLatin1String("i");
         else if (ch == QLatin1Char('~')) element = QLatin1String("s");
         else element = QLatin1String("code");
+        // A bare <code> does not reliably select a fixed-pitch font in Qt.
+        QString opening = QLatin1Char('<') + element + QLatin1Char('>');
+        if (code)
+            opening = QLatin1String("<code style=\"font-family:monospace\">");
         ranges.append({ g.at(i).begin, g.at(closing + run - 1).end,
-                        QLatin1Char('<') + element + QLatin1Char('>'),
-                        QLatin1String("</") + element + QLatin1Char('>') });
+                        opening, QLatin1String("</") + element + QLatin1Char('>') });
         if (!code)
             parseStylingSpans(g, i + run, closing, ranges, depth + 1);
         i = closing + run - 1;

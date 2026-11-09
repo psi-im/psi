@@ -2,6 +2,8 @@
 #include "BuiltinThemes.h"
 #include "ThemeLayoutHelpers.h"
 #include <QCoreApplication>
+#include <QFrame>
+#include <QPalette>
 #include <QSizePolicy>
 #include <QVBoxLayout>
 #include <memory>
@@ -25,8 +27,23 @@ public:
     void arrange(NativeChatMessageCanvas &canvas, const NativeChatMessageInfo &info) const override
     {
         auto *outer = NativeChatThemeLayout::rowLayout(canvas, QMargins(12, 8, 12, 8), spacing_);
-        if (auto *avatar = canvas.take(NativeChatMessageCanvas::Avatar))
-            outer->addWidget(avatar, 0, Qt::AlignTop);
+        if (info.alert) {
+            auto *marker = new QFrame(canvas.row());
+            marker->setObjectName(QStringLiteral("mamAlertMarker"));
+            marker->setFixedWidth(3);
+            const bool light = canvas.row()->palette().color(QPalette::Base).lightness() > 128;
+            QPalette colors = marker->palette();
+            colors.setColor(QPalette::Window, light ? QColor(185, 35, 45) : QColor(255, 120, 125));
+            marker->setPalette(colors);
+            marker->setAutoFillBackground(true);
+            outer->addWidget(marker);
+        }
+        if (auto *time = canvas.take(NativeChatMessageCanvas::NoticeTimestamp))
+            outer->addWidget(time, 0, Qt::AlignVCenter);
+        if (info.kind == NativeChatMessageInfo::Message) {
+            if (auto *avatar = canvas.take(NativeChatMessageCanvas::Avatar))
+                outer->addWidget(avatar, 0, Qt::AlignTop);
+        }
         auto *content = new QWidget(canvas.row());
         content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         outer->addWidget(content, 1, Qt::AlignTop);

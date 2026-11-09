@@ -36,6 +36,7 @@ struct NativeChatMessageInfo {
     bool      local     = false; // Sent by this account.
     bool      groupChat = false;
     bool      emote     = false; // A /me message. The body already starts with "*nick".
+    bool      alert     = false; // Highlight flag, styled by each theme.
     bool      retracted = false;
     QString   nick;              // Display name of the sender; empty for notices.
     QDateTime time;
@@ -82,6 +83,7 @@ public:
         Body,      // Text with reply preview, file cards and reactions. Always present.
         UnreadSeparator, // Optional boundary frame; Psi places it below the row if not taken.
         DateSeparator, // Optional local calendar date label before the first row of a day.
+        NoticeTimestamp, // Hover-only HH:mm time on join/part and /me notices.
     };
 
     // The row widget. Psi owns it, paints its hover/selection surface and

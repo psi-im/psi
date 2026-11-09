@@ -2409,7 +2409,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
 
     // code to determine if the speaker was addressing this client in chat
-    if (dm.body().contains(d->self))
+    if (!d->self.isEmpty() && from != d->self && dm.body().contains(d->self, Qt::CaseInsensitive))
         d->alert = true;
 
     if (dm.body().left(d->self.length()) == d->self)
@@ -2418,9 +2418,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     if (options->getOption("options.ui.muc.use-highlighting").toBool()) {
         QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
         for (const QString &word : std::as_const(highlightWords)) {
-            if (dm.body().contains((word), Qt::CaseInsensitive)) {
+            if (!word.isEmpty() && from != d->self && dm.body().contains(word, Qt::CaseInsensitive))
                 d->alert = true;
-            }
         }
     }
 

@@ -2106,7 +2106,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setProperty("_psiMamDateBoundary", dateBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
-    row->setProperty("_psiMamInformational", mv.type() != MessageView::Message);
+    row->setProperty("_psiMamInformational", mv.type() != MessageView::Message || mv.isEmote());
+    row->setProperty("alert", mv.isAlert());
     // Only the timestamp owns the full date/time tooltip.
     row->installEventFilter(this);
     row->setStyleSheet(theme_.styleSheet);
@@ -2190,7 +2191,25 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     }
 
-    if (message && !inText) {
+    if (mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart || mv.isEmote()) {
+        // Wall-clock time, independent of the ordinary relative time mode.
+        auto *noticeTime = new QLabel(mv.dateTime().isValid()
+                                         ? mv.dateTime().toLocalTime().toString(QStringLiteral("HH:mm"))
+                                         : QString(), row);
+        noticeTime->setObjectName(QStringLiteral("mamNoticeHoverTimestamp"));
+        noticeTime->setTextFormat(Qt::PlainText);
+        noticeTime->setToolTip(fullTimestamp(mv.dateTime()));
+        noticeTime->setAttribute(Qt::WA_TransparentForMouseEvents);
+        auto *opacity = new QGraphicsOpacityEffect(noticeTime);
+        opacity->setOpacity(0.0);
+        noticeTime->setGraphicsEffect(opacity);
+        auto *fade = new QPropertyAnimation(opacity, "opacity", noticeTime);
+        fade->setObjectName(QStringLiteral("mamNoticeTimestampFade"));
+        fade->setDuration(160);
+        fade->setEasingCurve(QEasingCurve::OutCubic);
+        canvas.add(NativeChatMessageCanvas::NoticeTimestamp, noticeTime);
+    }
+    if (message && !mv.isEmote() && !inText) {
         auto *author = new QLabel(row->options.authorPrefix + nick + row->options.authorSuffix, row);
         author->setObjectName(QStringLiteral("mamAuthor"));
         author->setTextFormat(Qt::PlainText);
@@ -2246,7 +2265,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             canvas.add(NativeChatMessageCanvas::Timestamp, time);
         }
     }
-    if (message) {
+    if (message && !mv.isEmote()) {
         if (row->options.avatarSize > 0) {
             const int size   = qBound(8, row->options.avatarSize, 256);
             auto     *avatar = new QLabel(row);
@@ -2271,7 +2290,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // The legacy text log: icon, time and nickname at the start of the text,
     // so that wrapped lines start at the left edge.
     QHash<QString, QString> inlineIcons; // Resource URL -> iconset name.
-    if (inText) {
+    if (inText && !mv.isEmote()) {
         const int  iconSize = qMax(10, QFontInfo(font()).pixelSize());
         const auto icon     = [&](const QString &name, const QString &toolTip) {
             const QString url = QStringLiteral("psi-icon:") + name;
@@ -2709,7 +2728,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         preview->setChildEventFilter(this);
     }
 
-    if (!message) {
+    if (!message || mv.isEmote()) {
         QTextCursor cursor(body->document());
         cursor.select(QTextCursor::Document);
         QTextBlockFormat format;
@@ -2773,12 +2792,13 @@ NativeChatMessageInfo MamChatWidget::messageInfo(int index) const
 {
     const auto           &mv = items_.at(index).message;
     NativeChatMessageInfo info;
-    info.kind = mv.type() == MessageView::Message ? NativeChatMessageInfo::Message
+    info.kind = mv.type() == MessageView::Message && !mv.isEmote() ? NativeChatMessageInfo::Message
         : mv.type() == MessageView::Subject       ? NativeChatMessageInfo::Subject
                                                   : NativeChatMessageInfo::Notice;
     info.local     = mv.isLocal();
     info.groupChat = groupChat_;
     info.emote     = mv.isEmote();
+    info.alert     = mv.isAlert();
     info.retracted = isRetracted(items_.at(index));
     info.nick      = mv.nick();
     info.time      = mv.dateTime();
@@ -3763,6 +3783,30 @@ void MamChatWidget::updateRowSelection(QFrame *row, bool selected)
             prose->setWholeMessageSelectionMode(selecting);
 }
 
+void MamChatWidget::setHoveredNoticeTimestamp(QFrame *row)
+{
+    if (hoveredNoticeTimestampRow_ == row)
+        return;
+    const auto animate = [](QFrame *target, qreal end) {
+        if (!target)
+            return;
+        auto *label = target->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
+        if (!label)
+            return;
+        auto *effect = qobject_cast<QGraphicsOpacityEffect *>(label->graphicsEffect());
+        auto *fade = label->findChild<QPropertyAnimation *>(QStringLiteral("mamNoticeTimestampFade"));
+        if (!effect || !fade)
+            return;
+        fade->stop();
+        fade->setStartValue(effect->opacity());
+        fade->setEndValue(end);
+        fade->start();
+    };
+    animate(hoveredNoticeTimestampRow_, 0.0);
+    hoveredNoticeTimestampRow_ = row;
+    animate(row, 1.0);
+}
+
 void MamChatWidget::setHoveredRow(QFrame *row)
 {
     auto *previous = qobject_cast<QFrame *>(hoverHighlightOverrideWidget());
@@ -3912,6 +3956,7 @@ void MamChatWidget::showEvent(QShowEvent *event)
 void MamChatWidget::hideEvent(QHideEvent *event)
 {
     setHoveredRow(nullptr);
+    setHoveredNoticeTimestamp(nullptr);
     timestampTimer_->stop();
     rangeDemandAllowed_ = false;
     Mattermost::LongListWidget::hideEvent(event);
@@ -3982,8 +4027,10 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
     }
     // A Leave from a row can be just a handoff to the floating actions. The
     // viewport encloses the complete hover session, including that overlay.
-    if (target == viewport() && (event->type() == QEvent::Enter || event->type() == QEvent::Leave))
+    if (target == viewport() && (event->type() == QEvent::Enter || event->type() == QEvent::Leave)) {
         setHoveredRow(nullptr);
+        setHoveredNoticeTimestamp(nullptr);
+    }
     if (target == verticalScrollBar()) {
         // A scrollbar at zero cannot emit valueChanged; Qt may even omit
         // actionTriggered for an outward user action that clamps to zero.
@@ -4033,6 +4080,7 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
             quickHideTimer_->stop();
         else if (!inActions) {
             if (auto *row = eventRow(target)) {
+                setHoveredNoticeTimestamp(row);
                 if (isHoverHighlightEnabled())
                     setHoveredRow(row);
                 showMessageActions(row);
@@ -4043,8 +4091,11 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
             quickHideTimer_->start();
         // Leaving a text viewport/label for row padding is still inside the
         // message. Only the enclosing row or toolbar can start dismissal.
-        if (target == messageActions_ || target == eventRow(target))
+        if (target == messageActions_ || target == eventRow(target)) {
+            if (target == eventRow(target))
+                setHoveredNoticeTimestamp(nullptr);
             actionHideTimer_->start();
+        }
     } else if (event->type() == QEvent::MouseButtonRelease && target == chooseReaction_) {
         // Do not change the toolbar geometry between the press and release
         // of the react button, or QAbstractButton may not emit clicked().
