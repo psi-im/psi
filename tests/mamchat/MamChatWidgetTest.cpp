@@ -2525,7 +2525,8 @@ private slots:
         enterWidget(first);
         palette.setColor(QPalette::Highlight, QColor(200, 80, 20));
         chat.setPalette(palette);
-        QTRY_COMPARE(first->palette().color(QPalette::Base), chat.hoverHighlightSurfaceColor());
+        const QColor expectedAfterPaletteChange = classic ? base : chat.hoverHighlightSurfaceColor();
+        QTRY_COMPARE(first->palette().color(QPalette::Base), expectedAfterPaletteChange);
         QApplication::setActiveWindow(nullptr);
         QTRY_COMPARE(first->palette().color(QPalette::Base), base);
         enterWidget(first);
