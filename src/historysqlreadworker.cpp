@@ -62,7 +62,7 @@ void HistorySqlReadWorker::open()
     // latency. This timer and all pending results live in the worker.
     appendCommitTimer_ = new QTimer(this);
     appendCommitTimer_->setSingleShot(true);
-    appendCommitTimer_->setInterval(40);
+    appendCommitTimer_->setInterval(250); // Bound latency while coalescing real chat bursts.
     connect(appendCommitTimer_, &QTimer::timeout, this, &HistorySqlReadWorker::flushPendingAppends);
 }
 
