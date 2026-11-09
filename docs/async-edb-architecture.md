@@ -12,6 +12,13 @@ performs all operations as queued slots. Requests/results cross the boundary
 as values with request IDs; no shared mutable queue, SQL connection,
 `QMutex`, or `QWaitCondition` is required.
 
+The SQLite backend's GUI-only dependencies are being separated before
+moving it: `HistoryEventFactory::decode()` reconstructs `PsiEvent` values
+on the GUI side, while FileSharingManager registration is performed by the
+GUI request dispatcher after SQL insertion rather than inside
+`EDBSqLite::appendEvent()`. Neither extraction changes the SQL transaction
+schedule yet; both prepare the eventual raw-record/value boundary.
+
 The current checkpoint worker in this PR is the first deployment of the
 QObject/queued-slot ownership pattern. It is **not** yet the complete EDB
 migration: legacy EDB and MAM still execute foreground SQL in the present
