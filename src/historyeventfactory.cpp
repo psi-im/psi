@@ -10,6 +10,7 @@
 #include <QCoreApplication>
 #include <QDomDocument>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QSqlRecord>
 
 // UI-thread-only reconstruction of legacy PsiEvent objects from immutable
