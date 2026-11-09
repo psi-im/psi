@@ -1,147 +1,99 @@
-# Async EDB migration: ownership, ordering and legacy servers
+# Async Psi EDB migration: architecture and invariants
 
-## Target
+## Purpose
 
-Move **all SQLite operations** for `history.db` off the GUI thread. Do not
-replace a synchronous call with `Qt::BlockingQueuedConnection`, a nested
-`QEventLoop`, or a timer that still runs SQL on the GUI thread.
+An observed GUI hang during a long connection stopped at `fdatasync` via
+Qt's SQLite driver. `QTimer::singleShot(0)` did not make the historical EDB
+queue asynchronous: it still executed SQL on the GUI thread. MAM history
+page writes introduced additional large transactions.
 
-An `EDB` facade remains on the GUI thread. A single `QObject` worker lives
-on a dedicated `QThread`, owns the sole history SQLite connection, and
-performs all operations as queued slots. Requests/results cross the boundary
-as values with request IDs; no shared mutable queue, SQL connection,
-`QMutex`, or `QWaitCondition` is required.
+## Implemented worker path
 
-The SQLite backend's GUI-only dependencies are being separated before
-moving it: `HistoryEventFactory::decode()` reconstructs `PsiEvent` values
-on the GUI side, while FileSharingManager registration is performed by the
-GUI request dispatcher after SQL insertion rather than inside
-`EDBSqLite::appendEvent()`. Neither extraction changes the SQL transaction
-schedule yet; both prepare the eventual raw-record/value boundary.
+- `EDBSqLite` is a **GUI-thread facade**. All normal `EDBHandle`
+  `append/get/find/erase` requests, local chat/MUC history pagination,
+  displayed-marker restoration, MAM page reads, archive snapshots,
+  **atomic MAM page stores**, archived plaintext lookup, own OMEMO
+  plaintext lookup, and resolution of corrections use a single
+  `HistorySqlReadWorker` QObject moved to a dedicated QThread.
+- The worker owns its own SQLite connection. SQL commands are processed
+  sequentially as queued slots. Results are value objects (`QSqlRecord`,
+  `HistoryArchive::Page`, snapshots and operation IDs), never
+  `PsiEvent`/account/widget pointers. No shared mutable queues or
+  `QMutex`/`QWaitCondition` are needed.
+- `HistoryEventFactory` serializes events before queueing and reconstructs
+  `PsiEvent` on the GUI. FileSharingManager registration is likewise
+  performed only on the GUI after successful worker insertion.
+- A worker page fetch (including multiple revision lookups) is one SQLite
+  read transaction. Live appends and MAM stores share the same ordered
+  worker queue; a MAM page transaction includes its events, identities,
+  revisions, message-state references, adjacency and archive checkpoint.
+  The GUI advances no persistent archive cursor until the store succeeds.
+- `HistorySync` awaits its async cache fetch, decoded-plaintext lookups,
+  own plaintext fallback, page store, and batch resolved-revision lookup
+  before emitting the final `finished()` signal. Ordinary live messages
+  still appear without waiting for their disk append.
+- A local history callback is scoped to its receiving widget; each dialog
+  also validates the peer and view generation. Closing, clearing or
+  repointing a view invalidates old results without reversing durable
+  worker writes.
+- The superseded GUI SQL `get/find/append/erase` paths, redundant query
+  plans and standalone WAL checkpoint thread have been removed.
+  SQLite uses **WAL + synchronous=FULL** on GUI and worker connections;
+  automatic checkpoints happen on whichever connection makes the
+  threshold-triggering commit, normally the worker.
 
-## Implemented stages in PR #1112
+## Old server identity rules
 
-- The WAL checkpoint worker and read worker use `QObject::moveToThread()`
-  and queued signals/slots. No mutex or shared mutable queue is involved.
-  The checkpoint readiness callback has been replaced by a queued Qt signal
-  so a shutdown cannot dereference a destroyed EDB facade.
-- `EDBHandle::get/find` enqueue SQL reads on a read-only SQLite connection;
-  the results are detached `QSqlRecord` values. The GUI reconstructs
-  `PsiEvent` and delivers `EDBHandle::finished()` as before.
-- Native one-to-one/MUC local scrollback now requests local pages via a
-  receiver-scoped asynchronous EDB API. The MAM page continuation waits
-  until the local page is projected. A dialog generation and peer check
-  prevent applying a stale result after clearing or switching conversations.
-- Each reader request runs in a read transaction. A local page's multiple
-  original/revision lookups see one consistent SQLite snapshot even during
-  concurrent live/MAM writes; the test suite covers legacy no-ID messages
-  and a concurrent uncommitted writer.
-- The previous EDB write queue is still on the GUI thread. Before sending a
-  read to the worker it commits *preceding* queued GUI writes. Subsequent
-  writes may still commit during that read; the read snapshot is isolated.
-  This is not yet the final single-owner database architecture.
+- Old servers can omit MAM entirely and also omit `origin-id` and
+  `stanza-id`. Local-only history must keep working offline and after
+  reconnection, including ordinary incoming/outgoing messages.
+- A stable **local EDB event ID** identifies repeated reads of the
+  *same stored record*. Do not interpret an absent server ID as permission
+  to merge distinct messages with equal text, sender or timestamp.
+- A MAM UID is scoped to its account/archive/peer; a `stanza-id` is also
+  scoped by its `by` authority. Use only supported, proven identity
+  edges and the existing revision graph. The SQL worker is storage, not
+  a second deduplicator.
+- Messages and protocol events without stored bodies must retain their
+  own processing and state semantics. A failed encrypted decode is not
+  durable plaintext and must remain retryable.
 
-**Remaining work:** `EDBSqLite::appendEvent/eraseHistory/commit`, synchronous
-MAM cache access/merges in `HistorySync::Context`, archive revision lookup,
-displayed cursor restoration, the history contact list, and startup schema
-migration all still need value-based asynchronous worker APIs. The separate
-read and checkpoint connections are *intermediate*: after writes migrate,
-they should be folded into one worker-owned connection and
-`synchronous=FULL` reconsidered.
+## Remaining synchronous compatibility/administration APIs
 
-## Compatibility with old XMPP servers
+The application **is not yet entirely free of GUI-thread SQL**:
+- Database open/schema initialization and schema upgrades, including
+  UI progress for historical database migrations, are still synchronous
+  at startup.
+- The legacy History dialog's `contacts` and `eventsCount` methods
+  execute foreground SQL. Public synchronous EDB compatibility methods
+  remain, although `historysyncaccount.cpp` no longer installs those
+  callbacks for normal MAM traffic.
+- Internal system storage parameters and unused/legacy direct methods
+  `archivePage`, `resolvedHistoryEvent`, `archivedEvent` and
+  `ownPlaintext` still exist for compatibility and fallback, and must
+  be reviewed as the last consumers migrate.
 
-- Local EDB reads/writes and scrollback work with no MAM support and with
-  missing XEP-0359 `origin-id` and `stanza-id`.
-- Absence of server IDs is not permission to deduplicate by matching body,
-  sender and timestamp. These can belong to distinct deliveries, including
-  two separate messages with exactly the same text/time.
-- A locally assigned persistent EDB event ID is still a valid identity for
-  the *same local record* across repeated pages. Do not confuse it with a
-  globally authoritative delivery ID.
-- Server-side archive UIDs must always be scoped by account, archive and
-  peer. Stanza IDs must also be scoped by their `by` authority.
-- Continue using the existing EDB/HistoryArchive live/MAM reconciliation,
-  including its explicit-message-ID and revision relationships. Do not
-  introduce an independent deduplicator in the worker.
+Do not reintroduce blocking queued connections, nested event loops,
+GUI-side `QSqlQuery` in the native chat/MAM hot path, or a second
+authoritative deduplication state. Complete the remaining migrations
+before declaring the architectural refactor finished.
 
-## Execution and presentation ordering
+## Deterministic regression requirements
 
-Reader operations carry a request ID and account/peer scope. Native local
-page consumers additionally capture a dialog generation. The reader worker
-executes its own queued requests in submission order; this is **not yet a
-global ordering guarantee** with the still-GUI-owned writer. The eventual
-single worker must serialize all reads and writes together.
-
-**Target:** the UI must not wait for persistence to display a live stanza.
-At this stage the UI is nonblocking for queued history reads, but synchronous
-SQLite writes can still stall it. When an asynchronous EDB read arrives,
-the consumer validates that the view still exists and that the request
-matches its active scope/generation. An obsolete result is discarded without
-rolling back any completed writes.
-
-History pages **merge**, never replace, an existing timeline wholesale.
-In particular, a live message arriving between a local read request and
-its completion must survive the earlier snapshot. An older EDB/MAM result
-must not overwrite a newer edited revision or reduce accumulated message
-state (e.g. delivered/displayed/retracted).
-
-## Persistence invariant
-
-A logical MAM page is saved as **one SQLite transaction**: events,
-archive-identity mapping, revision relationships, message-state updates,
-adjacency and page checkpoint/cursor either all commit or all roll back.
-The persisted archive cursor must never get ahead of the data it covers.
-Queued incoming live appends and MAM page merges must use the **same**
-SQLite worker, preserving one order of transactions without concurrent
-writers across connections.
-
-Changing the queue to prioritize reads must not allow reads to overtake
-writes on which their visible state depends. If batching is introduced,
-the batch boundary must retain transaction and response ordering.
-
-## API migration boundaries
-
-1. Preserve `EDBHandle`'s asynchronous `get/find/append/erase` contract.
-   **Get/find are now worker reads; append/erase are still GUI writes.**
-   Move the remaining writes behind the same queue without altering
-   `finished()` semantics. Handle destruction cancels *delivery*, not a
-   write already executing in the worker.
-2. Convert direct synchronous consumers, notably
-   `HistorySync::Context` read/merge/snapshot/lookup,
-   `nativechathistory` local history/prepend (**now asynchronous**),
-   archive revision resolution, `sentDisplayedCursor`, and the history contact list.
-   Return typed value results asynchronously instead of blocking.
-3. Move connection creation, schema checking, startup migration,
-   prepared statements, timers and transaction management entirely
-   into the worker. Existing migration UX must remain functional.
-4. Remove the standalone checkpoint thread only after the single
-   database worker owns all history reads and writes; then consider
-   returning to `synchronous=FULL` without blocking GUI input.
-5. Preserve the existing no-MAM fallback paths throughout migration.
-   Test each consumer against a local-only server fixture.
-
-## Required deterministic regression cases
-
-- A local page completes after a newly delivered live message; the live
-  tail stays present.
-- A saved page is returned twice, including messages with no server ID;
-  each persistent local event is shown once.
-- Two distinct no-ID messages have identical sender/text/timestamp and
-  remain distinct.
-- A delayed archived original cannot replace a newer correction; markers
-  never regress read state.
-- Both orders of duplicate delivery (live then MAM, MAM then live) use
-  existing trustworthy identity edges.
-- A page-store failure does not advance an archive cursor.
-- A view is destroyed/repointed while a read runs: no stale UI callback,
-  no use-after-free, and no lost completed write.
-- Old servers without MAM can load local history while offline, reconnect,
-  and keep receiving messages.
-- A deliberately slow SQLite sync blocks the worker, not GUI event
-  processing. `QSignalSpy`/controllable fake sources gate completions;
-  avoid sleep-based ordering tests.
-
-Until step 3 is completed, WAL/NORMAL in this PR is a **temporary
-responsiveness/durability trade-off**, not proof that all history I/O is
-asynchronous.
+- Distinct id-less messages with identical sender/text/time remain separate;
+  repeated local EDB IDs do not duplicate.
+- Worker append/read/erase completion order is deterministic; an earlier
+  uncommitted writer is never visible to a read transaction.
+- Local history arriving after a new live message merges into the timeline
+  without deleting the live tail.
+- Newer corrections and message-state transitions cannot be replaced by
+  stale archive snapshots.
+- Failure storing a page never advances its cursor or exposes partially
+  committed rows; successful page storage returns permanent IDs.
+- Cancelling a view suppresses callbacks, but never cancels an unrelated
+  already committed write.
+- Cached and own OMEMO plaintext reuse does not decrypt an already
+  consumed ciphertext twice.
+- Slow SQLite fsync/automatic WAL checkpointing takes place in the worker,
+  while the GUI event loop remains responsive.
+- CI across Qt5/Qt6 and Win/macOS/Linux remains green.
