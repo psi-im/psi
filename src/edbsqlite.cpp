@@ -513,8 +513,17 @@ void EDBSqLite::performRequests()
     const int       type = r->type;
 
     if (type == item_query_req::Type_append) {
-        bool b = appendEvent(r->accId, r->j, r->event, r->jidType);
-        writeFinished(r->id, b);
+        bool inserted = false;
+        bool ok = appendEvent(r->accId, r->j, r->event, r->jidType, inserted);
+        // Account and FileSharingManager are GUI-owned. Keep this side effect
+        // out of the SQL insertion routine so the latter can migrate to a
+        // database worker without accessing the application's QObject graph.
+        if (inserted && r->event->type() == PsiEvent::Message) {
+            if (auto account = psi()->contactList()->getAccount(r->accId))
+                psi()->fileSharingManager()->rememberMessage(
+                    r->event.staticCast<MessageEvent>()->message().displayMessage(), account);
+        }
+        writeFinished(r->id, ok);
     }
 
     else if (type == item_query_req::Type_get) {
@@ -608,8 +617,10 @@ void EDBSqLite::performRequests()
     delete r;
 }
 
-bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const PsiEvent::Ptr &e, int jidType)
+bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const PsiEvent::Ptr &e,
+                              int jidType, bool &inserted)
 {
+    inserted = false;
     QSqlDatabase db        = QSqlDatabase::database("history");
     const qint64 contactId = ensureJidRowId(accId, jid, jidType);
     if (contactId == 0)
@@ -683,8 +694,6 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         query->bindValue(":m_text", m.body(lang));
         query->bindValue(":lang", lang);
         query->bindValue(":extra_data", HistoryMessageExtras::encode(m));
-        if (auto account = psi()->contactList()->getAccount(accId))
-            psi()->fileSharingManager()->rememberMessage(m, account);
     } else {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         query->bindValue(":subject", QVariant(QVariant::String));
@@ -709,6 +718,7 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
             return false;
         }
     }
+    inserted = res;
     return res;
 }
 
