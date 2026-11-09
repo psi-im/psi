@@ -55,6 +55,19 @@ HistorySync::Context accountContext(PsiAccount *account)
                   }
               return cached;
           };
+    context.readAsync = [account](const HistoryArchive::Key &key, HistorySync::Query query, QObject *receiver,
+                                  std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished) {
+        const auto mode = query.mode == HistorySync::Query::After ? EDB::ArchiveReadMode::After
+                          : query.mode == HistorySync::Query::Index ? EDB::ArchiveReadMode::Index
+                                                                    : EDB::ArchiveReadMode::Before;
+        account->edb()->requestArchivePage(mode, key, query.cursor, query.index, query.limit,
+                                           query.snapshotCount, receiver, std::move(finished));
+    };
+    context.mergeAsync = [account](const HistoryArchive::Key &key, const QString &before, int limit,
+                                   HistoryArchive::Page page, QObject *receiver,
+                                   std::function<void(HistoryArchive::Page, bool)> finished) {
+        account->edb()->requestStoreArchivePage(key, before, limit, std::move(page), receiver, std::move(finished));
+    };
     return context;
 }
 }
