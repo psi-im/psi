@@ -7,6 +7,34 @@
 #include <QThread>
 #include <utility>
 
+namespace {
+// A local-history page resolves each original and its latest revision via
+// multiple SQL statements. One read transaction guarantees a single snapshot
+// even while live messages or MAM pages are being committed concurrently.
+class ReadSnapshot {
+public:
+    explicit ReadSnapshot(QSqlDatabase &db) : db_(db), active_(db_.transaction()) { }
+    ~ReadSnapshot()
+    {
+        if (active_)
+            db_.rollback();
+    }
+    bool active() const { return active_; }
+    bool commit()
+    {
+        if (!active_)
+            return false;
+        if (!db_.commit())
+            return false;
+        active_ = false;
+        return true;
+    }
+private:
+    QSqlDatabase &db_;
+    bool active_;
+};
+}
+
 void HistorySqlReadWorker::open()
 {
     Q_ASSERT(QThread::currentThread() == thread());
@@ -15,7 +43,7 @@ void HistorySqlReadWorker::open()
     db_ = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName_);
     db_.setDatabaseName(path_);
     // This connection must never write, block a writer, or migrate schemas.
-    db_.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_BUSY_TIMEOUT=0"));
+    db_.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_BUSY_TIMEOUT=1000"));
     if (!db_.open())
         qWarning() << "[history-read] Cannot open read-only SQLite connection:" << db_.lastError().text();
 }
@@ -29,11 +57,17 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    ReadSnapshot snapshot(db_);
+    if (!snapshot.active()) {
+        qWarning() << "[history-read] Cannot open read transaction:" << db_.lastError().text();
+        emit completed(result);
+        return;
+    }
     if (request.type == HistoryReadRequest::LocalPage) {
         if (!request.account.isEmpty() && !request.peer.isEmpty() && request.limit > 0) {
             result.rows = HistoryArchive::localRecords(db_, request.account, request.peer,
                                                        request.before, request.limit);
-            result.success = true;
+            result.success = snapshot.commit();
         }
         emit completed(result);
         return;
@@ -130,7 +164,11 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             result.beginRow = backwards ? qMax(0, total - request.limit + 1) : total + 1;
         }
     }
-    result.success = true;
+    result.success = snapshot.commit();
+    if (!result.success) {
+        qWarning() << "[history-read] Failed to finish read snapshot:" << db_.lastError().text();
+        result.rows.clear();
+    }
     emit completed(result);
 }
 
