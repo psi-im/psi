@@ -63,6 +63,14 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    if (request.type == HistoryReadRequest::DisplayedCursor) {
+        if (!request.account.isEmpty() && !request.peer.isEmpty()) {
+            result.cursor = HistoryArchive::sentDisplayedCursor(db_, request.account, request.peer);
+            result.success = snapshot.commit();
+        }
+        emit completed(result);
+        return;
+    }
     if (request.type == HistoryReadRequest::LocalPage) {
         if (!request.account.isEmpty() && !request.peer.isEmpty() && request.limit > 0) {
             result.rows = HistoryArchive::localRecords(db_, request.account, request.peer,
