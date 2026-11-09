@@ -17,6 +17,9 @@ class ChatMessageText : public PsiTextView {
 public:
     explicit ChatMessageText(QWidget *parent = nullptr);
     void    setRichText(const QString &text);
+    // Update both the live widget font and the QTextDocument's explicit
+    // character sizes. Inherited FontChange events can lag theme/QSS changes.
+    void    synchronizeBaseFont(const QFont &font);
     QString toPlainText() const { return document()->toPlainText(); }
     void    setWholeMessageSelectionMode(bool active);
     void    setPlainMessage(const QString &text);

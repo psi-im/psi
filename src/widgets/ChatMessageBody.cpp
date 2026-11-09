@@ -46,6 +46,19 @@ ChatMessageBody::ChatMessageBody(QWidget *parent) : QWidget(parent)
     addProse();
 }
 
+void ChatMessageBody::synchronizeTextFont(const QFont &base)
+{
+    if (font() != base)
+        setFont(base);
+    for (auto *prose : std::as_const(prose_))
+        prose->synchronizeBaseFont(base);
+    // Code blocks keep their own monospace editor, but their controls,
+    // measurements and parent font should track the configured chat size.
+    for (auto *code : std::as_const(codeBlocks_))
+        if (code->font() != base)
+            code->setFont(base);
+}
+
 ChatMessageText *ChatMessageBody::addProse()
 {
     auto *prose = new ChatMessageText(this);
@@ -55,6 +68,7 @@ ChatMessageText *ChatMessageBody::addProse()
         // One text to a style sheet, like QTextEdit#mamBody of a theme.
         prose->setObjectName(text()->objectName());
         prose->setPalette(text()->palette());
+        prose->synchronizeBaseFont(text()->font());
     }
     connect(prose, &ChatMessageText::plainClicked, this, &ChatMessageBody::plainClicked);
     layout_->addWidget(prose);

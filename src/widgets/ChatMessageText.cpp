@@ -145,6 +145,17 @@ ChatMessageText::ChatMessageText(QWidget *parent) : PsiTextView(parent)
     });
 }
 
+void ChatMessageText::synchronizeBaseFont(const QFont &base)
+{
+    if (font() != base)
+        setFont(base);
+    // A QTextDocument keeps explicit per-fragment sizes independent of its
+    // QWidget font. Do not wait for a row to be evicted/reconstructed after
+    // changing the chat font in Settings.
+    if (document()->defaultFont() != font())
+        applyDocumentFont();
+}
+
 void ChatMessageText::setRichText(const QString &text)
 {
     hasMediaMarkup_ = text.contains(QLatin1String("<share"))

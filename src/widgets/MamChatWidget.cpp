@@ -2287,7 +2287,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     QFont proseFont = font();
     if (row->options.boldBody)
         proseFont.setBold(true);
-    row->body->setFont(proseFont);
+    row->body->synchronizeTextFont(proseFont);
     row->body->layout()->setSpacing(bodyPart->column()->spacing());
     auto *body = row->body->text();
     body->setObjectName(QStringLiteral("mamBody"));
@@ -2840,8 +2840,7 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
         QFont proseFont = font();
         if (options.boldBody)
             proseFont.setBold(true);
-        if (row->body->font() != proseFont)
-            row->body->setFont(proseFont);
+        row->body->synchronizeTextFont(proseFont);
     }
     // Even an uncoloured nickname needs an explicit refresh: a style sheet on
     // the chat window can leave nested labels with their old resolved palette.
@@ -3060,6 +3059,9 @@ void MamChatWidget::changeEvent(QEvent *event)
             row->setFont(font());
         }
         restyleRows();
+        // Invalidate the currently visible painted text as well as geometry.
+        // Font changes are not necessarily accompanied by a scrollbar move.
+        viewport()->update();
         if (!items_.isEmpty())
             for (int at : materializedRows()) {
                 const int logical = historySource_.logicalIndex(at);

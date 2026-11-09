@@ -40,6 +40,9 @@ public:
 
     void setPlainText(const QString &text);
     void setRichText(const QString &html, const RichTextOptions &options);
+    // Apply a chat font to every existing prose view (including code-split
+    // sections), not just the parent QWidget's inherited font.
+    void synchronizeTextFont(const QFont &font);
 
     void setQuoteColor(const QColor &color);
     // Installed on the widgets of every part, including those of later content.

@@ -1429,6 +1429,53 @@ private slots:
         QCOMPARE(body.text()->toPlainText(), QStringLiteral("Answer"));
     }
 
+    void settingsFontChangeUpdatesVisibleAlertsWithoutScrolling()
+    {
+        for (const QString &themeId : { QStringLiteral("modern"), QStringLiteral("classic") }) {
+            MamChatWidget chat;
+            chat.setHistoryLoading(true);
+            chat.resize(720, 500);
+            chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            QFont small = chat.font();
+            small.setPointSize(9);
+            chat.setFont(small);
+            auto alert = message(QStringLiteral("alert-font"), QStringLiteral("Alert with `code`"));
+            alert.setAlert();
+            chat.appendMessage(alert);
+            chat.appendMessage(message(QStringLiteral("prose"), proseAroundFencedCode(
+                QStringLiteral("cpp"), { QStringLiteral("int value = 42;") }), 1));
+            chat.show();
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1));
+            auto *alertRow = chat.itemWidget(0);
+            auto *regularRow = chat.itemWidget(1);
+            auto *alertText = alertRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            auto *regularText = regularRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            auto *code = regularRow->findChild<CodeBlockWidget *>();
+            QVERIFY(alertText && regularText && code);
+            const int scroll = chat.verticalScrollBar()->value();
+            for (int size : { 17, 12, 20 }) {
+                QFont configured = small;
+                configured.setPointSize(size);
+                chat.setFont(configured); // The same path as chat Settings.
+                // Reapply the surrounding palette/look without evicting rows.
+                chat.setStyleBackgroundColor(QColor(248, 248, 248));
+                QCOMPARE(chat.itemWidget(0), alertRow);
+                QCOMPARE(chat.itemWidget(1), regularRow);
+                QCOMPARE(chat.verticalScrollBar()->value(), scroll);
+                for (auto *prose : { alertText, regularText }) {
+                    QCOMPARE(prose->font().pointSize(), size);
+                    QCOMPARE(prose->document()->defaultFont().pointSize(), size);
+                    for (auto block = prose->document()->begin(); block.isValid(); block = block.next())
+                        for (auto it = block.begin(); !it.atEnd(); ++it)
+                            QCOMPARE(it.fragment().charFormat().fontPointSize(), qreal(size));
+                }
+                QVERIFY(alertText->font().bold());
+                QVERIFY(!regularText->font().bold());
+                QCOMPARE(code->font().pointSize(), size);
+            }
+        }
+    }
+
     void fontChangeReachesEveryPartOfTheBody()
     {
         MamChatWidget chat;
