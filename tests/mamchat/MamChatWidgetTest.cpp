@@ -5093,8 +5093,10 @@ private slots:
         for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
                                    QStringLiteral("classic") }) {
             const bool classic = id == QLatin1String("classic");
-            list.setTheme(NativeChatThemes::instance()->theme(id));
+            // Set the preference before recreating the theme rows: the new
+            // renderer then materializes the preferred presentation directly.
             list.setTimestampMode(ChatTimestamp::Mode::Clock);
+            list.setTheme(NativeChatThemes::instance()->theme(id));
             QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
             QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
             QTRY_VERIFY(sourceTime(classic).contains(clock));
