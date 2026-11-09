@@ -802,7 +802,11 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
  */
 void TabDlg::tabCloseRequested(int i)
 {
-    TabbableWidget *tw = static_cast<TabbableWidget *>(tabWidget_->page(i));
+    // A delayed close-button click can refer to a tab already removed.
+    // Never dereference a page obtained from an invalid/stale index.
+    auto *tw = qobject_cast<TabbableWidget *>(tabWidget_->page(i));
+    if (!tw || !tabs_.contains(tw))
+        return;
     if (tabWidget_->currentPageIndex() != i) {
         if (!PsiOptions::instance()->getOption("options.ui.tabs.can-close-inactive-tab").toBool()) {
             selectTab(tw);
