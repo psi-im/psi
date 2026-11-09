@@ -8,6 +8,10 @@ on:
       - 'src/widgets/tabbar.*'
       - 'src/widgets/psitabwidget.*'
       - 'src/tabs/tabdlg.*'
+      - 'src/historysqlitepolicy.h'
+      - 'src/historywalcheckpoint.h'
+      - 'src/edbsqlite.*'
+      - 'tests/mamchat/HistorySqlitePolicyTest.cpp'
       - 'tests/mamchat/TabCloseTest.cpp'
       - 'tests/mamchat/OverlayScrollBarManagerTest.cpp'
       - 'tests/mamchat/ThinSplitterTest.cpp'
@@ -24,7 +28,7 @@ concurrency:
 
 jobs:
   overlay-and-splitter:
-    name: Overlay scrollbar, splitter and tab close (Qt5)
+    name: Overlay, tabs and history SQLite (Qt5)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -43,10 +47,10 @@ jobs:
       - name: Build focused widget regressions
         run: |
           cmake --build build-mam-widgets-qt5 \
-            --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test --parallel 4
+            --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test mam_history_sqlite_policy_test --parallel 4
       - name: Test overlay, splitter and tab close
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
           ctest --test-dir build-mam-widgets-qt5 --output-on-failure \
-            -R "^(mam_overlay_scrollbar|mam_thin_splitter|mam_tab_close)$"
+            -R "^(mam_overlay_scrollbar|mam_thin_splitter|mam_tab_close|mam_history_sqlite_policy)$"
