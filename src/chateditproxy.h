@@ -28,6 +28,7 @@ class ChatEdit;
 class QLayout;
 class QTextEdit;
 class MessagePreview;
+class QTimer;
 
 class ChatEditProxy : public QWidget {
     Q_OBJECT
@@ -60,12 +61,14 @@ private:
     virtual ChatEdit *createTextEdit();
     void              moveData(QTextEdit *newTextEdit, QTextEdit *oldTextEdit) const;
     void              updateLayout();
+    void              refreshReplyTimestamp();
 
     bool      lineEditEnabled_;
     ChatEdit *textEdit_;
     QLayout  *layout_;
     MessagePreview *replyPreview_ = nullptr;
     ChatReply reply_;
+    QTimer *replyTimestampTimer_ = nullptr;
     QHash<QString, ChatReply> sentReplies_;
 };
 
