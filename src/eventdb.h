@@ -152,6 +152,14 @@ public:
 
     virtual HistoryArchive::Page archivePageAtIndex(const HistoryArchive::Key &, int, int, int) { return {}; }
     virtual HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) { return {}; }
+    enum class ArchiveReadMode { Before, After, Index };
+    virtual void requestArchivePage(ArchiveReadMode mode, const HistoryArchive::Key &key, const QString &cursor,
+                                    int index, int limit, int snapshotCount, QObject *receiver,
+                                    std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished);
+    virtual void requestStoreArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
+                                         HistoryArchive::Page page, QObject *receiver,
+                                         std::function<void(HistoryArchive::Page, bool)> finished);
+
     // Older storage providers may omit island persistence while still displaying
     // them. Never reinterpret an island as their legacy tail checkpoint.
     virtual bool mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) { return true; }
