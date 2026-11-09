@@ -17,6 +17,57 @@
 // PsiAccount or Client: both belong to the GUI thread.
 using namespace XMPP;
 
+HistoryEventFactory::Encoded HistoryEventFactory::encode(const PsiEvent::Ptr &event)
+{
+    Encoded out;
+    if (!event)
+        return out;
+    out.direction = event->originLocal() ? 1 : 2;
+    if (event->type() == PsiEvent::Message) {
+        const auto me = event.staticCast<MessageEvent>();
+        const auto message = me->message().displayMessage();
+        out.isMessage = true;
+        out.valid = true;
+        out.timestamp = message.timeStamp().isValid() ? message.timeStamp() : me->timeStamp();
+        switch (message.type()) {
+        case Message::Type::Chat:      out.type = 1; break;
+        case Message::Type::Error:     out.type = 4; break;
+        case Message::Type::Headline:  out.type = 5; break;
+        case Message::Type::Groupchat: out.type = 9; break;
+        default:                       out.type = 0; break;
+        }
+        out.language = message.lang();
+        out.subject = message.subject(out.language);
+        out.body = message.body(out.language);
+        out.extras = HistoryMessageExtras::encode(message);
+        // The live/MAM match uses the default-language payload, not the
+        // localized fields chosen for the EDB text columns.
+        out.matchBody = message.body();
+        out.matchSubject = message.subject();
+        out.sender = message.from().full();
+        out.messageId = message.id();
+        out.replaceId = message.replaceId();
+        return out;
+    }
+    if (event->type() == PsiEvent::Auth) {
+        const auto auth = event.staticCast<AuthEvent>();
+        const QString kind = auth->authType();
+        if (kind == QLatin1String("subscribe"))
+            out.type = 3;
+        else if (kind == QLatin1String("subscribed"))
+            out.type = 6;
+        else if (kind == QLatin1String("unsubscribe"))
+            out.type = 7;
+        else if (kind == QLatin1String("unsubscribed"))
+            out.type = 8;
+        else
+            return out;
+        out.timestamp = auth->timeStamp();
+        out.valid = true;
+    }
+    return out;
+}
+
 PsiEvent::Ptr HistoryEventFactory::decode(PsiCon *psi, const QSqlRecord &record)
 {
     PsiAccount *pa = psi->contactList()->getAccount(record.value("acc_id").toString());
