@@ -2,6 +2,7 @@
 #pragma once
 
 #include "historyarchive.h"
+#include "historyeventpayload.h"
 
 #include <QDateTime>
 #include <QObject>
@@ -32,6 +33,23 @@ struct HistoryReadResult {
 };
 Q_DECLARE_METATYPE(HistoryReadResult)
 
+struct HistoryWriteRequest {
+    enum Type { Append, Erase };
+    int id = 0;
+    Type type = Append;
+    QString account, peer;
+    int jidType = 0;
+    HistoryEventFactory::Encoded encoded;
+};
+Q_DECLARE_METATYPE(HistoryWriteRequest)
+
+struct HistoryWriteResult {
+    int id = 0;
+    bool success = false;
+    bool inserted = false;
+};
+Q_DECLARE_METATYPE(HistoryWriteResult)
+
 class HistorySqlReadWorker final : public QObject {
     Q_OBJECT
 public:
@@ -40,10 +58,12 @@ public:
 public slots:
     void open();
     void read(HistoryReadRequest request);
+    void write(HistoryWriteRequest request);
     void close();
 
 signals:
     void completed(HistoryReadResult result);
+    void writeCompleted(HistoryWriteResult result);
     void stopped();
 
 private:
