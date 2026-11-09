@@ -56,6 +56,14 @@ void HistorySqlReadWorker::open()
         qWarning() << "[history-db] Could not enable FULL synchronization:" << policy.lastError().text();
     if (!policy.exec(QStringLiteral("PRAGMA foreign_keys=ON")))
         qWarning() << "[history-db] Cannot enable foreign keys:" << policy.lastError().text();
+    policy.finish();
+
+    // Retain the old EDB batching benefit, with a much shorter maximum
+    // latency. This timer and all pending results live in the worker.
+    appendCommitTimer_ = new QTimer(this);
+    appendCommitTimer_->setSingleShot(true);
+    appendCommitTimer_->setInterval(40);
+    connect(appendCommitTimer_, &QTimer::timeout, this, &HistorySqlReadWorker::flushPendingAppends);
 }
 
 void HistorySqlReadWorker::read(HistoryReadRequest request)
@@ -67,6 +75,9 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    // A reader must observe all earlier appends in the same worker queue.
+    // Complete their transaction and notify write handles before reading.
+    flushPendingAppends();
     ReadSnapshot snapshot(db_);
     if (!snapshot.active()) {
         qWarning() << "[history-read] Cannot open read transaction:" << db_.lastError().text();
@@ -283,6 +294,10 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
         emit writeCompleted(result);
         return;
     }
+    // Erase and atomic MAM stores are barriers: they must neither overtake
+    // queued appends nor be accidentally included in an append batch.
+    if (request.type != HistoryWriteRequest::Append)
+        flushPendingAppends();
     if (request.type == HistoryWriteRequest::StorePage) {
         // storePage owns its transaction: message rows, identity, revisions,
         // adjacency and persistent cursor either all commit or roll back.
@@ -296,13 +311,17 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
     // A deferred BEGIN can otherwise observe an old WAL snapshot and fail
     // with SQLITE_BUSY_SNAPSHOT when a second connection commits first.
     // BEGIN IMMEDIATE honors the configured busy timeout without GUI stalls.
-    QSqlQuery begin(db_);
-    if (!begin.exec(QStringLiteral("BEGIN IMMEDIATE TRANSACTION"))) {
-        qWarning() << "[history-db] Cannot begin history write:" << begin.lastError().text();
-        emit writeCompleted(result);
-        return;
+    if (!appendTransactionOpen_) {
+        QSqlQuery begin(db_);
+        if (!begin.exec(QStringLiteral("BEGIN IMMEDIATE TRANSACTION"))) {
+            qWarning() << "[history-db] Cannot begin history write:" << begin.lastError().text();
+            emit writeCompleted(result);
+            return;
+        }
+        begin.finish();
+        if (request.type == HistoryWriteRequest::Append)
+            appendTransactionOpen_ = true;
     }
-    begin.finish();
 
     // One write is one transaction. In particular, events, revisions and
     // message-state materialization are never committed separately.
@@ -405,6 +424,35 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
             ok = HistoryArchive::invalidate(db_, request.account, request.peer);
     }
 
+    if (request.type == HistoryWriteRequest::Append) {
+        if (!ok) {
+            // No successful callback may escape a failed batch. All writes
+            // in the transaction roll back together, including revisions.
+            db_.rollback();
+            appendTransactionOpen_ = false;
+            if (appendCommitTimer_)
+                appendCommitTimer_->stop();
+            for (auto &pending : pendingAppends_) {
+                pending.success = false;
+                pending.inserted = false;
+                emit writeCompleted(pending);
+            }
+            pendingAppends_.clear();
+            result.inserted = false;
+            emit writeCompleted(result);
+            return;
+        }
+        pendingAppends_.append(result);
+        if (pendingAppends_.size() >= 3) {
+            flushPendingAppends();
+        } else if (appendCommitTimer_ && !appendCommitTimer_->isActive()) {
+            appendCommitTimer_->start();
+        }
+        return;
+    }
+
+    // Erase operations are standalone transactions and notify only after
+    // commit. MAM StorePage already committed inside HistoryArchive.
     if (ok)
         ok = db_.commit();
     if (!ok)
@@ -415,9 +463,33 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
     emit writeCompleted(result);
 }
 
+void HistorySqlReadWorker::flushPendingAppends()
+{
+    Q_ASSERT(QThread::currentThread() == thread());
+    if (!appendTransactionOpen_)
+        return;
+    if (appendCommitTimer_)
+        appendCommitTimer_->stop();
+    // FULL-sync durability applies at each batch commit, not each message.
+    const bool committed = db_.commit();
+    if (!committed) {
+        qWarning() << "[history-db] Failed to commit append batch:" << db_.lastError().text();
+        db_.rollback();
+    }
+    appendTransactionOpen_ = false;
+    for (auto &result : pendingAppends_) {
+        result.success = committed;
+        if (!committed)
+            result.inserted = false;
+        emit writeCompleted(result);
+    }
+    pendingAppends_.clear();
+}
+
 void HistorySqlReadWorker::close()
 {
     Q_ASSERT(QThread::currentThread() == thread());
+    flushPendingAppends(); // Shutdown is also a durability boundary.
     db_.close();
     db_ = QSqlDatabase();
     if (!connectionName_.isEmpty())
