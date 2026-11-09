@@ -39,6 +39,7 @@ private slots:
             }
             std::atomic_bool opened { false };
             std::atomic_bool checkpointed { false };
+            std::atomic_int checkpointCalls { 0 };
             std::atomic_bool wrongThread { false };
             auto *guiThread = QThread::currentThread();
             {
@@ -50,6 +51,7 @@ private slots:
                     [&] {
                         wrongThread.store(wrongThread.load() || QThread::currentThread() == guiThread);
                         checkpointed.store(true);
+                        ++checkpointCalls;
                     });
                 worker.start();
                 QTRY_VERIFY(opened.load());
@@ -65,9 +67,13 @@ private slots:
                     QVERIFY(q.exec(QStringLiteral("INSERT INTO messages(body) VALUES('persisted')")));
                     QVERIFY(db.commit());
                 }
-                worker.requestCheckpoint();
+                for (int i = 0; i < 20; ++i)
+                    worker.requestCheckpoint(); // Requests coalesce before GUI event delivery.
                 QTRY_VERIFY(checkpointed.load());
                 QVERIFY(!wrongThread.load());
+                QCOMPARE(checkpointCalls.load(), 1);
+                worker.requestCheckpoint(); // Once completed, a new operation is allowed.
+                QTRY_COMPARE(checkpointCalls.load(), 2);
             }
             db.close();
         }
