@@ -147,3 +147,15 @@ add_executable(mam_tray_badge_test TrayBadgePainterTest.cpp
 target_include_directories(mam_tray_badge_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_tray_badge_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_tray_badge COMMAND mam_tray_badge_test)
+
+# Exercise the actual multi-row tab close buttons, including stale clicks
+# arriving while their removed page awaits deferred deletion.
+add_executable(mam_tab_close_test TabCloseTest.cpp
+    ${PSI_WIDGETS}/tabbar.cpp ${PSI_WIDGETS}/tabbar.h)
+target_include_directories(mam_tab_close_test BEFORE PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/mock
+    ${CMAKE_CURRENT_LIST_DIR}/../../src
+    ${PSI_WIDGETS})
+target_link_libraries(mam_tab_close_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_tab_close COMMAND mam_tab_close_test)
