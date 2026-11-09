@@ -5097,6 +5097,17 @@ private slots:
             // renderer then materializes the preferred presentation directly.
             list.setTimestampMode(ChatTimestamp::Mode::Clock);
             list.setTheme(NativeChatThemes::instance()->theme(id));
+            // Native row replacement settles asynchronously when the theme
+            // changes layout height. First confirm the requested theme landed.
+            if (classic)
+                QTRY_VERIFY(list.itemWidget(0)
+                            && !list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
+            else if (id == QLatin1String("bubble"))
+                QTRY_VERIFY(list.itemWidget(0)
+                            && list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
+            else
+                QTRY_VERIFY(list.itemWidget(0)
+                            && !list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
             QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
             QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
             QTRY_VERIFY(sourceTime(classic).contains(clock));
