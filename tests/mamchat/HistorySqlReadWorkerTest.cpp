@@ -101,6 +101,50 @@ private slots:
         QVERIFY(rows.rows.first().value(QStringLiteral("id")).toLongLong()
                 != rows.rows.last().value(QStringLiteral("id")).toLongLong());
 
+        // The MAM cache page is written atomically on the same worker as
+        // live messages and read again without a separate SQL owner.
+        HistoryWriteRequest store;
+        store.id = 7;
+        store.type = HistoryWriteRequest::StorePage;
+        store.archiveKey = { QStringLiteral("account"), QStringLiteral("alice@example.test"),
+                             QStringLiteral("bob@example.test"), false };
+        store.limit = 40;
+        HistoryArchive::Entry entry;
+        entry.uid = QStringLiteral("archive-seven");
+        entry.timestamp = QDateTime::fromMSecsSinceEpoch(2000, Qt::UTC);
+        entry.messageId = QStringLiteral("client-seven");
+        entry.sender = append.peer;
+        entry.body = QStringLiteral("archived message");
+        entry.xml = QStringLiteral("<result id='archive-seven' xmlns='urn:xmpp:mam:2'>"
+                                   "<forwarded xmlns='urn:xmpp:forward:0'><delay "
+                                   "xmlns='urn:xmpp:delay' stamp='1970-01-01T00:00:02Z'/>"
+                                   "<message xmlns='jabber:client' id='client-seven' type='chat' "
+                                   "from='bob@example.test/resource' to='alice@example.test'>"
+                                   "<body>archived message</body></message></forwarded></result>");
+        store.archivePage.entries.append(entry);
+        store.archivePage.stable = true;
+        store.archivePage.complete = true;
+        QVERIFY(enqueueWrite(store));
+        QTRY_COMPARE(wrote.count(), 1);
+        const auto stored = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QVERIFY(stored.success);
+        QCOMPARE(stored.archivePage.entries.size(), 1);
+        QVERIFY(stored.archivePage.entries.first().eventId > 0);
+
+        HistoryReadRequest archiveRead;
+        archiveRead.id = 8;
+        archiveRead.type = HistoryReadRequest::ArchiveBefore;
+        archiveRead.archiveKey = store.archiveKey;
+        archiveRead.limit = 40;
+        QVERIFY(enqueueRead(archiveRead));
+        QTRY_COMPARE(read.count(), 1);
+        const auto loaded = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(loaded.success);
+        QVERIFY(loaded.archivePage.found);
+        QCOMPARE(loaded.archivePage.entries.size(), 1);
+        QCOMPARE(loaded.archivePage.entries.first().uid, entry.uid);
+        QCOMPARE(loaded.archivePage.entries.first().eventId, stored.archivePage.entries.first().eventId);
+
         HistoryWriteRequest erase;
         erase.id = 4;
         erase.type = HistoryWriteRequest::Erase;
