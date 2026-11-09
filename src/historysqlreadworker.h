@@ -8,6 +8,7 @@
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QString>
+#include <utility>
 
 // Only immutable value objects cross the EDB reader's queued connections.
 // No PsiEvent, PsiAccount or SQLite connection ever crosses into the worker.
