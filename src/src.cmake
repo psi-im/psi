@@ -69,6 +69,8 @@ list(APPEND FORMS
 list(APPEND HEADERS
     messagestate.h
     historyarchive.h
+    historysqlitepolicy.h
+    historywalcheckpoint.h
     aboutdlg.h
     abstracttreeitem.h
     abstracttreemodel.h
