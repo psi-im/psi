@@ -142,17 +142,18 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
             reactionTarget = uid;
         if (retractionTarget.isEmpty())
             retractionTarget = uid;
-        if (auto resolved = account->edb()->resolvedHistoryEvent(task->eventId(uid))) {
-            if (resolved->event()->type() == PsiEvent::Message) {
-                archived     = resolved->event().staticCast<MessageEvent>()->message().displayMessage();
-                historyId    = resolved->id().toLongLong(); // Same original position as the local EDB projection.
-                messageState = resolved->messageFlags();
-                revisionTime = resolved->revisionTime();
-                if (!resolved->reactionTarget().isEmpty())
-                    reactionTarget = resolved->reactionTarget();
-                if (!resolved->retractionTarget().isEmpty())
-                    retractionTarget = resolved->retractionTarget();
-            }
+        // HistorySync has already resolved the entire page in the SQL
+        // worker. Never synchronously query SQLite while painting 40 rows.
+        const auto resolved = task->resolvedMessage(uid);
+        if (resolved.found) {
+            archived = resolved.message;
+            historyId = resolved.historyId; // Root ID preserves the original position.
+            messageState = resolved.messageState;
+            revisionTime = resolved.revisionTime;
+            if (!resolved.reactionTarget.isEmpty())
+                reactionTarget = resolved.reactionTarget;
+            if (!resolved.retractionTarget.isEmpty())
+                retractionTarget = resolved.retractionTarget;
         }
         const bool local
             = room ? archived.from().resource() == ownNick : archived.from().compare(account->jid(), false);
