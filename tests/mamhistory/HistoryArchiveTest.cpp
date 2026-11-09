@@ -1013,8 +1013,10 @@ private slots:
         deliveries.stable = deliveries.complete = true;
         auto first = entry(QStringLiteral("archive-one"));
         first.messageId.clear();
+        first.extra = QStringLiteral("{}"); // No legacy client ID hiding in the persisted envelope.
         auto second = entry(QStringLiteral("archive-two"));
         second.messageId.clear();
+        second.extra = QStringLiteral("{}");
         second.timestamp = first.timestamp;
         second.body = first.body;
         deliveries.entries = { first, second };
