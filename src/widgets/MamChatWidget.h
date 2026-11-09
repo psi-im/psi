@@ -5,6 +5,7 @@
 #include "../../plugins/include/nativechatthemeprovider.h"
 #include "LongListWidget.h"
 #include "MamHistorySource.h"
+#include "chattimestamp.h"
 #include "messageview.h"
 #include <QPixmap>
 #include <QPointer>
@@ -80,6 +81,8 @@ public:
     // Without a renderer, the theme is laid out from its description alone.
     // A renderer must outlive the rows it builds (see nativechatrenderer.h).
     void           setTheme(const NativeChatTheme &theme);
+    void           setTimestampMode(ChatTimestamp::Mode mode);
+    ChatTimestamp::Mode timestampMode() const { return timestampMode_; }
     void           setAvatarResolver(std::function<QPixmap(const MessageView &)> resolver);
     void           setNicknameColorResolver(std::function<QColor(const MessageView &)> resolver);
     void           refreshNicknameColors();
@@ -246,7 +249,7 @@ private:
     QString copiedMessage(const Row &) const;
     QMenu *createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition);
     int  replyTargetIndex(const ChatReply &) const;
-    bool resolveReply(const ChatReply &, QString &author, QString &html) const;
+    bool resolveReply(const ChatReply &, QString &author, QString &html, QDateTime &when) const;
     void navigateToReply(const ChatReply &);
     void showReply(MessagePreview *preview, const ChatReply &reply) const;
     // A message's text as its row shows it, as rich text.
@@ -263,6 +266,7 @@ private:
     // renderer are passed back to it.
     quint64                                       rendererGeneration_ = 0;
     bool                                          groupChat_   = false;
+    ChatTimestamp::Mode                           timestampMode_ = ChatTimestamp::Mode::Relative;
     FileSharingDeviceOpener                      *mediaOpener_ = nullptr;
     // Keep opened temporary attachments on disk for the lifetime of this chat.
     QList<std::shared_ptr<QTemporaryDir>>         openedTemporaryFiles_;
