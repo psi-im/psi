@@ -31,6 +31,7 @@ private slots:
                 "type INTEGER,direction INTEGER,subject TEXT,m_text TEXT,lang TEXT,extra_data TEXT,"
                 "history_state INTEGER DEFAULT 0,message_flags INTEGER DEFAULT 0)")));
             QVERIFY(q.exec(QStringLiteral("CREATE TABLE message_revisions(event_id INTEGER,root_id INTEGER)")));
+            QVERIFY(q.exec(QStringLiteral("CREATE TABLE message_state_refs(event_id INTEGER,kind INTEGER,target TEXT)")));
             QVERIFY(q.exec(QStringLiteral("CREATE TABLE archive_items(event_id INTEGER,uid TEXT,archive TEXT,xml TEXT)")));
             QVERIFY(q.exec(QStringLiteral("INSERT INTO contacts VALUES (1,'account','old.example/peer')")));
             // A legacy server has no MAM, origin-id or stanza-id. Three
@@ -42,6 +43,8 @@ private slots:
                 q.bindValue(QStringLiteral(":id"), i);
                 QVERIFY(q.exec());
             }
+            QVERIFY(q.exec(QStringLiteral("UPDATE events SET message_flags=1 WHERE id=3")));
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO message_state_refs VALUES(3,1,'client-id-3')")));
             QVERIFY(db.commit());
             db.close();
         }
@@ -114,6 +117,20 @@ private slots:
         result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
         QVERIFY(result.success);
         QCOMPARE(result.rows.size(), 3);
+
+        // The persisted XEP-0333 cursor is restored through the same
+        // worker, without blocking an activated chat's GUI thread.
+        HistoryReadRequest displayed;
+        displayed.id = 7;
+        displayed.type = HistoryReadRequest::DisplayedCursor;
+        displayed.account = local.account;
+        displayed.peer = local.peer;
+        QVERIFY(send(displayed));
+        QTRY_COMPARE(spy.count(), 1);
+        result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.cursor.eventId, qint64(3));
+        QCOMPARE(result.cursor.messageId, QStringLiteral("client-id-3"));
 
         // A writer can commit another live message concurrently. A worker
         // snapshot never leaks an uncommitted row or loses earlier messages.
