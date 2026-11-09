@@ -172,8 +172,11 @@ XMPP::Message HistorySync::message(const QString &uid) const
         const auto forwarded = element.firstChildElement("forwarded");
         // A cached plaintext revision can be replayed without decrypting the
         // same OMEMO ciphertext a second time (ratchets may reject duplicates).
-        const auto saved = context_.lookup(
-            key_, uid, QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate));
+        const auto saved = context_.lookupAsync
+            ? cachedLookups_.value(uid)
+            : context_.lookup(key_, uid,
+                              QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"),
+                                                    Qt::ISODate));
         const auto &plain = saved.message;
         if (!plain.isNull()
             && (!plain.body().isEmpty() || saved.protocolOnly || plain.messageReceipt() == XMPP::ReceiptReceived
@@ -243,6 +246,29 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
     if (cancelled_)
         return;
     if (context_.logging()) {
+        if (context_.lookupAsync && saved.found && saved.stable && !saved.entries.isEmpty()
+            && !savedLookupsStarted_) {
+            savedLookupsStarted_ = true;
+            pendingSavedPage_ = std::move(saved);
+            savedLookupsRemaining_ = pendingSavedPage_.entries.size();
+            // Every read runs on the same SQL worker. Collect all decoded
+            // projections before validating/replaying the cached MAM page.
+            for (const auto &entry : pendingSavedPage_.entries) {
+                const auto element = readResult(entry.xml);
+                const QDateTime stamp = QDateTime::fromString(
+                    element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
+                    Qt::ISODate);
+                context_.lookupAsync(
+                    key_, entry.uid, stamp, this, [this, uid = entry.uid](CachedMessage cached) {
+                        if (cancelled_)
+                            return;
+                        cachedLookups_.insert(uid, std::move(cached));
+                        if (--savedLookupsRemaining_ == 0)
+                            processSavedPage(std::move(pendingSavedPage_));
+                    });
+            }
+            return;
+        }
             qCDebug(PsiMam::historyLog) << "cache account=" << key_.account << "peer=" << key_.peer
                                         << "mode=" << query_.mode << "index=" << query_.index << "before=" << before_
                                         << "after=" << after_ << "limit=" << pageSize_ << "hit=" << saved.found
@@ -256,11 +282,13 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
                     break;
                 }
                 xml.append(element);
-                const auto row = context_.lookup(
-                    key_, entry.uid,
-                    QDateTime::fromString(
-                        element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
-                        Qt::ISODate));
+                const auto row = context_.lookupAsync
+                    ? cachedLookups_.value(entry.uid)
+                    : context_.lookup(
+                          key_, entry.uid,
+                          QDateTime::fromString(
+                              element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
+                              Qt::ISODate));
                 if (!row.message.isNull()) {
                     decoded_.insert(entry.uid, row.message);
                     if (!row.message.body().isNull())
@@ -397,7 +425,17 @@ void HistorySync::decodeNext()
             && encrypted.namespaceURI() != QLatin1String("eu.siacs.conversations.axolotl"))
             continue;
         const auto stamp = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
-        const auto saved = context_.lookup(key_, uid, stamp);
+        if (context_.lookupAsync && !cachedLookups_.contains(uid)) {
+            context_.lookupAsync(key_, uid, stamp, this, [this, uid](CachedMessage cached) {
+                if (cancelled_)
+                    return;
+                cachedLookups_.insert(uid, std::move(cached));
+                --decodeIndex_;
+                QTimer::singleShot(0, this, &HistorySync::decodeNext);
+            });
+            return;
+        }
+        const auto saved = context_.lookupAsync ? cachedLookups_.value(uid) : context_.lookup(key_, uid, stamp);
         if (!saved.message.isNull()) {
             decoded_.insert(uid, saved.message);
             if (!saved.message.body().isNull())
@@ -411,13 +449,27 @@ void HistorySync::decodeNext()
         // recorded outgoing plaintext. The account JID is bare, and a restart
         // can bind a different resource. Storage checks the recorded sender;
         // peers' unverified client IDs must never use this fallback.
-        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, false) && context_.ownPlaintext
+        if (!key_.room && XMPP::Jid(stanza.attribute("from")).compare(context_.owner, false) && (context_.ownPlaintext || context_.ownPlaintextAsync)
             && PsiMam::belongsToConversation(context_.owner.bare(), key_.peer,
                                              XMPP::Jid(stanza.attribute("from")).bare(),
                                              XMPP::Jid(stanza.attribute("to")).bare())) {
             const auto time
                 = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
-            const auto own = context_.ownPlaintext(key_, stanza.attribute("id"), stanza.attribute("from"), time);
+            if (context_.ownPlaintextAsync && !ownLookups_.contains(uid)) {
+                context_.ownPlaintextAsync(
+                    key_, stanza.attribute("id"), stanza.attribute("from"), time, this,
+                    [this, uid](CachedMessage cached) {
+                        if (cancelled_)
+                            return;
+                        ownLookups_.insert(uid, std::move(cached));
+                        --decodeIndex_;
+                        QTimer::singleShot(0, this, &HistorySync::decodeNext);
+                    });
+                return;
+            }
+            const auto own = context_.ownPlaintextAsync
+                ? ownLookups_.value(uid)
+                : context_.ownPlaintext(key_, stanza.attribute("id"), stanza.attribute("from"), time);
             if (!own.message.isNull()) {
                 decoded_.insert(uid, own.message);
                 if (!own.message.body().isNull())
