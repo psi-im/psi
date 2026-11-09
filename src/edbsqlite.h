@@ -160,7 +160,6 @@ private:
 
 private:
     bool          appendEvent(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int);
-    PsiEvent::Ptr getEvent(const QSqlRecord &record);
     qint64        ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type);
     int           rowCount(const QString &accId, const XMPP::Jid &jid, const QDateTime before);
     bool          eraseHistory(const QString &accId, const XMPP::Jid &);
