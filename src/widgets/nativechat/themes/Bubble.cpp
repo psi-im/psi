@@ -4,7 +4,9 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QFontMetricsF>
+#include <QLabel>
 #include <QPaintEvent>
+#include <QPointer>
 #include <QPainter>
 #include <QPainterPath>
 #include <QTransform>
@@ -241,6 +243,60 @@ QHBoxLayout *bubbleRowLayout(Canvas &canvas)
     return outer;
 }
 
+// The clock is an absolute-positioned sibling of the bubble. It must not
+// participate in the layout, or a hidden clock shifts centred notice bubbles.
+class NoticeClockPositioner final : public QObject {
+public:
+    NoticeClockPositioner(QLabel *clock, QWidget *bubble, QWidget *row)
+        : QObject(clock), clock_(clock), bubble_(bubble), row_(row)
+    {
+        clock_->setParent(row_);
+        bubble_->installEventFilter(this);
+        row_->installEventFilter(this);
+        clock_->show();
+        reposition();
+    }
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (watched == bubble_ || watched == row_) {
+            switch (event->type()) {
+            case QEvent::Move:
+            case QEvent::Resize:
+            case QEvent::Show:
+            case QEvent::LayoutRequest:
+            case QEvent::LayoutDirectionChange:
+            case QEvent::ParentChange:
+                reposition();
+                break;
+            default:
+                break;
+            }
+        }
+        return QObject::eventFilter(watched, event);
+    }
+
+private:
+    void reposition()
+    {
+        if (!clock_ || !bubble_ || !row_)
+            return;
+        clock_->adjustSize();
+        const QPoint origin = bubble_->mapTo(row_, QPoint());
+        const bool rtl = bubble_->layoutDirection() == Qt::RightToLeft;
+        constexpr int gap = 6;
+        const int x = rtl ? origin.x() + bubble_->width() + gap
+                          : origin.x() - clock_->width() - gap;
+        clock_->move(x, origin.y() + (bubble_->height() - clock_->height()) / 2);
+        clock_->raise();
+    }
+
+    QPointer<QLabel>  clock_;
+    QPointer<QWidget> bubble_;
+    QPointer<QWidget> row_;
+};
+
 // Messages in speech bubbles, based on Modern. Incoming messages sit on the
 // left and our own on the right, each with the avatar on its outer side and
 // the bubble's tail pointing at it.
@@ -265,10 +321,10 @@ public:
             auto *bubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, canvas.row());
             bubble->column()->addWidget(canvas.take(Canvas::Body), 0, Qt::AlignTop);
             outer->addStretch(1);
-            if (auto *time = canvas.take(Canvas::NoticeTimestamp))
-                outer->addWidget(time, 0, Qt::AlignVCenter);
             outer->addWidget(bubble, 0, Qt::AlignTop);
             outer->addStretch(1);
+            if (auto *clock = qobject_cast<QLabel *>(canvas.take(Canvas::NoticeTimestamp)))
+                new NoticeClockPositioner(clock, bubble, canvas.row());
             canvas.setActionAnchor(bubble);
             return;
         }

@@ -2588,11 +2588,27 @@ private slots:
                 auto *effect = qobject_cast<QGraphicsOpacityEffect *>(time->graphicsEffect());
                 QVERIFY(effect);
                 QCOMPARE(effect->opacity(), 0.0);
+                auto *noticeBubble = row->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *regularTime = chat.itemWidget(2)->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+                QVERIFY(noticeBubble && regularTime);
+                QCOMPARE(time->font().family(), regularTime->font().family());
+                QCOMPARE(time->font().pointSizeF(), regularTime->font().pointSizeF());
+                QCOMPARE(time->palette().color(QPalette::Text), regularTime->palette().color(QPalette::Text));
+                const auto centred = [row, noticeBubble] {
+                    const int centre = noticeBubble->mapTo(row, QPoint(noticeBubble->width() / 2, 0)).x();
+                    return qAbs(centre - row->width() / 2) <= 2;
+                };
+                QTRY_VERIFY(centred());
+                QVERIFY(time->x() + time->width() <= noticeBubble->mapTo(row, QPoint()).x());
                 enterWidget(row);
                 QTRY_VERIFY(effect->opacity() > 0.99);
                 QEvent leave(QEvent::Leave);
                 QApplication::sendEvent(row, &leave);
                 QTRY_VERIFY(effect->opacity() < 0.01);
+                QVERIFY(centred());
+                chat.setLayoutDirection(Qt::RightToLeft);
+                QTRY_VERIFY(centred());
+                QTRY_VERIFY(time->x() >= noticeBubble->mapTo(row, QPoint()).x() + noticeBubble->width());
             } else {
                 QVERIFY(!time);
             }

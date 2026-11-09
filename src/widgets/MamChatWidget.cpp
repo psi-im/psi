@@ -2867,11 +2867,10 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
             setPartTextColor(author, nickColor.isValid() ? nickColor : palette().color(QPalette::Text));
     }
     auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-    if (!label)
+    auto *noticeClock = row->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
+    if (!label && !noticeClock)
         return;
-    // Always derive the timestamp font from the CHAT font, never the label's
-    // previous font: recreating a row or switching themes must not
-    // progressively shrink it.
+    // Both clocks use the same theme-specific font and colour options.
     QFont timeFont = font();
     if (!qFuzzyIsNull(options.timePointDelta)) {
         if (timeFont.pointSizeF() > 0)
@@ -2879,10 +2878,18 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
         else if (timeFont.pixelSize() > 0)
             timeFont.setPixelSize(qMax(9, timeFont.pixelSize() + qRound(options.timePointDelta)));
     }
-    label->setFont(timeFont);
     QColor color = options.timeInNickColor && nickColor.isValid() ? nickColor : palette().color(QPalette::Text);
     color.setAlpha(qBound(0, options.timeAlpha, 255));
-    setPartTextColor(label, color);
+    if (label) {
+        label->setFont(timeFont);
+        setPartTextColor(label, color);
+    }
+    if (noticeClock) {
+        noticeClock->setFont(timeFont);
+        setPartTextColor(noticeClock, color);
+    }
+    if (!label)
+        return;
     // Timestamp marks have no Q_OBJECT, so Qt6's findChild<T>() rejects
     // them; find the sibling QLabels and cast with RTTI instead.
     for (auto *sibling : label->parentWidget()->findChildren<QLabel *>(QString(), Qt::FindDirectChildrenOnly)) {
@@ -2954,6 +2961,21 @@ void MamChatWidget::updateTimestamps(bool forcePreferenceChange)
                 const qint64 delay = ChatTimestamp::nextChangeMs(when, now);
                 if (delay > 0)
                     nextRefresh = qMin(nextRefresh, delay);
+            }
+            // While a replacement is staged the old row remains visible.
+            // Refresh its quoted timestamp using the NEW theme's policy.
+            if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"))) {
+                const auto quotedAt = preview->property("_psiQuotedAt").toDateTime();
+                if (quotedAt.isValid()) {
+                    preview->setTimestamp(ChatTimestamp::formatPattern(quotedAt, theme_.timestampFormat,
+                                                                      timestampMode_, now),
+                                          preview->property("_psiQuotedFullTime").toString());
+                    if (ChatTimestamp::usesRelative(theme_.timestampFormat, timestampMode_)) {
+                        const qint64 delay = ChatTimestamp::nextChangeMs(quotedAt, now);
+                        if (delay > 0)
+                            nextRefresh = qMin(nextRefresh, delay);
+                    }
+                }
             }
             continue;
         }
