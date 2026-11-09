@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            cmake ninja-build g++ qtbase5-dev qtmultimedia5-dev
+            cmake ninja-build g++ qtbase5-dev qtmultimedia5-dev libqt5sql5-sqlite
       - name: Configure focused widget regressions
         run: |
           cmake -S tests/mamchat -B build-mam-widgets-qt5 -G Ninja \
@@ -48,7 +48,7 @@ jobs:
         run: |
           cmake --build build-mam-widgets-qt5 \
             --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test mam_history_sqlite_policy_test --parallel 4
-      - name: Test overlay, splitter and tab close
+      - name: Test overlay, tabs and history SQLite
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
