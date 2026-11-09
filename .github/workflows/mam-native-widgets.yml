@@ -27,9 +27,7 @@ on:
       - 'src/edbsqlite.*'
       - 'src/historysqlitepolicy.h'
       - 'src/historywalcheckpoint.h'
-      - 'src/edbsqlite.*'
-      - 'src/historysqlitepolicy.h'
-      - 'src/historywalcheckpoint.h'
+      - 'src/historysqlreadworker.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   pull_request:
@@ -55,6 +53,8 @@ on:
       - 'tests/mamchat/**'
       - 'tests/mamhistory/**'
       - 'src/historyarchive.*'
+      - 'src/edbsqlite.*'
+      - 'src/historysqlreadworker.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   workflow_dispatch:
