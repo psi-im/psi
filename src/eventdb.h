@@ -28,6 +28,7 @@
 #include <QDateTime>
 #include <functional>
 #include <QFile>
+#include <QHash>
 #include <QObject>
 #include <QSharedPointer>
 #include <QTimer>
@@ -132,6 +133,8 @@ public:
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
     virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }
+    virtual void requestResolvedHistoryEvents(const QList<qint64> &, QObject *receiver,
+                                               std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished);
     virtual EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {})
     {
         return {};
