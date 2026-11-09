@@ -28,7 +28,6 @@
 
 #include <QDateTime>
 
-class HistoryWalCheckpoint;
 class QThread;
 #include <QHash>
 #include <QObject>
@@ -169,9 +168,6 @@ private:
     int                     maxUncommitedSecs;
     unsigned int            commitByTimeoutSecs;
     QTimer                 *commitTimer;
-    QTimer                 *checkpointTimer_ = nullptr;
-    HistoryWalCheckpoint  *checkpointWorker_ = nullptr;
-    bool                   walEnabled_ = false;
     QList<item_query_req *> rlist;
     QueryStorage            queryes;
     QThread                 *historyReadThread_ = nullptr;
