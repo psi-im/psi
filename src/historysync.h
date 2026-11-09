@@ -29,6 +29,14 @@ public:
         XMPP::Message message;
         bool          protocolOnly = false;
     };
+    struct ResolvedMessage {
+        XMPP::Message message;
+        qint64        historyId = 0;
+        MessageState::Flags messageState;
+        QDateTime     revisionTime;
+        QString       reactionTarget, retractionTarget;
+        bool          found = false;
+    };
     // Storage/account policy stays outside the protocol coordinator.
     struct Context {
         QString                                                                                accountId;
@@ -49,6 +57,8 @@ public:
                            std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)>)> readAsync;
         std::function<void(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page, QObject *,
                            std::function<void(HistoryArchive::Page, bool)>)> mergeAsync;
+        std::function<void(const QList<qint64> &, QObject *,
+                           std::function<void(QHash<qint64, ResolvedMessage>, bool)>)> resolveAsync;
     };
     static constexpr int PageSize = 40;
     HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);
@@ -65,6 +75,7 @@ public:
     QString            statusString() const { return error_; }
     QList<QDomElement> archive() const;
     qint64             eventId(const QString &uid) const;
+    ResolvedMessage    resolvedMessage(const QString &uid) const;
     XMPP::Message      message(const QString &uid) const;
     bool               protocolOnly(const QString &uid) const;
     int                requestedPageSize() const { return pageSize_; }
@@ -94,6 +105,7 @@ private:
     void                          decodeNext();
     void                          acceptPage();
     void                          finishAcceptedPage();
+    void                          finishResolvedPage();
     void                          processSavedPage(HistoryArchive::Page);
     void                          finishError(const QString &);
     bool                          parseResults(const QList<QDomElement> &, HistoryArchive::Page &);
@@ -116,5 +128,6 @@ private:
     bool                          decodingSaved_ = false, replaySaved_ = false;
     QPointer<XMPP::MAMTask>       task_;
     HistoryArchive::Page          page_;
+    QHash<qint64, ResolvedMessage> resolved_;
     bool                          success_ = false, cached_ = false, cancelled_ = false;
 };
