@@ -356,7 +356,7 @@ bool EDBSqLite::init()
                 checkpointTimer_->start();
             }, Qt::QueuedConnection);
         });
-        checkpointWorker_->start(QThread::LowPriority);
+        checkpointWorker_->start();
     }
     return true;
 }
