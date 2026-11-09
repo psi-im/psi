@@ -169,6 +169,8 @@ EDBSqLite::~EDBSqLite()
     pendingWrites_.clear();
     pendingLocalPages_.clear();
     pendingDisplayedCursors_.clear();
+    pendingArchiveReads_.clear();
+    pendingArchiveWrites_.clear();
     qDeleteAll(rlist);
     rlist.clear();
     if (checkpointTimer_)
@@ -385,6 +387,53 @@ bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &
     const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
     jidsCache.clear(); // A failed transaction must not retain an inserted contact ID.
     return ok;
+}
+
+void EDBSqLite::requestArchivePage(
+    ArchiveReadMode mode, const HistoryArchive::Key &key, const QString &cursor, int index, int limit,
+    int snapshotCount, QObject *receiver,
+    std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestArchivePage(mode, key, cursor, index, limit, snapshotCount, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->id = genUniqueId();
+    r->type = item_query_req::Type_archiveRead;
+    r->archiveKey = key;
+    r->archiveCursor = cursor;
+    r->archiveMode = mode;
+    r->archiveIndex = index;
+    r->len = limit;
+    r->snapshotCount = snapshotCount;
+    pendingArchiveReads_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
+}
+
+void EDBSqLite::requestStoreArchivePage(
+    const HistoryArchive::Key &key, const QString &before, int limit, HistoryArchive::Page page,
+    QObject *receiver, std::function<void(HistoryArchive::Page, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestStoreArchivePage(key, before, limit, std::move(page), receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->id = genUniqueId();
+    r->type = item_query_req::Type_archiveWrite;
+    r->archiveKey = key;
+    r->archiveCursor = page.checkpoint ? before : QString();
+    r->archivePage = std::move(page);
+    r->len = limit;
+    pendingArchiveWrites_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 }
 
 bool EDBSqLite::init()
@@ -606,6 +655,12 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 
 void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 {
+    if (pendingArchiveWrites_.contains(written.id)) {
+        auto pending = pendingArchiveWrites_.take(written.id);
+        if (pending.receiver)
+            pending.finished(std::move(written.archivePage), written.success);
+        return;
+    }
     auto *r = pendingWrites_.take(written.id);
     if (!r)
         return;
@@ -621,6 +676,12 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingArchiveReads_.contains(read.id)) {
+        auto pending = pendingArchiveReads_.take(read.id);
+        if (pending.receiver)
+            pending.finished(std::move(read.archivePage), std::move(read.archiveSnapshot), read.success);
+        return;
+    }
     if (pendingDisplayedCursors_.contains(read.id)) {
         auto pending = pendingDisplayedCursors_.take(read.id);
         if (pending.receiver)
@@ -662,7 +723,8 @@ void EDBSqLite::performRequests()
     const int       type = r->type;
 
     if ((type == item_query_req::Type_get || type == item_query_req::Type_find
-         || type == item_query_req::Type_local || type == item_query_req::Type_displayed)
+         || type == item_query_req::Type_local || type == item_query_req::Type_displayed
+         || type == item_query_req::Type_archiveRead)
         && historyReadThread_) {
         // Queued reads share the worker's event loop with preceding writes.
         // Do not call GUI-thread commit here: it may block in fdatasync().
@@ -670,6 +732,10 @@ void EDBSqLite::performRequests()
         read.id = r->id;
         read.type = type == item_query_req::Type_local ? HistoryReadRequest::LocalPage
             : type == item_query_req::Type_displayed ? HistoryReadRequest::DisplayedCursor
+            : type == item_query_req::Type_archiveRead
+                ? (r->archiveMode == ArchiveReadMode::After ? HistoryReadRequest::ArchiveAfter
+                   : r->archiveMode == ArchiveReadMode::Index ? HistoryReadRequest::ArchiveIndex
+                                                              : HistoryReadRequest::ArchiveBefore)
             : type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
         read.account = r->accId;
         read.peer = r->j.full();
@@ -679,7 +745,12 @@ void EDBSqLite::performRequests()
         read.start = r->start;
         read.limit = r->len;
         read.before = r->localBefore;
-        if (type == item_query_req::Type_local || type == item_query_req::Type_displayed)
+        read.archiveKey = r->archiveKey;
+        read.cursor = r->archiveCursor;
+        read.archiveIndex = r->archiveIndex;
+        read.snapshotCount = r->snapshotCount;
+        if (type == item_query_req::Type_local || type == item_query_req::Type_displayed
+            || type == item_query_req::Type_archiveRead)
             delete r; // Their completion callbacks are held separately.
         else
             pendingReads_.insert(r->id, r);
@@ -687,15 +758,25 @@ void EDBSqLite::performRequests()
         return;
     }
 
-    if ((type == item_query_req::Type_append || type == item_query_req::Type_erase) && historyReadThread_) {
+    if ((type == item_query_req::Type_append || type == item_query_req::Type_erase
+         || type == item_query_req::Type_archiveWrite) && historyReadThread_) {
         HistoryWriteRequest write;
         write.id = r->id;
-        write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append : HistoryWriteRequest::Erase;
+        write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append
+                     : type == item_query_req::Type_archiveWrite ? HistoryWriteRequest::StorePage
+                                                                 : HistoryWriteRequest::Erase;
         write.account = r->accId;
         write.peer = r->j.full();
         write.jidType = r->jidType;
         write.encoded = r->encoded;
-        pendingWrites_.insert(r->id, r);
+        write.archiveKey = r->archiveKey;
+        write.before = r->archiveCursor;
+        write.archivePage = r->archivePage;
+        write.limit = r->len;
+        if (type == item_query_req::Type_archiveWrite)
+            delete r;
+        else
+            pendingWrites_.insert(r->id, r);
         emit historyWriteRequested(write);
         return;
     }
