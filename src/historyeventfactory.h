@@ -2,6 +2,7 @@
 #pragma once
 
 #include "psievent.h"
+#include "historyeventpayload.h"
 
 #include <QSqlRecord>
 #include <QDateTime>
@@ -10,15 +11,6 @@
 class PsiCon;
 
 namespace HistoryEventFactory {
-// A value-only, immutable SQL insertion request. Encode it before crossing
-// the GUI/EDB boundary: a worker must never dereference a PsiEvent or PsiAccount.
-struct Encoded {
-    bool valid = false, isMessage = false;
-    int type = 0, direction = 2;
-    QDateTime timestamp;
-    QString subject, body, language, extras;
-    QString matchSubject, matchBody, sender, messageId, replaceId;
-};
 Encoded encode(const PsiEvent::Ptr &event);
 
 // Must be called on PsiCon's thread. Decoding can refer to PsiAccount and
