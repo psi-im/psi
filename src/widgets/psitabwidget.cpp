@@ -131,7 +131,7 @@ void PsiTabWidget::setTabTextColor(QWidget *tab, const QColor &color)
  * \param index Widget to return.
  * \return Specified widget.
  */
-QWidget *PsiTabWidget::widget(int index) { return widgets_[index]; }
+QWidget *PsiTabWidget::widget(int index) { return page(index); }
 
 void PsiTabWidget::mouseDoubleClickTab(int tab) { emit mouseDoubleClickTab(widget(tab)); }
 
@@ -147,9 +147,7 @@ int PsiTabWidget::count() { return tabBar_->count(); }
  */
 QWidget *PsiTabWidget::currentPage()
 {
-    if (currentPageIndex() == -1)
-        return nullptr;
-    return widgets_[currentPageIndex()];
+    return page(currentPageIndex());
 }
 
 void PsiTabWidget::tab_currentChanged(int tab)
@@ -371,8 +369,9 @@ void PsiTabWidget::tab_contextMenu(QContextMenuEvent *event, int tab)
 
 QWidget *PsiTabWidget::page(int index)
 {
-    Q_ASSERT(index >= 0 && index < count());
-    return widgets_[index];
+    // Close signals may outlive a tab index while a close button is awaiting
+    // deferred deletion. An assertion alone is not a release-build guard.
+    return index >= 0 && index < tabBar_->count() ? widgets_.value(index, nullptr) : nullptr;
 }
 
 /**
