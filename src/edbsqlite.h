@@ -170,6 +170,7 @@ private:
     QThread                 *historyReadThread_ = nullptr;
     HistorySqlReadWorker    *historyReader_ = nullptr;
     QHash<int, item_query_req *> pendingReads_;
+    QHash<int, item_query_req *> pendingWrites_;
     struct PendingLocalPage {
         QPointer<QObject> receiver;
         std::function<void(EDBResult, bool)> finished;
@@ -195,10 +196,12 @@ private:
 
 signals:
     void historyReadRequested(HistoryReadRequest request);
+    void historyWriteRequested(HistoryWriteRequest request);
     void historyReadStopRequested();
 
 private slots:
     void onHistoryReadCompleted(HistoryReadResult result);
+    void onHistoryWriteCompleted(HistoryWriteResult result);
     void performRequests();
     bool commit();
 };
