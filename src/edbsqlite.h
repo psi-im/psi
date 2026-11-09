@@ -140,12 +140,12 @@ private:
     struct item_query_req {
         QString       accId;
         XMPP::Jid     j;
-        int           jidType;
-        int           type; // 0 = latest, 1 = oldest, 2 = random, 3 = write
-        int           start;
-        int           len;
-        int           dir;
-        int           id;
+        int           jidType = 0;
+        int           type = 0;
+        int           start = 0;
+        int           len = 0;
+        int           dir = 0;
+        int           id = 0;
         qint64        localBefore = 0;
         QDateTime     date;
         QString       findStr;
