@@ -48,8 +48,9 @@ struct NativeChatMessageInfo {
 // NativeChatMessageRenderer::restyle() to reapply anything else.
 struct NativeChatPartOptions {
     int     avatarSize = 0;      // Pixels; 0 builds no avatar.
-    QString timeFormat;          // QDateTime format, e.g. "HH:mm" or "[HH:mm:ss]".
-                                 // Empty: relative time ("5 minutes ago"), refreshed by Psi.
+    QString timeFormat;          // Per-row output format, set by Psi's global
+                                 // timestamp preference (clock or relative).
+                                 // Theme renderers must not override that preference.
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.
@@ -60,7 +61,7 @@ struct NativeChatPartOptions {
     // Timestamp), or at the start of the message text, in one document with
     // it: wrapped lines then start at the left edge, as in Psi's classic text
     // log, and the message icon (direction, delivery, encryption) goes before
-    // the time. In the text, the time is not refreshed: give a clock format.
+    // the time. Psi updates relative time inside that text document in place.
     enum Header { HeaderParts, HeaderInText };
     Header  header = HeaderParts;
     QString authorPrefix; // Put before the nickname, e.g. "<".
