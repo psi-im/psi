@@ -9,7 +9,7 @@ on:
       - 'src/widgets/psitabwidget.*'
       - 'src/tabs/tabdlg.*'
       - 'src/historysqlitepolicy.h'
-      - 'src/historywalcheckpoint.h'
+      - 'src/historysqlreadworker.h'
       - 'src/historysqlreadworker.*'
       - 'tests/mamchat/HistorySqlReadWorkerTest.cpp'
       - 'src/edbsqlite.*'
