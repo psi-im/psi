@@ -24,6 +24,12 @@ on:
       - 'tests/mamchat/**'
       - 'tests/mamhistory/**'
       - 'src/historyarchive.*'
+      - 'src/edbsqlite.*'
+      - 'src/historysqlitepolicy.h'
+      - 'src/historywalcheckpoint.h'
+      - 'src/edbsqlite.*'
+      - 'src/historysqlitepolicy.h'
+      - 'src/historywalcheckpoint.h'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   pull_request:
@@ -124,7 +130,7 @@ jobs:
       - name: Install Qt6
         run: |
           dnf install -y git-core gcc gcc-c++ cmake ninja-build ccache \
-            qt6-qtbase-devel qt6-qtbase-gui qt6-qtmultimedia-devel
+            qt6-qtbase-devel qt6-qtbase-gui qt6-qtbase-sqlite qt6-qtmultimedia-devel
       - uses: actions/checkout@v4
         with:
           submodules: false
