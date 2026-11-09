@@ -187,6 +187,30 @@ private slots:
         rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
         QVERIFY(rows.success);
         QVERIFY(rows.rows.isEmpty());
+
+        // An invalid second append must roll back the first one in the same
+        // batch. Neither handle may be told "success" before COMMIT.
+        append.id = 10;
+        append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(4000, Qt::UTC);
+        HistoryWriteRequest invalid = append;
+        invalid.id = 11;
+        invalid.account.clear();
+        QVERIFY(enqueueWrite(append));
+        QVERIFY(enqueueWrite(invalid));
+        QTRY_COMPARE(wrote.count(), 2);
+        const auto rolledBack = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        const auto rejected = qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first());
+        QCOMPARE(rolledBack.id, 10);
+        QCOMPARE(rejected.id, 11);
+        QVERIFY(!rolledBack.success);
+        QVERIFY(!rejected.success);
+        page.id = 12;
+        QVERIFY(enqueueRead(page));
+        QTRY_COMPARE(read.count(), 1);
+        rows = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(rows.success);
+        QVERIFY(rows.rows.isEmpty());
+
         QVERIFY(QMetaObject::invokeMethod(worker, "close", Qt::QueuedConnection));
         QVERIFY(thread.wait(5000));
     }
