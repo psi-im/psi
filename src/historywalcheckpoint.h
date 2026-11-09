@@ -7,7 +7,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QThread>
-#include <functional>
 #include <utility>
 
 // The worker owns its SQLite connection exclusively. No database handle,
@@ -16,12 +15,7 @@
 class HistoryWalCheckpointWorker final : public QObject {
     Q_OBJECT
 public:
-    explicit HistoryWalCheckpointWorker(QString databasePath, std::function<void()> opened,
-                                        std::function<void()> checkpointed)
-        : databasePath_(std::move(databasePath)), opened_(std::move(opened)),
-          checkpointed_(std::move(checkpointed))
-    {
-    }
+    explicit HistoryWalCheckpointWorker(QString databasePath) : databasePath_(std::move(databasePath)) { }
 
 public slots:
     void open()
@@ -37,8 +31,7 @@ public slots:
             qWarning() << "Cannot open history checkpoint connection:" << db_.lastError().text();
             return;
         }
-        if (opened_)
-            opened_();
+        emit opened();
     }
 
     void checkpoint()
@@ -49,8 +42,6 @@ public slots:
             if (!query.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)")))
                 qWarning() << "History WAL checkpoint failed:" << query.lastError().text();
         }
-        if (checkpointed_)
-            checkpointed_();
         emit completed();
     }
 
@@ -68,6 +59,7 @@ public slots:
     }
 
 signals:
+    void opened();
     void completed();
     void stopped();
 
@@ -75,7 +67,6 @@ private:
     QString databasePath_;
     QString connectionName_;
     QSqlDatabase db_; // Accessed only on the worker thread.
-    std::function<void()> opened_, checkpointed_;
 };
 
 // GUI-side controller. Pending/coalescing state lives entirely in the GUI
@@ -84,19 +75,22 @@ private:
 class HistoryWalCheckpoint final : public QObject {
     Q_OBJECT
 public:
-    explicit HistoryWalCheckpoint(QString databasePath, std::function<void()> opened = {},
-                                  std::function<void()> checkpointed = {})
+    explicit HistoryWalCheckpoint(QString databasePath)
     {
-        worker_ = new HistoryWalCheckpointWorker(std::move(databasePath), std::move(opened),
-                                                 std::move(checkpointed));
+        worker_ = new HistoryWalCheckpointWorker(std::move(databasePath));
         worker_->moveToThread(&thread_);
         connect(&thread_, &QThread::started, worker_, &HistoryWalCheckpointWorker::open);
         connect(this, &HistoryWalCheckpoint::checkpointRequested,
                 worker_, &HistoryWalCheckpointWorker::checkpoint, Qt::QueuedConnection);
         connect(this, &HistoryWalCheckpoint::stopRequested,
                 worker_, &HistoryWalCheckpointWorker::close, Qt::QueuedConnection);
+        connect(worker_, &HistoryWalCheckpointWorker::opened, this,
+                &HistoryWalCheckpoint::ready, Qt::QueuedConnection);
         connect(worker_, &HistoryWalCheckpointWorker::completed, this,
-                [this] { pending_ = false; }, Qt::QueuedConnection);
+                [this] {
+                    pending_ = false;
+                    emit checkpointCompleted();
+                }, Qt::QueuedConnection);
         connect(worker_, &HistoryWalCheckpointWorker::stopped, &thread_, &QThread::quit,
                 Qt::DirectConnection);
         connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
@@ -125,6 +119,8 @@ public:
     }
 
 signals:
+    void ready();
+    void checkpointCompleted();
     void checkpointRequested();
     void stopRequested();
 
