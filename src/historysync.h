@@ -59,6 +59,10 @@ public:
                            std::function<void(HistoryArchive::Page, bool)>)> mergeAsync;
         std::function<void(const QList<qint64> &, QObject *,
                            std::function<void(QHash<qint64, ResolvedMessage>, bool)>)> resolveAsync;
+        std::function<void(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
+                           std::function<void(CachedMessage)>)> lookupAsync;
+        std::function<void(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                           QObject *, std::function<void(CachedMessage)>)> ownPlaintextAsync;
     };
     static constexpr int PageSize = 40;
     HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);
@@ -129,5 +133,9 @@ private:
     QPointer<XMPP::MAMTask>       task_;
     HistoryArchive::Page          page_;
     QHash<qint64, ResolvedMessage> resolved_;
+    QHash<QString, CachedMessage> cachedLookups_, ownLookups_;
+    HistoryArchive::Page pendingSavedPage_;
+    int savedLookupsRemaining_ = 0;
+    bool savedLookupsStarted_ = false;
     bool                          success_ = false, cached_ = false, cancelled_ = false;
 };
