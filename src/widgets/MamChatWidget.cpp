@@ -2112,6 +2112,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setStyleSheet(theme_.styleSheet);
     row->info               = messageInfo(index);
     row->options            = renderer_->partOptions(row->info);
+    // A single user setting determines timestamp content. Themes only
+    // control placement, colour and font.
+    row->options.timeFormat = timestampMode_ == ChatTimestamp::Mode::Clock ? QStringLiteral("HH:mm") : QString();
     row->rendererGeneration = rendererGeneration_;
     const bool message      = mv.type() == MessageView::Message;
     RowCanvas  canvas(row);
@@ -2310,7 +2313,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             const auto [nickColor, timeColor] = inTextHeaderColors(mv, row->options);
             header += QStringLiteral("<a name=\"psi-time\" style=\"color:%1\">%2</a> ")
                           .arg(timeColor.name(QColor::HexArgb),
-                               timestampText(mv.dateTime(), row->options).toHtmlEscaped());
+                               (QStringLiteral("[") + timestampText(mv.dateTime(), row->options)
+                                 + QStringLiteral("]")).toHtmlEscaped());
             // An emote already starts with "*nick".
             if (!mv.isEmote() || retracted) {
                 const QColor color = nickColor;
@@ -2790,26 +2794,12 @@ QString MamChatWidget::timestampText(const QDateTime &when, const NativeChatPart
 
 QString MamChatWidget::displayTime(const QDateTime &when, const QDateTime &now)
 {
-    if (!when.isValid())
-        return {};
-    const qint64 age = now.toMSecsSinceEpoch() - when.toMSecsSinceEpoch();
-    if (age < 0 || age >= 24 * 60 * 60 * 1000)
-        return when.toLocalTime().toString(QStringLiteral("HH:mm"));
-    const int seconds = int(age / 1000);
-    if (seconds < 60)
-        return tr("just now");
-    if (seconds < 3600)
-        return (seconds / 60 == 1 ? tr("1 minute ago") : tr("%n minutes ago", nullptr, seconds / 60));
-    return (seconds / 3600 == 1 ? tr("1 hour ago") : tr("%n hours ago", nullptr, seconds / 3600));
+    return ChatTimestamp::relative(when, now);
 }
 
 QString MamChatWidget::fullTimestamp(const QDateTime &when)
 {
-    if (!when.isValid())
-        return {};
-    const auto local = when.toLocalTime();
-    return QLocale().toString(local.date(), QLocale::LongFormat) + QStringLiteral(" ")
-        + local.toString(QStringLiteral("HH:mm:ss t"));
+    return ChatTimestamp::full(when);
 }
 
 void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
@@ -2898,54 +2888,68 @@ void MamChatWidget::restyleRows()
 void MamChatWidget::updateTimestamps()
 {
     timestampTimer_->stop();
-    // Hidden tabs/windows require no clock, nor do themes with clock times.
+    // One coalesced timer for the visible timeline, including quoted times.
+    // Clock mode also runs once on a settings change, but never schedules a
+    // clock tick. Both modes update the existing row rather than replacing it.
     if (!isVisible() || window()->isMinimized())
         return;
 
     const auto range = knownVisibleRange();
     if (!range.isValid())
         return;
-    const auto   now         = QDateTime::currentDateTime();
-    const qint64 minute      = 60 * 1000;
-    const qint64 hour        = 60 * minute;
-    const qint64 day         = 24 * hour;
-    qint64       nextRefresh = std::numeric_limits<int>::max();
+    const auto now = QDateTime::currentDateTime();
+    qint64 nextRefresh = std::numeric_limits<int>::max();
+    const auto refresh = [this, &now, &nextRefresh](const QDateTime &when, const auto &setText) {
+        if (!when.isValid())
+            return;
+        setText(ChatTimestamp::format(when, timestampMode_, now));
+        if (timestampMode_ == ChatTimestamp::Mode::Relative) {
+            const auto delay = ChatTimestamp::nextChangeMs(when, now);
+            if (delay > 0)
+                nextRefresh = qMin(nextRefresh, delay);
+        }
+    };
 
-    // The prefetch/materialization buffer can be much larger than the
-    // viewport. Touch only rows that actually intersect the visible area.
     for (int i = range.first; i <= range.last; ++i) {
         auto *row = rowWidget(i);
         if (!row || !row->isVisibleTo(viewport())
             || !QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
             continue;
-        // Ask the current renderer: rows being rebuilt for a new theme may
-        // still show the previous one.
-        if (!renderer_->partOptions(messageInfo(i)).timeFormat.isEmpty())
-            continue;
-        auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-        if (!label)
-            continue;
-        const auto when = items_.at(i).message.dateTime();
-        if (!when.isValid())
-            continue;
         auto *message = messageRow(row);
-        if (message && message->options.timeFormat.isEmpty()) {
-            const auto text = displayTime(when, now);
-            if (label->text() != text)
-                label->setText(text);
+        const auto when = items_.at(i).message.dateTime();
+        if (message && message->options.header == NativeChatPartOptions::HeaderInText) {
+            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))) {
+                refresh(when, [body](const QString &value) {
+                    QTextDocument *document = body->document();
+                    for (auto block = document->begin(); block.isValid(); block = block.next()) {
+                        for (auto it = block.begin(); !it.atEnd(); ++it) {
+                            const QTextFragment fragment = it.fragment();
+                            if (!fragment.charFormat().anchorNames().contains(QStringLiteral("psi-time")))
+                                continue;
+                            const QString desired = QStringLiteral("[") + value + QStringLiteral("]");
+                            if (fragment.text() != desired) {
+                                QTextCursor cursor(document);
+                                cursor.setPosition(fragment.position());
+                                cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+                                cursor.insertText(desired, fragment.charFormat());
+                            }
+                            return;
+                        }
+                    }
+                });
+            }
+        } else if (auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))) {
+            refresh(when, [label](const QString &value) {
+                if (label->text() != value)
+                    label->setText(value);
+            });
         }
-
-        const qint64 age       = when.msecsTo(now);
-        qint64       untilNext = 0;
-        if (age < 0)
-            untilNext = -age; // Future timestamp becomes "just now".
-        else if (age < hour)
-            untilNext = minute - age % minute;
-        else if (age < day)
-            untilNext = hour - age % hour;
-        // Beyond 24 hours we show a fixed clock time, with no timer.
-        if (untilNext > 0)
-            nextRefresh = qMin(nextRefresh, untilNext + 50);
+        if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"))) {
+            const auto quoteTime = preview->property("_psiQuotedAt").toDateTime();
+            refresh(quoteTime, [preview](const QString &value) {
+                preview->setTimestamp(value, preview->property("_psiQuotedFullTime").toString());
+            });
+        }
     }
     if (nextRefresh < std::numeric_limits<int>::max())
         timestampTimer_->start(int(nextRefresh));
@@ -3010,6 +3014,21 @@ void MamChatWidget::refreshPalette()
                 fileCard->setLinkColor(palette().color(QPalette::Link));
             }
         }
+}
+
+void MamChatWidget::setTimestampMode(ChatTimestamp::Mode mode)
+{
+    if (timestampMode_ == mode)
+        return;
+    timestampMode_ = mode;
+    // Update in place. In particular, rebuilding a row while a theme-switch
+    // replacement is settling can commit an obsolete timestamp after this
+    // setting has changed. Classic's anchored text fragment and the separate
+    // timestamp/quote labels are all updated by the same method.
+    for (int index : materializedRows())
+        if (auto *row = messageRow(rowWidget(index)))
+            row->options.timeFormat = mode == ChatTimestamp::Mode::Clock ? QStringLiteral("HH:mm") : QString();
+    updateTimestamps();
 }
 
 void MamChatWidget::setTheme(const NativeChatTheme &theme)
@@ -3435,19 +3454,22 @@ QString MamChatWidget::copiedMessage(const Row &row) const
 
 void MamChatWidget::showReply(MessagePreview *preview, const ChatReply &reply) const
 {
-    // The quoted message as it is shown in its own row, but without quotes of
-    // its own: no chain of quotes. Without the message itself, the quoting
-    // client's fallback text.
-    QString    author = reply.author;
-    QString    html;
-    const bool resolved = resolveReply(reply, author, html);
+    // An XEP-0461 fallback has no authoritative time. Resolve the actual
+    // source message whenever possible; otherwise use local composer context.
+    QString   author = reply.author;
+    QString   html;
+    QDateTime when = reply.timestamp;
+    const bool resolved = resolveReply(reply, author, html, when);
     if (!resolved)
         html = reply.text.isEmpty() ? tr("Referenced message is not available locally").toHtmlEscaped()
                                     : TextUtil::linkify(TextUtil::plain2rich(reply.text));
     preview->setProperty("replyResolved", resolved);
     preview->setActivatable(resolved);
-    // An unknown author gets no title: the quote styling says enough.
     preview->setRichContent(author, html, true);
+    const QString full = ChatTimestamp::full(when);
+    preview->setProperty("_psiQuotedAt", when);
+    preview->setProperty("_psiQuotedFullTime", full);
+    preview->setTimestamp(ChatTimestamp::format(when, timestampMode_), full);
 }
 
 int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
@@ -3461,13 +3483,14 @@ int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
                                      });
 }
 
-bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html) const
+bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html, QDateTime &when) const
 {
     const int at = replyTargetIndex(reply);
     if (at < 0)
         return false;
     author = items_.at(at).message.nick();
     html   = richMessage(items_.at(at));
+    when   = items_.at(at).message.dateTime();
     return true;
 }
 
@@ -3627,7 +3650,8 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         if (at < 0 || isRetracted(items_.at(at)))
             return;
         const auto &message = items_.at(at).message;
-        emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at))});
+        emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at)),
+                             message.dateTime()});
     });
     if (items_.at(at).message.isLocal() && !items_.at(at).message.messageId().isEmpty()
         && !isRetracted(items_.at(at))) {

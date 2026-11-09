@@ -1,4 +1,5 @@
 #include "opt_chat.h"
+#include "chattimestamp.h"
 
 #include "common.h"
 #include "psioptions.h"
@@ -59,6 +60,9 @@ QWidget *OptionsTabChat::widget()
         tr("Makes Psi switch tab on active tabbed window when you receive a new message."
            " It does not take the keyboard focus, so it will not interfere with your work."));
     d->ck_smallChats->setToolTip(tr("Makes Psi open chat windows in compact mode."));
+    d->cb_timestampMode->addItem(tr("Time (HH:mm)"), ChatTimestamp::optionValue(ChatTimestamp::Mode::Clock));
+    d->cb_timestampMode->addItem(tr("Relative (5 minutes ago)"), ChatTimestamp::optionValue(ChatTimestamp::Mode::Relative));
+    d->cb_timestampMode->setToolTip(tr("Use one timestamp format in chats, group chats and reply previews, regardless of the message theme."));
 
     return w;
 }
@@ -77,6 +81,7 @@ void OptionsTabChat::applyOptions()
     o->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
     o->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
     o->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
+    o->setOption(QString::fromLatin1(ChatTimestamp::OptionKey), d->cb_timestampMode->currentData().toString());
     o->setOption("options.ui.chat.show-status-changes", d->ck_showStatusChanges->isChecked());
     o->setOption("options.ui.chat.status-with-priority", d->ck_showStatusPriority->isChecked());
 
@@ -117,6 +122,9 @@ void OptionsTabChat::restoreOptions()
     d->ck_raiseChatWindow->setChecked(o->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool());
     d->ck_switchTabOnMessage->setChecked(o->getOption("options.ui.chat.switch-tab-on-new-messages").toBool());
     d->ck_smallChats->setChecked(o->getOption("options.ui.chat.use-small-chats").toBool());
+    const QString timeMode = ChatTimestamp::optionValue(ChatTimestamp::fromOption(
+        o->getOption(QString::fromLatin1(ChatTimestamp::OptionKey)).toString()));
+    d->cb_timestampMode->setCurrentIndex(d->cb_timestampMode->findData(timeMode));
     d->ck_showStatusChanges->setChecked(o->getOption("options.ui.chat.show-status-changes").toBool());
     d->ck_showStatusPriority->setChecked(o->getOption("options.ui.chat.status-with-priority").toBool());
 

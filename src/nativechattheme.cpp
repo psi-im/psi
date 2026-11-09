@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nativechattheme.h"
+#include "chattimestamp.h"
 #include "coloropt.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -78,6 +79,16 @@ QString NativeChatViewThemeProvider::optionsDescription() const { return tr("Cho
 void configureNativeChat(MamChatWidget *view, PsiAccount *account, bool groupChat)
 {
     view->setMediaOpener(account->fileSharingDeviceOpener());
+    const auto applyTimestampMode = [view] {
+        view->setTimestampMode(ChatTimestamp::fromOption(
+            PsiOptions::instance()->getOption(QString::fromLatin1(ChatTimestamp::OptionKey)).toString()));
+    };
+    applyTimestampMode();
+    QObject::connect(PsiOptions::instance(), &PsiOptions::optionChanged, view,
+                     [applyTimestampMode](const QString &name) {
+        if (name == QLatin1String(ChatTimestamp::OptionKey))
+            applyTimestampMode();
+    });
     // A separate instance of Psi's picker avoids also inserting the chosen
     // reaction into the composer's shared emoticon popup.
     auto *picker = new IconSelectPopup(view);

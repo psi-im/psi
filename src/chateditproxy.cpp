@@ -19,6 +19,7 @@
 
 #include "chateditproxy.h"
 #include "coloropt.h"
+#include "chattimestamp.h"
 
 #include "msgmle.h"
 #include "psioptions.h"
@@ -26,6 +27,8 @@
 #include "iris/xmpp_message.h"
 
 #include <QVBoxLayout>
+#include <QTimer>
+#include <climits>
 
 static const QLatin1String expandingLineEdit("options.ui.chat.use-expanding-line-edit");
 
@@ -52,6 +55,10 @@ ChatEditProxy::ChatEditProxy(QWidget *parent) :
         }
     });
 
+    replyTimestampTimer_ = new QTimer(this);
+    replyTimestampTimer_->setSingleShot(true);
+    replyTimestampTimer_->setTimerType(Qt::CoarseTimer);
+    connect(replyTimestampTimer_, &QTimer::timeout, this, &ChatEditProxy::refreshReplyTimestamp);
     connect(PsiOptions::instance(), &PsiOptions::optionChanged, this, &ChatEditProxy::optionsChanged);
     optionsChanged(expandingLineEdit);
 }
@@ -74,6 +81,7 @@ void ChatEditProxy::setReply(const ChatReply &reply)
     replyPreview_->setContent(reply.author.isEmpty() ? tr("Reply") : tr("Reply to %1").arg(reply.author),
                               reply.text);
     replyPreview_->show();
+    refreshReplyTimestamp();
     chatEdit()->resetCorrection();
     chatEdit()->setFocus();
 }
@@ -81,7 +89,23 @@ void ChatEditProxy::setReply(const ChatReply &reply)
 void ChatEditProxy::clearReply()
 {
     reply_ = {};
+    replyTimestampTimer_->stop();
+    replyPreview_->setTimestamp({});
     replyPreview_->hide();
+}
+
+void ChatEditProxy::refreshReplyTimestamp()
+{
+    replyTimestampTimer_->stop();
+    const auto mode = ChatTimestamp::fromOption(
+        PsiOptions::instance()->getOption(QString::fromLatin1(ChatTimestamp::OptionKey)).toString());
+    replyPreview_->setTimestamp(ChatTimestamp::format(reply_.timestamp, mode),
+                                ChatTimestamp::full(reply_.timestamp));
+    if (reply_.timestamp.isValid() && mode == ChatTimestamp::Mode::Relative && replyPreview_->isVisible()) {
+        const auto delay = ChatTimestamp::nextChangeMs(reply_.timestamp);
+        if (delay > 0)
+            replyTimestampTimer_->start(int(qMin<qint64>(delay, INT_MAX)));
+    }
 }
 
 void ChatEditProxy::applyReply(XMPP::Message &message)
@@ -144,6 +168,8 @@ void ChatEditProxy::updateLayout()
  */
 void ChatEditProxy::optionsChanged(const QString &option)
 {
+    if (option == QLatin1String(ChatTimestamp::OptionKey))
+        refreshReplyTimestamp();
     if (option == expandingLineEdit) {
         lineEditEnabled_ = PsiOptions::instance()->getOption(expandingLineEdit).toBool();
         updateLayout();

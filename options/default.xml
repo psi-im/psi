@@ -101,6 +101,7 @@
             <chat comment="Chat dialog options">
                 <external-media-player type="QString"></external-media-player>
                 <native-theme type="QString">bubble</native-theme>
+                <timestamp-mode type="QString" comment="Clock (HH:mm) or relative time for all native chat themes">relative</timestamp-mode>
                 <theme comment="The theme used for chat messages rendering" type="QString">psi/new_classic</theme>
                 <central-toolbar comment="Have a central toolbar" type="bool">true</central-toolbar>
                 <size comment="Remembered window size" type="QSize">

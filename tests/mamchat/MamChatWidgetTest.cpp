@@ -1122,11 +1122,16 @@ private slots:
         auto *preview = row->findChild<MessagePreview *>("mamReplyPreview");
         QVERIFY(preview);
         QCOMPARE(preview->findChild<QTextEdit *>("previewText")->toPlainText(), QString("old fallback"));
+        auto *quoteTime = preview->findChild<QLabel *>("previewTimestamp");
+        QVERIFY(quoteTime);
+        QVERIFY(quoteTime->text().isEmpty()); // No time in an XEP-0461 fallback.
         auto original = message("client", "The original message");
         original.setUserId("peer@example.org/phone");
         original.setReactionTargetId("origin");
         chat.prependArchivePage({qMakePair(QString("archive-original"), original)});
         QTRY_COMPARE(preview->findChild<QTextEdit *>("previewText")->toPlainText(), QString("The original message"));
+        QCOMPARE(quoteTime->text(), ChatTimestamp::format(original.dateTime(), ChatTimestamp::Mode::Relative));
+        QCOMPARE(quoteTime->toolTip(), ChatTimestamp::full(original.dateTime()));
         QCOMPARE(chat.messageCount(), 2);
         auto *excerpt = preview->findChild<QTextEdit *>("previewText");
         excerpt->selectAll();
@@ -3741,6 +3746,7 @@ private slots:
         MamChatWidget  list;
         list.resize(700, 500);
         list.setHistoryLoading(true);
+        list.setTimestampMode(ChatTimestamp::Mode::Clock);
         list.setTheme(testRendererTheme(NativeChatTheme(QStringLiteral("org.example.framed"), QStringLiteral("Framed"), 40, 10), &renderer));
         auto incoming = message(QStringLiteral("in"), QStringLiteral("Incoming text"));
         incoming.setReactionTargetId(QStringLiteral("in-origin"));
@@ -4311,6 +4317,7 @@ private slots:
 
         NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
+        list.setTimestampMode(ChatTimestamp::Mode::Clock);
         list.setTheme(classic);
         // Virtual rows stage replacement until Qt's rich-text height settles.
         // Classic is the legacy text log: icon, time and nickname in the text.
@@ -4318,9 +4325,9 @@ private slots:
         auto *row = list.itemWidget(0);
         QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
-        const QString hhmmss = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
-                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm:ss"));
-        QCOMPARE(body->toPlainText(), QString(QChar::ObjectReplacementCharacter) + QStringLiteral(" [") + hhmmss
+        const QString hhmm = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
+                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm"));
+        QCOMPARE(body->toPlainText(), QString(QChar::ObjectReplacementCharacter) + QStringLiteral(" [") + hhmm
                      + QStringLiteral("] <Peer> Message body"));
 
         NativeChatTheme plugin;
@@ -5050,6 +5057,68 @@ private slots:
         QCOMPARE(body->verticalScrollBar()->value(), 0);
     }
 
+    void sharedTimestampSettingFollowsAllThemesAndQuotes()
+    {
+        MamChatWidget list;
+        list.resize(650, 420);
+        list.setHistoryLoading(true);
+        auto original = message(QStringLiteral("original"), QStringLiteral("Source text"));
+        original.setDateTime(QDateTime::currentDateTime().addSecs(-125));
+        original.setUserId(QStringLiteral("peer@example.org/phone"));
+        original.setReactionTargetId(QStringLiteral("original-target"));
+        auto reply = message(QStringLiteral("answer"), QStringLiteral("Reply"), 1);
+        reply.setDateTime(original.dateTime().addSecs(30));
+        reply.setReply({ QStringLiteral("original-target"), QStringLiteral("peer@example.org/phone"),
+                         QStringLiteral("Peer"), QStringLiteral("Source text") });
+        list.appendMessage(original);
+        list.appendMessage(reply);
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+        const QString clock = ChatTimestamp::format(original.dateTime(), ChatTimestamp::Mode::Clock);
+        auto quoteLabel = [&list]() -> QLabel * {
+            auto *row = list.itemWidget(1);
+            return row ? row->findChild<QLabel *>(QStringLiteral("previewTimestamp")) : nullptr;
+        };
+        auto sourceTime = [&list](bool inText) {
+            auto *row = list.itemWidget(0);
+            if (!row)
+                return QString();
+            if (inText) {
+                auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                return body ? body->toPlainText() : QString();
+            }
+            auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+            return label ? label->text() : QString();
+        };
+        for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
+                                   QStringLiteral("classic") }) {
+            const bool classic = id == QLatin1String("classic");
+            // Set the preference before recreating the theme rows: the new
+            // renderer then materializes the preferred presentation directly.
+            list.setTimestampMode(ChatTimestamp::Mode::Clock);
+            list.setTheme(NativeChatThemes::instance()->theme(id));
+            // Native row replacement settles asynchronously when the theme
+            // changes layout height. First confirm the requested theme landed.
+            if (classic)
+                QTRY_VERIFY(list.itemWidget(0)
+                            && !list.itemWidget(0)->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
+            else if (id == QLatin1String("bubble"))
+                QTRY_VERIFY(list.itemWidget(0)
+                            && list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
+            else
+                QTRY_VERIFY(list.itemWidget(0)
+                            && !list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
+            QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
+            QTRY_VERIFY(sourceTime(classic).contains(clock));
+
+            list.setTimestampMode(ChatTimestamp::Mode::Relative);
+            const QString relative = ChatTimestamp::relative(original.dateTime());
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == relative);
+            QTRY_VERIFY(sourceTime(classic).contains(relative));
+        }
+    }
+
     void semanticTimestampBoundaries()
     {
         const auto now = QDateTime::fromString(QStringLiteral("2026-10-18T12:34:56+03:00"), Qt::ISODate);
@@ -5059,10 +5128,13 @@ private slots:
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-60), now).contains(QStringLiteral("1")));
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-3600), now).contains(QStringLiteral("1")));
         QVERIFY(MamChatWidget::displayTime(now.addSecs(-86399), now).contains(QStringLiteral("23")));
-        QCOMPARE(MamChatWidget::displayTime(now.addSecs(-86400), now),
-                 now.addSecs(-86400).toLocalTime().toString(QStringLiteral("HH:mm")));
-        QCOMPARE(MamChatWidget::displayTime(now.addSecs(60), now),
-                 now.addSecs(60).toLocalTime().toString(QStringLiteral("HH:mm")));
+        QCOMPARE(MamChatWidget::displayTime(now.addSecs(-86400), now), QStringLiteral("1 day ago"));
+        QCOMPARE(MamChatWidget::displayTime(now.addSecs(60), now), QStringLiteral("just now"));
+        QCOMPARE(ChatTimestamp::format(now, ChatTimestamp::Mode::Clock, now),
+                 now.toLocalTime().toString(QStringLiteral("HH:mm")));
+        QCOMPARE(ChatTimestamp::format(now.addDays(-2), ChatTimestamp::Mode::Relative, now),
+                 QStringLiteral("2 days ago"));
+        QVERIFY(ChatTimestamp::nextChangeMs(now.addSecs(-61), now) > 0);
         QVERIFY(MamChatWidget::fullTimestamp(now).contains(now.toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
     }
 
@@ -5098,6 +5170,9 @@ private slots:
         NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
+        // Classic text is now refreshed without rebuilding its QTextDocument.
+        QTRY_VERIFY(clock->isActive());
+        list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
     }
 

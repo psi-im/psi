@@ -79,6 +79,15 @@ MessagePreview::MessagePreview(const QColor &barColor, const QColor &textColor, 
     title_->setFont(titleFont);
     connect(title, &PreviewTitle::plainClicked, this, &MessagePreview::handlePlainClick);
     header->addWidget(title_, 1);
+    auto *timestamp = new PreviewTitle(this);
+    timestamp_ = timestamp;
+    timestamp_->setObjectName(QStringLiteral("previewTimestamp"));
+    timestamp_->setTextFormat(Qt::PlainText);
+    timestamp_->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    timestamp_->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+    timestamp_->hide();
+    connect(timestamp, &PreviewTitle::plainClicked, this, &MessagePreview::handlePlainClick);
+    header->addWidget(timestamp_);
     close_ = new QPushButton(QString::fromUtf8("×"), this);
     close_->setObjectName(QStringLiteral("previewDismiss"));
     close_->setFlat(true);
@@ -147,6 +156,7 @@ void MessagePreview::refreshColors()
         foreground.setColor(QPalette::WindowText, textColor_);
     }
     title_->setPalette(foreground);
+    timestamp_->setPalette(foreground);
     for (auto *prose : body_->prose())
         prose->setPalette(foreground);
     QPalette barPalette;
@@ -182,6 +192,17 @@ void MessagePreview::setRichContent(const QString &title, const QString &html, b
     updatePreview();
 }
 
+void MessagePreview::setTimestamp(const QString &text, const QString &fullTime)
+{
+    if (timestamp_->text() == text && timestamp_->toolTip() == fullTime)
+        return;
+    timestamp_->setText(text);
+    timestamp_->setToolTip(fullTime);
+    timestamp_->setVisible(!text.isEmpty());
+    updateGeometry();
+    emit heightChanged();
+}
+
 void MessagePreview::setMediaOpener(FileSharingDeviceOpener *opener) { body_->text()->setMediaOpener(opener); }
 
 void MessagePreview::setTitle(const QString &title)
@@ -210,9 +231,11 @@ void MessagePreview::setActivatable(bool activatable)
     if (activatable) {
         setCursor(Qt::PointingHandCursor);
         title_->setCursor(Qt::PointingHandCursor);
+        timestamp_->setCursor(Qt::PointingHandCursor);
     } else {
         unsetCursor();
         title_->unsetCursor();
+        timestamp_->unsetCursor();
     }
 }
 
@@ -264,8 +287,11 @@ int MessagePreview::naturalWidth() const
 {
     int content = 0;
     if (!title_->isHidden() && !title_->text().isEmpty())
-        content = QFontMetrics(title_->font()).horizontalAdvance(title_->text())
-            + (close_->isHidden() ? 0 : close_->width() + 6);
+        content = QFontMetrics(title_->font()).horizontalAdvance(title_->text());
+    if (!timestamp_->isHidden())
+        content += QFontMetrics(timestamp_->font()).horizontalAdvance(timestamp_->text()) + 7;
+    if (!close_->isHidden())
+        content += close_->width() + 6;
     content = qMax(content, body_->naturalWidth());
     if (!toggle_->isHidden())
         content = qMax(content, toggle_->sizeHint().width());
