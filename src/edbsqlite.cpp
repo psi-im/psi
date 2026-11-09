@@ -22,6 +22,7 @@
 #include "edbsqlite.h"
 #include "filesharingmanager.h"
 #include "historyupgrade.h"
+#include "historyeventfactory.h"
 #include "historysqlitepolicy.h"
 #include "historywalcheckpoint.h"
 #include "historymessageextras.h"
@@ -171,7 +172,7 @@ EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, q
     const auto rows
         = HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit);
     for (const auto &row : rows) {
-        if (auto event = getEvent(row))
+        if (auto event = HistoryEventFactory::decode(psi(), row))
             result.append(
                 EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
                                        row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
@@ -189,7 +190,7 @@ EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
     const auto row = HistoryArchive::resolvedRecord(QSqlDatabase::database("history"),eventId);
     if (row.isEmpty())
         return {};
-    const auto event = getEvent(row);
+    const auto event = HistoryEventFactory::decode(psi(), row);
     return event ? EDBItemPtr(new EDBItem(event, row.value("id").toString(), row.value("history_state").toInt(),
                                           row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
                                           protocolOnlyRecord(row), row.value("reaction_target").toString(),
@@ -213,7 +214,7 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
     if (!q.exec())
         return {};
     if (q.next()) {
-        auto event = getEvent(q.record());
+        auto event = HistoryEventFactory::decode(psi(), q.record());
         if (event && decodedRecord(q.record()))
             return EDBItemPtr(new EDBItem(event, q.record().value("id").toString(), 0, uid, {},
                                           QJsonDocument::fromJson(q.record().value("extra_data").toString().toUtf8())
@@ -238,7 +239,7 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
     while (q.next()) {
         if (!decodedRecord(q.record()))
             continue;
-        const auto event = getEvent(q.record());
+        const auto event = HistoryEventFactory::decode(psi(), q.record());
         if (!event || event->type() != PsiEvent::Message)
             continue;
         const auto message = event.staticCast<MessageEvent>()->message();
@@ -306,7 +307,7 @@ EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString
     q.bindValue(":id", eventId);
     if (!q.exec() || !q.next())
         return {};
-    const auto event = getEvent(q.record());
+    const auto event = HistoryEventFactory::decode(psi(), q.record());
     return event ? EDBItemPtr(new EDBItem(event, QString::number(eventId))) : EDBItemPtr();
 }
 
@@ -544,7 +545,7 @@ void EDBSqLite::performRequests()
         EDBResult result;
         if (query->exec()) {
             while (query->next()) {
-                PsiEvent::Ptr e(getEvent(query->record()));
+                PsiEvent::Ptr e(HistoryEventFactory::decode(psi(), query->record()));
                 if (e) {
                     QString id = query->record().value("id").toString();
                     result.append(EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
@@ -586,7 +587,7 @@ void EDBSqLite::performRequests()
                 const QSqlRecord rec = query->record();
                 if (!rec.value("m_text").toString().toLower().contains(str, Qt::CaseSensitive))
                     continue;
-                PsiEvent::Ptr e(getEvent(rec));
+                PsiEvent::Ptr e(HistoryEventFactory::decode(psi(), rec));
                 if (e) {
                     QString    id  = rec.value("id").toString();
                     EDBItemPtr eip = EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
@@ -709,82 +710,6 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
         }
     }
     return res;
-}
-
-PsiEvent::Ptr EDBSqLite::getEvent(const QSqlRecord &record)
-{
-    PsiAccount *pa = psi()->contactList()->getAccount(record.value("acc_id").toString());
-
-    int type = record.value("type").toInt();
-
-    if (type == 0 || type == 1 || type == 4 || type == 5 || type == 9) {
-        Message m;
-        m.setTimeStamp(record.value("date").toDateTime());
-        if (type == 1)
-            m.setType(Message::Type::Chat);
-        else if (type == 4)
-            m.setType(Message::Type::Error);
-        else if (type == 5)
-            m.setType(Message::Type::Headline);
-        else if (type == 9)
-            m.setType(Message::Type::Groupchat);
-        else
-            m.setType(Message::Type::Normal);
-        m.setFrom(Jid(record.value("jid").toString()));
-        QVariant text = record.value("m_text");
-        if (!text.isNull()) {
-            m.setBody(text.toString());
-            m.setLang(record.value("lang").toString());
-            m.setSubject(record.value("subject").toString());
-        }
-        // Older development versions stored protocol-only MAM rows without
-        // their event attributes. Recover those from the retained raw envelope.
-        if (pa && !record.value("archive_xml").toString().isEmpty()) {
-            QDomDocument doc;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-            const bool parsed = bool(doc.setContent(record.value("archive_xml").toString(),
-                                                    QDomDocument::ParseOption::UseNamespaceProcessing));
-#else
-            const bool parsed = doc.setContent(record.value("archive_xml").toString(), true);
-#endif
-            XMPP::Forwarding wrapper;
-            if (parsed && wrapper.fromXml(doc.documentElement().firstChildElement("forwarded"), pa->client())) {
-                const auto raw = wrapper.message();
-                if (raw.messageReceipt() == ReceiptReceived || !raw.displayedMarkerId().isEmpty()
-                    || !raw.reactions().targetId.isEmpty()
-                    || !raw.retraction().isEmpty())
-                    m = raw;
-            }
-        }
-        m.setSpooled(true);
-        HistoryMessageExtras::restore(record.value("extra_data").toString(), m);
-        if (QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8())
-                .object()
-                .value("psi:decryption-error")
-                .toBool())
-            m.setBody(tr("Unable to decrypt archived message"));
-        MessageEvent::Ptr me(new MessageEvent(m, pa));
-        me->setOriginLocal((record.value("direction").toInt() == 1));
-        return me.staticCast<PsiEvent>();
-    }
-
-    if (type == 2 || type == 3 || type == 6 || type == 7 || type == 8) {
-        QString subType = "subscribe";
-        // if(type == 2) { // Not used (stupid "system message" from Psi <= 0.8.6)
-        if (type == 3)
-            subType = "subscribe";
-        else if (type == 6)
-            subType = "subscribed";
-        else if (type == 7)
-            subType = "unsubscribe";
-        else if (type == 8)
-            subType = "unsubscribed";
-
-        AuthEvent::Ptr ae(new AuthEvent(Jid(record.value("jid").toString()), subType, pa));
-        ae->setTimeStamp(record.value("date").toDateTime());
-        return ae.staticCast<PsiEvent>();
-    }
-    return PsiEvent::Ptr();
 }
 
 qint64 EDBSqLite::ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type)
