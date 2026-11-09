@@ -165,6 +165,7 @@ EDBSqLite::~EDBSqLite()
     }
     qDeleteAll(pendingReads_);
     pendingReads_.clear();
+    pendingLocalPages_.clear();
     qDeleteAll(rlist);
     rlist.clear();
     if (checkpointTimer_)
@@ -181,13 +182,9 @@ EDBSqLite::~EDBSqLite()
     QSqlDatabase::removeDatabase("history");
 }
 
-EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit)
+EDBResult EDBSqLite::decodeLocalRecords(const QList<QSqlRecord> &rows)
 {
     EDBResult result;
-    if (!commit() || account.isEmpty() || peer.isEmpty() || limit <= 0)
-        return result;
-    const auto rows
-        = HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit);
     for (const auto &row : rows) {
         if (auto event = HistoryEventFactory::decode(psi(), row))
             result.append(
@@ -198,6 +195,35 @@ EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, q
                                        MessageState::Flags(row.value("message_flags").toInt()))));
     }
     return result;
+}
+
+EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit)
+{
+    if (!commit() || account.isEmpty() || peer.isEmpty() || limit <= 0)
+        return {};
+    return decodeLocalRecords(
+        HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit));
+}
+
+void EDBSqLite::requestLocalHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit,
+                                      QObject *receiver, std::function<void(EDBResult, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestLocalHistoryPage(account, peer, before, limit, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->type = item_query_req::Type_local;
+    r->accId = account;
+    r->j = peer;
+    r->localBefore = before;
+    r->len = limit;
+    r->id = genUniqueId();
+    pendingLocalPages_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 }
 
 EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
@@ -550,6 +576,14 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingLocalPages_.contains(read.id)) {
+        auto pending = pendingLocalPages_.take(read.id);
+        // Closing a tab invalidates its presentation request, not an already
+        // completed SQL operation. Never call a destroyed receiver.
+        if (pending.receiver)
+            pending.finished(read.success ? decodeLocalRecords(read.rows) : EDBResult(), read.success);
+        return;
+    }
     auto *r = pendingReads_.take(read.id);
     if (!r)
         return; // A cancelled request must never reach a stale UI handle.
@@ -576,17 +610,25 @@ void EDBSqLite::performRequests()
     item_query_req *r    = rlist.takeFirst();
     const int       type = r->type;
 
-    if ((type == item_query_req::Type_get || type == item_query_req::Type_find) && historyReadThread_) {
-        // Commit the preceding GUI-thread appends before the separate SQLite
-        // reader takes its snapshot. Avoid a stale database snapshot.
+    if ((type == item_query_req::Type_get || type == item_query_req::Type_find
+         || type == item_query_req::Type_local) && historyReadThread_) {
+        // Commit GUI-thread appends preceding this read in the EDB request
+        // queue. A worker snapshot must not overtake an earlier write.
         if (!commit()) {
-            resultReady(r->id, {}, 0);
+            if (type == item_query_req::Type_local) {
+                auto pending = pendingLocalPages_.take(r->id);
+                if (pending.receiver)
+                    pending.finished({}, false);
+            } else {
+                resultReady(r->id, {}, 0);
+            }
             delete r;
             return;
         }
         HistoryReadRequest read;
         read.id = r->id;
-        read.type = type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
+        read.type = type == item_query_req::Type_local ? HistoryReadRequest::LocalPage
+            : type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
         read.account = r->accId;
         read.peer = r->j.full();
         read.text = r->findStr;
@@ -594,7 +636,11 @@ void EDBSqLite::performRequests()
         read.direction = r->dir;
         read.start = r->start;
         read.limit = r->len;
-        pendingReads_.insert(r->id, r);
+        read.before = r->localBefore;
+        if (type == item_query_req::Type_local)
+            delete r; // Its completion callback is held separately.
+        else
+            pendingReads_.insert(r->id, r);
         emit historyReadRequested(read);
         return;
     }
