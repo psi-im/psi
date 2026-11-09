@@ -5150,6 +5150,8 @@ private slots:
         for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
                                    QStringLiteral("classic") }) {
             const bool classic = id == QLatin1String("classic");
+            const QString themeClock = classic ? original.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"))
+                                               : clock;
             // Set the preference before recreating the theme rows: the new
             // renderer then materializes the preferred presentation directly.
             list.setTimestampMode(ChatTimestamp::Mode::Clock);
@@ -5165,14 +5167,14 @@ private slots:
             else
                 QTRY_VERIFY(list.itemWidget(0)
                             && !list.itemWidget(0)->findChild<QWidget *>(QStringLiteral("mamBubble")));
-            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == clock);
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == themeClock);
             QCOMPARE(quoteLabel()->toolTip(), ChatTimestamp::full(original.dateTime()));
-            QTRY_VERIFY(sourceTime(classic).contains(clock));
+            QTRY_VERIFY(sourceTime(classic).contains(themeClock));
 
             list.setTimestampMode(ChatTimestamp::Mode::Relative);
-            const QString relative = ChatTimestamp::relative(original.dateTime());
-            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == relative);
-            QTRY_VERIFY(sourceTime(classic).contains(relative));
+            const QString themeRelative = classic ? themeClock : ChatTimestamp::relative(original.dateTime());
+            QTRY_VERIFY(quoteLabel() && quoteLabel()->text() == themeRelative);
+            QTRY_VERIFY(sourceTime(classic).contains(themeRelative));
         }
     }
 
@@ -5192,6 +5194,17 @@ private slots:
         QCOMPARE(ChatTimestamp::format(now.addDays(-2), ChatTimestamp::Mode::Relative, now),
                  QStringLiteral("2 days ago"));
         QVERIFY(ChatTimestamp::nextChangeMs(now.addSecs(-61), now) > 0);
+        QVERIFY(!ChatTimestamp::usesRelative(QStringLiteral("HH:mm:ss"), ChatTimestamp::Mode::Relative));
+        QVERIFY(ChatTimestamp::usesRelative(QStringLiteral("HH:mm:ss {relative}"), ChatTimestamp::Mode::Clock));
+        QVERIFY(ChatTimestamp::usesRelative({}, ChatTimestamp::Mode::Relative));
+        const QString mixed = ChatTimestamp::formatPattern(now.addSecs(-120),
+                                                           QStringLiteral("HH:mm:ss {relative}"),
+                                                           ChatTimestamp::Mode::Clock, now);
+        QVERIFY(mixed.startsWith(now.addSecs(-120).toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
+        QVERIFY(mixed.contains(QStringLiteral("2 minutes ago")));
+        QCOMPARE(ChatTimestamp::formatPattern(now, QStringLiteral("HH:mm:ss"),
+                                              ChatTimestamp::Mode::Relative, now),
+                 now.toLocalTime().toString(QStringLiteral("HH:mm:ss")));
         QVERIFY(MamChatWidget::fullTimestamp(now).contains(now.toLocalTime().toString(QStringLiteral("HH:mm:ss"))));
     }
 
@@ -5227,8 +5240,8 @@ private slots:
         NativeChatTheme classic = NativeChatThemes::instance()->theme(QStringLiteral("classic"));
         classic.avatarSize = 0;
         list.setTheme(classic);
-        // Classic text is now refreshed without rebuilding its QTextDocument.
-        QTRY_VERIFY(clock->isActive());
+        // Classic has absolute time, so no periodic relative-time polling.
+        QVERIFY(!clock->isActive());
         list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
     }

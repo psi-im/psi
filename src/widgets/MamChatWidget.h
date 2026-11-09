@@ -92,7 +92,8 @@ public:
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
     static QString timestampText(const QDateTime &when, const NativeChatPartOptions &options,
-                                 const QDateTime &now = QDateTime::currentDateTime());
+                                 const QDateTime &now = QDateTime::currentDateTime(),
+                                 ChatTimestamp::Mode fallback = ChatTimestamp::Mode::Relative);
     static QString fullTimestamp(const QDateTime &when);
     // Most recent actually visible incoming message requesting a read marker.
     QString takeVisibleMarkableIncomingId();

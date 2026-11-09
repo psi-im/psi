@@ -100,6 +100,7 @@ public:
             && seen.contains(QStringLiteral("body"))) {
             tree_ = custom.object();
             slots_ = seen;
+            layoutTimeFormat_ = tree_.value(QStringLiteral("timestampFormat")).toString();
         }
     }
 
@@ -112,6 +113,7 @@ public:
         options.boldAuthor = true;
         options.timePointDelta = -1.0;
         options.timeAlpha = 188;
+        options.timeFormat = theme_.timestampFormat.isEmpty() ? layoutTimeFormat_ : theme_.timestampFormat;
         return options;
     }
 
@@ -147,6 +149,7 @@ private:
     NativeChatTheme theme_;
     QJsonObject tree_;
     QSet<QString> slots_;
+    QString layoutTimeFormat_;
 };
 }
 

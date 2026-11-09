@@ -234,6 +234,7 @@ public:
         irc.name       = tr("IRC");
         irc.avatarSize = 0;
         irc.spacing    = 4;
+        irc.timestampFormat = QStringLiteral("HH:mm:ss");
         irc.layoutSpec = QStringLiteral(
             R"({"direction":"horizontal","items":["timestamp","author","body"]})");
 
@@ -264,6 +265,12 @@ The fields:
   follows light and dark palettes.
 - `layoutSpec`: optional JSON that arranges the parts. With no C++ renderer
   and no valid JSON specification, a neutral avatar/header/body layout is used.
+- `timestampFormat`: optional Qt date/time format. Empty follows the user's
+  clock/relative setting; `HH:mm:ss` forces a clock with seconds;
+  `{relative}` forces relative time, and `HH:mm '·' {relative}` combines both.
+  A declarative JSON `layoutSpec` also accepts `"timestampFormat"` at its
+  root; the theme field wins if both are supplied. Relative time needs a
+  refresh only when its displayed value changes.
 - `hoverHighlight`: whether the message under the pointer is tinted (default
   `true`). The hover actions appear either way.
 - `background`: the log's background colour; invalid (the default) uses the
@@ -292,6 +299,7 @@ loading avatars. An invalid tree is ignored and the base layout is used.
 
 ```json
 {
+  "timestampFormat": "HH:mm:ss",
   "direction": "horizontal",
   "items": [
     "avatar",

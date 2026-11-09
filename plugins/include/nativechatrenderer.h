@@ -49,9 +49,9 @@ struct NativeChatMessageInfo {
 // NativeChatMessageRenderer::restyle() to reapply anything else.
 struct NativeChatPartOptions {
     int     avatarSize = 0;      // Pixels; 0 builds no avatar.
-    QString timeFormat;          // Per-row output format, set by Psi's global
-                                 // timestamp preference (clock or relative).
-                                 // Theme renderers must not override that preference.
+    QString timeFormat;          // Optional per-message Qt date/time pattern,
+                                 // optionally containing {relative}. Empty:
+                                 // theme format, then the global preference.
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.

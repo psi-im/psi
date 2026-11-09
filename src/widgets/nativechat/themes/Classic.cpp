@@ -14,8 +14,7 @@ public:
         NativeChatPartOptions options;
         options.avatarSize = 0;
         options.directionColors = true;
-        // Psi applies the global clock/relative format; the renderer only
-        // positions the timestamp in the text next to the nickname.
+        // Classic sets its fixed clock format in the theme definition.
         options.boldAuthor = false;
         options.timeInNickColor = info.groupChat;
         // One document: the message icon, timestamp, nickname and text all
@@ -52,6 +51,7 @@ NativeChatTheme classic()
     theme.description = QCoreApplication::translate("NativeChatThemes", "Compact text layout");
     theme.avatarSize = 0;
     theme.spacing = 4;
+    theme.timestampFormat = QStringLiteral("HH:mm:ss");
     theme.setRenderer(std::make_shared<ClassicRenderer>(theme.spacing));
     return theme;
 }

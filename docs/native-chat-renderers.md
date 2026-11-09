@@ -41,7 +41,7 @@ public:
     {
         NativeChatPartOptions options;
         options.avatarSize = 32;
-        options.timeFormat = QStringLiteral("HH:mm"); // Empty: "5 minutes ago".
+        options.timeFormat = QStringLiteral("HH:mm:ss"); // Force seconds regardless of user setting.
         return options;
     }
 
@@ -61,8 +61,11 @@ public:
 };
 ```
 
-- `partOptions()` is asked before the parts are built. Besides the avatar size
-  and the time format it sets the nickname suffix and weight and the
+- `partOptions()` is asked before the parts are built. Its `timeFormat`
+  overrides the theme's `timestampFormat` for a message; empty delegates to
+  the theme and then the user's preference. The format uses Qt date/time
+  patterns such as `HH:mm:ss`, optionally with `{relative}`. Besides avatar
+  size it sets the nickname suffix and weight and the
   timestamp's size, opacity and colour. Psi applies these when the row is
   built and again, in place, whenever the chat font, palette or nickname
   colours change.
@@ -74,8 +77,8 @@ public:
   (direction, delivery and encryption, following the "use message icons"
   option) before the time, wraps the nickname in `authorPrefix` and
   `authorSuffix`, makes it insert itself into the composer when clicked,
-  and recolours it in place. The time is not refreshed there: give a clock
-  `timeFormat`. Notices get an information icon instead.
+  and recolours it in place. Inline timestamps refresh in place when their
+  format contains `{relative}`. Notices get an information icon instead.
 - `directionColors` paints the nickname, in a conversation (not a group
   chat), in the colour of sent or received messages from Psi's options, as
   the legacy text log did; with the header in the text, the time too.

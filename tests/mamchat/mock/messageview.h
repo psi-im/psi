@@ -31,6 +31,15 @@ public:
     };
     explicit MessageView(Type type = Message) : type_(type) { }
 
+    static MessageView mucJoinMessage(const QString &nick, int, const QString &message,
+                                      const QString & = {}, int = 0)
+    {
+        MessageView view(MUCJoin);
+        view.setNick(nick);
+        view.setPlainText(message);
+        return view;
+    }
+
     bool           isJoinLeaveHidden() const { return false; }
     bool           isStatusChangeHidden() const { return false; }
     Type           type() const { return type_; }
@@ -42,6 +51,8 @@ public:
     void           setStylingDisabled(bool disabled) { stylingDisabled_ = disabled; }
     bool           isEmote() const { return emote_; }
     void           setEmote(bool value = true) { emote_ = value; }
+    bool           isAlert() const { return alert_; }
+    void           setAlert(bool value = true) { alert_ = value; }
     void           setHistoryId(qint64 id) { historyId_ = id; }
     qint64         historyId() const { return historyId_; }
     void           setRevisionTime(const QDateTime &time) { revisionTime_ = time; }
@@ -124,6 +135,7 @@ private:
     bool          markable_ = false;
     bool          stylingDisabled_ = false;
     bool          emote_ = false;
+    bool          alert_ = false;
     bool          securityKnown_ = false;
     bool          encrypted_     = false;
     QString       encryptionProtocol_;

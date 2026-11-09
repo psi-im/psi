@@ -61,6 +61,30 @@ inline QString format(const QDateTime &when, Mode mode, const QDateTime &now = Q
     return mode == Mode::Clock ? when.toLocalTime().toString(QStringLiteral("HH:mm")) : relative(when, now);
 }
 
+// An empty format delegates to the user preference. Explicit formats use
+// Qt date/time tokens; {relative} can also appear anywhere in the format.
+inline bool usesRelative(const QString &pattern, Mode fallback)
+{
+    return pattern.isEmpty() ? fallback == Mode::Relative : pattern.contains(QLatin1String("{relative}"));
+}
+
+inline QString formatPattern(const QDateTime &when, const QString &pattern, Mode fallback,
+                             const QDateTime &now = QDateTime::currentDateTime())
+{
+    if (!when.isValid())
+        return {};
+    if (pattern.isEmpty())
+        return format(when, fallback, now);
+    if (!pattern.contains(QLatin1String("{relative}")))
+        return when.toLocalTime().toString(pattern);
+    // Keep the Qt date formatter responsible for its quotes and tokens while
+    // replacing a special token that it does not recognize.
+    constexpr QChar marker(0xe000);
+    QString qtPattern = pattern;
+    qtPattern.replace(QLatin1String("{relative}"), QString(marker));
+    return when.toLocalTime().toString(qtPattern).replace(marker, relative(when, now));
+}
+
 // No polling: wake up only when the currently displayed relative label changes.
 inline QString full(const QDateTime &when)
 {
