@@ -292,10 +292,17 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
         emit writeCompleted(result);
         return;
     }
-    if (!db_.transaction()) {
+    // Claim the SQLite writer slot *before* reading contacts or revisions.
+    // A deferred BEGIN can otherwise observe an old WAL snapshot and fail
+    // with SQLITE_BUSY_SNAPSHOT when a second connection commits first.
+    // BEGIN IMMEDIATE honors the configured busy timeout without GUI stalls.
+    QSqlQuery begin(db_);
+    if (!begin.exec(QStringLiteral("BEGIN IMMEDIATE TRANSACTION"))) {
+        qWarning() << "[history-db] Cannot begin history write:" << begin.lastError().text();
         emit writeCompleted(result);
         return;
     }
+    begin.finish();
 
     // One write is one transaction. In particular, events, revisions and
     // message-state materialization are never committed separately.
