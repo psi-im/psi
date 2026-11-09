@@ -290,7 +290,7 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     timestampTimer_->setObjectName(QStringLiteral("mamTimestampRefresh"));
     timestampTimer_->setSingleShot(true);
     timestampTimer_->setTimerType(Qt::CoarseTimer);
-    connect(timestampTimer_, &QTimer::timeout, this, &MamChatWidget::updateTimestamps);
+    connect(timestampTimer_, &QTimer::timeout, this, [this] { updateTimestamps(); });
     // Deliberately visible in normal terminal output. The reported XMPP
     // software_version may be stale after a CMake reconfigure/rebuild.
     qCDebug(PsiMam::historyLog).noquote() << "timeline-created build=history-demand-v4 widget=" << this;
