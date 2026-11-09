@@ -163,7 +163,7 @@ add_test(NAME mam_tab_close COMMAND mam_tab_close_test)
 # The history journal must never call fdatasync on the GUI thread during
 # ordinary commits. Exercise WAL/NORMAL and the separate checkpoint connection.
 add_executable(mam_history_sqlite_policy_test HistorySqlitePolicyTest.cpp
-    ../../src/historysqlitepolicy.h ../../src/historywalcheckpoint.h)
+    ../../src/historysqlitepolicy.h)
 target_include_directories(mam_history_sqlite_policy_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_history_sqlite_policy_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
