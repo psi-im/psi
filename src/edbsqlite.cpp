@@ -166,6 +166,7 @@ EDBSqLite::~EDBSqLite()
     qDeleteAll(pendingReads_);
     pendingReads_.clear();
     pendingLocalPages_.clear();
+    pendingDisplayedCursors_.clear();
     qDeleteAll(rlist);
     rlist.clear();
     if (checkpointTimer_)
@@ -335,6 +336,26 @@ HistoryArchive::DisplayedCursor EDBSqLite::sentDisplayedCursor(const QString &ac
 {
     return commit() ? HistoryArchive::sentDisplayedCursor(QSqlDatabase::database("history"), account, peer.full())
                     : HistoryArchive::DisplayedCursor {};
+}
+
+void EDBSqLite::requestSentDisplayedCursor(
+    const QString &account, const XMPP::Jid &peer, QObject *receiver,
+    std::function<void(HistoryArchive::DisplayedCursor, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestSentDisplayedCursor(account, peer, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->type = item_query_req::Type_displayed;
+    r->accId = account;
+    r->j = peer;
+    r->id = genUniqueId();
+    pendingDisplayedCursors_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 }
 
 EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString &id, const QString &sender,
@@ -577,6 +598,12 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingDisplayedCursors_.contains(read.id)) {
+        auto pending = pendingDisplayedCursors_.take(read.id);
+        if (pending.receiver)
+            pending.finished(read.cursor, read.success);
+        return;
+    }
     if (pendingLocalPages_.contains(read.id)) {
         auto pending = pendingLocalPages_.take(read.id);
         // Closing a tab invalidates its presentation request, not an already
@@ -612,12 +639,17 @@ void EDBSqLite::performRequests()
     const int       type = r->type;
 
     if ((type == item_query_req::Type_get || type == item_query_req::Type_find
-         || type == item_query_req::Type_local) && historyReadThread_) {
+         || type == item_query_req::Type_local || type == item_query_req::Type_displayed)
+        && historyReadThread_) {
         // Commit GUI-thread appends preceding this read in the EDB request
         // queue. A worker snapshot must not overtake an earlier write.
         if (!commit()) {
             if (type == item_query_req::Type_local) {
                 auto pending = pendingLocalPages_.take(r->id);
+                if (pending.receiver)
+                    pending.finished({}, false);
+            } else if (type == item_query_req::Type_displayed) {
+                auto pending = pendingDisplayedCursors_.take(r->id);
                 if (pending.receiver)
                     pending.finished({}, false);
             } else {
@@ -629,6 +661,7 @@ void EDBSqLite::performRequests()
         HistoryReadRequest read;
         read.id = r->id;
         read.type = type == item_query_req::Type_local ? HistoryReadRequest::LocalPage
+            : type == item_query_req::Type_displayed ? HistoryReadRequest::DisplayedCursor
             : type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
         read.account = r->accId;
         read.peer = r->j.full();
@@ -638,8 +671,8 @@ void EDBSqLite::performRequests()
         read.start = r->start;
         read.limit = r->len;
         read.before = r->localBefore;
-        if (type == item_query_req::Type_local)
-            delete r; // Its completion callback is held separately.
+        if (type == item_query_req::Type_local || type == item_query_req::Type_displayed)
+            delete r; // Their completion callbacks are held separately.
         else
             pendingReads_.insert(r->id, r);
         emit historyReadRequested(read);
