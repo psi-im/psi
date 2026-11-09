@@ -39,18 +39,7 @@ class QThread;
 #include <QTimer>
 #include <QVariant>
 
-enum QueryType {
-    QueryContactsList,
-    QueryLatest,
-    QueryOldest,
-    QueryDateForward,
-    QueryDateBackward,
-    QueryFindText,
-    QueryRowCount,
-    QueryRowCountBefore,
-    QueryJidRowId,
-    QueryInsertEvent
-};
+enum QueryType { QueryContactsList, QueryRowCount }
 
 struct QueryProperty {
     QueryType type;
@@ -178,7 +167,6 @@ private:
     HistoryWalCheckpoint  *checkpointWorker_ = nullptr;
     bool                   walEnabled_ = false;
     QList<item_query_req *> rlist;
-    QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;
     QThread                 *historyReadThread_ = nullptr;
     HistorySqlReadWorker    *historyReader_ = nullptr;
@@ -212,11 +200,6 @@ private:
 
 private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
-    bool          appendEvent(const QString &accId, const XMPP::Jid &, const HistoryEventFactory::Encoded &,
-                              int, bool &inserted);
-    qint64        ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type);
-    int           rowCount(const QString &accId, const XMPP::Jid &jid, const QDateTime before);
-    bool          eraseHistory(const QString &accId, const XMPP::Jid &);
     bool          transaction(bool now);
     bool          rollback();
     void          startAutocommitTimer();
