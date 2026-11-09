@@ -572,6 +572,22 @@ void OptionsMigration::lateMigration()
         }
     }
 
+    // The old event_notifier toolbar action no longer exists. The live
+    // EventNotifier is a roster widget, not a toolbar. Remove stale entries
+    // from existing profiles, including toolbars renamed by the user.
+    PsiOptions *options = PsiOptions::instance();
+    const auto toolbarBases = options->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+    for (const QString &base : toolbarBases) {
+        QStringList actions = options->getOption(base + ".actions").toStringList();
+        if (!actions.removeAll(QStringLiteral("event_notifier")))
+            continue;
+        if (actions.isEmpty()) {
+            options->removeOption(base, true);
+        } else {
+            options->setOption(base + ".actions", actions);
+        }
+    }
+
     // 2016-02-09 touches Psi+ users. but let it be here for awhile
     if (PsiOptions::instance()->getOption("options.contactlist.use-autohide", false).toBool()) {
         PsiOptions::instance()->setOption("options.contactlist.autohide-interval", 0);

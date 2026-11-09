@@ -1,4 +1,3 @@
-:* Psi.<b>1 event received</b>_MLabel    {name='EventNotifierAction::MLabel' text='<b>1 event received</b>' type='MLabel' visible='1' window=':* Psi_MainWin'}
 :* Psi.contactListView_PsiContactListView    {name='contactListView' type='PsiContactListView' visible='1' window=':* Psi_MainWin'}
 :* Psi_MainWin    {name='MainWin' type='MainWin' visible='1' windowTitle='* Psi'}
 :About Psi.Close_IconButton    {name='pb_close' text='Close' type='IconButton' visible='1' window=':About Psi_AboutDlg'}

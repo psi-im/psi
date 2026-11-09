@@ -152,19 +152,6 @@
       <locked type="bool">true</locked>
       <name type="QString">Show contacts</name>
      </m1>
-     <m2>
-      <dock>
-       <position type="int">3</position>
-       <nl type="bool">true</nl>
-      </dock>
-      <key type="QString">{90c6e63d-23a5-4872-bd5c-91d09c4b53fe}</key>
-      <actions type="QStringList">
-       <item>event_notifier</item>
-      </actions>
-      <visible type="bool">false</visible>
-      <locked type="bool">true</locked>
-      <name type="QString">Event notifier</name>
-     </m2>
     </toolbars>
     <show>
      <hidden-contacts-group type="bool">true</hidden-contacts-group>
