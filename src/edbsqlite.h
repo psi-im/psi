@@ -25,6 +25,8 @@
 #include "psievent.h"
 
 #include <QDateTime>
+
+class HistoryWalCheckpoint;
 #include <QHash>
 #include <QObject>
 #include <QSqlDatabase>
@@ -149,6 +151,9 @@ private:
     int                     maxUncommitedSecs;
     unsigned int            commitByTimeoutSecs;
     QTimer                 *commitTimer;
+    QTimer                 *checkpointTimer_ = nullptr;
+    HistoryWalCheckpoint  *checkpointWorker_ = nullptr;
+    bool                   walEnabled_ = false;
     QList<item_query_req *> rlist;
     QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;
