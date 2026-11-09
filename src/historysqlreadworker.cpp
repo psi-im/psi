@@ -233,8 +233,9 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
     bool ok = false;
     if (request.type == HistoryWriteRequest::Append) {
         const auto &event = request.encoded;
-        const QString jid = request.jidType == 2 ? request.peer
-                                                  : request.peer.section(QLatin1Char('/'), 0, 0);
+        // JID resource can contain '/', so never try to reconstruct it
+        // by splitting the full JID string in this Qt-only worker.
+        const QString jid = request.contactPeer;
         if (event.valid && !request.account.isEmpty() && !jid.isEmpty()) {
             QSqlQuery contact(db_);
             contact.prepare(QStringLiteral("SELECT id FROM contacts WHERE acc_id=:account AND jid=:jid"));
@@ -278,7 +279,7 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
                         ":subject,:body,:lang,:extra,:state,:timestamp)"));
                     q.bindValue(QStringLiteral(":contact"), contactId);
                     q.bindValue(QStringLiteral(":resource"),
-                                request.jidType == 2 ? QString() : request.peer.section(QLatin1Char('/'), 1));
+                                request.jidType == 2 ? QString() : request.resource);
                     q.bindValue(QStringLiteral(":date"), event.timestamp);
                     q.bindValue(QStringLiteral(":type"), event.type);
                     q.bindValue(QStringLiteral(":direction"), event.direction);
