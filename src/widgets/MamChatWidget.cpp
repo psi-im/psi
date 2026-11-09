@@ -2888,54 +2888,64 @@ void MamChatWidget::restyleRows()
 void MamChatWidget::updateTimestamps()
 {
     timestampTimer_->stop();
-    // Hidden tabs/windows require no clock, nor do themes with clock times.
-    if (!isVisible() || window()->isMinimized())
+    // One coalesced timer for the visible timeline, including quoted times.
+    if (!isVisible() || window()->isMinimized() || timestampMode_ != ChatTimestamp::Mode::Relative)
         return;
 
     const auto range = knownVisibleRange();
     if (!range.isValid())
         return;
-    const auto   now         = QDateTime::currentDateTime();
-    const qint64 minute      = 60 * 1000;
-    const qint64 hour        = 60 * minute;
-    const qint64 day         = 24 * hour;
-    qint64       nextRefresh = std::numeric_limits<int>::max();
+    const auto now = QDateTime::currentDateTime();
+    qint64 nextRefresh = std::numeric_limits<int>::max();
+    const auto refresh = [this, &now, &nextRefresh](const QDateTime &when, const auto &setText) {
+        if (!when.isValid())
+            return;
+        setText(ChatTimestamp::format(when, timestampMode_, now));
+        const auto delay = ChatTimestamp::nextChangeMs(when, now);
+        if (delay > 0)
+            nextRefresh = qMin(nextRefresh, delay);
+    };
 
-    // The prefetch/materialization buffer can be much larger than the
-    // viewport. Touch only rows that actually intersect the visible area.
     for (int i = range.first; i <= range.last; ++i) {
         auto *row = rowWidget(i);
         if (!row || !row->isVisibleTo(viewport())
             || !QRect(row->mapTo(viewport(), QPoint()), row->size()).intersects(viewport()->rect()))
             continue;
-        // Ask the current renderer: rows being rebuilt for a new theme may
-        // still show the previous one.
-        if (!renderer_->partOptions(messageInfo(i)).timeFormat.isEmpty())
-            continue;
-        auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
-        if (!label)
-            continue;
-        const auto when = items_.at(i).message.dateTime();
-        if (!when.isValid())
-            continue;
         auto *message = messageRow(row);
-        if (message && message->options.timeFormat.isEmpty()) {
-            const auto text = displayTime(when, now);
-            if (label->text() != text)
-                label->setText(text);
+        const auto when = items_.at(i).message.dateTime();
+        if (message && message->options.header == NativeChatPartOptions::HeaderInText) {
+            if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))) {
+                refresh(when, [body](const QString &value) {
+                    QTextDocument *document = body->document();
+                    for (auto block = document->begin(); block.isValid(); block = block.next()) {
+                        for (auto it = block.begin(); !it.atEnd(); ++it) {
+                            const QTextFragment fragment = it.fragment();
+                            if (!fragment.charFormat().anchorNames().contains(QStringLiteral("psi-time")))
+                                continue;
+                            const QString desired = QStringLiteral("[") + value + QStringLiteral("]");
+                            if (fragment.text() != desired) {
+                                QTextCursor cursor(document);
+                                cursor.setPosition(fragment.position());
+                                cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+                                cursor.insertText(desired, fragment.charFormat());
+                            }
+                            return;
+                        }
+                    }
+                });
+            }
+        } else if (auto *label = row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))) {
+            refresh(when, [label](const QString &value) {
+                if (label->text() != value)
+                    label->setText(value);
+            });
         }
-
-        const qint64 age       = when.msecsTo(now);
-        qint64       untilNext = 0;
-        if (age < 0)
-            untilNext = -age; // Future timestamp becomes "just now".
-        else if (age < hour)
-            untilNext = minute - age % minute;
-        else if (age < day)
-            untilNext = hour - age % hour;
-        // Beyond 24 hours we show a fixed clock time, with no timer.
-        if (untilNext > 0)
-            nextRefresh = qMin(nextRefresh, untilNext + 50);
+        if (auto *preview = row->findChild<MessagePreview *>(QStringLiteral("mamReplyPreview"))) {
+            const auto quoteTime = preview->property("_psiQuotedAt").toDateTime();
+            refresh(quoteTime, [preview](const QString &value) {
+                preview->setTimestamp(value, preview->property("_psiQuotedFullTime").toString());
+            });
+        }
     }
     if (nextRefresh < std::numeric_limits<int>::max())
         timestampTimer_->start(int(nextRefresh));
