@@ -19,10 +19,35 @@ GUI request dispatcher after SQL insertion rather than inside
 `EDBSqLite::appendEvent()`. Neither extraction changes the SQL transaction
 schedule yet; both prepare the eventual raw-record/value boundary.
 
-The current checkpoint worker in this PR is the first deployment of the
-QObject/queued-slot ownership pattern. It is **not** yet the complete EDB
-migration: legacy EDB and MAM still execute foreground SQL in the present
-implementation.
+## Implemented stages in PR #1112
+
+- The WAL checkpoint worker and read worker use `QObject::moveToThread()`
+  and queued signals/slots. No mutex or shared mutable queue is involved.
+  The checkpoint readiness callback has been replaced by a queued Qt signal
+  so a shutdown cannot dereference a destroyed EDB facade.
+- `EDBHandle::get/find` enqueue SQL reads on a read-only SQLite connection;
+  the results are detached `QSqlRecord` values. The GUI reconstructs
+  `PsiEvent` and delivers `EDBHandle::finished()` as before.
+- Native one-to-one/MUC local scrollback now requests local pages via a
+  receiver-scoped asynchronous EDB API. The MAM page continuation waits
+  until the local page is projected. A dialog generation and peer check
+  prevent applying a stale result after clearing or switching conversations.
+- Each reader request runs in a read transaction. A local page's multiple
+  original/revision lookups see one consistent SQLite snapshot even during
+  concurrent live/MAM writes; the test suite covers legacy no-ID messages
+  and a concurrent uncommitted writer.
+- The previous EDB write queue is still on the GUI thread. Before sending a
+  read to the worker it commits *preceding* queued GUI writes. Subsequent
+  writes may still commit during that read; the read snapshot is isolated.
+  This is not yet the final single-owner database architecture.
+
+**Remaining work:** `EDBSqLite::appendEvent/eraseHistory/commit`, synchronous
+MAM cache access/merges in `HistorySync::Context`, archive revision lookup,
+displayed cursor restoration, the history contact list, and startup schema
+migration all still need value-based asynchronous worker APIs. The separate
+read and checkpoint connections are *intermediate*: after writes migrate,
+they should be folded into one worker-owned connection and
+`synchronous=FULL` reconsidered.
 
 ## Compatibility with old XMPP servers
 
@@ -42,15 +67,18 @@ implementation.
 
 ## Execution and presentation ordering
 
-Each request carries `requestId`, account/peer scope and, for a view,
-its current `generation`. The GUI facade may have many live requests;
-the worker executes SQL in submission order.
+Reader operations carry a request ID and account/peer scope. Native local
+page consumers additionally capture a dialog generation. The reader worker
+executes its own queued requests in submission order; this is **not yet a
+global ordering guarantee** with the still-GUI-owned writer. The eventual
+single worker must serialize all reads and writes together.
 
-**The UI does not wait for persistence** to display a live stanza. A queued
-append cannot hold up network message display. When an EDB result arrives,
-the consumer must validate that its view still exists and that its request
-matches the active scope/generation. An obsolete result may be discarded
-from the view without rolling back completed writes.
+**Target:** the UI must not wait for persistence to display a live stanza.
+At this stage the UI is nonblocking for queued history reads, but synchronous
+SQLite writes can still stall it. When an asynchronous EDB read arrives,
+the consumer validates that the view still exists and that the request
+matches its active scope/generation. An obsolete result is discarded without
+rolling back any completed writes.
 
 History pages **merge**, never replace, an existing timeline wholesale.
 In particular, a live message arriving between a local read request and
@@ -74,15 +102,15 @@ the batch boundary must retain transaction and response ordering.
 
 ## API migration boundaries
 
-1. Preserve `EDBHandle`'s existing asynchronous `get/find/append/erase`
-   contract. Replace `EDBSqLite::performRequests()`'s GUI timer with
-   worker-queued operations; deliver its existing `finished()` back on
-   the GUI thread. Handle destruction cancels *delivery*, not a write
-   already executing in the worker.
+1. Preserve `EDBHandle`'s asynchronous `get/find/append/erase` contract.
+   **Get/find are now worker reads; append/erase are still GUI writes.**
+   Move the remaining writes behind the same queue without altering
+   `finished()` semantics. Handle destruction cancels *delivery*, not a
+   write already executing in the worker.
 2. Convert direct synchronous consumers, notably
    `HistorySync::Context` read/merge/snapshot/lookup,
-   `nativechathistory` local history/prepend, archive revision
-   resolution, `sentDisplayedCursor`, and the history contact list.
+   `nativechathistory` local history/prepend (**now asynchronous**),
+   archive revision resolution, `sentDisplayedCursor`, and the history contact list.
    Return typed value results asynchronously instead of blocking.
 3. Move connection creation, schema checking, startup migration,
    prepared statements, timers and transaction management entirely
