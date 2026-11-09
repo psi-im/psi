@@ -10,6 +10,7 @@
 #include <QThread>
 #include <QWaitCondition>
 #include <functional>
+#include <utility>
 
 // Owns a separate SQLite connection created and closed on its own thread.
 // Checkpointing may call fdatasync() and take seconds on slow HDDs: it must
