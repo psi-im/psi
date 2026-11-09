@@ -26,6 +26,7 @@
 #include "psievent.h"
 
 #include <QDateTime>
+#include <functional>
 #include <QFile>
 #include <QObject>
 #include <QSharedPointer>
@@ -121,6 +122,10 @@ public:
     virtual void               setStorageParam(const QString &key, const QString &val) = 0;
 
     virtual EDBResult localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) { return {}; }
+    // Completion always runs on receiver's thread. Dropping the receiver
+    // cancels delivery without cancelling an already executing database read.
+    virtual void requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *receiver,
+                                         std::function<void(EDBResult, bool)> finished);
     virtual HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) { return {}; }
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
