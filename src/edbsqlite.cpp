@@ -718,25 +718,42 @@ void EDBSqLite::performRequests()
 {
     if (rlist.isEmpty())
         return;
+    auto *r = rlist.takeFirst();
+    const int type = r->type;
 
-    item_query_req *r    = rlist.takeFirst();
-    const int       type = r->type;
+    // Migration/init is the only reason a request could arrive without the
+    // database worker. Never silently drop it or fall back to GUI SQL.
+    if (!historyReadThread_) {
+        if (type == item_query_req::Type_local) {
+            auto pending = pendingLocalPages_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
+        } else if (type == item_query_req::Type_displayed) {
+            auto pending = pendingDisplayedCursors_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
+        } else if (type == item_query_req::Type_archiveRead) {
+            auto pending = pendingArchiveReads_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, {}, false);
+        } else if (type == item_query_req::Type_archiveWrite) {
+            auto pending = pendingArchiveWrites_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
+        } else if (type == item_query_req::Type_append || type == item_query_req::Type_erase) {
+            writeFinished(r->id, false);
+        } else {
+            resultReady(r->id, {}, 0);
+        }
+        delete r;
+        return;
+    }
 
-    if ((type == item_query_req::Type_get || type == item_query_req::Type_find
-         || type == item_query_req::Type_local || type == item_query_req::Type_displayed
-         || type == item_query_req::Type_archiveRead)
-        && historyReadThread_) {
-        // Queued reads share the worker's event loop with preceding writes.
-        // Do not call GUI-thread commit here: it may block in fdatasync().
+    if (type == item_query_req::Type_get || type == item_query_req::Type_find
+        || type == item_query_req::Type_local || type == item_query_req::Type_displayed
+        || type == item_query_req::Type_archiveRead) {
         HistoryReadRequest read;
         read.id = r->id;
-        read.type = type == item_query_req::Type_local ? HistoryReadRequest::LocalPage
-            : type == item_query_req::Type_displayed ? HistoryReadRequest::DisplayedCursor
-            : type == item_query_req::Type_archiveRead
-                ? (r->archiveMode == ArchiveReadMode::After ? HistoryReadRequest::ArchiveAfter
-                   : r->archiveMode == ArchiveReadMode::Index ? HistoryReadRequest::ArchiveIndex
-                                                              : HistoryReadRequest::ArchiveBefore)
-            : type == item_query_req::Type_find ? HistoryReadRequest::Find : HistoryReadRequest::Get;
         read.account = r->accId;
         read.peer = r->j.full();
         read.text = r->findStr;
@@ -749,307 +766,46 @@ void EDBSqLite::performRequests()
         read.cursor = r->archiveCursor;
         read.archiveIndex = r->archiveIndex;
         read.snapshotCount = r->snapshotCount;
-        if (type == item_query_req::Type_local || type == item_query_req::Type_displayed
-            || type == item_query_req::Type_archiveRead)
-            delete r; // Their completion callbacks are held separately.
+        if (type == item_query_req::Type_local)
+            read.type = HistoryReadRequest::LocalPage;
+        else if (type == item_query_req::Type_displayed)
+            read.type = HistoryReadRequest::DisplayedCursor;
+        else if (type == item_query_req::Type_find)
+            read.type = HistoryReadRequest::Find;
+        else if (type == item_query_req::Type_archiveRead)
+            read.type = r->archiveMode == ArchiveReadMode::After ? HistoryReadRequest::ArchiveAfter
+                : r->archiveMode == ArchiveReadMode::Index ? HistoryReadRequest::ArchiveIndex
+                                                            : HistoryReadRequest::ArchiveBefore;
         else
+            read.type = HistoryReadRequest::Get;
+
+        if (type == item_query_req::Type_get || type == item_query_req::Type_find)
             pendingReads_.insert(r->id, r);
+        else
+            delete r; // Receiver-scoped callbacks are tracked independently.
         emit historyReadRequested(read);
         return;
     }
 
-    if ((type == item_query_req::Type_append || type == item_query_req::Type_erase
-         || type == item_query_req::Type_archiveWrite) && historyReadThread_) {
-        HistoryWriteRequest write;
-        write.id = r->id;
-        write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append
-                     : type == item_query_req::Type_archiveWrite ? HistoryWriteRequest::StorePage
-                                                                 : HistoryWriteRequest::Erase;
-        write.account = r->accId;
-        write.peer = r->j.full();
-        write.contactPeer = r->jidType == GroupChatContact ? r->j.full() : r->j.bare();
-        write.resource = r->j.resource();
-        write.jidType = r->jidType;
-        write.encoded = r->encoded;
-        write.archiveKey = r->archiveKey;
-        write.before = r->archiveCursor;
-        write.archivePage = r->archivePage;
-        write.limit = r->len;
-        if (type == item_query_req::Type_archiveWrite)
-            delete r;
-        else
-            pendingWrites_.insert(r->id, r);
-        emit historyWriteRequested(write);
-        return;
-    }
-
-    else if (type == item_query_req::Type_get) {
-        commit();
-        bool      fContAll = r->j.isEmpty();
-        bool      fAccAll  = r->accId.isEmpty();
-        QueryType queryType;
-        if (r->date.isNull()) {
-            if (r->dir == Forward)
-                queryType = QueryOldest;
-            else
-                queryType = QueryLatest;
-        } else {
-            if (r->dir == Backward)
-                queryType = QueryDateBackward;
-            else
-                queryType = QueryDateForward;
-        }
-        EDBSqLite::PreparedQuery *query = queryes.getPreparedQuery(queryType, fAccAll, fContAll);
-        if (!fContAll)
-            query->bindValue(":jid", r->j.full());
-        if (!fAccAll)
-            query->bindValue(":acc_id", r->accId);
-        if (!r->date.isNull())
-            query->bindValue(":date", r->date.toMSecsSinceEpoch());
-        query->bindValue(":start", r->start);
-        query->bindValue(":cnt", r->len);
-        EDBResult result;
-        if (query->exec()) {
-            while (query->next()) {
-                PsiEvent::Ptr e(HistoryEventFactory::decode(psi(), query->record()));
-                if (e) {
-                    QString id = query->record().value("id").toString();
-                    result.append(EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
-                                                         query->record().value("archive_uid").toString(), {},
-                                                         protocolOnlyRecord(query->record()), {}, {},
-                                                         MessageState::Flags(query->record().value("message_flags").toInt()))));
-                }
-            }
-            query->freeResult();
-        }
-        int beginRow;
-        if (r->dir == Forward && r->date.isNull()) {
-            beginRow = r->start;
-        } else {
-            int cnt = rowCount(r->accId, r->j, r->date);
-            if (r->dir == Backward) {
-                beginRow = cnt - r->len + 1;
-                if (beginRow < 0)
-                    beginRow = 0;
-            } else {
-                beginRow = cnt + 1;
-            }
-        }
-        resultReady(r->id, result, beginRow);
-
-    } else if (type == item_query_req::Type_find) {
-        commit();
-        bool                      fContAll = r->j.isEmpty();
-        bool                      fAccAll  = r->accId.isEmpty();
-        EDBSqLite::PreparedQuery *query    = queryes.getPreparedQuery(QueryFindText, fAccAll, fContAll);
-        if (!fContAll)
-            query->bindValue(":jid", r->j.full());
-        if (!fAccAll)
-            query->bindValue(":acc_id", r->accId);
-        EDBResult result;
-        if (query->exec()) {
-            QString str = r->findStr.toLower();
-            while (query->next()) {
-                const QSqlRecord rec = query->record();
-                if (!rec.value("m_text").toString().toLower().contains(str, Qt::CaseSensitive))
-                    continue;
-                PsiEvent::Ptr e(HistoryEventFactory::decode(psi(), rec));
-                if (e) {
-                    QString    id  = rec.value("id").toString();
-                    EDBItemPtr eip = EDBItemPtr(new EDBItem(e, id, query->record().value("history_state").toInt(),
-                                                            query->record().value("archive_uid").toString(), {},
-                                                            protocolOnlyRecord(query->record()), {}, {},
-                                                            MessageState::Flags(query->record().value("message_flags").toInt())));
-                    result.append(eip);
-                }
-            }
-            query->freeResult();
-        }
-        resultReady(r->id, result, 0);
-
-    } else if (type == item_query_req::Type_erase) {
-        writeFinished(r->id, false);
-    }
-
-    delete r;
-}
-
-bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid,
-                              const HistoryEventFactory::Encoded &encoded, int jidType, bool &inserted)
-{
-    inserted = false;
-    if (!encoded.valid)
-        return false;
-    QSqlDatabase db        = QSqlDatabase::database("history");
-    const qint64 contactId = ensureJidRowId(accId, jid, jidType);
-    if (contactId == 0)
-        return false;
-
-    if (encoded.isMessage) {
-        HistoryArchive::Entry delivery;
-        delivery.messageId = encoded.messageId;
-        delivery.sender    = encoded.sender;
-        delivery.timestamp = encoded.timestamp;
-        delivery.type      = encoded.type;
-        delivery.direction = encoded.direction;
-        delivery.body      = encoded.matchBody;
-        delivery.subject   = encoded.matchSubject;
-        // A live delivery can be logged after its MAM page finished. Reuse
-        // that archived row rather than creating a second local original.
-        if (HistoryArchive::matchingDelivery(db, contactId, delivery, true))
-            return true;
-    }
-    if (!transaction(false))
-        return false;
-
-    PreparedQuery *query = queryes.getPreparedQuery(QueryInsertEvent, false, false);
-    query->bindValue(":contact_id", contactId);
-    query->bindValue(":resource", (jidType != GroupChatContact) ? jid.resource() : "");
-    query->bindValue(":date", encoded.timestamp);
-    query->bindValue(":history_date_ms",
-                     encoded.timestamp.isValid() ? encoded.timestamp.toMSecsSinceEpoch() : qint64(0));
-    query->bindValue(":type", encoded.type);
-    query->bindValue(":direction", encoded.direction);
-    // Authentication events are local history, never MAM message stanzas.
-    query->bindValue(":history_state",
-                     encoded.isMessage ? HistoryArchive::Unverified : HistoryArchive::LocalOnly);
-    if (encoded.isMessage) {
-        query->bindValue(":subject", encoded.subject);
-        query->bindValue(":m_text", encoded.body);
-        query->bindValue(":lang", encoded.language);
-        query->bindValue(":extra_data", encoded.extras);
-    } else {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        query->bindValue(":subject", QVariant(QVariant::String));
-        query->bindValue(":m_text", QVariant(QVariant::String));
-        query->bindValue(":lang", QVariant(QVariant::String));
-        query->bindValue(":extra_data", QVariant(QVariant::String));
-#else
-        query->bindValue(":subject", QVariant(QMetaType::fromType<QString>()));
-        query->bindValue(":m_text", QVariant(QMetaType::fromType<QString>()));
-        query->bindValue(":lang", QVariant(QMetaType::fromType<QString>()));
-        query->bindValue(":extra_data", QVariant(QMetaType::fromType<QString>()));
-#endif
-    }
-    bool res = query->exec();
-    if (res && encoded.isMessage) {
-        if (!HistoryArchive::recordRevision(db, query->lastInsertId().toLongLong(), contactId,
-                                            encoded.type, encoded.direction, encoded.sender,
-                                            encoded.messageId, encoded.replaceId)
-            || !HistoryArchive::recordMessageStates(db, { query->lastInsertId().toLongLong() })) {
-            rollback();
-            return false;
-        }
-    }
-    inserted = res;
-    return res;
-}
-
-qint64 EDBSqLite::ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type)
-{
-    if (jid.isEmpty())
-        return 0;
-    QString sJid = (type == GroupChatContact) ? jid.full() : jid.bare();
-    QString sKey = accId + "|" + sJid;
-    qint64  id   = jidsCache.value(sKey, 0);
-    if (id != 0)
-        return id;
-
-    EDBSqLite::PreparedQuery *query = queryes.getPreparedQuery(QueryJidRowId, false, false);
-    query->bindValue(":jid", sJid);
-    query->bindValue(":acc_id", accId);
-    if (query->exec()) {
-        if (query->first()) {
-            id = query->record().value("id").toLongLong();
-        } else {
-            //
-            QSqlQuery queryIns(QSqlDatabase::database("history"));
-            queryIns.prepare("INSERT INTO `contacts` (`acc_id`, `type`, `jid`, `lifetime`)"
-                             " VALUES (:acc_id, :type, :jid, -1);");
-            queryIns.bindValue(":acc_id", accId);
-            queryIns.bindValue(":type", type);
-            queryIns.bindValue(":jid", sJid);
-            if (queryIns.exec()) {
-                id = queryIns.lastInsertId().toLongLong();
-            }
-        }
-        query->freeResult();
-        if (id != 0)
-            jidsCache[sKey] = id;
-    }
-    return id;
-}
-
-int EDBSqLite::rowCount(const QString &accId, const XMPP::Jid &jid, QDateTime before)
-{
-    bool      fAccAll  = accId.isEmpty();
-    bool      fContAll = jid.isEmpty();
-    QueryType type;
-    if (before.isNull())
-        type = QueryRowCount;
+    HistoryWriteRequest write;
+    write.id = r->id;
+    write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append
+        : type == item_query_req::Type_archiveWrite ? HistoryWriteRequest::StorePage : HistoryWriteRequest::Erase;
+    write.account = r->accId;
+    write.peer = r->j.full();
+    write.contactPeer = r->jidType == GroupChatContact ? r->j.full() : r->j.bare();
+    write.resource = r->j.resource();
+    write.jidType = r->jidType;
+    write.encoded = r->encoded;
+    write.archiveKey = r->archiveKey;
+    write.before = r->archiveCursor;
+    write.archivePage = r->archivePage;
+    write.limit = r->len;
+    if (type == item_query_req::Type_archiveWrite)
+        delete r;
     else
-        type = QueryRowCountBefore;
-    PreparedQuery *query = queryes.getPreparedQuery(type, fAccAll, fContAll);
-    if (!fContAll)
-        query->bindValue(":jid", jid.full());
-    if (!fAccAll)
-        query->bindValue(":acc_id", accId);
-    if (!before.isNull())
-        query->bindValue(":date", before.toMSecsSinceEpoch());
-    int res = 0;
-    if (query->exec()) {
-        if (query->next()) {
-            res = query->record().value("count").toInt();
-        }
-        query->freeResult();
-    }
-    return res;
-}
-
-bool EDBSqLite::eraseHistory(const QString &accId, const XMPP::Jid &jid)
-{
-    bool res = false;
-    if (!transaction(true))
-        return false;
-
-    if (accId.isEmpty() && jid.isEmpty()) {
-        QSqlQuery query(QSqlDatabase::database("history"));
-        // if (query.exec("DELETE FROM `events`;"))
-        if (query.exec("DELETE FROM `contacts`;")) {
-            jidsCache.clear();
-            res = true;
-        }
-    } else {
-        PreparedQuery *query = queryes.getPreparedQuery(QueryJidRowId, false, false);
-        query->bindValue(":jid", jid.full());
-        query->bindValue(":acc_id", accId);
-        if (query->exec()) {
-            if (query->next()) {
-                const qint64 id = query->record().value("id").toLongLong();
-                QSqlQuery    query2(QSqlDatabase::database("history"));
-                query2.prepare("DELETE FROM `events` WHERE `contact_id` = :id;");
-                query2.bindValue(":id", id);
-                if (query2.exec()) {
-                    res = true;
-                    query2.prepare("DELETE FROM `contacts` WHERE `id` = :id AND `lifetime` = -1;");
-                    query2.bindValue(":id", id);
-                    if (query2.exec()) {
-                        if (query2.numRowsAffected() > 0)
-                            jidsCache.clear();
-                    } else
-                        res = false;
-                }
-            }
-            query->freeResult();
-        }
-    }
-    if (res)
-        res = HistoryArchive::invalidate(QSqlDatabase::database("history"), accId, jid.full());
-    if (res)
-        res = commit();
-    else
-        rollback();
-    return res;
+        pendingWrites_.insert(r->id, r);
+    emit historyWriteRequested(write);
 }
 
 bool EDBSqLite::transaction(bool now)
