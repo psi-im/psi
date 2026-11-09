@@ -206,7 +206,8 @@ void EDBSqLite::requestLocalHistoryPage(const QString &account, const Jid &peer,
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestLocalHistoryPage(account, peer, before, limit, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -244,7 +245,8 @@ void EDBSqLite::requestArchivedEvent(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestArchivedEvent(key, uid, time, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -265,7 +267,8 @@ void EDBSqLite::requestOwnPlaintext(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestOwnPlaintext(key, id, sender, time, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -287,7 +290,8 @@ void EDBSqLite::requestResolvedHistoryEvents(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestResolvedHistoryEvents(ids, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -395,7 +399,8 @@ void EDBSqLite::requestSentDisplayedCursor(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestSentDisplayedCursor(account, peer, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -441,7 +446,8 @@ void EDBSqLite::requestArchivePage(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestArchivePage(mode, key, cursor, index, limit, snapshotCount, receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, {}, false); });
         return;
     }
     auto *r = new item_query_req;
@@ -465,7 +471,8 @@ void EDBSqLite::requestStoreArchivePage(
     if (!receiver)
         return;
     if (!historyReadThread_) {
-        EDB::requestStoreArchivePage(key, before, limit, std::move(page), receiver, std::move(finished));
+        // A failed/uninitialized SQLite worker must not execute disk I/O on the GUI.
+        QTimer::singleShot(0, receiver, [finished = std::move(finished)]() mutable { finished({}, false); });
         return;
     }
     auto *r = new item_query_req;
