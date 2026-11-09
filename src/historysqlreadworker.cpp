@@ -69,6 +69,25 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    if (request.type == HistoryReadRequest::ArchiveBefore
+        || request.type == HistoryReadRequest::ArchiveAfter
+        || request.type == HistoryReadRequest::ArchiveIndex) {
+        const auto &key = request.archiveKey;
+        result.archiveSnapshot = HistoryArchive::readSnapshot(db_, key);
+        if (request.type == HistoryReadRequest::ArchiveBefore)
+            result.archivePage = HistoryArchive::readPage(db_, key, request.cursor, request.limit);
+        else if (request.type == HistoryReadRequest::ArchiveAfter)
+            result.archivePage = HistoryArchive::readAfter(db_, key, request.cursor, request.limit,
+                                                           request.snapshotCount);
+        else
+            result.archivePage = HistoryArchive::readIndex(db_, key, request.archiveIndex,
+                                                           request.limit, request.snapshotCount);
+        result.success = snapshot.commit();
+        if (!result.success)
+            result.archivePage = {};
+        emit completed(result);
+        return;
+    }
     if (request.type == HistoryReadRequest::DisplayedCursor) {
         if (!request.account.isEmpty() && !request.peer.isEmpty()) {
             result.cursor = HistoryArchive::sentDisplayedCursor(db_, request.account, request.peer);
@@ -191,7 +210,20 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
     Q_ASSERT(QThread::currentThread() == thread());
     HistoryWriteResult result;
     result.id = request.id;
-    if (!db_.isOpen() || !db_.transaction()) {
+    if (!db_.isOpen()) {
+        emit writeCompleted(result);
+        return;
+    }
+    if (request.type == HistoryWriteRequest::StorePage) {
+        // storePage owns its transaction: message rows, identity, revisions,
+        // adjacency and persistent cursor either all commit or roll back.
+        result.archivePage = request.archivePage;
+        result.success = HistoryArchive::storePage(db_, request.archiveKey, request.before,
+                                                   request.limit, result.archivePage);
+        emit writeCompleted(result);
+        return;
+    }
+    if (!db_.transaction()) {
         emit writeCompleted(result);
         return;
     }
