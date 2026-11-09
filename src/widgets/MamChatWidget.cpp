@@ -2889,7 +2889,9 @@ void MamChatWidget::updateTimestamps()
 {
     timestampTimer_->stop();
     // One coalesced timer for the visible timeline, including quoted times.
-    if (!isVisible() || window()->isMinimized() || timestampMode_ != ChatTimestamp::Mode::Relative)
+    // Clock mode also runs once on a settings change, but never schedules a
+    // clock tick. Both modes update the existing row rather than replacing it.
+    if (!isVisible() || window()->isMinimized())
         return;
 
     const auto range = knownVisibleRange();
@@ -2901,9 +2903,11 @@ void MamChatWidget::updateTimestamps()
         if (!when.isValid())
             return;
         setText(ChatTimestamp::format(when, timestampMode_, now));
-        const auto delay = ChatTimestamp::nextChangeMs(when, now);
-        if (delay > 0)
-            nextRefresh = qMin(nextRefresh, delay);
+        if (timestampMode_ == ChatTimestamp::Mode::Relative) {
+            const auto delay = ChatTimestamp::nextChangeMs(when, now);
+            if (delay > 0)
+                nextRefresh = qMin(nextRefresh, delay);
+        }
     };
 
     for (int i = range.first; i <= range.last; ++i) {
@@ -3017,10 +3021,13 @@ void MamChatWidget::setTimestampMode(ChatTimestamp::Mode mode)
     if (timestampMode_ == mode)
         return;
     timestampMode_ = mode;
-    // Classic embeds its clock in QTextDocument. Rebuild visible rows only
-    // when changing the preference, never on clock ticks.
+    // Update in place. In particular, rebuilding a row while a theme-switch
+    // replacement is settling can commit an obsolete timestamp after this
+    // setting has changed. Classic's anchored text fragment and the separate
+    // timestamp/quote labels are all updated by the same method.
     for (int index : materializedRows())
-        replaceRow(index);
+        if (auto *row = messageRow(rowWidget(index)))
+            row->options.timeFormat = mode == ChatTimestamp::Mode::Clock ? QStringLiteral("HH:mm") : QString();
     updateTimestamps();
 }
 
