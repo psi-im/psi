@@ -65,28 +65,25 @@ HistorySync::Context accountContext(PsiAccount *account)
                 finished(std::move(values), ok);
             });
     };
-    context.lookupAsync = [account](
-        const HistoryArchive::Key &key, const QString &uid, const QDateTime &time,
-        QObject *receiver, std::function<void(HistorySync::CachedMessage)> finished) {
-        account->edb()->requestArchivedEvent(key, uid, time, receiver,
-                                             [finished](EDBItemPtr item, bool) {
-                                                 finished(cachedMessage(item));
-                                             });
+    context.lookupAsync = [account](const HistoryArchive::Key &key, const QString &uid, const QDateTime &time,
+                                    QObject *receiver, std::function<void(HistorySync::CachedMessage, bool)> finished) {
+        account->edb()->requestArchivedEvent(
+            key, uid, time, receiver, [finished](EDBItemPtr item, bool ok) { finished(cachedMessage(item), ok); });
     };
-    context.ownPlaintextAsync = [account](
-        const HistoryArchive::Key &key, const QString &id, const QString &sender, const QDateTime &time,
-        QObject *receiver, std::function<void(HistorySync::CachedMessage)> finished) {
-        account->edb()->requestOwnPlaintext(key, id, sender, time, receiver,
-                                            [finished, key, sender](EDBItemPtr item, bool) {
-                                                auto cached = cachedMessage(item);
-                                                if (!cached.message.isNull()) {
-                                                    // Legacy outgoing EDB rows can omit envelope sender.
-                                                    cached.message.setFrom(XMPP::Jid(sender));
-                                                    cached.message.setTo(XMPP::Jid(key.peer));
-                                                }
-                                                finished(std::move(cached));
-                                            });
-    };
+    context.ownPlaintextAsync
+        = [account](const HistoryArchive::Key &key, const QString &id, const QString &sender, const QDateTime &time,
+                    QObject *receiver, std::function<void(HistorySync::CachedMessage, bool)> finished) {
+              account->edb()->requestOwnPlaintext(key, id, sender, time, receiver,
+                                                  [finished, key, sender](EDBItemPtr item, bool ok) {
+                                                      auto cached = cachedMessage(item);
+                                                      if (!cached.message.isNull()) {
+                                                          // Legacy outgoing EDB rows can omit envelope sender.
+                                                          cached.message.setFrom(XMPP::Jid(sender));
+                                                          cached.message.setTo(XMPP::Jid(key.peer));
+                                                      }
+                                                      finished(std::move(cached), ok);
+                                                  });
+          };
     return context;
 }
 }

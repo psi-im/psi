@@ -6,6 +6,7 @@
 #include <QDateTime>
 #include <QList>
 #include <QSqlDatabase>
+#include <QSqlError>
 #include <QSqlRecord>
 #include <QString>
 #include <functional>
@@ -70,16 +71,24 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
 // survive unloaded targets; the materialized mask belongs to the root row.
 bool recordMessageStates(QSqlDatabase db, const QList<qint64> &eventIds);
 bool backfillMessageStates(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
-QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId);
-QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit);
-DisplayedCursor   sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer);
-qint64            matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived);
-qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &, const QString &id, const QString &sender, const QDateTime &);
-Snapshot          readSnapshot(QSqlDatabase db, const Key &);
+// Read helpers distinguish a cache miss from SQL failure through an optional
+// error accumulator. Nested queries preserve the first error; callers must
+// discard the entire projection if it is valid.
+bool              isDecodedRecord(const QSqlRecord &record);
+QSqlRecord        resolvedRecord(QSqlDatabase db, qint64 eventId, QSqlError *error = nullptr);
+QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit,
+                               QSqlError *error = nullptr);
+DisplayedCursor   sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer,
+                                      QSqlError *error = nullptr);
+qint64   matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &, bool archived, QSqlError *error = nullptr);
+qint64   matchingOwnPlaintext(QSqlDatabase db, const Key &, const QString &id, const QString &sender, const QDateTime &,
+                              QSqlError *error = nullptr);
+Snapshot readSnapshot(QSqlDatabase db, const Key &, QSqlError *error = nullptr);
 bool              storeSnapshot(QSqlDatabase db, const Key &, const Snapshot &);
-Page   readPage(QSqlDatabase db, const Key &, const QString &before, int limit);
-Page              readAfter(QSqlDatabase db, const Key &, const QString &after, int limit, int snapshotCount = -1);
-Page              readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotCount);
+Page              readPage(QSqlDatabase db, const Key &, const QString &before, int limit, QSqlError *error = nullptr);
+Page              readAfter(QSqlDatabase db, const Key &, const QString &after, int limit, int snapshotCount = -1,
+                            QSqlError *error = nullptr);
+Page readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotCount, QSqlError *error = nullptr);
 // Caller has flushed pending EDB writes. This transaction includes events,
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &);

@@ -59,10 +59,14 @@ public:
                            std::function<void(HistoryArchive::Page, bool)>)> mergeAsync;
         std::function<void(const QList<qint64> &, QObject *,
                            std::function<void(QHash<qint64, ResolvedMessage>, bool)>)> resolveAsync;
+        // Empty + success means a cache miss; failure must stop replay before
+        // a potentially already consumed ciphertext reaches decryption again.
         std::function<void(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
-                           std::function<void(CachedMessage)>)> lookupAsync;
-        std::function<void(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
-                           QObject *, std::function<void(CachedMessage)>)> ownPlaintextAsync;
+                           std::function<void(CachedMessage, bool)>)>
+            lookupAsync;
+        std::function<void(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &, QObject *,
+                           std::function<void(CachedMessage, bool)>)>
+            ownPlaintextAsync;
     };
     static constexpr int PageSize = 40;
     HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);

@@ -29,7 +29,8 @@ page writes introduced additional large transactions.
   pending batch is committed before any history read, erase, MAM page
   operation or shutdown. All per-message callbacks are emitted **only
   after the shared transaction commits**, and an error rolls back the
-  entire batch and fails every pending callback. This batching requires
+  entire batch and fails every pending callback. Shutdown submits the facade's
+  undispatched requests before the worker stop barrier. This batching requires
   no mutexes: the same worker owns the timer and transaction.
 - A worker page fetch (including multiple revision lookups) is one SQLite
   read transaction. Live appends and MAM stores share the same ordered
@@ -38,7 +39,9 @@ page writes introduced additional large transactions.
   The GUI advances no persistent archive cursor until the store succeeds.
 - `HistorySync` awaits its async cache fetch, decoded-plaintext lookups,
   own plaintext fallback, page store, and batch resolved-revision lookup
-  before emitting the final `finished()` signal. Ordinary live messages
+  before emitting the final `finished()` signal. SQL errors are distinct from
+  successful cache misses; failed plaintext lookups stop replay before another
+  decryption attempt. Ordinary live messages
   still appear without waiting for their disk append.
 - A local history callback is scoped to its receiving widget; each dialog
   also validates the peer and view generation. Closing, clearing or

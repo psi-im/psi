@@ -38,28 +38,12 @@
 #include <QJsonObject>
 #include <QSqlDriver>
 #include <QSqlError>
-#include <QXmlStreamReader>
 
 #define FAKEDELAY 0
 
 using namespace XMPP;
 
 namespace {
-bool decodedRecord(const QSqlRecord &record)
-{
-    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
-    if (extra.contains("psi:decoded"))
-        return extra.value("psi:decoded").toBool();
-    // Legacy unprocessed encrypted MAM rows must be decoded, not mistaken for
-    // an already processed empty user message.
-    QXmlStreamReader reader(record.value("archive_xml").toString());
-    while (!reader.atEnd()) {
-        reader.readNext();
-        if (reader.isStartElement() && reader.name() == QLatin1String("encrypted"))
-            return false;
-    }
-    return true;
-}
 bool protocolOnlyRecord(const QSqlRecord &record)
 {
     const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
@@ -146,10 +130,12 @@ EDBSqLite::EDBSqLite(PsiCon *psi) : EDB(psi)
 
 EDBSqLite::~EDBSqLite()
 {
-    // All pending reads finish or are discarded before the database is
-    // closed. The worker owns a distinct, read-only SQLite connection.
+    // Submit facade requests before the stop barrier, including writes whose
+    // zero-delay dispatch has not run yet. Shutdown must flush both queues.
     if (historyReadThread_) {
         if (historyReadThread_->isRunning()) {
+            while (!rlist.isEmpty())
+                performRequests();
             emit historyReadStopRequested();
             historyReadThread_->wait();
         } else {
@@ -318,7 +304,7 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
         return {};
     if (q.next()) {
         auto event = HistoryEventFactory::decode(psi(), q.record());
-        if (event && decodedRecord(q.record()))
+        if (event && HistoryArchive::isDecodedRecord(q.record()))
             return EDBItemPtr(new EDBItem(event, q.record().value("id").toString(), 0, uid, {},
                                           QJsonDocument::fromJson(q.record().value("extra_data").toString().toUtf8())
                                               .object()
@@ -340,7 +326,7 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
         return {};
     EDBItemPtr match;
     while (q.next()) {
-        if (!decodedRecord(q.record()))
+        if (!HistoryArchive::isDecodedRecord(q.record()))
             continue;
         const auto event = HistoryEventFactory::decode(psi(), q.record());
         if (!event || event->type() != PsiEvent::Message)
@@ -730,7 +716,7 @@ void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
                 if (read.archiveExact && !read.rows.isEmpty()) {
                     firstCandidate = 1;
                     const auto &row = read.rows.first();
-                    if (decodedRecord(row)) {
+                    if (HistoryArchive::isDecodedRecord(row)) {
                         if (const auto event = HistoryEventFactory::decode(psi(), row))
                             found = EDBItemPtr(new EDBItem(
                                 event, row.value("id").toString(), 0, pending.uid, {},
@@ -741,7 +727,7 @@ void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
                 if (!found) {
                     for (int i = firstCandidate; i < read.rows.size(); ++i) {
                         const auto &row = read.rows.at(i);
-                        if (!decodedRecord(row))
+                        if (!HistoryArchive::isDecodedRecord(row))
                             continue;
                         const auto event = HistoryEventFactory::decode(psi(), row);
                         if (!event || event->type() != PsiEvent::Message

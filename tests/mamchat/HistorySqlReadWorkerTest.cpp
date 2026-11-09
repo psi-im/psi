@@ -10,9 +10,219 @@
 #include <QThread>
 #include <QTimer>
 
+namespace {
+// Real schema and archive links, so failures can be injected into nested
+// projection queries as well as the initial page query.
+struct HistoryDatabase {
+    QTemporaryDir        directory;
+    QSqlDatabase         db;
+    HistorySqlReadWorker worker { directory.filePath(QStringLiteral("history.db")) };
+    HistoryArchive::Key  key { "account", "alice@example.test", "bob@example.test", false };
+
+    HistoryDatabase()
+    {
+        db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("history-read-errors"));
+        db.setDatabaseName(directory.filePath(QStringLiteral("history.db")));
+        if (!directory.isValid() || !db.open())
+            qFatal("Cannot open history fixture");
+        QSqlQuery q(db);
+        for (const auto *sql :
+             { "CREATE TABLE system(key TEXT,value TEXT)", "INSERT INTO system VALUES('version','0.1')",
+               "CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,type INTEGER,jid TEXT,lifetime INTEGER)",
+               "CREATE TABLE events(id INTEGER PRIMARY KEY,contact_id INTEGER REFERENCES contacts(id) "
+               "ON DELETE CASCADE,resource TEXT,date TEXT,type INTEGER,direction INTEGER,subject TEXT,"
+               "m_text TEXT,lang TEXT,extra_data TEXT)" }) {
+            if (!q.exec(QLatin1String(sql)))
+                qFatal("Cannot initialize history fixture");
+        }
+        if (!HistoryArchive::migrate(db))
+            qFatal("Cannot migrate history fixture");
+        worker.open();
+    }
+    ~HistoryDatabase()
+    {
+        worker.close();
+        db.close();
+        db = {};
+        QSqlDatabase::removeDatabase(QStringLiteral("history-read-errors"));
+    }
+    void seed()
+    {
+        HistoryArchive::Page page;
+        page.stable = page.complete = true;
+        page.requestIndex = page.firstIndex = 0;
+        page.resultCount                    = 2;
+        for (int i = 1; i <= 2; ++i) {
+            HistoryArchive::Entry entry;
+            entry.uid       = QString::number(i);
+            entry.timestamp = QDateTime::fromMSecsSinceEpoch(i * 1000);
+            entry.body      = QStringLiteral("saved plaintext");
+            entry.extra     = QStringLiteral("{\"psi:decoded\":true}");
+            entry.xml       = QStringLiteral("<result/>");
+            page.entries.append(entry);
+        }
+        if (!HistoryArchive::storePage(db, key, {}, 40, page))
+            qFatal("Cannot seed history fixture");
+    }
+};
+}
+
 class HistorySqlReadWorkerTest final : public QObject {
     Q_OBJECT
 private slots:
+    void readErrorsAreNotCacheMisses_data()
+    {
+        QTest::addColumn<int>("type");
+        QTest::addColumn<QString>("missingTable");
+        QTest::newRow("get") << int(HistoryReadRequest::Get) << "events";
+        QTest::newRow("find") << int(HistoryReadRequest::Find) << "events";
+        QTest::newRow("local-page") << int(HistoryReadRequest::LocalPage) << "events";
+        QTest::newRow("local-revision") << int(HistoryReadRequest::LocalPage) << "archive_items";
+        QTest::newRow("displayed-cursor") << int(HistoryReadRequest::DisplayedCursor) << "message_state_refs";
+        QTest::newRow("snapshot") << int(HistoryReadRequest::ArchiveBefore) << "archive_snapshots";
+        QTest::newRow("archive-page") << int(HistoryReadRequest::ArchiveBefore) << "archive_page_items";
+        QTest::newRow("archive-after") << int(HistoryReadRequest::ArchiveAfter) << "archive_items";
+        QTest::newRow("archive-index") << int(HistoryReadRequest::ArchiveIndex) << "archive_index_page_items";
+        QTest::newRow("resolved-revision") << int(HistoryReadRequest::ResolveBatch) << "archive_items";
+        QTest::newRow("archive-lookup") << int(HistoryReadRequest::ArchiveLookup) << "archive_items";
+        QTest::newRow("own-plaintext") << int(HistoryReadRequest::OwnPlaintext) << "events";
+    }
+
+    void readErrorsAreNotCacheMisses()
+    {
+        QFETCH(int, type);
+        QFETCH(QString, missingTable);
+        HistoryDatabase fixture;
+        fixture.seed();
+        QSqlQuery damage(fixture.db);
+        damage.prepare(QStringLiteral("SELECT sql FROM sqlite_master WHERE type='table' AND name=:name"));
+        damage.bindValue(QStringLiteral(":name"), missingTable);
+        QVERIFY(damage.exec() && damage.next());
+        const QString repair = damage.value(0).toString();
+        damage.finish();
+        QVERIFY(damage.exec(QStringLiteral("DROP TABLE ") + missingTable));
+        QSignalSpy         completed(&fixture.worker, &HistorySqlReadWorker::completed);
+        HistoryReadRequest request;
+        request.id            = 123;
+        request.type          = HistoryReadRequest::Type(type);
+        request.account       = fixture.key.account;
+        request.peer          = fixture.key.peer;
+        request.archiveKey    = fixture.key;
+        request.cursor        = type == HistoryReadRequest::ArchiveBefore ? QString() : QStringLiteral("1");
+        request.archiveIndex  = 0;
+        request.snapshotCount = 2;
+        request.limit         = 1;
+        request.eventIds      = { 1 };
+        request.messageId     = QStringLiteral("client-id");
+        request.sender        = fixture.key.archive + QStringLiteral("/desktop");
+        request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);
+        fixture.worker.read(request);
+        QCOMPARE(completed.count(), 1);
+        const auto result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());
+        QCOMPARE(result.id, request.id);
+        QVERIFY(!result.success);
+        QVERIFY(result.rows.isEmpty());
+        QVERIFY(result.resolvedRows.isEmpty());
+        QVERIFY(!result.archivePage.found);
+
+        // The failed snapshot must be rolled back, so the same worker can
+        // see a repaired schema and serve subsequent requests normally.
+        QVERIFY(damage.exec(repair));
+        fixture.worker.read(request);
+        QCOMPARE(completed.count(), 1);
+        QVERIFY(qvariant_cast<HistoryReadResult>(completed.takeFirst().first()).success);
+    }
+
+    void emptyHistoryIsSuccessful_data() { readErrorsAreNotCacheMisses_data(); }
+
+    void emptyHistoryIsSuccessful()
+    {
+        QFETCH(int, type);
+        HistoryDatabase    fixture;
+        QSignalSpy         completed(&fixture.worker, &HistorySqlReadWorker::completed);
+        HistoryReadRequest request;
+        request.type          = HistoryReadRequest::Type(type);
+        request.account       = fixture.key.account;
+        request.peer          = fixture.key.peer;
+        request.archiveKey    = fixture.key;
+        request.cursor        = QStringLiteral("missing-uid");
+        request.archiveIndex  = 0;
+        request.snapshotCount = 2;
+        request.eventIds      = { 1 };
+        request.messageId     = QStringLiteral("missing-client-id");
+        request.sender        = fixture.key.archive + QStringLiteral("/desktop");
+        request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);
+        fixture.worker.read(request);
+        QCOMPARE(completed.count(), 1);
+        const auto result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());
+        QVERIFY(result.success);
+        QVERIFY(result.rows.isEmpty());
+        QVERIFY(result.resolvedRows.isEmpty());
+        QVERIFY(!result.archivePage.found);
+        QVERIFY(result.cursor.messageId.isEmpty());
+    }
+
+    void exactArchiveLookupDoesNotScanNearbyMessages()
+    {
+        HistoryDatabase fixture;
+        fixture.seed();
+        QSignalSpy         completed(&fixture.worker, &HistorySqlReadWorker::completed);
+        HistoryReadRequest request;
+        request.type        = HistoryReadRequest::ArchiveLookup;
+        request.archiveKey  = fixture.key;
+        request.cursor      = QStringLiteral("1");
+        request.messageTime = QDateTime::fromMSecsSinceEpoch(1000);
+        fixture.worker.read(request);
+        QCOMPARE(completed.count(), 1);
+        auto result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());
+        QVERIFY(result.success);
+        QVERIFY(result.archiveExact);
+        QCOMPARE(result.rows.size(), 1); // No ten-minute candidate scan on a decoded exact hit.
+
+        QSqlQuery q(fixture.db);
+        QVERIFY(q.exec(QStringLiteral("UPDATE events SET extra_data='{\"psi:decoded\":false}' WHERE id=1")));
+        fixture.worker.read(request);
+        result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());
+        QVERIFY(result.success);
+        QVERIFY(result.archiveExact);
+        QCOMPARE(result.rows.size(), 3); // An undecoded hit still permits live-plaintext fallback.
+    }
+
+    void failedIdentityLookupRollsBackAppendBatch()
+    {
+        HistoryDatabase fixture;
+        fixture.seed();
+        QSqlQuery q(fixture.db);
+        QVERIFY(q.exec(QStringLiteral("DROP TABLE archive_items")));
+        QSignalSpy          wrote(&fixture.worker, &HistorySqlReadWorker::writeCompleted);
+        HistoryWriteRequest append;
+        append.id                = 1;
+        append.account           = fixture.key.account;
+        append.contactPeer       = fixture.key.peer;
+        append.jidType           = 1;
+        append.encoded.valid     = true;
+        append.encoded.type      = 3; // An auth event starts a valid pending batch.
+        append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(1000);
+        fixture.worker.write(append);
+        QCOMPARE(wrote.count(), 0);
+        append.id                = 2;
+        append.encoded.isMessage = true;
+        append.encoded.type      = 1;
+        append.encoded.sender    = fixture.key.peer;
+        append.encoded.messageId = QStringLiteral("live-id");
+        append.encoded.body      = QStringLiteral("live text");
+        fixture.worker.write(append);
+        fixture.worker.read({}); // Flush even if the broken lookup was mistaken for a miss.
+        QCOMPARE(wrote.count(), 2);
+        for (const auto &signal : wrote) {
+            const auto result = qvariant_cast<HistoryWriteResult>(signal.first());
+            QVERIFY(!result.success);
+            QVERIFY(!result.inserted);
+        }
+        QVERIFY(q.exec(QStringLiteral("SELECT count(*) FROM events")) && q.next());
+        QCOMPARE(q.value(0).toInt(), 2); // Neither append was committed.
+    }
+
     void serialWritesAndReadsOnOldServer()
     {
         QTemporaryDir directory;
@@ -211,8 +421,25 @@ private slots:
         QVERIFY(rows.success);
         QVERIFY(rows.rows.isEmpty());
 
+        // Shutdown commits a final append even when neither its timer nor
+        // another read has had a chance to flush the batch.
+        append.id = 13;
+        QVERIFY(enqueueWrite(append));
         QVERIFY(QMetaObject::invokeMethod(worker, "close", Qt::QueuedConnection));
         QVERIFY(thread.wait(5000));
+        QCOMPARE(wrote.count(), 1);
+        QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first()).success);
+        {
+            auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral("SELECT count(*) FROM events")) && q.next());
+            QCOMPARE(q.value(0).toInt(), 1);
+            q.finish();
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(name);
     }
 
     void queuedReadsPreserveLegacyMessagesAndOrdering()

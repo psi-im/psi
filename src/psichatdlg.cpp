@@ -1059,9 +1059,10 @@ void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
             account()->edb()->requestSentDisplayedCursor(
                 account()->id(), peer, this,
                 [this, peer, generation](HistoryArchive::DisplayedCursor cursor, bool success) {
+                    if (generation != localHistoryGeneration_)
+                        return; // An older view must not clear a newer request's pending flag.
                     displayedCursorPending_ = false;
-                    if (generation != localHistoryGeneration_
-                        || peer.full() != (roomOccupantChat_ ? jid().full() : jid().bare()))
+                    if (peer.full() != (roomOccupantChat_ ? jid().full() : jid().bare()))
                         return; // The conversation changed while SQLite was reading.
                     if (!success) {
                         qWarning() << "[history-db] Could not restore displayed cursor";

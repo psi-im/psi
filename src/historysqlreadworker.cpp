@@ -24,8 +24,10 @@ public:
     {
         if (!active_)
             return false;
-        if (!db_.commit())
+        if (!db_.commit()) {
+            qWarning() << "[history-read] Failed to finish read snapshot:" << db_.lastError().text();
             return false;
+        }
         active_ = false;
         return true;
     }
@@ -85,6 +87,19 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    QSqlError  error;
+    const auto finish = [&] {
+        if (error.isValid())
+            qWarning() << "[history-read] Could not read history projection:" << error.text();
+        result.success = !error.isValid() && snapshot.commit();
+        if (!result.success) {
+            // Never expose an incomplete projection or turn a failed read
+            // into a successfully restored empty cursor/page.
+            result    = HistoryReadResult();
+            result.id = request.id;
+        }
+        emit completed(result);
+    };
     if (request.type == HistoryReadRequest::ArchiveLookup) {
         QSqlQuery q(db_);
         q.prepare(QStringLiteral(
@@ -95,12 +110,20 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         q.bindValue(QStringLiteral(":archive"), request.archiveKey.archive);
         q.bindValue(QStringLiteral(":peer"), request.archiveKey.peer);
         q.bindValue(QStringLiteral(":uid"), request.cursor);
-        if (q.exec() && q.next()) {
+        if (!q.exec()) {
+            error = q.lastError();
+        } else if (q.next()) {
             result.rows.append(q.record());
             result.archiveExact = true;
+        } else if (q.lastError().isValid()) {
+            error = q.lastError();
         }
         q.finish();
-        if (request.messageTime.isValid()) {
+        // Exact decoded archive hits are by far the common path. Avoid
+        // transferring every message in the ten-minute fallback window for
+        // each element of an already cached page.
+        const bool decoded = result.archiveExact && HistoryArchive::isDecodedRecord(result.rows.first());
+        if (!error.isValid() && !decoded && request.messageTime.isValid()) {
             q.prepare(QStringLiteral(
                 "SELECT e.*,c.acc_id,c.jid FROM events e JOIN contacts c ON c.id=e.contact_id "
                 "WHERE c.acc_id=:account AND c.jid=:peer AND e.history_date_ms BETWEEN :start AND :end"));
@@ -108,20 +131,20 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             q.bindValue(QStringLiteral(":peer"), request.archiveKey.peer);
             q.bindValue(QStringLiteral(":start"), request.messageTime.toMSecsSinceEpoch() - 300000);
             q.bindValue(QStringLiteral(":end"), request.messageTime.toMSecsSinceEpoch() + 300000);
-            if (q.exec())
+            if (!q.exec()) {
+                error = q.lastError();
+            } else {
                 while (q.next())
                     result.rows.append(q.record());
+                error = q.lastError();
+            }
         }
-        result.success = snapshot.commit();
-        if (!result.success)
-            result.rows.clear();
-        emit completed(result);
+        finish();
         return;
     }
     if (request.type == HistoryReadRequest::OwnPlaintext) {
-        const auto id = HistoryArchive::matchingOwnPlaintext(db_, request.archiveKey,
-                                                              request.messageId, request.sender,
-                                                              request.messageTime);
+        const auto id = HistoryArchive::matchingOwnPlaintext(db_, request.archiveKey, request.messageId, request.sender,
+                                                             request.messageTime, &error);
         if (id > 0) {
             QSqlQuery q(db_);
             q.prepare(QStringLiteral("SELECT e.*,c.acc_id,c.jid FROM events e "
@@ -129,61 +152,55 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             q.bindValue(QStringLiteral(":id"), id);
             if (q.exec() && q.next())
                 result.rows.append(q.record());
+            error = q.lastError();
         }
-        result.success = snapshot.commit();
-        if (!result.success)
-            result.rows.clear();
-        emit completed(result);
+        finish();
         return;
     }
     if (request.type == HistoryReadRequest::ResolveBatch) {
         for (const auto id : request.eventIds) {
             if (id <= 0 || result.resolvedRows.contains(id))
                 continue;
-            const auto row = HistoryArchive::resolvedRecord(db_, id);
+            const auto row = HistoryArchive::resolvedRecord(db_, id, &error);
             if (!row.isEmpty())
                 result.resolvedRows.insert(id, row);
         }
-        result.success = snapshot.commit();
-        if (!result.success)
-            result.resolvedRows.clear();
-        emit completed(result);
+        finish();
         return;
     }
     if (request.type == HistoryReadRequest::ArchiveBefore
         || request.type == HistoryReadRequest::ArchiveAfter
         || request.type == HistoryReadRequest::ArchiveIndex) {
         const auto &key = request.archiveKey;
-        result.archiveSnapshot = HistoryArchive::readSnapshot(db_, key);
+        result.archiveSnapshot = HistoryArchive::readSnapshot(db_, key, &error);
         if (request.type == HistoryReadRequest::ArchiveBefore)
-            result.archivePage = HistoryArchive::readPage(db_, key, request.cursor, request.limit);
+            result.archivePage = HistoryArchive::readPage(db_, key, request.cursor, request.limit, &error);
         else if (request.type == HistoryReadRequest::ArchiveAfter)
-            result.archivePage = HistoryArchive::readAfter(db_, key, request.cursor, request.limit,
-                                                           request.snapshotCount);
+            result.archivePage
+                = HistoryArchive::readAfter(db_, key, request.cursor, request.limit, request.snapshotCount, &error);
         else
-            result.archivePage = HistoryArchive::readIndex(db_, key, request.archiveIndex,
-                                                           request.limit, request.snapshotCount);
-        result.success = snapshot.commit();
-        if (!result.success)
-            result.archivePage = {};
-        emit completed(result);
+            result.archivePage = HistoryArchive::readIndex(db_, key, request.archiveIndex, request.limit,
+                                                           request.snapshotCount, &error);
+        finish();
         return;
     }
     if (request.type == HistoryReadRequest::DisplayedCursor) {
         if (!request.account.isEmpty() && !request.peer.isEmpty()) {
-            result.cursor = HistoryArchive::sentDisplayedCursor(db_, request.account, request.peer);
-            result.success = snapshot.commit();
+            result.cursor = HistoryArchive::sentDisplayedCursor(db_, request.account, request.peer, &error);
+            finish();
+        } else {
+            emit completed(result);
         }
-        emit completed(result);
         return;
     }
     if (request.type == HistoryReadRequest::LocalPage) {
         if (!request.account.isEmpty() && !request.peer.isEmpty() && request.limit > 0) {
-            result.rows = HistoryArchive::localRecords(db_, request.account, request.peer,
-                                                       request.before, request.limit);
-            result.success = snapshot.commit();
+            result.rows = HistoryArchive::localRecords(db_, request.account, request.peer, request.before,
+                                                       request.limit, &error);
+            finish();
+        } else {
+            emit completed(result);
         }
-        emit completed(result);
         return;
     }
 
@@ -245,6 +262,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             continue;
         result.rows.append(row);
     }
+    error = q.lastError();
     q.finish();
 
     if (request.type == HistoryReadRequest::Get) {
@@ -261,6 +279,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
                 countSql += QStringLiteral(" AND history_date_ms < :date");
             QSqlQuery count(db_);
             if (!count.prepare(countSql)) {
+                result.rows.clear();
                 emit completed(result);
                 return;
             }
@@ -271,6 +290,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             if (dateQuery)
                 count.bindValue(QStringLiteral(":date"), request.date.toMSecsSinceEpoch());
             if (!count.exec() || !count.next()) {
+                result.rows.clear();
                 emit completed(result);
                 return;
             }
@@ -278,12 +298,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             result.beginRow = backwards ? qMax(0, total - request.limit + 1) : total + 1;
         }
     }
-    result.success = snapshot.commit();
-    if (!result.success) {
-        qWarning() << "[history-read] Failed to finish read snapshot:" << db_.lastError().text();
-        result.rows.clear();
-    }
-    emit completed(result);
+    finish();
 }
 
 void HistorySqlReadWorker::write(HistoryWriteRequest request)
@@ -363,9 +378,12 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
                 delivery.subject = event.matchSubject;
                 // Only a confirmed existing archived delivery can suppress
                 // a duplicate. Old servers may have no stable server IDs.
-                const bool existing = event.isMessage
-                    && HistoryArchive::matchingDelivery(db_, contactId, delivery, true);
-                if (existing) {
+                QSqlError  error;
+                const bool existing
+                    = event.isMessage && HistoryArchive::matchingDelivery(db_, contactId, delivery, true, &error);
+                if (error.isValid()) {
+                    qWarning() << "[history-db] Could not match live delivery:" << error.text();
+                } else if (existing) {
                     ok = true;
                 } else {
                     QSqlQuery q(db_);

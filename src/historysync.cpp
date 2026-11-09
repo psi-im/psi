@@ -258,14 +258,19 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
                 const QDateTime stamp = QDateTime::fromString(
                     element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
                     Qt::ISODate);
-                context_.lookupAsync(
-                    key_, entry.uid, stamp, this, [this, uid = entry.uid](CachedMessage cached) {
-                        if (cancelled_)
-                            return;
-                        cachedLookups_.insert(uid, std::move(cached));
-                        if (--savedLookupsRemaining_ == 0)
-                            processSavedPage(std::move(pendingSavedPage_));
-                    });
+                context_.lookupAsync(key_, entry.uid, stamp, this,
+                                     [this, uid = entry.uid](CachedMessage cached, bool ok) {
+                                         if (cancelled_ || savedLookupsRemaining_ == 0)
+                                             return;
+                                         if (!ok) {
+                                             savedLookupsRemaining_ = 0; // Ignore remaining callbacks for this page.
+                                             finishError(tr("Could not read cached archive message"));
+                                             return;
+                                         }
+                                         cachedLookups_.insert(uid, std::move(cached));
+                                         if (--savedLookupsRemaining_ == 0)
+                                             processSavedPage(std::move(pendingSavedPage_));
+                                     });
             }
             return;
         }
@@ -426,9 +431,13 @@ void HistorySync::decodeNext()
             continue;
         const auto stamp = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
         if (context_.lookupAsync && !cachedLookups_.contains(uid)) {
-            context_.lookupAsync(key_, uid, stamp, this, [this, uid](CachedMessage cached) {
+            context_.lookupAsync(key_, uid, stamp, this, [this, uid](CachedMessage cached, bool ok) {
                 if (cancelled_)
                     return;
+                if (!ok) {
+                    finishError(tr("Could not read cached archive message"));
+                    return; // A failed lookup must not decrypt an already consumed ciphertext again.
+                }
                 cachedLookups_.insert(uid, std::move(cached));
                 --decodeIndex_;
                 QTimer::singleShot(0, this, &HistorySync::decodeNext);
@@ -456,15 +465,18 @@ void HistorySync::decodeNext()
             const auto time
                 = QDateTime::fromString(forwarded.firstChildElement("delay").attribute("stamp"), Qt::ISODate);
             if (context_.ownPlaintextAsync && !ownLookups_.contains(uid)) {
-                context_.ownPlaintextAsync(
-                    key_, stanza.attribute("id"), stanza.attribute("from"), time, this,
-                    [this, uid](CachedMessage cached) {
-                        if (cancelled_)
-                            return;
-                        ownLookups_.insert(uid, std::move(cached));
-                        --decodeIndex_;
-                        QTimer::singleShot(0, this, &HistorySync::decodeNext);
-                    });
+                context_.ownPlaintextAsync(key_, stanza.attribute("id"), stanza.attribute("from"), time, this,
+                                           [this, uid](CachedMessage cached, bool ok) {
+                                               if (cancelled_)
+                                                   return;
+                                               if (!ok) {
+                                                   finishError(tr("Could not read sent message plaintext"));
+                                                   return;
+                                               }
+                                               ownLookups_.insert(uid, std::move(cached));
+                                               --decodeIndex_;
+                                               QTimer::singleShot(0, this, &HistorySync::decodeNext);
+                                           });
                 return;
             }
             const auto own = context_.ownPlaintextAsync

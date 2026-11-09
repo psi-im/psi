@@ -23,6 +23,24 @@ namespace {
         qWarning().noquote() << "[history-cache]" << q.lastError().text();
         return false;
     }
+    bool readExec(QSqlQuery &query, QSqlError *error)
+    {
+        if (error && error->isValid())
+            return false;
+        if (query.exec())
+            return true;
+        if (error && !error->isValid())
+            *error = query.lastError();
+        return false;
+    }
+    bool readNext(QSqlQuery &query, QSqlError *error)
+    {
+        if (query.next())
+            return true;
+        if (error && !error->isValid() && query.lastError().isValid())
+            *error = query.lastError();
+        return false;
+    }
     void bindKey(QSqlQuery &q, const Key &key)
     {
         q.bindValue(":account", key.account);
@@ -335,7 +353,23 @@ bool recordRevision(QSqlDatabase db, qint64 eventId, qint64 contactId, int type,
     return true;
 }
 
-QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
+bool isDecodedRecord(const QSqlRecord &record)
+{
+    const auto extra = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
+    if (extra.contains("psi:decoded"))
+        return extra.value("psi:decoded").toBool();
+    // Legacy unprocessed encrypted MAM rows must be decoded, not mistaken for
+    // an already processed empty user message.
+    QXmlStreamReader reader(record.value("archive_xml").toString());
+    while (!reader.atEnd()) {
+        reader.readNext();
+        if (reader.isStartElement() && reader.name() == QLatin1String("encrypted"))
+            return false;
+    }
+    return true;
+}
+
+QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId, QSqlError *error)
 {
     if (eventId <= 0)
         return {};
@@ -343,7 +377,7 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
     q.prepare("SELECT COALESCE(r.root_id,e.id) FROM events e"
               " LEFT JOIN message_revisions r ON r.event_id=e.id WHERE e.id=:id");
     q.bindValue(":id", eventId);
-    if (!q.exec() || !q.next())
+    if (!readExec(q, error) || !readNext(q, error))
         return {};
     const qint64 root = q.value(0).toLongLong();
     q.finish();
@@ -353,7 +387,7 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
               "(SELECT xml FROM archive_items WHERE event_id=e.id LIMIT 1) AS archive_xml"
               " FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id");
     q.bindValue(":id", root);
-    if (!q.exec() || !q.next())
+    if (!readExec(q, error) || !readNext(q, error))
         return {};
     QSqlRecord record   = q.record();
     const auto original = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
@@ -381,7 +415,7 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
               " FROM message_revisions r JOIN events e ON e.id=r.event_id"
               " WHERE r.root_id=:root ORDER BY e.history_date_ms DESC,e.id DESC LIMIT 1");
     q.bindValue(":root", root);
-    if (q.exec() && q.next()) {
+    if (readExec(q, error) && readNext(q, error)) {
         auto revision = record.field(record.indexOf("date"));
         revision.setName("revision_date");
         record.append(revision);
@@ -412,11 +446,11 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
         const auto revisionTime = record.value("revision_date").toDateTime();
         const auto saved
             = matchingOwnPlaintext(db, key, envelope.value("id").toString(), envelope.value("from").toString(),
-                                   revisionTime.isValid() ? revisionTime : record.value("date").toDateTime());
+                                   revisionTime.isValid() ? revisionTime : record.value("date").toDateTime(), error);
         if (saved) {
             q.prepare("SELECT m_text,subject,lang,extra_data FROM events WHERE id=:id");
             q.bindValue(":id", saved);
-            if (q.exec() && q.next()) {
+            if (readExec(q, error) && readNext(q, error)) {
                 const char *names[] = { "m_text", "subject", "lang", "extra_data" };
                 for (int i = 0; i < 4; ++i)
                     record.setValue(QLatin1String(names[i]), q.value(i));
@@ -426,7 +460,8 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId)
     return record;
 }
 
-QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit)
+QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QString &peer, qint64 before, int limit,
+                               QSqlError *error)
 {
     QList<QSqlRecord> result;
     if (account.isEmpty() || peer.isEmpty() || limit <= 0)
@@ -447,19 +482,19 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     if (before > 0)
         q.bindValue(":before", before);
     QList<qint64> ids;
-    if (q.exec())
-        while (q.next())
+    if (readExec(q, error))
+        while (readNext(q, error))
             ids.prepend(q.value(0).toLongLong());
     q.finish();
     for (qint64 id : ids) {
-        const auto resolved = resolvedRecord(db, id);
+        const auto resolved = resolvedRecord(db, id, error);
         if (!resolved.isEmpty())
             result.append(resolved);
     }
     return result;
 }
 
-DisplayedCursor sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer)
+DisplayedCursor sentDisplayedCursor(QSqlDatabase db, const QString &account, const QString &peer, QSqlError *error)
 {
     if (account.isEmpty() || peer.isEmpty())
         return {};
@@ -470,12 +505,12 @@ DisplayedCursor sentDisplayedCursor(QSqlDatabase db, const QString &account, con
                   "AND (e.message_flags & 1)<>0 ORDER BY e.history_date_ms DESC,e.id DESC LIMIT 1");
     query.bindValue(":account", account);
     query.bindValue(":peer", peer);
-    if (!query.exec() || !query.next())
+    if (!readExec(query, error) || !readNext(query, error))
         return {};
     return { query.value(2).toString(), query.value(1).toDateTime(), query.value(0).toLongLong() };
 }
 
-qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, bool archived)
+qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, bool archived, QSqlError *error)
 {
     if (entry.messageId.isEmpty() || entry.sender.isEmpty() || !entry.timestamp.isValid())
         return 0;
@@ -488,10 +523,10 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
     q.bindValue(":type", entry.type);
     q.bindValue(":body", nonNull(entry.body));
     q.bindValue(":subject", nonNull(entry.subject));
-    if (!q.exec())
+    if (!readExec(q, error))
         return 0;
     qint64 match = 0;
-    while (q.next()) {
+    while (readNext(q, error)) {
         const auto    extra        = QJsonDocument::fromJson(q.value(2).toString().toUtf8()).object();
         const auto    envelope     = extra.value("psi:message").toObject();
         const QString sender = envelope.value("from").toString();
@@ -510,7 +545,7 @@ qint64 matchingDelivery(QSqlDatabase db, qint64 contact, const Entry &entry, boo
 }
 
 qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, const QString &sender,
-                            const QDateTime &time)
+                            const QDateTime &time, QSqlError *error)
 {
     if (key.room || id.isEmpty() || sender.isEmpty() || !time.isValid()
         || sender.section(QLatin1Char('/'), 0, 0) != key.archive)
@@ -524,9 +559,9 @@ qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, 
     q.bindValue(":start", time.toMSecsSinceEpoch() - 300000);
     q.bindValue(":end", time.toMSecsSinceEpoch() + 300000);
     qint64 found = 0;
-    if (!q.exec())
+    if (!readExec(q, error))
         return 0;
-    while (q.next()) {
+    while (readNext(q, error)) {
         const auto extra = QJsonDocument::fromJson(q.value(1).toString().toUtf8()).object();
         const bool protocolEvent = !extra.value("psi:events").toObject().isEmpty();
         if ((extra.contains("psi:decoded") && !extra.value("psi:decoded").toBool())
@@ -550,12 +585,12 @@ qint64 matchingOwnPlaintext(QSqlDatabase db, const Key &key, const QString &id, 
     return found;
 }
 
-Snapshot readSnapshot(QSqlDatabase db, const Key &key)
+Snapshot readSnapshot(QSqlDatabase db, const Key &key, QSqlError *error)
 {
     QSqlQuery q(db);
     q.prepare("SELECT result_count,last_uid,observed_at,stable FROM archive_snapshots WHERE " + scope);
     bindKey(q, key);
-    if (!q.exec() || !q.next())
+    if (!readExec(q, error) || !readNext(q, error))
         return {};
     return { q.value(0).toInt(), q.value(1).toString(),
              QDateTime::fromMSecsSinceEpoch(q.value(2).toLongLong(), QTimeZone(0)), q.value(3).toBool() };
@@ -580,7 +615,7 @@ bool storeSnapshot(QSqlDatabase db, const Key &key, const Snapshot &snapshot)
     return q.exec();
 }
 
-Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
+Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit, QSqlError *error)
 {
     Page page;
     if (limit <= 0 || key.account.isEmpty() || key.archive.isEmpty() || key.peer.isEmpty())
@@ -591,9 +626,9 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
     bindKey(q, key);
     q.bindValue(":before", nonNull(before));
     q.bindValue(":limit", limit);
-    if (!q.exec())
+    if (!readExec(q, error))
         return page;
-    if (!q.next()) {
+    if (!readNext(q, error)) {
         q.finish();
         // Page boundaries move after new tail messages arrive. Reuse an
         // already verified contiguous chain at the new boundary, rather than
@@ -606,11 +641,11 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
         bindKey(q, key);
         q.bindValue(":before", nonNull(before));
         int savedSize = 0;
-        if (q.exec() && q.next())
+        if (readExec(q, error) && readNext(q, error))
             savedSize = q.value(0).toInt();
         q.finish();
         if (savedSize > 0 && savedSize != limit) {
-            const auto saved = readPage(db, key, before, savedSize);
+            const auto saved = readPage(db, key, before, savedSize, error);
             if (saved.found && saved.stable) {
                 page = saved;
                 while (page.entries.size() > limit) {
@@ -633,7 +668,7 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
             q.prepare("SELECT previous_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
             bindKey(q, key);
             q.bindValue(":uid", cursor);
-            if (!q.exec() || !q.next() || q.value(0).isNull())
+            if (!readExec(q, error) || !readNext(q, error) || q.value(0).isNull())
                 return {};
             const QString previous = q.value(0).toString();
             q.finish();
@@ -649,7 +684,7 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
             bindKey(q, key);
             q.bindValue(":uid", previous);
             q.bindValue(":next", cursor);
-            if (!q.exec() || !q.next())
+            if (!readExec(q, error) || !readNext(q, error))
                 return {};
             Entry entry;
             entry.uid     = q.value(0).toString();
@@ -667,7 +702,7 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
             q.prepare("SELECT previous_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
             bindKey(q, key);
             q.bindValue(":uid", cursor);
-            if (q.exec() && q.next() && !q.value(0).isNull() && q.value(0).toString().isEmpty())
+            if (readExec(q, error) && readNext(q, error) && !q.value(0).isNull() && q.value(0).toString().isEmpty())
                 page.complete = true;
         }
         page.found = page.stable = true;
@@ -686,9 +721,9 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
               + scope + " ORDER BY p.position");
     bindKey(q, key);
     q.bindValue(":id", id);
-    if (!q.exec())
+    if (!readExec(q, error))
         return {};
-    while (q.next()) {
+    while (readNext(q, error)) {
         Entry entry;
         entry.uid     = q.value(0).toString();
         entry.xml     = q.value(1).toString();
@@ -701,7 +736,7 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit)
     return page;
 }
 
-Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit, int snapshotCount)
+Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit, int snapshotCount, QSqlError *error)
 {
     Page page;
     if (after.isEmpty() || limit < 1 || limit > 40)
@@ -713,7 +748,7 @@ Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit,
         q.prepare("SELECT next_uid FROM archive_items WHERE " + scope + " AND uid=:uid AND stable=1");
         bindKey(q, key);
         q.bindValue(":uid", cursor);
-        if (!q.exec() || !q.next() || q.value(0).isNull())
+        if (!readExec(q, error) || !readNext(q, error) || q.value(0).isNull())
             return {};
         const QString next = q.value(0).toString();
         q.finish();
@@ -727,7 +762,7 @@ Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit,
         bindKey(q, key);
         q.bindValue(":uid", next);
         q.bindValue(":previous", cursor);
-        if (!q.exec() || !q.next())
+        if (!readExec(q, error) || !readNext(q, error))
             return {};
         Entry entry;
         entry.uid     = q.value(0).toString();
@@ -744,7 +779,7 @@ Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit,
     return page;
 }
 
-Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapshotCount)
+Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapshotCount, QSqlError *error)
 {
     Page page;
     if (index < 0 || limit < 1 || limit > 40 || snapshotCount < 0)
@@ -757,7 +792,7 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
     q.bindValue(":snapshot", snapshotCount);
     q.bindValue(":position", index);
     q.bindValue(":end", qint64(index) + limit);
-    if (!q.exec() || !q.next())
+    if (!readExec(q, error) || !readNext(q, error))
         return page;
     const auto id       = q.value(0);
     const int  count    = q.value(1).toInt();
@@ -770,9 +805,9 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
               + scope + " ORDER BY p.position");
     bindKey(q, key);
     q.bindValue(":id", id);
-    if (!q.exec())
+    if (!readExec(q, error))
         return {};
-    while (q.next()) {
+    while (readNext(q, error)) {
         Entry entry;
         entry.uid     = q.value(0).toString();
         entry.xml     = q.value(1).toString();
@@ -861,8 +896,14 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             return fail();
         qint64 eventId = q.next() ? q.value(0).toLongLong() : 0;
         q.finish();
-        if (!eventId)
-            eventId = matchingDelivery(db, contact, entry, false);
+        if (!eventId) {
+            QSqlError error;
+            eventId = matchingDelivery(db, contact, entry, false, &error);
+            if (error.isValid()) {
+                qWarning() << "[history-cache] Could not match archived delivery:" << error.text();
+                return fail();
+            }
+        }
         const bool existingEvent = eventId > 0;
         bool       preserveProjection = existingEvent && !page.stable;
         if (!eventId) {
@@ -1099,7 +1140,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     if (!db.commit())
         return fail();
     if (elapsed.elapsed() > 1000)
-        qWarning() << "[history-cache] GUI-thread archive transaction took" << elapsed.elapsed() << "ms"
+        qWarning() << "[history-cache] Archive transaction took" << elapsed.elapsed() << "ms"
                    << "entries=" << page.entries.size();
     return true;
 }

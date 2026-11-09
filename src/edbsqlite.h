@@ -111,12 +111,6 @@ private:
         enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
                     Type_archiveRead, Type_archiveWrite, Type_resolved, Type_lookup, Type_plaintext };
     };
-    unsigned int            transactionsCounter;
-    QDateTime               lastCommitTime;
-    unsigned int            maxUncommitedRecs;
-    int                     maxUncommitedSecs;
-    unsigned int            commitByTimeoutSecs;
-    QTimer                 *commitTimer;
     bool                    active_ = false;
     QList<item_query_req *> rlist;
     QThread                 *historyReadThread_ = nullptr;

@@ -545,7 +545,14 @@ private slots:
         f.online = false;
         f.client.close();
         auto context = f.context();
-        int reads = 0, writes = 0;
+        int  reads = 0, writes = 0, lookups = 0;
+        context.lookupAsync = [lookup = context.lookup, &lookups](
+                                  const HistoryArchive::Key &key, const QString &uid, const QDateTime &time,
+                                  QObject *receiver, std::function<void(HistorySync::CachedMessage, bool)> done) {
+            ++lookups;
+            QTimer::singleShot(0, receiver, [lookup, key, uid, time, done] { done(lookup(key, uid, time), true); });
+        };
+        context.lookup    = {}; // This fixture must use the asynchronous lookup path.
         context.readAsync = [&f, &reads](const HistoryArchive::Key &key, HistorySync::Query query,
                                           QObject *receiver,
                                           std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> done) {
@@ -574,7 +581,98 @@ private slots:
         QVERIFY(sync.fromCache());
         QCOMPARE(reads, 1);
         QCOMPARE(writes, 1);
+        QCOMPARE(lookups, 1);
+        QCOMPARE(sync.message("seed").body(), QString("hello"));
         QVERIFY(f.wire.sent.isEmpty());
+    }
+
+    void failedCachedMessageLookupFinishesOnce()
+    {
+        Fixture f;
+        f.seed();
+        f.online = false;
+        // Reuse the same saved page with two pending lookups, to exercise a
+        // late callback after the first lookup has failed.
+        const auto   read    = f.context().read;
+        auto         context = f.context();
+        QDomDocument doc;
+        doc.appendChild(doc.importNode(f.result("second", 1), true));
+        const QString secondXml = doc.toString(-1);
+        context.read            = [read, secondXml](const HistoryArchive::Key &key, const QString &before, int limit) {
+            auto page   = read(key, before, limit);
+            auto second = page.entries.first();
+            second.uid  = QStringLiteral("second");
+            second.xml  = secondXml;
+            page.entries.append(second);
+            return page;
+        };
+        int lookups = 0, writes = 0;
+        context.lookupAsync
+            = [&lookups](const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *receiver,
+                         std::function<void(HistorySync::CachedMessage, bool)> done) {
+                  const bool ok = ++lookups > 1;
+                  QTimer::singleShot(0, receiver, [done, ok] { done({}, ok); });
+              };
+        context.merge = [&writes](const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) {
+            ++writes;
+            return true;
+        };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(done.count(), 1);
+        QCoreApplication::processEvents();
+        QCOMPARE(done.count(), 1);
+        QVERIFY(!sync.success());
+        QCOMPARE(lookups, 2);
+        QCOMPARE(writes, 0);
+        QVERIFY(f.wire.sent.isEmpty());
+    }
+
+    void encryptedLookupFailureDoesNotDecryptOrStore_data()
+    {
+        QTest::addColumn<bool>("own");
+        QTest::newRow("archive-lookup") << false;
+        QTest::newRow("own-plaintext") << true;
+    }
+
+    void encryptedLookupFailureDoesNotDecryptOrStore()
+    {
+        QFETCH(bool, own);
+        Fixture f;
+        auto   *cipher = new ArchiveCipher;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        auto context = f.context();
+        int  lookups = 0;
+        context.lookupAsync
+            = [&lookups, own](const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *receiver,
+                              std::function<void(HistorySync::CachedMessage, bool)> done) {
+                  ++lookups;
+                  QTimer::singleShot(0, receiver, [done, own] { done({}, own); });
+              };
+        context.ownPlaintextAsync
+            = [&lookups](const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                         QObject *receiver, std::function<void(HistorySync::CachedMessage, bool)> done) {
+                  ++lookups;
+                  QTimer::singleShot(0, receiver, [done] { done({}, false); });
+              };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        auto raw = f.result("cipher", 1, "<encrypted xmlns='urn:psi:test:cipher'/>");
+        if (own) {
+            auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+            stanza.setAttribute("from", f.client.jid().full());
+            stanza.setAttribute("to", f.key.peer);
+        }
+        QVERIFY(f.reply(f.wire.sent.last(), { raw }));
+        QTRY_COMPARE(done.count(), 1);
+        QVERIFY(!sync.success());
+        QCOMPARE(lookups, own ? 2 : 1);
+        QCOMPARE(cipher->decryptions, 0);
+        QVERIFY(!HistoryArchive::readPage(f.db, f.key, {}, 40).found);
     }
 
     void failedQueuedArchiveStoreNeverCertifiesPage()
