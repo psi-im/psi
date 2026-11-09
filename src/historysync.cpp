@@ -192,17 +192,49 @@ void HistorySync::go()
     QTimer::singleShot(0, this, [this] {
         if (cancelled_)
             return;
-        const bool logging = context_.logging();
-        if (logging) {
+        if (context_.logging() && context_.readAsync) {
+            Query query = query_;
+            query.limit = pageSize_;
+            context_.readAsync(
+                key_, query, this,
+                [this](HistoryArchive::Page saved, HistoryArchive::Snapshot snapshot, bool ok) {
+                    if (cancelled_)
+                        return;
+                    if (!ok) {
+                        // A cache read error must not certify a page or its
+                        // cursor. Fetch from the server if still connected.
+                        if (context_.connected())
+                            requestPage();
+                        else
+                            finishError(tr("Could not read cached archive page"));
+                        return;
+                    }
+                    snapshot_ = snapshot;
+                    processSavedPage(std::move(saved));
+                });
+            return;
+        }
+
+        HistoryArchive::Page saved;
+        if (context_.logging()) {
             if (context_.readSnapshot)
                 snapshot_ = context_.readSnapshot(key_);
-            HistoryArchive::Page saved;
             if (query_.mode == Query::Before)
                 saved = context_.read(key_, before_, pageSize_);
             else if (query_.mode == Query::Index && context_.readIndex && query_.snapshotCount >= 0)
                 saved = context_.readIndex(key_, query_.index, pageSize_, query_.snapshotCount);
             else if (query_.mode == Query::After && context_.readAfter)
                 saved = context_.readAfter(key_, after_, pageSize_, query_.snapshotCount);
+        }
+        processSavedPage(std::move(saved));
+    });
+}
+
+void HistorySync::processSavedPage(HistoryArchive::Page saved)
+{
+    if (cancelled_)
+        return;
+    if (context_.logging()) {
             qCDebug(PsiMam::historyLog) << "cache account=" << key_.account << "peer=" << key_.peer
                                         << "mode=" << query_.mode << "index=" << query_.index << "before=" << before_
                                         << "after=" << after_ << "limit=" << pageSize_ << "hit=" << saved.found
@@ -260,13 +292,12 @@ void HistorySync::go()
                     return;
                 }
             }
-        }
-        if (!context_.connected()) {
-            finishError(tr("Account is offline"));
-            return;
-        }
-        requestPage();
-    });
+    }
+    if (!context_.connected()) {
+        finishError(tr("Account is offline"));
+        return;
+    }
+    requestPage();
 }
 
 void HistorySync::finishError(const QString &error)
