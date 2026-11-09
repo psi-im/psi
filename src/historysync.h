@@ -43,6 +43,12 @@ public:
         std::function<CachedMessage(const HistoryArchive::Key &, const QString &, const QDateTime &)>  lookup;
         std::function<CachedMessage(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &)>
             ownPlaintext;
+        // Optional async store API for worker-backed databases. The callback
+        // is receiver-scoped; completed pages may update persistent event IDs.
+        std::function<void(const HistoryArchive::Key &, Query, QObject *,
+                           std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)>)> readAsync;
+        std::function<void(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page, QObject *,
+                           std::function<void(HistoryArchive::Page, bool)>)> mergeAsync;
     };
     static constexpr int PageSize = 40;
     HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);
@@ -87,6 +93,8 @@ private:
     HistoryArchive::Snapshot      snapshot_;
     void                          decodeNext();
     void                          acceptPage();
+    void                          finishAcceptedPage();
+    void                          processSavedPage(HistoryArchive::Page);
     void                          finishError(const QString &);
     bool                          parseResults(const QList<QDomElement> &, HistoryArchive::Page &);
     Context                       context_;
