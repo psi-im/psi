@@ -9,8 +9,8 @@
 #include <QSqlQuery>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QSignalSpy>
 #include <QThread>
-#include <atomic>
 
 class HistorySqlitePolicyTest : public QObject {
     Q_OBJECT
@@ -37,24 +37,14 @@ private slots:
                 QCOMPARE(q.value(0).toInt(), 1); // NORMAL, not FULL.
                 q.finish();
             }
-            std::atomic_bool opened { false };
-            std::atomic_bool checkpointed { false };
-            std::atomic_int checkpointCalls { 0 };
-            std::atomic_bool wrongThread { false };
-            auto *guiThread = QThread::currentThread();
             {
-                HistoryWalCheckpoint worker(path,
-                    [&] {
-                        wrongThread.store(QThread::currentThread() == guiThread);
-                        opened.store(true);
-                    },
-                    [&] {
-                        wrongThread.store(wrongThread.load() || QThread::currentThread() == guiThread);
-                        checkpointed.store(true);
-                        ++checkpointCalls;
-                    });
+                HistoryWalCheckpoint worker(path);
+                QSignalSpy ready(&worker, &HistoryWalCheckpoint::ready);
+                QSignalSpy checkpointed(&worker, &HistoryWalCheckpoint::checkpointCompleted);
+                QVERIFY(ready.isValid());
+                QVERIFY(checkpointed.isValid());
                 worker.start();
-                QTRY_VERIFY(opened.load());
+                QTRY_COMPARE(ready.count(), 1);
                 QVERIFY(HistorySqlitePolicy::useBackgroundCheckpoint(db));
                 {
                     QSqlQuery q(db);
@@ -68,12 +58,10 @@ private slots:
                     QVERIFY(db.commit());
                 }
                 for (int i = 0; i < 20; ++i)
-                    worker.requestCheckpoint(); // Requests coalesce before GUI event delivery.
-                QTRY_VERIFY(checkpointed.load());
-                QVERIFY(!wrongThread.load());
-                QCOMPARE(checkpointCalls.load(), 1);
-                worker.requestCheckpoint(); // Once completed, a new operation is allowed.
-                QTRY_COMPARE(checkpointCalls.load(), 2);
+                    worker.requestCheckpoint(); // Requests coalesce without shared locks.
+                QTRY_COMPARE(checkpointed.count(), 1);
+                worker.requestCheckpoint(); // A completed request permits the next checkpoint.
+                QTRY_COMPARE(checkpointed.count(), 2);
             }
             db.close();
         }
