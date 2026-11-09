@@ -64,7 +64,9 @@ private slots:
         HistoryWriteRequest append;
         append.type = HistoryWriteRequest::Append;
         append.account = QStringLiteral("account");
-        append.peer = QStringLiteral("bob@example.test/resource");
+        append.peer = QStringLiteral("bob@example.test/resource/with/slash");
+        append.contactPeer = QStringLiteral("bob@example.test");
+        append.resource = QStringLiteral("resource/with/slash");
         append.jidType = 1;
         append.encoded.valid = true;
         append.encoded.isMessage = true;
