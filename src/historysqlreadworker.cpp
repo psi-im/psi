@@ -42,10 +42,16 @@ void HistorySqlReadWorker::open()
                           .arg(qulonglong(reinterpret_cast<quintptr>(this)), 0, 16);
     db_ = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName_);
     db_.setDatabaseName(path_);
-    // This connection must never write, block a writer, or migrate schemas.
-    db_.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY;QSQLITE_BUSY_TIMEOUT=1000"));
-    if (!db_.open())
-        qWarning() << "[history-read] Cannot open read-only SQLite connection:" << db_.lastError().text();
+    // The same worker serializes SQLite reads and new appends/erasures.
+    // Migration and legacy archive APIs are still being moved off the GUI.
+    db_.setConnectOptions(QStringLiteral("QSQLITE_BUSY_TIMEOUT=2000"));
+    if (!db_.open()) {
+        qWarning() << "[history-db] Cannot open worker SQLite connection:" << db_.lastError().text();
+        return;
+    }
+    QSqlQuery foreignKeys(db_);
+    if (!foreignKeys.exec(QStringLiteral("PRAGMA foreign_keys=ON")))
+        qWarning() << "[history-db] Cannot enable foreign keys:" << foreignKeys.lastError().text();
 }
 
 void HistorySqlReadWorker::read(HistoryReadRequest request)
@@ -178,6 +184,126 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         result.rows.clear();
     }
     emit completed(result);
+}
+
+void HistorySqlReadWorker::write(HistoryWriteRequest request)
+{
+    Q_ASSERT(QThread::currentThread() == thread());
+    HistoryWriteResult result;
+    result.id = request.id;
+    if (!db_.isOpen() || !db_.transaction()) {
+        emit writeCompleted(result);
+        return;
+    }
+
+    // One write is one transaction. In particular, events, revisions and
+    // message-state materialization are never committed separately.
+    bool ok = false;
+    if (request.type == HistoryWriteRequest::Append) {
+        const auto &event = request.encoded;
+        const QString jid = request.jidType == 2 ? request.peer
+                                                  : request.peer.section(QLatin1Char('/'), 0, 0);
+        if (event.valid && !request.account.isEmpty() && !jid.isEmpty()) {
+            QSqlQuery contact(db_);
+            contact.prepare(QStringLiteral("SELECT id FROM contacts WHERE acc_id=:account AND jid=:jid"));
+            contact.bindValue(QStringLiteral(":account"), request.account);
+            contact.bindValue(QStringLiteral(":jid"), jid);
+            qint64 contactId = 0;
+            if (contact.exec()) {
+                if (contact.next())
+                    contactId = contact.value(0).toLongLong();
+                contact.finish();
+                if (!contactId) {
+                    contact.prepare(QStringLiteral("INSERT INTO contacts(acc_id,type,jid,lifetime) "
+                                                    "VALUES(:account,:type,:jid,-1)"));
+                    contact.bindValue(QStringLiteral(":account"), request.account);
+                    contact.bindValue(QStringLiteral(":type"), request.jidType);
+                    contact.bindValue(QStringLiteral(":jid"), jid);
+                    if (contact.exec())
+                        contactId = contact.lastInsertId().toLongLong();
+                }
+            }
+            if (contactId) {
+                HistoryArchive::Entry delivery;
+                delivery.messageId = event.messageId;
+                delivery.sender = event.sender;
+                delivery.timestamp = event.timestamp;
+                delivery.type = event.type;
+                delivery.direction = event.direction;
+                delivery.body = event.matchBody;
+                delivery.subject = event.matchSubject;
+                // Only a confirmed existing archived delivery can suppress
+                // a duplicate. Old servers may have no stable server IDs.
+                const bool existing = event.isMessage
+                    && HistoryArchive::matchingDelivery(db_, contactId, delivery, true);
+                if (existing) {
+                    ok = true;
+                } else {
+                    QSqlQuery q(db_);
+                    q.prepare(QStringLiteral(
+                        "INSERT INTO events(contact_id,resource,date,type,direction,subject,m_text,lang,extra_data,"
+                        "history_state,history_date_ms) VALUES(:contact,:resource,:date,:type,:direction,"
+                        ":subject,:body,:lang,:extra,:state,:timestamp)"));
+                    q.bindValue(QStringLiteral(":contact"), contactId);
+                    q.bindValue(QStringLiteral(":resource"),
+                                request.jidType == 2 ? QString() : request.peer.section(QLatin1Char('/'), 1));
+                    q.bindValue(QStringLiteral(":date"), event.timestamp);
+                    q.bindValue(QStringLiteral(":type"), event.type);
+                    q.bindValue(QStringLiteral(":direction"), event.direction);
+                    q.bindValue(QStringLiteral(":subject"), event.isMessage ? QVariant(event.subject) : QVariant());
+                    q.bindValue(QStringLiteral(":body"), event.isMessage ? QVariant(event.body) : QVariant());
+                    q.bindValue(QStringLiteral(":lang"), event.isMessage ? QVariant(event.language) : QVariant());
+                    q.bindValue(QStringLiteral(":extra"), event.isMessage ? QVariant(event.extras) : QVariant());
+                    q.bindValue(QStringLiteral(":state"),
+                                event.isMessage ? HistoryArchive::Unverified : HistoryArchive::LocalOnly);
+                    q.bindValue(QStringLiteral(":timestamp"),
+                                event.timestamp.isValid() ? event.timestamp.toMSecsSinceEpoch() : qint64(0));
+                    ok = q.exec();
+                    if (ok) {
+                        result.inserted = true;
+                        const qint64 eventId = q.lastInsertId().toLongLong();
+                        if (event.isMessage)
+                            ok = HistoryArchive::recordRevision(db_, eventId, contactId, event.type, event.direction,
+                                                                event.sender, event.messageId, event.replaceId)
+                                 && HistoryArchive::recordMessageStates(db_, { eventId });
+                    }
+                }
+            }
+        }
+    } else if (request.type == HistoryWriteRequest::Erase) {
+        if (request.account.isEmpty() && request.peer.isEmpty()) {
+            QSqlQuery q(db_);
+            ok = q.exec(QStringLiteral("DELETE FROM contacts"));
+        } else if (!request.account.isEmpty() && !request.peer.isEmpty()) {
+            QSqlQuery contact(db_);
+            contact.prepare(QStringLiteral("SELECT id FROM contacts WHERE acc_id=:account AND jid=:jid"));
+            contact.bindValue(QStringLiteral(":account"), request.account);
+            contact.bindValue(QStringLiteral(":jid"), request.peer);
+            if (contact.exec() && contact.next()) {
+                const qint64 contactId = contact.value(0).toLongLong();
+                contact.finish();
+                QSqlQuery q(db_);
+                q.prepare(QStringLiteral("DELETE FROM events WHERE contact_id=:id"));
+                q.bindValue(QStringLiteral(":id"), contactId);
+                if (q.exec()) {
+                    q.prepare(QStringLiteral("DELETE FROM contacts WHERE id=:id AND lifetime=-1"));
+                    q.bindValue(QStringLiteral(":id"), contactId);
+                    ok = q.exec();
+                }
+            }
+        }
+        if (ok)
+            ok = HistoryArchive::invalidate(db_, request.account, request.peer);
+    }
+
+    if (ok)
+        ok = db_.commit();
+    if (!ok)
+        db_.rollback();
+    result.success = ok;
+    if (!ok)
+        result.inserted = false;
+    emit writeCompleted(result);
 }
 
 void HistorySqlReadWorker::close()
