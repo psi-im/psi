@@ -22,12 +22,14 @@
 
 #include "eventdb.h"
 #include "historyeventfactory.h"
+#include "historysqlreadworker.h"
 #include "iris/xmpp_jid.h"
 #include "psievent.h"
 
 #include <QDateTime>
 
 class HistoryWalCheckpoint;
+class QThread;
 #include <QHash>
 #include <QObject>
 #include <QSqlDatabase>
@@ -159,6 +161,8 @@ private:
     QList<item_query_req *> rlist;
     QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;
+    QThread                 *historyReadThread_ = nullptr;
+    QHash<int, item_query_req *> pendingReads_;
 
 private:
     bool          appendEvent(const QString &accId, const XMPP::Jid &, const HistoryEventFactory::Encoded &,
@@ -171,7 +175,12 @@ private:
     void          startAutocommitTimer();
     void          stopAutocommitTimer();
 
+signals:
+    void historyReadRequested(HistoryReadRequest request);
+    void historyReadStopRequested();
+
 private slots:
+    void onHistoryReadCompleted(HistoryReadResult result);
     void performRequests();
     bool commit();
 };
