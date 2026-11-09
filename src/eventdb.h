@@ -139,6 +139,10 @@ public:
     {
         return {};
     }
+    virtual void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
+                                      std::function<void(EDBItemPtr, bool)> finished);
+    virtual void requestOwnPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                                     QObject *, std::function<void(EDBItemPtr, bool)> finished);
     virtual EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &)
     {
         return {};
