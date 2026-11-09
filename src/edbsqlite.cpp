@@ -87,10 +87,9 @@ bool protocolOnlyRecord(const QSqlRecord &record)
 // EDBSqLite
 //----------------------------------------------------------------------------
 
-EDBSqLite::EDBSqLite(PsiCon *psi) :
-    EDB(psi), transactionsCounter(0), lastCommitTime(QDateTime::currentDateTime()), commitTimer(nullptr)
+EDBSqLite::EDBSqLite(PsiCon *psi) : EDB(psi)
 {
-    status            = NotActive;
+
     QString      path = ApplicationInfo::historyDir() + "/history.db";
     QSqlDatabase db   = QSqlDatabase::addDatabase("QSQLITE", "history");
     db.setDatabaseName(path);
@@ -101,9 +100,6 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
     HistorySqlitePolicy::configure(db);
     QSqlQuery query(db);
     query.exec("PRAGMA foreign_keys = ON;");
-    maxUncommitedRecs = 3;
-    maxUncommitedSecs = 1;
-    commitByTimeoutSecs = 1;
     if (db.tables(QSql::Tables).size() == 0) {
         // no tables found.
         if (db.transaction()) {
@@ -139,18 +135,17 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
             query.exec("CREATE INDEX `contact_id` ON `events` (`contact_id`);");
             query.exec("CREATE INDEX `date` ON `events` (`date`);");
             if (db.commit()) {
-                status = Commited;
+                active_ = true;
                 setStorageParam("version", "0.1");
             }
         }
     } else
-        status = Commited;
+        active_ = true;
 
 }
 
 EDBSqLite::~EDBSqLite()
 {
-    commit();
     // All pending reads finish or are discarded before the database is
     // closed. The worker owns a distinct, read-only SQLite connection.
     if (historyReadThread_) {
@@ -199,7 +194,7 @@ EDBResult EDBSqLite::decodeLocalRecords(const QList<QSqlRecord> &rows)
 
 EDBResult EDBSqLite::localHistoryPage(const QString &account, const Jid &peer, qint64 before, int limit)
 {
-    if (!commit() || account.isEmpty() || peer.isEmpty() || limit <= 0)
+    if (account.isEmpty() || peer.isEmpty() || limit <= 0)
         return {};
     return decodeLocalRecords(
         HistoryArchive::localRecords(QSqlDatabase::database("history"), account, peer.full(), before, limit));
@@ -228,7 +223,7 @@ void EDBSqLite::requestLocalHistoryPage(const QString &account, const Jid &peer,
 
 EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
 {
-    if (eventId <= 0 || !commit())
+    if (eventId <= 0)
         return {};
     const auto row = HistoryArchive::resolvedRecord(QSqlDatabase::database("history"),eventId);
     if (row.isEmpty())
@@ -306,8 +301,7 @@ void EDBSqLite::requestResolvedHistoryEvents(
 
 EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QString &uid, const QDateTime &time)
 {
-    if (!commit())
-        return {};
+
     QSqlQuery q(QSqlDatabase::database("history"));
     q.prepare("SELECT e.*,c.acc_id,c.jid,i.xml AS archive_xml FROM archive_items i JOIN events e ON e.id=i.event_id "
               "JOIN contacts c ON c.id=e.contact_id WHERE i.account=:account AND i.archive=:archive "
@@ -359,33 +353,29 @@ EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QStrin
 
 HistoryArchive::Snapshot EDBSqLite::archiveSnapshot(const HistoryArchive::Key &key)
 {
-    if (!commit())
-        return {};
+
     return HistoryArchive::readSnapshot(QSqlDatabase::database("history"), key);
 }
 bool EDBSqLite::saveArchiveSnapshot(const HistoryArchive::Key &key, const HistoryArchive::Snapshot &snapshot)
 {
-    return commit() && HistoryArchive::storeSnapshot(QSqlDatabase::database("history"), key, snapshot);
+    return HistoryArchive::storeSnapshot(QSqlDatabase::database("history"), key, snapshot);
 }
 
 HistoryArchive::Page EDBSqLite::archivePage(const HistoryArchive::Key &key, const QString &before, int limit)
 {
-    if (!commit())
-        return {};
+
     return HistoryArchive::readPage(QSqlDatabase::database("history"), key, before, limit);
 }
 
 HistoryArchive::Page EDBSqLite::archivePageAtIndex(const HistoryArchive::Key &key, int index, int limit, int snapshot)
 {
-    if (!commit())
-        return {};
+
     return HistoryArchive::readIndex(QSqlDatabase::database("history"), key, index, limit, snapshot);
 }
 HistoryArchive::Page EDBSqLite::archivePageAfter(const HistoryArchive::Key &key, const QString &after, int limit,
                                                  int snapshot)
 {
-    if (!commit())
-        return {};
+
     return HistoryArchive::readAfter(QSqlDatabase::database("history"), key, after, limit, snapshot);
 }
 bool EDBSqLite::mergeArchiveIsland(const HistoryArchive::Key &key, int limit, HistoryArchive::Page &page)
@@ -395,8 +385,7 @@ bool EDBSqLite::mergeArchiveIsland(const HistoryArchive::Key &key, int limit, Hi
 
 HistoryArchive::DisplayedCursor EDBSqLite::sentDisplayedCursor(const QString &account, const XMPP::Jid &peer)
 {
-    return commit() ? HistoryArchive::sentDisplayedCursor(QSqlDatabase::database("history"), account, peer.full())
-                    : HistoryArchive::DisplayedCursor {};
+    return HistoryArchive::sentDisplayedCursor(QSqlDatabase::database("history"), account, peer.full());
 }
 
 void EDBSqLite::requestSentDisplayedCursor(
@@ -422,8 +411,7 @@ void EDBSqLite::requestSentDisplayedCursor(
 EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString &id, const QString &sender,
                                    const QDateTime &time)
 {
-    if (!commit())
-        return {};
+
     const auto eventId = HistoryArchive::matchingOwnPlaintext(QSqlDatabase::database("history"), key, id, sender, time);
     if (!eventId)
         return {};
@@ -439,8 +427,7 @@ EDBItemPtr EDBSqLite::ownPlaintext(const HistoryArchive::Key &key, const QString
 bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
                                  HistoryArchive::Page &page)
 {
-    if (!commit())
-        return false;
+
     const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
     // All contact inserts are now owned by the worker and are transactional.
     return ok;
@@ -495,7 +482,7 @@ void EDBSqLite::requestStoreArchivePage(
 
 bool EDBSqLite::init()
 {
-    if (status == NotActive)
+    if (!active_)
         return false;
     auto db = QSqlDatabase::database("history");
     if (HistoryArchive::needsMigration(db)) {
@@ -504,7 +491,7 @@ bool EDBSqLite::init()
         count.finish();
         const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryUpgrade::upgradeDatabase(db.databaseName());
         if (!migrated) {
-            status = NotActive;
+            active_ = false;
             return false;
         }
     }
@@ -618,37 +605,38 @@ int EDBSqLite::erase(const QString &accId, const XMPP::Jid &jid)
 
 QList<EDB::ContactItem> EDBSqLite::contacts(const QString &accId, int type)
 {
-    QList<ContactItem>        res;
-    EDBSqLite::PreparedQuery *query = queryes.getPreparedQuery(QueryContactsList, accId.isEmpty(), true);
-    query->bindValue(":type", type);
+    QList<ContactItem> contacts;
+    QSqlQuery q(QSqlDatabase::database("history"));
+    QString sql = QStringLiteral("SELECT acc_id,jid FROM contacts WHERE type=:type");
     if (!accId.isEmpty())
-        query->bindValue(":acc_id", accId);
-    if (query->exec()) {
-        while (query->next()) {
-            const QSqlRecord &rec = query->record();
-            res.append(ContactItem(rec.value("acc_id").toString(), XMPP::Jid(rec.value("jid").toString())));
-        }
-        query->freeResult();
-    }
-    return res;
+        sql += QStringLiteral(" AND acc_id=:account");
+    sql += QStringLiteral(" ORDER BY jid");
+    if (!q.prepare(sql))
+        return contacts;
+    q.bindValue(QStringLiteral(":type"), type);
+    if (!accId.isEmpty())
+        q.bindValue(QStringLiteral(":account"), accId);
+    if (q.exec())
+        while (q.next())
+            contacts.append(ContactItem(q.value(0).toString(), XMPP::Jid(q.value(1).toString())));
+    return contacts;
 }
 
 quint64 EDBSqLite::eventsCount(const QString &accId, const XMPP::Jid &jid)
 {
-    quint64                   res      = 0;
-    bool                      fAccAll  = accId.isEmpty();
-    bool                      fContAll = jid.isEmpty();
-    EDBSqLite::PreparedQuery *query    = queryes.getPreparedQuery(QueryRowCount, fAccAll, fContAll);
-    if (!fAccAll)
-        query->bindValue(":acc_id", accId);
-    if (!fContAll)
-        query->bindValue(":jid", jid.full());
-    if (query->exec()) {
-        if (query->next())
-            res = query->record().value("count").toULongLong();
-        query->freeResult();
-    }
-    return res;
+    QSqlQuery q(QSqlDatabase::database("history"));
+    QString sql = QStringLiteral("SELECT count(*) FROM events e JOIN contacts c ON c.id=e.contact_id WHERE 1=1");
+    if (!accId.isEmpty())
+        sql += QStringLiteral(" AND c.acc_id=:account");
+    if (!jid.isEmpty())
+        sql += QStringLiteral(" AND c.jid=:peer");
+    if (!q.prepare(sql))
+        return 0;
+    if (!accId.isEmpty())
+        q.bindValue(QStringLiteral(":account"), accId);
+    if (!jid.isEmpty())
+        q.bindValue(QStringLiteral(":peer"), jid.full());
+    return q.exec() && q.next() ? q.value(0).toULongLong() : 0;
 }
 
 QString EDBSqLite::getStorageParam(const QString &key)
@@ -663,28 +651,36 @@ QString EDBSqLite::getStorageParam(const QString &key)
 
 void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 {
-    transaction(true);
-    QSqlQuery query(QSqlDatabase::database("history"));
+    // The legacy settings API is synchronous. Unlike message persistence,
+    // these occasional settings writes do not share a long-lived transaction.
+    QSqlDatabase db = QSqlDatabase::database("history");
+    if (!db.isOpen() || !db.transaction())
+        return;
+    QSqlQuery q(db);
+    bool ok = false;
     if (val.isEmpty()) {
-        query.prepare("DELETE FROM `system` WHERE `key` = :key;");
-        query.bindValue(":key", key);
-        query.exec();
+        q.prepare(QStringLiteral("DELETE FROM system WHERE key=:key"));
+        q.bindValue(QStringLiteral(":key"), key);
+        ok = q.exec();
     } else {
-        query.prepare("SELECT COUNT(*) AS `count` FROM `system` WHERE `key` = :key;");
-        query.bindValue(":key", key);
-        if (query.exec() && query.next() && query.record().value("count").toULongLong() != 0) {
-            query.prepare("UPDATE `system` SET `value` = :val WHERE `key` = :key;");
-            query.bindValue(":key", key);
-            query.bindValue(":val", val);
-            query.exec();
-        } else {
-            query.prepare("INSERT INTO `system` (`key`, `value`) VALUES (:key, :val);");
-            query.bindValue(":key", key);
-            query.bindValue(":val", val);
-            query.exec();
+        q.prepare(QStringLiteral("UPDATE system SET value=:val WHERE key=:key"));
+        q.bindValue(QStringLiteral(":key"), key);
+        q.bindValue(QStringLiteral(":val"), val);
+        ok = q.exec();
+        if (ok && q.numRowsAffected() == 0) {
+            q.prepare(QStringLiteral("INSERT INTO system(key,value) VALUES(:key,:val)"));
+            q.bindValue(QStringLiteral(":key"), key);
+            q.bindValue(QStringLiteral(":val"), val);
+            ok = q.exec();
         }
     }
-    commit();
+    q.finish();
+    if (ok)
+        ok = db.commit();
+    if (!ok) {
+        db.rollback();
+        qWarning() << "[history-db] Could not update storage parameter" << key << db.lastError().text();
+    }
 }
 
 void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
@@ -929,134 +925,3 @@ void EDBSqLite::performRequests()
     emit historyWriteRequested(write);
 }
 
-bool EDBSqLite::transaction(bool now)
-{
-    if (status == NotActive)
-        return false;
-    if (now || transactionsCounter >= maxUncommitedRecs
-        || lastCommitTime.secsTo(QDateTime::currentDateTime()) >= maxUncommitedSecs)
-        if (!commit())
-            return false;
-
-    if (status == Commited) {
-        if (!QSqlDatabase::database("history").transaction())
-            return false;
-        status = NotCommited;
-    }
-    ++transactionsCounter;
-
-    startAutocommitTimer();
-
-    return true;
-}
-
-bool EDBSqLite::commit()
-{
-    if (status != NotActive) {
-        const bool pending = status == NotCommited;
-        QElapsedTimer elapsed;
-        if (pending)
-            elapsed.start();
-        const bool committed = status == Commited || QSqlDatabase::database("history").commit();
-        if (pending && elapsed.elapsed() > 1000)
-            qWarning() << "[history-db] GUI-thread SQLite commit took" << elapsed.elapsed() << "ms";
-        if (committed) {
-            transactionsCounter = 0;
-            lastCommitTime      = QDateTime::currentDateTime();
-            status              = Commited;
-            stopAutocommitTimer();
-            return true;
-        }
-    }
-    return false;
-}
-
-bool EDBSqLite::rollback()
-{
-    if (status == NotCommited && QSqlDatabase::database("history").rollback()) {
-        transactionsCounter = 0;
-        lastCommitTime      = QDateTime::currentDateTime();
-        status              = Commited;
-        stopAutocommitTimer();
-        return true;
-    }
-    return false;
-}
-
-void EDBSqLite::startAutocommitTimer()
-{
-    if (!commitTimer) {
-        commitTimer = new QTimer(this);
-        connect(commitTimer, SIGNAL(timeout()), this, SLOT(commit()));
-        commitTimer->setSingleShot(true);
-        commitTimer->setInterval(int(commitByTimeoutSecs) * 1000);
-    }
-    commitTimer->start();
-}
-
-void EDBSqLite::stopAutocommitTimer()
-{
-    if (commitTimer && commitTimer->isActive())
-        commitTimer->stop();
-}
-
-// ****************** class PreparedQueryes ********************
-
-EDBSqLite::QueryStorage::QueryStorage() { }
-
-EDBSqLite::QueryStorage::~QueryStorage()
-{
-    const auto &qList = queryList.values();
-    for (EDBSqLite::PreparedQuery *q : qList) {
-        if (q)
-            delete q;
-    }
-}
-
-EDBSqLite::PreparedQuery *EDBSqLite::QueryStorage::getPreparedQuery(QueryType type, bool allAccounts, bool allContacts)
-{
-    QueryProperty             queryProp(type, allAccounts, allContacts);
-    EDBSqLite::PreparedQuery *q = queryList.value(queryProp, nullptr);
-    if (q != nullptr)
-        return q;
-
-    q = new EDBSqLite::PreparedQuery(QSqlDatabase::database("history"));
-    q->setForwardOnly(true);
-    q->prepare(getQueryString(type, allAccounts, allContacts));
-    queryList[queryProp] = q;
-    return q;
-}
-
-EDBSqLite::PreparedQuery::PreparedQuery(QSqlDatabase db) : QSqlQuery(db) { }
-
-QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts, bool allContacts)
-{
-    QString queryStr;
-    switch (type) {
-    case QueryContactsList:
-        queryStr = QStringLiteral("SELECT acc_id,jid FROM contacts WHERE type=:type");
-        if (!allAccounts)
-            queryStr += QStringLiteral(" AND acc_id=:acc_id");
-        queryStr += QStringLiteral(" ORDER BY jid");
-        break;
-    case QueryRowCount:
-        queryStr = QStringLiteral("SELECT count(*) AS count FROM events, contacts "
-                                  "WHERE contacts.id=contact_id");
-        if (!allContacts)
-            queryStr += QStringLiteral(" AND jid=:jid");
-        if (!allAccounts)
-            queryStr += QStringLiteral(" AND acc_id=:acc_id");
-        break;
-    }
-    return queryStr;
-}
-
-uint qHash(const QueryProperty &struc)
-{
-    uint res = struc.type;
-    res <<= 8;
-    res |= struc.allAccounts ? 1 : 0;
-    res <<= 8;
-    res |= struc.allContacts ? 1 : 0;
-    return res;
-}
