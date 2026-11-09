@@ -165,6 +165,8 @@ EDBSqLite::~EDBSqLite()
     }
     qDeleteAll(pendingReads_);
     pendingReads_.clear();
+    qDeleteAll(pendingWrites_);
+    pendingWrites_.clear();
     pendingLocalPages_.clear();
     pendingDisplayedCursors_.clear();
     qDeleteAll(rlist);
@@ -429,12 +431,18 @@ bool EDBSqLite::init()
     if (!historyReadThread_) {
         qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
         qRegisterMetaType<HistoryReadResult>("HistoryReadResult");
+        qRegisterMetaType<HistoryWriteRequest>("HistoryWriteRequest");
+        qRegisterMetaType<HistoryWriteResult>("HistoryWriteResult");
         historyReadThread_ = new QThread(this);
         historyReader_ = new HistorySqlReadWorker(db.databaseName());
         historyReader_->moveToThread(historyReadThread_);
         connect(historyReadThread_, &QThread::started, historyReader_, &HistorySqlReadWorker::open);
         connect(this, &EDBSqLite::historyReadRequested, historyReader_,
                 &HistorySqlReadWorker::read, Qt::QueuedConnection);
+        connect(this, &EDBSqLite::historyWriteRequested, historyReader_,
+                &HistorySqlReadWorker::write, Qt::QueuedConnection);
+        connect(historyReader_, &HistorySqlReadWorker::writeCompleted, this,
+                &EDBSqLite::onHistoryWriteCompleted, Qt::QueuedConnection);
         connect(historyReader_, &HistorySqlReadWorker::completed, this,
                 &EDBSqLite::onHistoryReadCompleted, Qt::QueuedConnection);
         connect(this, &EDBSqLite::historyReadStopRequested, historyReader_,
@@ -596,6 +604,21 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
     commit();
 }
 
+void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
+{
+    auto *r = pendingWrites_.take(written.id);
+    if (!r)
+        return;
+    if (written.success && written.inserted && r->type == item_query_req::Type_append
+        && r->event && r->event->type() == PsiEvent::Message) {
+        if (auto *account = psi()->contactList()->getAccount(r->accId))
+            psi()->fileSharingManager()->rememberMessage(
+                r->event.staticCast<MessageEvent>()->message().displayMessage(), account);
+    }
+    writeFinished(r->id, written.success);
+    delete r;
+}
+
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
     if (pendingDisplayedCursors_.contains(read.id)) {
@@ -641,23 +664,8 @@ void EDBSqLite::performRequests()
     if ((type == item_query_req::Type_get || type == item_query_req::Type_find
          || type == item_query_req::Type_local || type == item_query_req::Type_displayed)
         && historyReadThread_) {
-        // Commit GUI-thread appends preceding this read in the EDB request
-        // queue. A worker snapshot must not overtake an earlier write.
-        if (!commit()) {
-            if (type == item_query_req::Type_local) {
-                auto pending = pendingLocalPages_.take(r->id);
-                if (pending.receiver)
-                    pending.finished({}, false);
-            } else if (type == item_query_req::Type_displayed) {
-                auto pending = pendingDisplayedCursors_.take(r->id);
-                if (pending.receiver)
-                    pending.finished({}, false);
-            } else {
-                resultReady(r->id, {}, 0);
-            }
-            delete r;
-            return;
-        }
+        // Queued reads share the worker's event loop with preceding writes.
+        // Do not call GUI-thread commit here: it may block in fdatasync().
         HistoryReadRequest read;
         read.id = r->id;
         read.type = type == item_query_req::Type_local ? HistoryReadRequest::LocalPage
@@ -679,18 +687,17 @@ void EDBSqLite::performRequests()
         return;
     }
 
-    if (type == item_query_req::Type_append) {
-        bool inserted = false;
-        bool ok = appendEvent(r->accId, r->j, r->encoded, r->jidType, inserted);
-        // Account and FileSharingManager are GUI-owned. Keep this side effect
-        // out of the SQL insertion routine so the latter can migrate to a
-        // database worker without accessing the application's QObject graph.
-        if (inserted && r->event->type() == PsiEvent::Message) {
-            if (auto account = psi()->contactList()->getAccount(r->accId))
-                psi()->fileSharingManager()->rememberMessage(
-                    r->event.staticCast<MessageEvent>()->message().displayMessage(), account);
-        }
-        writeFinished(r->id, ok);
+    if ((type == item_query_req::Type_append || type == item_query_req::Type_erase) && historyReadThread_) {
+        HistoryWriteRequest write;
+        write.id = r->id;
+        write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append : HistoryWriteRequest::Erase;
+        write.account = r->accId;
+        write.peer = r->j.full();
+        write.jidType = r->jidType;
+        write.encoded = r->encoded;
+        pendingWrites_.insert(r->id, r);
+        emit historyWriteRequested(write);
+        return;
     }
 
     else if (type == item_query_req::Type_get) {
@@ -778,7 +785,7 @@ void EDBSqLite::performRequests()
         resultReady(r->id, result, 0);
 
     } else if (type == item_query_req::Type_erase) {
-        writeFinished(r->id, eraseHistory(r->accId, r->j));
+        writeFinished(r->id, false);
     }
 
     delete r;
