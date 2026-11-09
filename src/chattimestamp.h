@@ -48,9 +48,10 @@ inline QString relative(const QDateTime &when, const QDateTime &now = QDateTime:
         return months == 1 ? QCoreApplication::translate("ChatTimestamp", "1 month ago")
                            : QCoreApplication::translate("ChatTimestamp", "%n months ago", nullptr, int(months));
     const qint64 years = days / 365;
+    const int yearsForPlural = int(qMin<qint64>(years, 1000000));
     return years == 1 ? QCoreApplication::translate("ChatTimestamp", "1 year ago")
                       : QCoreApplication::translate("ChatTimestamp", "%n years ago", nullptr,
-                                                    int(qMin<qint64>(years, 1000000)));
+                                                    yearsForPlural);
 }
 
 inline QString format(const QDateTime &when, Mode mode, const QDateTime &now = QDateTime::currentDateTime())
