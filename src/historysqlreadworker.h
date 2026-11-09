@@ -6,10 +6,12 @@
 
 #include <QDateTime>
 #include <QHash>
+#include <QList>
 #include <QObject>
 #include <QSqlDatabase>
 #include <QSqlRecord>
 #include <QString>
+#include <QTimer>
 #include <utility>
 
 // Only immutable value objects cross the EDB reader's queued connections.
@@ -83,6 +85,12 @@ signals:
     void stopped();
 
 private:
+    // All batching state belongs to the worker thread. No shared mutex or
+    // GUI-side SQL transaction is involved.
+    void flushPendingAppends();
     QString path_, connectionName_;
     QSqlDatabase db_;
+    QTimer *appendCommitTimer_ = nullptr;
+    QList<HistoryWriteResult> pendingAppends_;
+    bool appendTransactionOpen_ = false;
 };
