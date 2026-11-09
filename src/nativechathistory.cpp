@@ -91,7 +91,8 @@ void applyLocalHistoryPage(MamChatWidget *timeline, PsiAccount *account, const Q
 void prependLocalChatHistoryAsync(MamChatWidget *timeline, PsiAccount *account, const QString &peer, bool room,
                                   const QString &ownNick, qint64 before, bool exhausted,
                                   const std::function<void(qint64, bool, bool)> &finished,
-                                  const std::function<QString(bool)> &nickname)
+                                  const std::function<QString(bool)> &nickname,
+                                  const std::function<bool()> &stillCurrent)
 {
     if (!timeline || !account)
         return;
@@ -103,8 +104,8 @@ void prependLocalChatHistoryAsync(MamChatWidget *timeline, PsiAccount *account, 
     QPointer<PsiAccount> owner(account);
     account->edb()->requestLocalHistoryPage(
         account->id(), XMPP::Jid(peer), before, HistorySync::PageSize, timeline,
-        [target, owner, peer, room, ownNick, before, finished, nickname](EDBResult entries, bool success) {
-            if (!target || !owner)
+        [target, owner, peer, room, ownNick, before, finished, nickname, stillCurrent](EDBResult entries, bool success) {
+            if (!target || !owner || (stillCurrent && !stillCurrent()))
                 return;
             if (!success) {
                 finished(before, false, false);
