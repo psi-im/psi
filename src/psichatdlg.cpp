@@ -278,6 +278,7 @@ void PsiChatDlg::clearNativeHistory()
     ++localHistoryGeneration_; // Invalidate any late queued EDB page.
     localHistoryLoading_ = false;
     displayedCursorRestored_ = false;
+    displayedCursorPending_ = false;
     resetLocalHistorySource();
     mamBeforeId_.clear();
     mamRefreshTail_        = false;
@@ -1051,10 +1052,27 @@ void PsiChatDlg::sendDisplayedMarkerForVisibleMessage()
     if (mamBeforeId_.isEmpty() && !mamExhausted_)
         return;
     if (!displayedCursorRestored_) {
-        const auto peer   = roomOccupantChat_ ? jid() : XMPP::Jid(jid().bare());
-        const auto cursor = account()->edb()->sentDisplayedCursor(account()->id(), peer);
-        nativeTimeline_->restoreDisplayedIncoming(cursor.messageId, cursor.time, cursor.eventId);
-        displayedCursorRestored_ = true;
+        if (!displayedCursorPending_) {
+            displayedCursorPending_ = true;
+            const auto peer = roomOccupantChat_ ? jid() : XMPP::Jid(jid().bare());
+            const quint64 generation = localHistoryGeneration_;
+            account()->edb()->requestSentDisplayedCursor(
+                account()->id(), peer, this,
+                [this, peer, generation](HistoryArchive::DisplayedCursor cursor, bool success) {
+                    displayedCursorPending_ = false;
+                    if (generation != localHistoryGeneration_
+                        || peer.full() != (roomOccupantChat_ ? jid().full() : jid().bare()))
+                        return; // The conversation changed while SQLite was reading.
+                    if (!success) {
+                        qWarning() << "[history-db] Could not restore displayed cursor";
+                        return; // Do not spin in an immediate retry loop.
+                    }
+                    nativeTimeline_->restoreDisplayedIncoming(cursor.messageId, cursor.time, cursor.eventId);
+                    displayedCursorRestored_ = true;
+                    QTimer::singleShot(0, this, &PsiChatDlg::sendDisplayedMarkerForVisibleMessage);
+                });
+        }
+        return; // Never send a marker before the saved read cursor is restored.
     }
 
     // Read markers reveal that we're present. For ordinary 1:1 conversations
