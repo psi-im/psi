@@ -22,6 +22,8 @@
 #include "edbsqlite.h"
 #include "filesharingmanager.h"
 #include "historyupgrade.h"
+#include "historysqlitepolicy.h"
+#include "historywalcheckpoint.h"
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
@@ -93,6 +95,7 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
         qWarning("%s\n%s", "EDBSqLite::EDBSqLite(): Can't open base.", qUtf8Printable(db.lastError().text()));
         return;
     }
+    walEnabled_ = HistorySqlitePolicy::configure(db);
     QSqlQuery query(db);
     query.exec("PRAGMA foreign_keys = ON;");
     maxUncommitedRecs = 3;
@@ -145,6 +148,12 @@ EDBSqLite::EDBSqLite(PsiCon *psi) :
 EDBSqLite::~EDBSqLite()
 {
     commit();
+    if (checkpointTimer_)
+        checkpointTimer_->stop();
+    // A final WAL sync may take time on a slow disk, but only the background
+    // worker executes it. Do not close its separate connection on this thread.
+    delete checkpointWorker_;
+    checkpointWorker_ = nullptr;
     {
         QSqlDatabase db = QSqlDatabase::database("history", false);
         if (db.isOpen())
@@ -326,6 +335,28 @@ bool EDBSqLite::init()
         }
     }
 
+    if (walEnabled_ && !checkpointWorker_) {
+        const QString path = db.databaseName();
+        // Once the worker has opened its own SQLite connection, turn off
+        // SQLite's default checkpoint-on-commit on the GUI connection.
+        checkpointWorker_ = new HistoryWalCheckpoint(path, [this] {
+            QMetaObject::invokeMethod(this, [this] {
+                auto connection = QSqlDatabase::database(QStringLiteral("history"), false);
+                if (!connection.isOpen() || !HistorySqlitePolicy::useBackgroundCheckpoint(connection)) {
+                    qWarning() << "Cannot disable foreground WAL auto-checkpoint for history";
+                    return;
+                }
+                checkpointTimer_ = new QTimer(this);
+                checkpointTimer_->setInterval(15000);
+                connect(checkpointTimer_, &QTimer::timeout, this, [this] {
+                    if (checkpointWorker_)
+                        checkpointWorker_->requestCheckpoint();
+                });
+                checkpointTimer_->start();
+            }, Qt::QueuedConnection);
+        });
+        checkpointWorker_->start(QThread::LowPriority);
+    }
     return true;
 }
 
