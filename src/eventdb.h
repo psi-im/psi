@@ -127,6 +127,8 @@ public:
     virtual void requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *receiver,
                                          std::function<void(EDBResult, bool)> finished);
     virtual HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) { return {}; }
+    virtual void requestSentDisplayedCursor(const QString &, const XMPP::Jid &, QObject *receiver,
+                                            std::function<void(HistoryArchive::DisplayedCursor, bool)> finished);
     // Resolve any archived revision to its original anchored position and
     // latest known text, including corrections outside the requested page.
     virtual EDBItemPtr resolvedHistoryEvent(qint64) { return {}; }
