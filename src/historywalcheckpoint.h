@@ -2,98 +2,134 @@
 #pragma once
 
 #include <QDebug>
-#include <QMutex>
-#include <QMutexLocker>
+#include <QObject>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QThread>
-#include <QWaitCondition>
 #include <functional>
 #include <utility>
 
-// Owns a separate SQLite connection created and closed on its own thread.
-// Checkpointing may call fdatasync() and take seconds on slow HDDs: it must
-// never execute as a QTimer callback in the GUI thread.
-//
-// PASSIVE never waits for readers or writers. If a reader pins the WAL, a
-// later checkpoint will copy the remaining frames. Requested checkpoints
-// coalesce to one outstanding operation.
-class HistoryWalCheckpoint final : public QThread {
+// The worker owns its SQLite connection exclusively. No database handle,
+// mutable state or mutex crosses the thread boundary. Each slot executes in
+// the worker's event loop; requests are serialized by queued connections.
+class HistoryWalCheckpointWorker final : public QObject {
+    Q_OBJECT
 public:
-    explicit HistoryWalCheckpoint(QString databasePath, std::function<void()> opened = {},
-                                  std::function<void()> checkpointed = {})
+    explicit HistoryWalCheckpointWorker(QString databasePath, std::function<void()> opened,
+                                        std::function<void()> checkpointed)
         : databasePath_(std::move(databasePath)), opened_(std::move(opened)),
           checkpointed_(std::move(checkpointed))
     {
     }
 
-    ~HistoryWalCheckpoint() override
+public slots:
+    void open()
     {
-        {
-            QMutexLocker lock(&mutex_);
-            stopping_ = true;
-            pending_ = true; // One final checkpoint on normal shutdown.
-            wake_.wakeOne();
-        }
-        wait();
-    }
-
-    void requestCheckpoint()
-    {
-        QMutexLocker lock(&mutex_);
-        if (stopping_)
+        Q_ASSERT(QThread::currentThread() == thread());
+        connectionName_ = QStringLiteral("history-checkpoint-%1")
+                              .arg(qulonglong(reinterpret_cast<quintptr>(this)), 0, 16);
+        db_ = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName_);
+        db_.setDatabaseName(databasePath_);
+        // PASSIVE checkpoints should never queue behind a foreground writer.
+        db_.setConnectOptions(QStringLiteral("QSQLITE_BUSY_TIMEOUT=0"));
+        if (!db_.open()) {
+            qWarning() << "Cannot open history checkpoint connection:" << db_.lastError().text();
             return;
-        pending_ = true;
-        wake_.wakeOne();
+        }
+        if (opened_)
+            opened_();
     }
 
-protected:
-    void run() override
+    void checkpoint()
     {
-        const auto connectionName = QStringLiteral("history-checkpoint-%1")
-                                        .arg(qulonglong(reinterpret_cast<quintptr>(this)), 0, 16);
-        {
-            auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-            db.setDatabaseName(databasePath_);
-            // Never wait for a GUI-held writer. A missed checkpoint is retried.
-            db.setConnectOptions(QStringLiteral("QSQLITE_BUSY_TIMEOUT=0"));
-            if (db.open()) {
-                if (opened_)
-                    opened_();
-                for (;;) {
-                    bool stopping;
-                    {
-                        QMutexLocker lock(&mutex_);
-                        while (!pending_ && !stopping_)
-                            wake_.wait(&mutex_);
-                        stopping = stopping_;
-                        pending_ = false;
-                    }
-                    {
-                        QSqlQuery checkpoint(db);
-                        if (!checkpoint.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)")))
-                            qWarning() << "History WAL checkpoint failed:" << checkpoint.lastError().text();
-                    }
-                    if (checkpointed_)
-                        checkpointed_();
-                    if (stopping)
-                        break;
-                }
-                db.close();
-            } else {
-                qWarning() << "Cannot open history checkpoint connection:" << db.lastError().text();
-            }
+        Q_ASSERT(QThread::currentThread() == thread());
+        if (db_.isOpen()) {
+            QSqlQuery query(db_);
+            if (!query.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)")))
+                qWarning() << "History WAL checkpoint failed:" << query.lastError().text();
         }
-        QSqlDatabase::removeDatabase(connectionName);
+        if (checkpointed_)
+            checkpointed_();
+        emit completed();
     }
+
+    void close()
+    {
+        Q_ASSERT(QThread::currentThread() == thread());
+        // A final checkpoint is ordered after all already queued checkpoints.
+        if (db_.isOpen())
+            checkpoint();
+        db_.close();
+        db_ = QSqlDatabase();
+        if (!connectionName_.isEmpty())
+            QSqlDatabase::removeDatabase(connectionName_);
+        emit stopped();
+    }
+
+signals:
+    void completed();
+    void stopped();
 
 private:
     QString databasePath_;
-    std::function<void()> opened_;
-    std::function<void()> checkpointed_;
-    QMutex mutex_;
-    QWaitCondition wake_;
-    bool pending_ = false;
-    bool stopping_ = false;
+    QString connectionName_;
+    QSqlDatabase db_; // Accessed only on the worker thread.
+    std::function<void()> opened_, checkpointed_;
+};
+
+// GUI-side controller. Pending/coalescing state lives entirely in the GUI
+// thread. The only cross-thread communication is queued signals/slots.
+// This is also the ownership pattern for the future fully asynchronous EDB.
+class HistoryWalCheckpoint final : public QObject {
+    Q_OBJECT
+public:
+    explicit HistoryWalCheckpoint(QString databasePath, std::function<void()> opened = {},
+                                  std::function<void()> checkpointed = {})
+    {
+        worker_ = new HistoryWalCheckpointWorker(std::move(databasePath), std::move(opened),
+                                                 std::move(checkpointed));
+        worker_->moveToThread(&thread_);
+        connect(&thread_, &QThread::started, worker_, &HistoryWalCheckpointWorker::open);
+        connect(this, &HistoryWalCheckpoint::checkpointRequested,
+                worker_, &HistoryWalCheckpointWorker::checkpoint, Qt::QueuedConnection);
+        connect(this, &HistoryWalCheckpoint::stopRequested,
+                worker_, &HistoryWalCheckpointWorker::close, Qt::QueuedConnection);
+        connect(worker_, &HistoryWalCheckpointWorker::completed, this,
+                [this] { pending_ = false; }, Qt::QueuedConnection);
+        connect(worker_, &HistoryWalCheckpointWorker::stopped, &thread_, &QThread::quit,
+                Qt::DirectConnection);
+        connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
+    }
+
+    ~HistoryWalCheckpoint() override
+    {
+        Q_ASSERT(QThread::currentThread() == thread());
+        if (thread_.isRunning()) {
+            emit stopRequested();
+            thread_.wait(); // Only on final shutdown; no wait in the GUI event loop.
+        } else {
+            delete worker_;
+        }
+    }
+
+    void start() { thread_.start(QThread::LowPriority); }
+
+    void requestCheckpoint()
+    {
+        Q_ASSERT(QThread::currentThread() == thread());
+        if (pending_ || !thread_.isRunning())
+            return;
+        pending_ = true;
+        emit checkpointRequested();
+    }
+
+signals:
+    void checkpointRequested();
+    void stopRequested();
+
+private:
+    QThread thread_;
+    HistoryWalCheckpointWorker *worker_ = nullptr;
+    bool pending_ = false; // GUI thread only.
 };
