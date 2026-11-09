@@ -25,7 +25,7 @@ page writes introduced additional large transactions.
   performed only on the GUI after successful worker insertion.
 - Live appends use bounded **worker-side batching** to preserve the old
   EDB optimization for SSD wear, CPU and WAL fsync overhead: up to three
-  consecutive appends per transaction, with a 250 ms maximum wait. A
+  consecutive appends per transaction, with the original 1-second maximum wait. A
   pending batch is committed before any history read, erase, MAM page
   operation or shutdown. All per-message callbacks are emitted **only
   after the shared transaction commits**, and an error rolls back the
