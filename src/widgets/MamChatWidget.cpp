@@ -2112,6 +2112,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setStyleSheet(theme_.styleSheet);
     row->info               = messageInfo(index);
     row->options            = renderer_->partOptions(row->info);
+    // A single user setting determines timestamp content. Themes only
+    // control placement, colour and font.
+    row->options.timeFormat = timestampMode_ == ChatTimestamp::Mode::Clock ? QStringLiteral("HH:mm") : QString();
     row->rendererGeneration = rendererGeneration_;
     const bool message      = mv.type() == MessageView::Message;
     RowCanvas  canvas(row);
@@ -2310,7 +2313,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             const auto [nickColor, timeColor] = inTextHeaderColors(mv, row->options);
             header += QStringLiteral("<a name=\"psi-time\" style=\"color:%1\">%2</a> ")
                           .arg(timeColor.name(QColor::HexArgb),
-                               timestampText(mv.dateTime(), row->options).toHtmlEscaped());
+                               (QStringLiteral("[") + timestampText(mv.dateTime(), row->options)
+                                 + QStringLiteral("]")).toHtmlEscaped());
             // An emote already starts with "*nick".
             if (!mv.isEmote() || retracted) {
                 const QColor color = nickColor;
@@ -2790,26 +2794,12 @@ QString MamChatWidget::timestampText(const QDateTime &when, const NativeChatPart
 
 QString MamChatWidget::displayTime(const QDateTime &when, const QDateTime &now)
 {
-    if (!when.isValid())
-        return {};
-    const qint64 age = now.toMSecsSinceEpoch() - when.toMSecsSinceEpoch();
-    if (age < 0 || age >= 24 * 60 * 60 * 1000)
-        return when.toLocalTime().toString(QStringLiteral("HH:mm"));
-    const int seconds = int(age / 1000);
-    if (seconds < 60)
-        return tr("just now");
-    if (seconds < 3600)
-        return (seconds / 60 == 1 ? tr("1 minute ago") : tr("%n minutes ago", nullptr, seconds / 60));
-    return (seconds / 3600 == 1 ? tr("1 hour ago") : tr("%n hours ago", nullptr, seconds / 3600));
+    return ChatTimestamp::relative(when, now);
 }
 
 QString MamChatWidget::fullTimestamp(const QDateTime &when)
 {
-    if (!when.isValid())
-        return {};
-    const auto local = when.toLocalTime();
-    return QLocale().toString(local.date(), QLocale::LongFormat) + QStringLiteral(" ")
-        + local.toString(QStringLiteral("HH:mm:ss t"));
+    return ChatTimestamp::full(when);
 }
 
 void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
@@ -3010,6 +3000,18 @@ void MamChatWidget::refreshPalette()
                 fileCard->setLinkColor(palette().color(QPalette::Link));
             }
         }
+}
+
+void MamChatWidget::setTimestampMode(ChatTimestamp::Mode mode)
+{
+    if (timestampMode_ == mode)
+        return;
+    timestampMode_ = mode;
+    // Classic embeds its clock in QTextDocument. Rebuild visible rows only
+    // when changing the preference, never on clock ticks.
+    for (int index : materializedRows())
+        replaceRow(index);
+    updateTimestamps();
 }
 
 void MamChatWidget::setTheme(const NativeChatTheme &theme)
@@ -3461,13 +3463,14 @@ int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
                                      });
 }
 
-bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html) const
+bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html, QDateTime &when) const
 {
     const int at = replyTargetIndex(reply);
     if (at < 0)
         return false;
     author = items_.at(at).message.nick();
     html   = richMessage(items_.at(at));
+    when   = items_.at(at).message.dateTime();
     return true;
 }
 
@@ -3627,7 +3630,8 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         if (at < 0 || isRetracted(items_.at(at)))
             return;
         const auto &message = items_.at(at).message;
-        emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at))});
+        emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at)),
+                             message.dateTime()});
     });
     if (items_.at(at).message.isLocal() && !items_.at(at).message.messageId().isEmpty()
         && !isRetracted(items_.at(at))) {
