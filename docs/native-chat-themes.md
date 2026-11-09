@@ -62,7 +62,7 @@ no `mamAuthor` or `mamTimestamp` labels; style its text through
 | `#mamFilePreview` | File and media cards | |
 | `#mamBubble` | A speech bubble (Bubble theme) | `[tone="incoming"]`, `[tone="own"]`, `[tone="notice"]`; `[tailSide="left"]`, `"right"`, `"none"`. Painted by Psi, styled with the properties below. |
 | `#mamHeader`, `#mamHeaderGroup` | Container of nickname and time | Spacing via padding. |
-| `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. |
+| `#mamMessageRow` | The whole message row | Use only as an ancestor in selectors, see *Limitations*. `[alert="true"]` includes MUC mentions and replies to your messages. |
 | `QFrame#mamUnreadSeparator` | Unread boundary when the renderer places it | Style its border/colour/height in QSS; absent on other messages. |
 | `QLabel#mamDateSeparator` | Local calendar date divider | Theme-placeable date text, styled like other labels. |
 | `#mamDateBubble` | Bubble theme's date bubble | Set `qproperty-fillColor`, `qproperty-borderColor` and `qproperty-radius` independently of message bubbles. |
@@ -148,6 +148,9 @@ bubbles from it, and it shows through transparent parts of the image.
 /* Smaller, grey times and italic nicknames in every theme. */
 QLabel#mamTimestamp { color: rgba(128, 128, 128, 200); font-size: 8pt; }
 QLabel#mamAuthor { font-style: italic; }
+
+/* A declarative theme can style mentions and replies to your messages. */
+#mamMessageRow[alert="true"] QTextEdit#mamBody { color: #b9232d; }
 
 /* Blue checks once a message has been read. */
 QLabel#mamDeliveryIndicator[deliveryState="read"] { color: #3d9be9; }
@@ -278,7 +281,8 @@ The fields:
   root; the theme field wins if both are supplied. Relative time needs a
   refresh only when its displayed value changes.
 - `hoverHighlight`: whether the message under the pointer is tinted (default
-  `true`). The hover actions appear either way.
+  `true`; off for built-in Classic and Bubble). Hover actions still appear.
+  Users can override this in the shared chat style sheet.
 - `background`: the log's background colour; invalid (the default) uses the
   chat background colour option, which may itself follow the system palette.
   Choose it together with text colours that stay readable on it.
@@ -298,7 +302,8 @@ a second renderer-provider interface.
 
 A tree of groups. A group is an object with `direction` (`"horizontal"` or
 `"vertical"`) and `items` (1–12 entries). An item is a nested group or one of
-the slot names `"avatar"`, `"author"`, `"timestamp"` and `"body"`. Each slot
+the slot names `"avatar"`, `"author"`, `"timestamp"`, `"body"`,
+`"dateSeparator"`, `"unreadSeparator"` and `"noticeTimestamp"`. Each slot
 may appear once, `"body"` is required, and groups nest at most 8 levels deep.
 Parts left out are not shown; leaving out `"avatar"` also stops Psi from
 loading avatars. An invalid tree is ignored and the base layout is used.

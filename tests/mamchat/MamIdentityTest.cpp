@@ -1,11 +1,30 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamMessageIdentity.h"
+#include "mucalertpolicy.h"
 
 #include <QtTest/QtTest>
 
 class MamIdentityTest : public QObject {
     Q_OBJECT
 private slots:
+    void quotesOfOurMessagesTriggerHighlights()
+    {
+        const QString own = QStringLiteral("My Nick");
+        const ChatReply explicitReply { QStringLiteral("stanza-1"), QStringLiteral("room@example.org/My Nick"),
+                                        own, QStringLiteral("Original text") };
+        QVERIFY(MucAlertPolicy::quotesSelf(explicitReply, own, true, false));
+        QVERIFY(MucAlertPolicy::quotesSelf(explicitReply, own, false, true));
+        QVERIFY(!MucAlertPolicy::quotesSelf(explicitReply, own, false, false));
+        QVERIFY(!MucAlertPolicy::quotesSelf(explicitReply, {}, true, false));
+        const ChatReply legacy { {}, {}, QStringLiteral("my nick"), QStringLiteral("Old message") };
+        QVERIFY(MucAlertPolicy::quotesSelf(legacy, own, false, false));
+        const ChatReply other { {}, {}, QStringLiteral("Other"), QStringLiteral("mentions My Nick") };
+        QVERIFY(!MucAlertPolicy::quotesSelf(other, own, false, false));
+        const ChatReply forged { QStringLiteral("stanza-2"), QStringLiteral("room@example.org/Other"),
+                                 own, QStringLiteral("Bogus author") };
+        QVERIFY(!MucAlertPolicy::quotesSelf(forged, own, false, false));
+    }
+
     void distinctArchiveAndLiveDeliveries()
     {
         const auto now = QDateTime::fromString(QStringLiteral("2026-10-18T09:00:00Z"), Qt::ISODate);

@@ -36,7 +36,8 @@ struct NativeChatMessageInfo {
     bool      local     = false; // Sent by this account.
     bool      groupChat = false;
     bool      emote     = false; // A /me message. The body already starts with "*nick".
-    bool      alert     = false; // Highlight flag, styled by each theme.
+    bool      alert     = false; // MUC nick mention, quote of own message, or configured highlight.
+                                   // C++ renderers and declarative QSS can style it.
     bool      retracted = false;
     QString   nick;              // Display name of the sender; empty for notices.
     QDateTime time;

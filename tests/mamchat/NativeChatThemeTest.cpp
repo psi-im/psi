@@ -97,7 +97,7 @@ private slots:
         QCOMPARE(bubble.renderer()->partOptions({}).avatarSize, 40);
         QVERIFY(!bubble.hoverHighlight);
         QVERIFY(modern.hoverHighlight);
-        QVERIFY(classic.hoverHighlight);
+        QVERIFY(!classic.hoverHighlight);
         QVERIFY(!modern.description.isEmpty());
         QVERIFY(!classic.description.isEmpty());
         QVERIFY(!bubble.description.isEmpty());

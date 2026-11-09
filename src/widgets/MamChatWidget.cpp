@@ -3551,6 +3551,14 @@ int MamChatWidget::replyTargetIndex(const ChatReply &reply) const
                                      });
 }
 
+bool MamChatWidget::replyReferencesLocalMessage(const ChatReply &reply) const
+{
+    if (!reply.hasReference())
+        return false;
+    const int at = replyTargetIndex(reply);
+    return at >= 0 && items_.at(at).message.isLocal();
+}
+
 bool MamChatWidget::resolveReply(const ChatReply &reply, QString &author, QString &html, QDateTime &when) const
 {
     const int at = replyTargetIndex(reply);

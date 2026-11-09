@@ -62,6 +62,9 @@ public:
     void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    // Resolve an XEP-0461 reference against cached room messages. Returns
+    // false for unknown or ambiguous references, including old room id values.
+    bool replyReferencesLocalMessage(const ChatReply &reply) const;
     const MamHistorySource &historySource() const { return historySource_; }
     void                    restoreArchiveSnapshot(int count, const QString &lastUid);
     void observeArchivePage(const QStringList &uids, int count, int firstIndex, const QString &before = {},

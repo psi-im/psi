@@ -2558,6 +2558,29 @@ private slots:
         QCOMPARE(bodyText().count(clock), 1);
     }
 
+    void quotedOwnMessageResolvesByMucStanzaId()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        chat.setHistoryLoading(true);
+        auto mine = message(QStringLiteral("my-client-id"), QStringLiteral("Mine"), 0, true);
+        mine.setUserId(QStringLiteral("room@example.org/My Nick"));
+        mine.setReactionTargetId(QStringLiteral("room-stanza-123"));
+        chat.appendMessage(mine);
+        auto other = message(QStringLiteral("other-id"), QStringLiteral("Other"), 1);
+        other.setUserId(QStringLiteral("room@example.org/Other"));
+        other.setReactionTargetId(QStringLiteral("room-stanza-456"));
+        chat.appendMessage(other);
+        QVERIFY(chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"), {}, {}, {} }));
+        QVERIFY(chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"),
+                                                   QStringLiteral("room@example.org/My Nick"), {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-123"),
+                                                    QStringLiteral("room@example.org/Other"), {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("room-stanza-456"), {}, {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("my-client-id"), {}, {}, {} }));
+        QVERIFY(!chat.replyReferencesLocalMessage({ QStringLiteral("unknown"), {}, {}, {} }));
+    }
+
     void hoverClockOnNoticesAndThemeAlerts()
     {
         for (const QString &themeId : { QStringLiteral("classic"), QStringLiteral("modern"),

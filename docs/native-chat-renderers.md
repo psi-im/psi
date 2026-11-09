@@ -117,7 +117,9 @@ public:
   changes. Psi never calls a renderer for rows built by another renderer.
 - `NativeChatMessageInfo` says what is being rendered: the kind (message,
   notice or subject), whether it is our own message, a group chat, an emote or
-  retracted, the sender's nickname and the time.
+  retracted, the sender's nickname and the time. `alert` covers MUC mentions
+  and recognized replies to our messages, including legacy plain-text quotes.
+  Declarative themes can use `#mamMessageRow[alert="true"]` QSS selectors.
 
 The row itself is Psi's `mamMessageRow` frame. Psi paints its hover/selection
 surface and applies the theme's style sheet to it; keep it as the root of the
@@ -164,7 +166,8 @@ description-only plugins do not have that restriction.
 
 - **Modern**: avatar, a bold nickname with a smaller relative time, and the
   body below them.
-- **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document
+- **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document,
+  without whole-row hover background tint,
   (`HeaderInText`), with the legacy message icons before the time, the
   time painted in the nickname colour in group chats, and notices left
   aligned after an information icon.

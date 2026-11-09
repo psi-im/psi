@@ -49,6 +49,7 @@ NativeChatTheme classic()
     theme.description = QCoreApplication::translate("NativeChatThemes", "Compact text layout");
     theme.avatarSize = 0;
     theme.spacing = 4;
+    theme.hoverHighlight = false;
     theme.timestampFormat = QStringLiteral("HH:mm:ss");
     theme.setRenderer(std::make_shared<ClassicRenderer>(theme.spacing));
     return theme;
