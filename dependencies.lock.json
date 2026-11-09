@@ -1,6 +1,6 @@
 {
   "iris": {
-    "minimum_version": "1.6.0"
+    "minimum_version": "1.6.2"
   },
   "psimedia": {
     "repository": "psi-im/psimedia",
