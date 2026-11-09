@@ -70,9 +70,8 @@ list(APPEND HEADERS
     messagestate.h
     historyarchive.h
     historysqlitepolicy.h
-    historywalcheckpoint.h
-    historyeventfactory.h
     historysqlreadworker.h
+    historyeventfactory.h
     aboutdlg.h
     abstracttreeitem.h
     abstracttreemodel.h
