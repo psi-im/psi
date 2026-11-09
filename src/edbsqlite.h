@@ -127,6 +127,8 @@ public:
     void                 requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *,
                                                  std::function<void(EDBResult, bool)>) override;
     EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
+    void                  requestResolvedHistoryEvents(const QList<qint64> &, QObject *,
+                                                      std::function<void(QHash<qint64, EDBItemPtr>, bool)>) override;
     HistoryArchive::Snapshot archiveSnapshot(const HistoryArchive::Key &) override;
     bool                 saveArchiveSnapshot(const HistoryArchive::Key &, const HistoryArchive::Snapshot &) override;
     HistoryArchive::Page archivePage(const HistoryArchive::Key &, const QString &, int) override;
@@ -157,12 +159,13 @@ private:
         HistoryEventFactory::Encoded encoded;
         HistoryArchive::Key archiveKey;
         HistoryArchive::Page archivePage;
+        QList<qint64> eventIds;
         QString archiveCursor;
         ArchiveReadMode archiveMode = ArchiveReadMode::Before;
         int archiveIndex = -1, snapshotCount = -1;
 
         enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
-                    Type_archiveRead, Type_archiveWrite };
+                    Type_archiveRead, Type_archiveWrite, Type_resolved };
     };
     int                     status;
     unsigned int            transactionsCounter;
@@ -201,6 +204,11 @@ private:
     };
     QHash<int, PendingArchiveRead> pendingArchiveReads_;
     QHash<int, PendingArchiveWrite> pendingArchiveWrites_;
+    struct PendingResolved {
+        QPointer<QObject> receiver;
+        std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished;
+    };
+    QHash<int, PendingResolved> pendingResolved_;
 
 private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
