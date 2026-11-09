@@ -23,6 +23,8 @@ private slots:
             db.setDatabaseName(path);
             QVERIFY2(db.open(), qPrintable(db.lastError().text()));
             QSqlQuery q(db);
+            QVERIFY(q.exec(QStringLiteral("PRAGMA journal_mode=WAL")));
+            q.finish();
             QVERIFY(q.exec(QStringLiteral("CREATE TABLE contacts(id INTEGER PRIMARY KEY,acc_id TEXT,jid TEXT)")));
             QVERIFY(q.exec(QStringLiteral("CREATE TABLE events("
                 "id INTEGER PRIMARY KEY,contact_id INTEGER,date TEXT,history_date_ms INTEGER,"
@@ -112,6 +114,37 @@ private slots:
         result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
         QVERIFY(result.success);
         QCOMPARE(result.rows.size(), 3);
+
+        // A writer can commit another live message concurrently. A worker
+        // snapshot never leaks an uncommitted row or loses earlier messages.
+        const QString concurrentName = QStringLiteral("history-reader-concurrent-writer");
+        {
+            auto writer = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), concurrentName);
+            writer.setDatabaseName(path);
+            QVERIFY(writer.open());
+            QVERIFY(writer.transaction());
+            QSqlQuery q(writer);
+            QVERIFY(q.exec(QStringLiteral("INSERT INTO events(id,contact_id,date,history_date_ms,type,direction,"
+                "m_text,extra_data) VALUES(4,1,'2026-11-09T19:00:00Z',1000,1,2,'hello','{}')")));
+            get.id = 5;
+            get.limit = 10;
+            QVERIFY(send(get));
+            QTRY_COMPARE(spy.count(), 1);
+            result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+            QVERIFY(result.success);
+            QCOMPARE(result.rows.size(), 3);
+            QVERIFY(writer.commit());
+
+            get.id = 6;
+            QVERIFY(send(get));
+            QTRY_COMPARE(spy.count(), 1);
+            result = qvariant_cast<HistoryReadResult>(spy.takeFirst().first());
+            QVERIFY(result.success);
+            QCOMPARE(result.rows.size(), 4);
+            QCOMPARE(result.rows.first().value(QStringLiteral("id")).toInt(), 4);
+            writer.close();
+        }
+        QSqlDatabase::removeDatabase(concurrentName);
 
         QVERIFY(QMetaObject::invokeMethod(reader, "close", Qt::QueuedConnection));
         QVERIFY(thread.wait(5000));
