@@ -8,6 +8,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QThread>
+#include <QTimer>
 
 class HistorySqlReadWorkerTest final : public QObject {
     Q_OBJECT
@@ -144,6 +145,33 @@ private slots:
         QCOMPARE(loaded.archivePage.entries.size(), 1);
         QCOMPARE(loaded.archivePage.entries.first().uid, entry.uid);
         QCOMPARE(loaded.archivePage.entries.first().eventId, stored.archivePage.entries.first().eventId);
+
+        // Reproduce a busy history database without freezing the GUI event
+        // loop. This is the critical regression on slow disks / checkpoints.
+        const QString lockName = QStringLiteral("history-worker-lock-test");
+        {
+            auto blocker = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), lockName);
+            blocker.setDatabaseName(path);
+            QVERIFY(blocker.open());
+            QVERIFY(blocker.transaction());
+            QSqlQuery lock(blocker);
+            QVERIFY(lock.exec(QStringLiteral("UPDATE system SET value='busy' WHERE key='version'")));
+            append.id = 9;
+            append.encoded.timestamp = QDateTime::fromMSecsSinceEpoch(3000, Qt::UTC);
+            QVERIFY(enqueueWrite(append));
+
+            bool guiDelivered = false;
+            QTimer::singleShot(0, this, [&guiDelivered] { guiDelivered = true; });
+            QTRY_VERIFY(guiDelivered);
+            // The worker must be waiting on the locked database, but this
+            // Qt event loop has remained responsive.
+            QCOMPARE(wrote.count(), 0);
+            QVERIFY(blocker.commit());
+            QTRY_COMPARE(wrote.count(), 1);
+            QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.takeFirst().first()).success);
+            blocker.close();
+        }
+        QSqlDatabase::removeDatabase(lockName);
 
         HistoryWriteRequest erase;
         erase.id = 4;
