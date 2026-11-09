@@ -18,6 +18,7 @@
  */
 
 #include "eventdb.h"
+#include <QPointer>
 
 #include "jidutil.h"
 #include "psievent.h"
@@ -167,6 +168,21 @@ EDB::~EDB()
     qDeleteAll(d->list);
     d->list.clear();
     delete d;
+}
+
+void EDB::requestLocalHistoryPage(const QString &account, const XMPP::Jid &peer, qint64 before, int limit,
+                                  QObject *receiver, std::function<void(EDBResult, bool)> finished)
+{
+    if (!receiver)
+        return;
+    // Compatibility for EDB providers that do not implement the worker API.
+    // Qt schedules this on the receiver; the SQLite provider overrides it
+    // with a genuinely asynchronous disk read.
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, account, peer, before, limit, finished] {
+        if (database)
+            finished(database->localHistoryPage(account, peer, before, limit), true);
+    });
 }
 
 int EDB::genUniqueId() const { return d->reqid_base++; }
