@@ -21,6 +21,7 @@
 #define EDBSQLITE_H
 
 #include "eventdb.h"
+#include "historyeventfactory.h"
 #include "iris/xmpp_jid.h"
 #include "psievent.h"
 
@@ -140,7 +141,8 @@ private:
         int           id;
         QDateTime     date;
         QString       findStr;
-        PsiEvent::Ptr event;
+        PsiEvent::Ptr event; // GUI-side media registration on write completion.
+        HistoryEventFactory::Encoded encoded;
 
         enum Type { Type_get, Type_append, Type_find, Type_erase };
     };
@@ -159,7 +161,8 @@ private:
     QueryStorage            queryes;
 
 private:
-    bool          appendEvent(const QString &accId, const XMPP::Jid &, const PsiEvent::Ptr &, int, bool &inserted);
+    bool          appendEvent(const QString &accId, const XMPP::Jid &, const HistoryEventFactory::Encoded &,
+                              int, bool &inserted);
     qint64        ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type);
     int           rowCount(const QString &accId, const XMPP::Jid &jid, const QDateTime before);
     bool          eraseHistory(const QString &accId, const XMPP::Jid &);
