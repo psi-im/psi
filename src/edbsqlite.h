@@ -97,6 +97,10 @@ public:
     ~EDBSqLite();
     bool init();
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
+    void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
+                              std::function<void(EDBItemPtr, bool)>) override;
+    void requestOwnPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &,
+                             QObject *, std::function<void(EDBItemPtr, bool)>) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
     HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) override;
     void requestSentDisplayedCursor(const QString &, const XMPP::Jid &, QObject *,
@@ -150,11 +154,13 @@ private:
         HistoryArchive::Page archivePage;
         QList<qint64> eventIds;
         QString archiveCursor;
+        QString ownSender, ownMessageId;
+        QDateTime ownTime;
         ArchiveReadMode archiveMode = ArchiveReadMode::Before;
         int archiveIndex = -1, snapshotCount = -1;
 
         enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
-                    Type_archiveRead, Type_archiveWrite, Type_resolved };
+                    Type_archiveRead, Type_archiveWrite, Type_resolved, Type_lookup, Type_plaintext };
     };
     int                     status;
     unsigned int            transactionsCounter;
@@ -197,6 +203,11 @@ private:
         std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished;
     };
     QHash<int, PendingResolved> pendingResolved_;
+    struct PendingMessageLookup {
+        QPointer<QObject> receiver;
+        std::function<void(EDBItemPtr, bool)> finished;
+    };
+    QHash<int, PendingMessageLookup> pendingMessageLookups_;
 
 private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
