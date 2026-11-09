@@ -171,6 +171,7 @@ EDBSqLite::~EDBSqLite()
     pendingDisplayedCursors_.clear();
     pendingArchiveReads_.clear();
     pendingArchiveWrites_.clear();
+    pendingResolved_.clear();
     qDeleteAll(rlist);
     rlist.clear();
     if (checkpointTimer_)
@@ -245,6 +246,25 @@ EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
                                           row.value("retraction_target").toString(),
                                           MessageState::Flags(row.value("message_flags").toInt())))
                  : EDBItemPtr();
+}
+
+void EDBSqLite::requestResolvedHistoryEvents(
+    const QList<qint64> &ids, QObject *receiver,
+    std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestResolvedHistoryEvents(ids, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->id = genUniqueId();
+    r->type = item_query_req::Type_resolved;
+    r->eventIds = ids;
+    pendingResolved_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 }
 
 EDBItemPtr EDBSqLite::archivedEvent(const HistoryArchive::Key &key, const QString &uid, const QDateTime &time)
@@ -676,6 +696,27 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingResolved_.contains(read.id)) {
+        auto pending = pendingResolved_.take(read.id);
+        if (pending.receiver) {
+            QHash<qint64, EDBItemPtr> results;
+            if (read.success) {
+                for (auto it = read.resolvedRows.cbegin(); it != read.resolvedRows.cend(); ++it) {
+                    const auto &row = it.value();
+                    if (const auto event = HistoryEventFactory::decode(psi(), row)) {
+                        results.insert(it.key(), EDBItemPtr(new EDBItem(
+                            event, row.value("id").toString(), row.value("history_state").toInt(),
+                            row.value("archive_uid").toString(), row.value("revision_date").toDateTime(),
+                            protocolOnlyRecord(row), row.value("reaction_target").toString(),
+                            row.value("retraction_target").toString(),
+                            MessageState::Flags(row.value("message_flags").toInt()))));
+                    }
+                }
+            }
+            pending.finished(std::move(results), read.success);
+        }
+        return;
+    }
     if (pendingArchiveReads_.contains(read.id)) {
         auto pending = pendingArchiveReads_.take(read.id);
         if (pending.receiver)
@@ -736,6 +777,10 @@ void EDBSqLite::performRequests()
             auto pending = pendingArchiveReads_.take(r->id);
             if (pending.receiver)
                 pending.finished({}, {}, false);
+        } else if (type == item_query_req::Type_resolved) {
+            auto pending = pendingResolved_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
         } else if (type == item_query_req::Type_archiveWrite) {
             auto pending = pendingArchiveWrites_.take(r->id);
             if (pending.receiver)
@@ -751,7 +796,7 @@ void EDBSqLite::performRequests()
 
     if (type == item_query_req::Type_get || type == item_query_req::Type_find
         || type == item_query_req::Type_local || type == item_query_req::Type_displayed
-        || type == item_query_req::Type_archiveRead) {
+        || type == item_query_req::Type_archiveRead || type == item_query_req::Type_resolved) {
         HistoryReadRequest read;
         read.id = r->id;
         read.account = r->accId;
@@ -766,10 +811,13 @@ void EDBSqLite::performRequests()
         read.cursor = r->archiveCursor;
         read.archiveIndex = r->archiveIndex;
         read.snapshotCount = r->snapshotCount;
+        read.eventIds = r->eventIds;
         if (type == item_query_req::Type_local)
             read.type = HistoryReadRequest::LocalPage;
         else if (type == item_query_req::Type_displayed)
             read.type = HistoryReadRequest::DisplayedCursor;
+        else if (type == item_query_req::Type_resolved)
+            read.type = HistoryReadRequest::ResolveBatch;
         else if (type == item_query_req::Type_find)
             read.type = HistoryReadRequest::Find;
         else if (type == item_query_req::Type_archiveRead)
