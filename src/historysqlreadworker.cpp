@@ -69,6 +69,57 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         emit completed(result);
         return;
     }
+    if (request.type == HistoryReadRequest::ArchiveLookup) {
+        QSqlQuery q(db_);
+        q.prepare(QStringLiteral(
+            "SELECT e.*,c.acc_id,c.jid,i.xml AS archive_xml FROM archive_items i "
+            "JOIN events e ON e.id=i.event_id JOIN contacts c ON c.id=e.contact_id "
+            "WHERE i.account=:account AND i.archive=:archive AND i.peer=:peer AND i.uid=:uid"));
+        q.bindValue(QStringLiteral(":account"), request.archiveKey.account);
+        q.bindValue(QStringLiteral(":archive"), request.archiveKey.archive);
+        q.bindValue(QStringLiteral(":peer"), request.archiveKey.peer);
+        q.bindValue(QStringLiteral(":uid"), request.cursor);
+        if (q.exec() && q.next()) {
+            result.rows.append(q.record());
+            result.archiveExact = true;
+        }
+        q.finish();
+        if (request.messageTime.isValid()) {
+            q.prepare(QStringLiteral(
+                "SELECT e.*,c.acc_id,c.jid FROM events e JOIN contacts c ON c.id=e.contact_id "
+                "WHERE c.acc_id=:account AND c.jid=:peer AND e.history_date_ms BETWEEN :start AND :end"));
+            q.bindValue(QStringLiteral(":account"), request.archiveKey.account);
+            q.bindValue(QStringLiteral(":peer"), request.archiveKey.peer);
+            q.bindValue(QStringLiteral(":start"), request.messageTime.toMSecsSinceEpoch() - 300000);
+            q.bindValue(QStringLiteral(":end"), request.messageTime.toMSecsSinceEpoch() + 300000);
+            if (q.exec())
+                while (q.next())
+                    result.rows.append(q.record());
+        }
+        result.success = snapshot.commit();
+        if (!result.success)
+            result.rows.clear();
+        emit completed(result);
+        return;
+    }
+    if (request.type == HistoryReadRequest::OwnPlaintext) {
+        const auto id = HistoryArchive::matchingOwnPlaintext(db_, request.archiveKey,
+                                                              request.messageId, request.sender,
+                                                              request.messageTime);
+        if (id > 0) {
+            QSqlQuery q(db_);
+            q.prepare(QStringLiteral("SELECT e.*,c.acc_id,c.jid FROM events e "
+                                     "JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id"));
+            q.bindValue(QStringLiteral(":id"), id);
+            if (q.exec() && q.next())
+                result.rows.append(q.record());
+        }
+        result.success = snapshot.commit();
+        if (!result.success)
+            result.rows.clear();
+        emit completed(result);
+        return;
+    }
     if (request.type == HistoryReadRequest::ResolveBatch) {
         for (const auto id : request.eventIds) {
             if (id <= 0 || result.resolvedRows.contains(id))
