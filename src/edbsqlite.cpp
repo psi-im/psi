@@ -384,21 +384,22 @@ bool EDBSqLite::init()
         const QString path = db.databaseName();
         // Once the worker has opened its own SQLite connection, turn off
         // SQLite's default checkpoint-on-commit on the GUI connection.
-        checkpointWorker_ = new HistoryWalCheckpoint(path, [this] {
-            QMetaObject::invokeMethod(this, [this] {
-                auto connection = QSqlDatabase::database(QStringLiteral("history"), false);
-                if (!connection.isOpen() || !HistorySqlitePolicy::useBackgroundCheckpoint(connection)) {
-                    qWarning() << "Cannot disable foreground WAL auto-checkpoint for history";
-                    return;
-                }
-                checkpointTimer_ = new QTimer(this);
-                checkpointTimer_->setInterval(15000);
-                connect(checkpointTimer_, &QTimer::timeout, this, [this] {
-                    if (checkpointWorker_)
-                        checkpointWorker_->requestCheckpoint();
-                });
-                checkpointTimer_->start();
-            }, Qt::QueuedConnection);
+        checkpointWorker_ = new HistoryWalCheckpoint(path);
+        // A Qt queued signal guarantees that a late worker startup cannot
+        // dereference an EDB facade already destroyed during shutdown.
+        connect(checkpointWorker_, &HistoryWalCheckpoint::ready, this, [this] {
+            auto connection = QSqlDatabase::database(QStringLiteral("history"), false);
+            if (!connection.isOpen() || !HistorySqlitePolicy::useBackgroundCheckpoint(connection)) {
+                qWarning() << "Cannot disable foreground WAL auto-checkpoint for history";
+                return;
+            }
+            checkpointTimer_ = new QTimer(this);
+            checkpointTimer_->setInterval(15000);
+            connect(checkpointTimer_, &QTimer::timeout, this, [this] {
+                if (checkpointWorker_)
+                    checkpointWorker_->requestCheckpoint();
+            });
+            checkpointTimer_->start();
         });
         checkpointWorker_->start();
     }
