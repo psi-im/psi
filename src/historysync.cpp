@@ -160,6 +160,9 @@ XMPP::Message HistorySync::message(const QString &uid) const
 {
     if (decoded_.contains(uid))
         return decoded_.value(uid);
+    const auto resolved = resolvedMessage(uid);
+    if (resolved.found)
+        return resolved.message;
     for (const auto &entry : page_.entries) {
         if (entry.uid != uid)
             continue;
