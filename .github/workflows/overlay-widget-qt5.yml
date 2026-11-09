@@ -10,6 +10,8 @@ on:
       - 'src/tabs/tabdlg.*'
       - 'src/historysqlitepolicy.h'
       - 'src/historywalcheckpoint.h'
+      - 'src/historysqlreadworker.*'
+      - 'tests/mamchat/HistorySqlReadWorkerTest.cpp'
       - 'src/edbsqlite.*'
       - 'tests/mamchat/HistorySqlitePolicyTest.cpp'
       - 'tests/mamchat/TabCloseTest.cpp'
@@ -47,10 +49,10 @@ jobs:
       - name: Build focused widget regressions
         run: |
           cmake --build build-mam-widgets-qt5 \
-            --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test mam_history_sqlite_policy_test --parallel 4
+            --target mam_overlay_scrollbar_test mam_thin_splitter_test mam_tab_close_test mam_history_sqlite_policy_test mam_history_sql_read_test --parallel 4
       - name: Test overlay, tabs and history SQLite
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
           ctest --test-dir build-mam-widgets-qt5 --output-on-failure \
-            -R "^(mam_overlay_scrollbar|mam_thin_splitter|mam_tab_close|mam_history_sqlite_policy)$"
+            -R "^(mam_overlay_scrollbar|mam_thin_splitter|mam_tab_close|mam_history_sqlite_policy|mam_history_sql_read)$"
