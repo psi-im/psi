@@ -172,6 +172,7 @@ EDBSqLite::~EDBSqLite()
     pendingArchiveReads_.clear();
     pendingArchiveWrites_.clear();
     pendingResolved_.clear();
+    pendingMessageLookups_.clear();
     qDeleteAll(rlist);
     rlist.clear();
     if (checkpointTimer_)
@@ -246,6 +247,49 @@ EDBItemPtr EDBSqLite::resolvedHistoryEvent(qint64 eventId)
                                           row.value("retraction_target").toString(),
                                           MessageState::Flags(row.value("message_flags").toInt())))
                  : EDBItemPtr();
+}
+
+void EDBSqLite::requestArchivedEvent(
+    const HistoryArchive::Key &key, const QString &uid, const QDateTime &time, QObject *receiver,
+    std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestArchivedEvent(key, uid, time, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->id = genUniqueId();
+    r->type = item_query_req::Type_lookup;
+    r->archiveKey = key;
+    r->archiveCursor = uid;
+    r->ownTime = time;
+    pendingMessageLookups_.insert(r->id, { receiver, std::move(finished), key, uid, false });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
+}
+
+void EDBSqLite::requestOwnPlaintext(
+    const HistoryArchive::Key &key, const QString &id, const QString &sender, const QDateTime &time,
+    QObject *receiver, std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    if (!historyReadThread_) {
+        EDB::requestOwnPlaintext(key, id, sender, time, receiver, std::move(finished));
+        return;
+    }
+    auto *r = new item_query_req;
+    r->id = genUniqueId();
+    r->type = item_query_req::Type_plaintext;
+    r->archiveKey = key;
+    r->ownMessageId = id;
+    r->ownSender = sender;
+    r->ownTime = time;
+    pendingMessageLookups_.insert(r->id, { receiver, std::move(finished), key, {}, true });
+    rlist.append(r);
+    QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 }
 
 void EDBSqLite::requestResolvedHistoryEvents(
@@ -696,6 +740,53 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingMessageLookups_.contains(read.id)) {
+        auto pending = pendingMessageLookups_.take(read.id);
+        if (!pending.receiver)
+            return;
+        EDBItemPtr found;
+        if (read.success) {
+            if (pending.own) {
+                if (!read.rows.isEmpty()) {
+                    const auto &row = read.rows.first();
+                    if (const auto event = HistoryEventFactory::decode(psi(), row))
+                        found = EDBItemPtr(new EDBItem(event, row.value("id").toString()));
+                }
+            } else {
+                int firstCandidate = 0;
+                if (read.archiveExact && !read.rows.isEmpty()) {
+                    firstCandidate = 1;
+                    const auto &row = read.rows.first();
+                    if (decodedRecord(row)) {
+                        if (const auto event = HistoryEventFactory::decode(psi(), row))
+                            found = EDBItemPtr(new EDBItem(
+                                event, row.value("id").toString(), 0, pending.uid, {},
+                                QJsonDocument::fromJson(row.value("extra_data").toString().toUtf8())
+                                    .object().value("psi:protocol-only").toBool()));
+                    }
+                }
+                if (!found) {
+                    for (int i = firstCandidate; i < read.rows.size(); ++i) {
+                        const auto &row = read.rows.at(i);
+                        if (!decodedRecord(row))
+                            continue;
+                        const auto event = HistoryEventFactory::decode(psi(), row);
+                        if (!event || event->type() != PsiEvent::Message
+                            || event.staticCast<MessageEvent>()->message()
+                                   .stanzaId(XMPP::Jid(pending.key.archive)).id != pending.uid)
+                            continue;
+                        if (found) {
+                            found.clear(); // Ambiguous identity must not suppress decryption.
+                            break;
+                        }
+                        found = EDBItemPtr(new EDBItem(event, row.value("id").toString(), 0, pending.uid));
+                    }
+                }
+            }
+        }
+        pending.finished(found, read.success);
+        return;
+    }
     if (pendingResolved_.contains(read.id)) {
         auto pending = pendingResolved_.take(read.id);
         if (pending.receiver) {
@@ -781,6 +872,10 @@ void EDBSqLite::performRequests()
             auto pending = pendingResolved_.take(r->id);
             if (pending.receiver)
                 pending.finished({}, false);
+        } else if (type == item_query_req::Type_lookup || type == item_query_req::Type_plaintext) {
+            auto pending = pendingMessageLookups_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
         } else if (type == item_query_req::Type_archiveWrite) {
             auto pending = pendingArchiveWrites_.take(r->id);
             if (pending.receiver)
@@ -796,7 +891,8 @@ void EDBSqLite::performRequests()
 
     if (type == item_query_req::Type_get || type == item_query_req::Type_find
         || type == item_query_req::Type_local || type == item_query_req::Type_displayed
-        || type == item_query_req::Type_archiveRead || type == item_query_req::Type_resolved) {
+        || type == item_query_req::Type_archiveRead || type == item_query_req::Type_resolved
+        || type == item_query_req::Type_lookup || type == item_query_req::Type_plaintext) {
         HistoryReadRequest read;
         read.id = r->id;
         read.account = r->accId;
@@ -812,12 +908,19 @@ void EDBSqLite::performRequests()
         read.archiveIndex = r->archiveIndex;
         read.snapshotCount = r->snapshotCount;
         read.eventIds = r->eventIds;
+        read.sender = r->ownSender;
+        read.messageId = r->ownMessageId;
+        read.messageTime = r->ownTime;
         if (type == item_query_req::Type_local)
             read.type = HistoryReadRequest::LocalPage;
         else if (type == item_query_req::Type_displayed)
             read.type = HistoryReadRequest::DisplayedCursor;
         else if (type == item_query_req::Type_resolved)
             read.type = HistoryReadRequest::ResolveBatch;
+        else if (type == item_query_req::Type_lookup)
+            read.type = HistoryReadRequest::ArchiveLookup;
+        else if (type == item_query_req::Type_plaintext)
+            read.type = HistoryReadRequest::OwnPlaintext;
         else if (type == item_query_req::Type_find)
             read.type = HistoryReadRequest::Find;
         else if (type == item_query_req::Type_archiveRead)
