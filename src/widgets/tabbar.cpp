@@ -526,7 +526,14 @@ void TabBar::Private::balanseCloseButtons()
         }
 
         while (closeButtons.size() > q->count()) {
-            closeButtons.takeLast()->deleteLater();
+            // deleteLater() keeps the button alive until the event loop runs.
+            // An old mouse release may otherwise emit clicked() after the
+            // button has stopped representing a tab (indexOf returns -1).
+            auto *old = closeButtons.takeLast();
+            old->setEnabled(false);
+            old->hide();
+            QObject::disconnect(old, &CloseButton::clicked, q, &TabBar::closeTab);
+            old->deleteLater();
         }
 
         for (int i = 0; i < pinnedTabs && i < closeButtons.size(); ++i) {
@@ -1221,9 +1228,13 @@ void TabBar::tabRemoved(int index)
 
 void TabBar::closeTab()
 {
-    CloseButton *cb    = qobject_cast<CloseButton *>(sender());
-    int          index = d->closeButtons.indexOf(cb);
-    emit         tabCloseRequested(index);
+    auto *cb = qobject_cast<CloseButton *>(sender());
+    const int index = d->closeButtons.indexOf(cb);
+    // A close button scheduled for deleteLater() may still receive a mouse
+    // release after a tab was removed during a busy UI event loop.
+    if (!cb || index < 0 || index >= count() || !d->tabsClosable || index < d->pinnedTabs)
+        return;
+    emit tabCloseRequested(index);
 }
 
 CloseButton::CloseButton(QWidget *parent) : QAbstractButton(parent)
