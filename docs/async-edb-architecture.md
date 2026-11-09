@@ -23,6 +23,14 @@ page writes introduced additional large transactions.
 - `HistoryEventFactory` serializes events before queueing and reconstructs
   `PsiEvent` on the GUI. FileSharingManager registration is likewise
   performed only on the GUI after successful worker insertion.
+- Live appends use bounded **worker-side batching** to preserve the old
+  EDB optimization for SSD wear, CPU and WAL fsync overhead: up to three
+  consecutive appends per transaction, with a 250 ms maximum wait. A
+  pending batch is committed before any history read, erase, MAM page
+  operation or shutdown. All per-message callbacks are emitted **only
+  after the shared transaction commits**, and an error rolls back the
+  entire batch and fails every pending callback. This batching requires
+  no mutexes: the same worker owns the timer and transaction.
 - A worker page fetch (including multiple revision lookups) is one SQLite
   read transaction. Live appends and MAM stores share the same ordered
   worker queue; a MAM page transaction includes its events, identities,
@@ -83,7 +91,9 @@ before declaring the architectural refactor finished.
 - Distinct id-less messages with identical sender/text/time remain separate;
   repeated local EDB IDs do not duplicate.
 - Worker append/read/erase completion order is deterministic; an earlier
-  uncommitted writer is never visible to a read transaction.
+  uncommitted writer is never visible to a read transaction. A read or
+  MAM store flushes preceding append batches; a failed batch rolls back
+  and fails all associated callbacks.
 - Local history arriving after a new live message merges into the timeline
   without deleting the live tail.
 - Newer corrections and message-state transitions cannot be replaced by
