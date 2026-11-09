@@ -2282,6 +2282,12 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     auto *bodyPart = new MessageBodyPart(row);
     canvas.add(NativeChatMessageCanvas::Body, bodyPart);
     row->body = new ChatMessageBody(bodyPart);
+    // Apply the theme's base weight before rich-text parsing. All prose
+    // sections inherit it, including text surrounding fenced code blocks.
+    QFont proseFont = font();
+    if (row->options.boldBody)
+        proseFont.setBold(true);
+    row->body->setFont(proseFont);
     row->body->layout()->setSpacing(bodyPart->column()->spacing());
     auto *body = row->body->text();
     body->setObjectName(QStringLiteral("mamBody"));
@@ -2828,6 +2834,15 @@ void MamChatWidget::applyPartStyle(QWidget *rowWidget, int index)
     if (!row || index < 0 || index >= items_.size())
         return;
     const NativeChatPartOptions &options = row->options;
+    // Keep body weight in sync with font changes without editing rich-text
+    // fragments, their links, inline monospace or embedded media objects.
+    if (row->body) {
+        QFont proseFont = font();
+        if (options.boldBody)
+            proseFont.setBold(true);
+        if (row->body->font() != proseFont)
+            row->body->setFont(proseFont);
+    }
     // Even an uncoloured nickname needs an explicit refresh: a style sheet on
     // the chat window can leave nested labels with their old resolved palette.
     const QColor nickColor = nicknameColorResolver_ ? nicknameColorResolver_(items_.at(index).message) : QColor();

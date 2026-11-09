@@ -2602,8 +2602,9 @@ private slots:
             auto highlighted = message(QStringLiteral("alert"), QStringLiteral("please look"), 2);
             highlighted.setAlert();
             chat.appendMessage(highlighted);
+            chat.appendMessage(message(QStringLiteral("plain"), QStringLiteral("ordinary message"), 3));
             chat.show();
-            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2));
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2) && chat.itemWidget(3));
 
             auto *row = chat.itemWidget(0);
             auto *time = row->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
@@ -2650,13 +2651,25 @@ private slots:
                 QVERIFY(emoteBubble && alertBubble);
                 QCOMPARE(emoteBubble->property("tone").toString(), QStringLiteral("notice"));
                 QCOMPARE(alertBubble->property("tone").toString(), QStringLiteral("alert"));
-            } else if (themeId == QLatin1String("modern")) {
-                QVERIFY(alertRow->findChild<QFrame *>(QStringLiteral("mamAlertMarker")));
             } else {
                 auto *body = alertRow->findChild<ChatMessageText *>();
-                QVERIFY(body);
+                auto *plainRow = chat.itemWidget(3);
+                auto *plainBody = plainRow->findChild<ChatMessageText *>();
+                QVERIFY(body && plainBody);
+                QVERIFY(body->font().bold());
+                QVERIFY(body->document()->defaultFont().bold());
+                QVERIFY(!plainBody->font().bold());
                 const QColor color = body->palette().color(QPalette::Text);
                 QVERIFY(color.red() > color.green());
+                if (themeId == QLatin1String("modern")) {
+                    // No extra marker or indentation compared with an ordinary message.
+                    QVERIFY(!alertRow->findChild<QFrame *>(QStringLiteral("mamAlertMarker")));
+                    QCOMPARE(body->mapTo(alertRow, QPoint()).x(), plainBody->mapTo(plainRow, QPoint()).x());
+                }
+                QFont changed = chat.font();
+                changed.setPointSizeF(qMax(8.0, changed.pointSizeF() + 1.0));
+                chat.setFont(changed);
+                QTRY_VERIFY(body->font().bold());
             }
         }
     }

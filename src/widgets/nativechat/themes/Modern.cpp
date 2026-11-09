@@ -2,7 +2,6 @@
 #include "BuiltinThemes.h"
 #include "ThemeLayoutHelpers.h"
 #include <QCoreApplication>
-#include <QFrame>
 #include <QPalette>
 #include <QSizePolicy>
 #include <QVBoxLayout>
@@ -13,12 +12,13 @@ class ModernRenderer final : public NativeChatMessageRenderer {
 public:
     explicit ModernRenderer(int avatarSize, int spacing) : avatarSize_(avatarSize), spacing_(spacing) { }
 
-    NativeChatPartOptions partOptions(const NativeChatMessageInfo &) const override
+    NativeChatPartOptions partOptions(const NativeChatMessageInfo &info) const override
     {
         NativeChatPartOptions options;
         options.avatarSize = avatarSize_;
         options.directionColors = true;
         options.boldAuthor = true;
+        options.boldBody = info.alert;
         options.timePointDelta = -1.0;
         options.timeAlpha = 188;
         return options;
@@ -28,15 +28,8 @@ public:
     {
         auto *outer = NativeChatThemeLayout::rowLayout(canvas, QMargins(12, 8, 12, 8), spacing_);
         if (info.alert) {
-            auto *marker = new QFrame(canvas.row());
-            marker->setObjectName(QStringLiteral("mamAlertMarker"));
-            marker->setFixedWidth(3);
             const bool light = canvas.row()->palette().color(QPalette::Base).lightness() > 128;
-            QPalette colors = marker->palette();
-            colors.setColor(QPalette::Window, light ? QColor(185, 35, 45) : QColor(255, 120, 125));
-            marker->setPalette(colors);
-            marker->setAutoFillBackground(true);
-            outer->addWidget(marker);
+            canvas.setBodyTextColor(light ? QColor(185, 35, 45) : QColor(255, 120, 125));
         }
         if (info.kind == NativeChatMessageInfo::Message) {
             if (auto *avatar = canvas.take(NativeChatMessageCanvas::Avatar))

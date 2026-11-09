@@ -109,7 +109,9 @@ public:
   without changing the renderer's vtable.
   `setActionAnchor()` attaches the hover actions toolbar to a widget other
   than the row, and `setBodyTextColor()` overrides the text colour of the body,
-  e.g. on a dark bubble.
+  e.g. on a dark bubble. A renderer may also request
+  `NativeChatPartOptions::boldBody` to make every prose section bold, while
+  keeping inline monospace, rich-text spans, and fenced code intact.
 - `restyle()` is optional. Psi calls it after restyling the parts of an
   existing row in place. Widgets that read `palette()` and `font()` while
   painting need nothing here.
@@ -165,7 +167,7 @@ description-only plugins do not have that restriction.
 ## Built-in themes
 
 - **Modern**: avatar, a bold nickname with a smaller relative time, and the
-  body below them.
+  body below them. Alerts use bold red prose without extra layout markers.
 - **Classic**: the legacy text log, `[HH:mm:ss] <nick> text` in one document,
   without whole-row hover background tint,
   (`HeaderInText`), with the legacy message icons before the time, the

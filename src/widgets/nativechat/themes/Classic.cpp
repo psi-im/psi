@@ -16,6 +16,7 @@ public:
         options.directionColors = true;
         // Classic sets its fixed clock format in the theme definition.
         options.boldAuthor = false;
+        options.boldBody = info.alert;
         options.timeInNickColor = info.groupChat;
         // One document: the message icon, timestamp, nickname and text all
         // wrap together from the left edge, as in Psi's classic text view.

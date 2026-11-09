@@ -56,6 +56,8 @@ struct NativeChatPartOptions {
     bool    noticeHoverTime = false; // Show an HH:mm clock on hovered notices.
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
+    bool    boldBody       = false; // Bold message prose, including text after code blocks.
+                                    // Rich-text emphasis and code fonts are preserved.
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.
     int     timeAlpha      = 255; // Opacity of the timestamp text colour.
     bool    timeInNickColor = false; // Paint the timestamp in the nickname colour.

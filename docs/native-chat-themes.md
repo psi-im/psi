@@ -150,7 +150,10 @@ QLabel#mamTimestamp { color: rgba(128, 128, 128, 200); font-size: 8pt; }
 QLabel#mamAuthor { font-style: italic; }
 
 /* A declarative theme can style mentions and replies to your messages. */
-#mamMessageRow[alert="true"] QTextEdit#mamBody { color: #b9232d; }
+#mamMessageRow[alert="true"] QTextEdit#mamBody {
+  color: #b9232d;
+  font-weight: bold;
+}
 
 /* Blue checks once a message has been read. */
 QLabel#mamDeliveryIndicator[deliveryState="read"] { color: #3d9be9; }
