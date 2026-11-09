@@ -32,6 +32,7 @@ class HistoryWalCheckpoint;
 class QThread;
 #include <QHash>
 #include <QObject>
+#include <QPointer>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -121,6 +122,8 @@ public:
     void               setStorageParam(const QString &key, const QString &val) override;
 
     EDBResult            localHistoryPage(const QString &, const XMPP::Jid &, qint64, int) override;
+    void                 requestLocalHistoryPage(const QString &, const XMPP::Jid &, qint64, int, QObject *,
+                                                 std::function<void(EDBResult, bool)>) override;
     EDBItemPtr            resolvedHistoryEvent(qint64 eventId) override;
     HistoryArchive::Snapshot archiveSnapshot(const HistoryArchive::Key &) override;
     bool                 saveArchiveSnapshot(const HistoryArchive::Key &, const HistoryArchive::Snapshot &) override;
@@ -164,8 +167,14 @@ private:
     QThread                 *historyReadThread_ = nullptr;
     HistorySqlReadWorker    *historyReader_ = nullptr;
     QHash<int, item_query_req *> pendingReads_;
+    struct PendingLocalPage {
+        QPointer<QObject> receiver;
+        std::function<void(EDBResult, bool)> finished;
+    };
+    QHash<int, PendingLocalPage> pendingLocalPages_;
 
 private:
+    EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
     bool          appendEvent(const QString &accId, const XMPP::Jid &, const HistoryEventFactory::Encoded &,
                               int, bool &inserted);
     qint64        ensureJidRowId(const QString &accId, const XMPP::Jid &jid, int type);
