@@ -15,12 +15,14 @@
 // Only immutable value objects cross the EDB reader's queued connections.
 // No PsiEvent, PsiAccount or SQLite connection ever crosses into the worker.
 struct HistoryReadRequest {
-    enum Type { Get, Find, LocalPage, DisplayedCursor, ArchiveBefore, ArchiveAfter, ArchiveIndex, ResolveBatch };
+    enum Type { Get, Find, LocalPage, DisplayedCursor, ArchiveBefore, ArchiveAfter, ArchiveIndex, ResolveBatch, ArchiveLookup, OwnPlaintext };
     int id = 0;
     Type type = Get;
     QString account, peer, text;
     HistoryArchive::Key archiveKey;
     QString cursor;
+    QString sender, messageId;
+    QDateTime messageTime;
     int archiveIndex = -1, snapshotCount = -1;
     QList<qint64> eventIds;
     QDateTime date;
@@ -38,6 +40,7 @@ struct HistoryReadResult {
     HistoryArchive::Page archivePage;
     HistoryArchive::Snapshot archiveSnapshot;
     QHash<qint64, QSqlRecord> resolvedRows;
+    bool archiveExact = false;
 };
 Q_DECLARE_METATYPE(HistoryReadResult)
 
