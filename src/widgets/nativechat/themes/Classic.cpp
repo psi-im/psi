@@ -14,7 +14,8 @@ public:
         NativeChatPartOptions options;
         options.avatarSize = 0;
         options.directionColors = true;
-        options.timeFormat = QStringLiteral("[HH:mm:ss]");
+        // Psi applies the global clock/relative format; the renderer only
+        // positions the timestamp in the text next to the nickname.
         options.boldAuthor = false;
         options.timeInNickColor = info.groupChat;
         // One document: the message icon, timestamp, nickname and text all
