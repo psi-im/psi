@@ -22,6 +22,9 @@ public:
     void setColors(const QColor &barColor, const QColor &textColor = {});
     void setLinkColor(const QColor &color);
     void setContent(const QString &title, const QString &text);
+    // The time belongs to the quoted original, not the reply. Empty means
+    // the original timestamp is unknown (e.g. an unresolved XEP-0461 reply).
+    void setTimestamp(const QString &text, const QString &fullTime = {});
     // Rich text as in a message: links, emoticons and media, with the
     // preview's text colour. Optionally without lines starting with '>'.
     void setRichContent(const QString &title, const QString &html, bool withoutQuotedLines = false);
@@ -59,6 +62,7 @@ private:
     QColor        barColor_;
     QColor        textColor_;
     QLabel       *title_ = nullptr;
+    QLabel       *timestamp_ = nullptr;
     QFrame       *bar_ = nullptr;
     QVBoxLayout  *column_ = nullptr;
     QWidget      *footer_ = nullptr;
