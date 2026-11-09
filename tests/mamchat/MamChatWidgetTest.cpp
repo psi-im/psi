@@ -5057,6 +5057,63 @@ private slots:
         QCOMPARE(body->verticalScrollBar()->value(), 0);
     }
 
+    void sharedTimestampSettingFollowsAllThemesAndQuotes()
+    {
+        MamChatWidget list;
+        list.resize(650, 420);
+        list.setHistoryLoading(true);
+        auto original = message(QStringLiteral("original"), QStringLiteral("Source text"));
+        original.setDateTime(QDateTime::currentDateTime().addSecs(-125));
+        original.setUserId(QStringLiteral("peer@example.org/phone"));
+        original.setReactionTargetId(QStringLiteral("original-target"));
+        auto reply = message(QStringLiteral("answer"), QStringLiteral("Reply"), 1);
+        reply.setDateTime(original.dateTime().addSecs(30));
+        reply.setReply({ QStringLiteral("original-target"), QStringLiteral("peer@example.org/phone"),
+                         QStringLiteral("Peer"), QStringLiteral("Source text") });
+        list.appendMessage(original);
+        list.appendMessage(reply);
+        list.show();
+        QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+        const QString clock = ChatTimestamp::format(original.dateTime(), ChatTimestamp::Mode::Clock);
+        for (const QString &id : { QStringLiteral("modern"), QStringLiteral("bubble"),
+                                   QStringLiteral("classic") }) {
+            list.setTheme(NativeChatThemes::instance()->theme(id));
+            list.setTimestampMode(ChatTimestamp::Mode::Clock);
+            QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+            auto *source = list.itemWidget(0);
+            auto *quote = list.itemWidget(1)->findChild<QLabel *>(QStringLiteral("previewTimestamp"));
+            QVERIFY2(quote, qPrintable(id));
+            QCOMPARE(quote->text(), clock);
+            QCOMPARE(quote->toolTip(), ChatTimestamp::full(original.dateTime()));
+            if (id == QLatin1String("classic")) {
+                auto *body = source->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                QVERIFY(body);
+                QVERIFY(body->toPlainText().contains(QStringLiteral("[") + clock + QStringLiteral("]")));
+            } else {
+                auto *label = source->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+                QVERIFY(label);
+                QCOMPARE(label->text(), clock);
+            }
+
+            list.setTimestampMode(ChatTimestamp::Mode::Relative);
+            QTRY_VERIFY(list.itemWidget(0) && list.itemWidget(1));
+            source = list.itemWidget(0);
+            quote = list.itemWidget(1)->findChild<QLabel *>(QStringLiteral("previewTimestamp"));
+            QVERIFY(quote);
+            const QString relative = ChatTimestamp::relative(original.dateTime());
+            QCOMPARE(quote->text(), relative);
+            if (id == QLatin1String("classic")) {
+                auto *body = source->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                QVERIFY(body);
+                QVERIFY(body->toPlainText().contains(QStringLiteral("[") + relative + QStringLiteral("]")));
+            } else {
+                auto *label = source->findChild<QLabel *>(QStringLiteral("mamTimestamp"));
+                QVERIFY(label);
+                QCOMPARE(label->text(), relative);
+            }
+        }
+    }
+
     void semanticTimestampBoundaries()
     {
         const auto now = QDateTime::fromString(QStringLiteral("2026-10-18T12:34:56+03:00"), Qt::ISODate);
