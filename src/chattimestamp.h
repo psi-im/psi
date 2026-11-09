@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QLocale>
 #include <QString>
 #include <QtGlobal>
 
@@ -60,6 +61,15 @@ inline QString format(const QDateTime &when, Mode mode, const QDateTime &now = Q
 }
 
 // No polling: wake up only when the currently displayed relative label changes.
+inline QString full(const QDateTime &when)
+{
+    if (!when.isValid())
+        return {};
+    const auto local = when.toLocalTime();
+    return QLocale().toString(local.date(), QLocale::LongFormat) + QStringLiteral(" ")
+        + local.toString(QStringLiteral("HH:mm:ss t"));
+}
+
 inline qint64 nextChangeMs(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime())
 {
     if (!when.isValid())
