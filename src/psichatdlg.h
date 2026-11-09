@@ -150,6 +150,7 @@ private:
     bool mamExhausted_ = false;
     bool mamResumeAfterConnect_ = false;
     bool                  displayedCursorRestored_ = false;
+    bool                  displayedCursorPending_ = false;
 
     QMenu *pm_settings_;
     QMenu *encryptionMenu_ = nullptr;
