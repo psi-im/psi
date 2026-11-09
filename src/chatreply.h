@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #ifndef CHATREPLY_H
 #define CHATREPLY_H
+#include <QDateTime>
 #include <QMetaType>
 #include <QString>
 
@@ -14,6 +15,7 @@ struct ChatReply {
     QString to;
     QString author;
     QString text;
+    QDateTime timestamp; // Local UI context only; XEP-0461 does not carry this field.
     // A reply normally references the quoted message by id (XEP-0461). In
     // rooms that do not assign stanza-ids (e.g. old ejabberd without MAM) a
     // quote may have no usable id; it is then sent as plain quoted body text.
