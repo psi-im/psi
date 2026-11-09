@@ -110,6 +110,8 @@ public:
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     EDBItemPtr ownPlaintext(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &) override;
     HistoryArchive::DisplayedCursor sentDisplayedCursor(const QString &, const XMPP::Jid &) override;
+    void requestSentDisplayedCursor(const QString &, const XMPP::Jid &, QObject *,
+                                    std::function<void(HistoryArchive::DisplayedCursor, bool)>) override;
 
     int features() const override;
     int get(const QString &accId, const XMPP::Jid &jid, const QDateTime date, int direction, int start, int len) override;
@@ -150,7 +152,7 @@ private:
         PsiEvent::Ptr event; // GUI-side media registration on write completion.
         HistoryEventFactory::Encoded encoded;
 
-        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local };
+        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed };
     };
     int                     status;
     unsigned int            transactionsCounter;
@@ -173,6 +175,11 @@ private:
         std::function<void(EDBResult, bool)> finished;
     };
     QHash<int, PendingLocalPage> pendingLocalPages_;
+    struct PendingDisplayedCursor {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::DisplayedCursor, bool)> finished;
+    };
+    QHash<int, PendingDisplayedCursor> pendingDisplayedCursors_;
 
 private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
