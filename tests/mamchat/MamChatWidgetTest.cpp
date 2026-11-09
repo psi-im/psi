@@ -5275,6 +5275,10 @@ private slots:
         QTRY_VERIFY(!clock->isActive());
         list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
+        // Switching back from a fixed theme restores relative refresh.
+        list.setTimestampMode(ChatTimestamp::Mode::Relative);
+        list.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("modern")));
+        QTRY_VERIFY(clock->isActive());
     }
 
     void avatarClickRequestsContactCard()

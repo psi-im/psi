@@ -2942,6 +2942,21 @@ void MamChatWidget::updateTimestamps(bool forcePreferenceChange)
             continue;
         auto *message = messageRow(row);
         const auto when = items_.at(i).message.dateTime();
+        if (message && message->rendererGeneration != rendererGeneration_) {
+            // Replacing a row can be deferred until its rich-text layout
+            // settles. The old row still owns its previous timestamp format;
+            // do not let it restart the relative timer after switching to a
+            // fixed-clock theme. Still schedule the next wake-up according to
+            // the *new* renderer, including custom per-row formats.
+            const auto requested = renderer_->partOptions(messageInfo(i));
+            const QString pattern = requested.timeFormat.isEmpty() ? theme_.timestampFormat : requested.timeFormat;
+            if (ChatTimestamp::usesRelative(pattern, timestampMode_)) {
+                const qint64 delay = ChatTimestamp::nextChangeMs(when, now);
+                if (delay > 0)
+                    nextRefresh = qMin(nextRefresh, delay);
+            }
+            continue;
+        }
         if (message && message->options.header == NativeChatPartOptions::HeaderInText) {
             if (auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"))) {
                 refresh(when, message->options.timeFormat, [body](const QString &value) {
