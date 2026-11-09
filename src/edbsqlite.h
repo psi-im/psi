@@ -134,6 +134,10 @@ public:
     HistoryArchive::Page archivePageAfter(const HistoryArchive::Key &, const QString &, int, int) override;
     bool                 mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) override;
     bool mergeArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page &) override;
+    void requestArchivePage(ArchiveReadMode, const HistoryArchive::Key &, const QString &, int, int, int, QObject *,
+                            std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)>) override;
+    void requestStoreArchivePage(const HistoryArchive::Key &, const QString &, int, HistoryArchive::Page, QObject *,
+                                 std::function<void(HistoryArchive::Page, bool)>) override;
 
 private:
     enum { NotActive, NotCommited, Commited };
@@ -151,8 +155,14 @@ private:
         QString       findStr;
         PsiEvent::Ptr event; // GUI-side media registration on write completion.
         HistoryEventFactory::Encoded encoded;
+        HistoryArchive::Key archiveKey;
+        HistoryArchive::Page archivePage;
+        QString archiveCursor;
+        ArchiveReadMode archiveMode = ArchiveReadMode::Before;
+        int archiveIndex = -1, snapshotCount = -1;
 
-        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed };
+        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
+                    Type_archiveRead, Type_archiveWrite };
     };
     int                     status;
     unsigned int            transactionsCounter;
@@ -181,6 +191,16 @@ private:
         std::function<void(HistoryArchive::DisplayedCursor, bool)> finished;
     };
     QHash<int, PendingDisplayedCursor> pendingDisplayedCursors_;
+    struct PendingArchiveRead {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::Page, HistoryArchive::Snapshot, bool)> finished;
+    };
+    struct PendingArchiveWrite {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryArchive::Page, bool)> finished;
+    };
+    QHash<int, PendingArchiveRead> pendingArchiveReads_;
+    QHash<int, PendingArchiveWrite> pendingArchiveWrites_;
 
 private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
