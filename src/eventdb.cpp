@@ -170,6 +170,19 @@ EDB::~EDB()
     delete d;
 }
 
+void EDB::requestSentDisplayedCursor(const QString &account, const XMPP::Jid &peer,
+                                     QObject *receiver,
+                                     std::function<void(HistoryArchive::DisplayedCursor, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, account, peer, finished] {
+        if (database)
+            finished(database->sentDisplayedCursor(account, peer), true);
+    });
+}
+
 void EDB::requestLocalHistoryPage(const QString &account, const XMPP::Jid &peer, qint64 before, int limit,
                                   QObject *receiver, std::function<void(EDBResult, bool)> finished)
 {
