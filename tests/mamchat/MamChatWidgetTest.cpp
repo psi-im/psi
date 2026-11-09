@@ -2494,7 +2494,8 @@ private slots:
         enterWidget(first);
         const auto hover = chat.hoverHighlightSurfaceColor();
         QVERIFY(hover != base);
-        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        const QColor expectedHover = classic ? base : hover;
+        QCOMPARE(first->palette().color(QPalette::Base), expectedHover);
         QCOMPARE(second->palette().color(QPalette::Base), base);
         QCOMPARE(body->textCursor().selectedText(), selection);
         QCOMPARE(body->document()->revision(), revision);
@@ -2504,19 +2505,19 @@ private slots:
                                                                 body->viewport()->height() - 3));
         const auto image = chat.grab().toImage();
         QCOMPARE(image.pixelColor(qRound(point.x() * image.devicePixelRatio()),
-                                  qRound(point.y() * image.devicePixelRatio())).rgba(), hover.rgba());
+                                  qRound(point.y() * image.devicePixelRatio())).rgba(), expectedHover.rgba());
         auto *actions = chat.findChild<QFrame *>("mamMessageActions");
         QVERIFY(actions);
         QTRY_VERIFY(actions->isVisible());
         QApplication::sendEvent(first, &leave);
         enterWidget(actions);
-        QCOMPARE(first->palette().color(QPalette::Base), hover);
+        QCOMPARE(first->palette().color(QPalette::Base), expectedHover);
         enterWidget(second);
         QCOMPARE(first->palette().color(QPalette::Base), base);
-        QCOMPARE(second->palette().color(QPalette::Base), hover);
+        QCOMPARE(second->palette().color(QPalette::Base), expectedHover);
         chat.selectMessageRange(1, 1);
         const auto selected = second->palette().color(QPalette::Base);
-        QVERIFY(selected != hover);
+        QVERIFY(selected != expectedHover);
         QApplication::sendEvent(chat.viewport(), &leave);
         QCOMPARE(second->palette().color(QPalette::Base), selected);
         chat.cancelMessageSelection();
