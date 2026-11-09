@@ -198,6 +198,32 @@ void EDB::requestLocalHistoryPage(const QString &account, const XMPP::Jid &peer,
     });
 }
 
+void EDB::requestArchivedEvent(
+    const HistoryArchive::Key &key, const QString &uid, const QDateTime &time, QObject *receiver,
+    std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, uid, time, finished] {
+        if (database)
+            finished(database->archivedEvent(key, uid, time), true);
+    });
+}
+
+void EDB::requestOwnPlaintext(
+    const HistoryArchive::Key &key, const QString &id, const QString &sender, const QDateTime &time,
+    QObject *receiver, std::function<void(EDBItemPtr, bool)> finished)
+{
+    if (!receiver)
+        return;
+    const QPointer<EDB> database(this);
+    QTimer::singleShot(0, receiver, [database, key, id, sender, time, finished] {
+        if (database)
+            finished(database->ownPlaintext(key, id, sender, time), true);
+    });
+}
+
 void EDB::requestResolvedHistoryEvents(
     const QList<qint64> &ids, QObject *receiver,
     std::function<void(QHash<qint64, EDBItemPtr>, bool)> finished)
