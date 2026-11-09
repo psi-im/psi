@@ -87,6 +87,11 @@ qint64 HistorySync::eventId(const QString &uid) const
     return 0;
 }
 
+HistorySync::ResolvedMessage HistorySync::resolvedMessage(const QString &uid) const
+{
+    return resolved_.value(eventId(uid));
+}
+
 bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive::Page &page)
 {
     QSet<QString> ids;
@@ -505,8 +510,8 @@ void HistorySync::acceptPage()
             }
             if (replaySaved_) {
                 page_ = std::move(page);
-                success_ = cached_ = true;
-                emit finished();
+                cached_ = true;
+                finishResolvedPage();
             } else {
                 tail_ = std::move(page);
                 after_ = tail_.entries.last().uid;
@@ -609,6 +614,39 @@ void HistorySync::finishAcceptedPage()
         QTimer::singleShot(0, this, &HistorySync::requestPage);
         return;
     }
-    success_ = true;
-    emit finished();
+    finishResolvedPage();
+}
+
+void HistorySync::finishResolvedPage()
+{
+    if (cancelled_)
+        return;
+    if (!context_.resolveAsync) {
+        success_ = true;
+        emit finished();
+        return;
+    }
+    QList<qint64> ids;
+    QSet<qint64> known;
+    for (const auto &entry : page_.entries) {
+        if (entry.eventId > 0 && !known.contains(entry.eventId)) {
+            known.insert(entry.eventId);
+            ids.append(entry.eventId);
+        }
+    }
+    if (ids.isEmpty()) {
+        success_ = true;
+        emit finished();
+        return;
+    }
+    context_.resolveAsync(ids, this, [this](QHash<qint64, ResolvedMessage> resolved, bool ok) {
+        if (cancelled_)
+            return;
+        if (ok)
+            resolved_ = std::move(resolved);
+        // The page itself remains usable if revision-resolution fails.
+        // Never claim that its persisted cursor was rolled back.
+        success_ = true;
+        emit finished();
+    });
 }
