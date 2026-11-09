@@ -39,7 +39,7 @@ class QThread;
 #include <QTimer>
 #include <QVariant>
 
-enum QueryType { QueryContactsList, QueryRowCount }
+enum QueryType { QueryContactsList, QueryRowCount };
 
 struct QueryProperty {
     QueryType type;
