@@ -42,7 +42,7 @@ struct HistoryWriteRequest {
     enum Type { Append, Erase, StorePage };
     int id = 0;
     Type type = Append;
-    QString account, peer;
+    QString account, peer, contactPeer, resource;
     int jidType = 0;
     HistoryEventFactory::Encoded encoded;
     HistoryArchive::Key archiveKey;
