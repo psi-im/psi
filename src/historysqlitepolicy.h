@@ -3,6 +3,7 @@
 
 #include <QDebug>
 #include <QSqlDatabase>
+#include <QSqlError>
 #include <QSqlQuery>
 
 // The SQL worker owns ordinary writes and MAM page commits, so fsync no
