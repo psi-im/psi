@@ -38,8 +38,6 @@ public:
             marker->setAutoFillBackground(true);
             outer->addWidget(marker);
         }
-        if (auto *time = canvas.take(NativeChatMessageCanvas::NoticeTimestamp))
-            outer->addWidget(time, 0, Qt::AlignVCenter);
         if (info.kind == NativeChatMessageInfo::Message) {
             if (auto *avatar = canvas.take(NativeChatMessageCanvas::Avatar))
                 outer->addWidget(avatar, 0, Qt::AlignTop);

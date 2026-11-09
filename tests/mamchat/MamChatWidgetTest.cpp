@@ -2532,10 +2532,37 @@ private slots:
         QCOMPARE(first->palette().color(QPalette::Base), base);
     }
 
+    void classicAbsoluteTimeDoesNotDuplicate()
+    {
+        MamChatWidget chat;
+        chat.resize(620, 280);
+        chat.setHistoryLoading(true);
+        chat.setTheme(NativeChatThemes::instance()->theme(QStringLiteral("classic")));
+        auto view = message(QStringLiteral("classic-clock"), QStringLiteral("Clock text"));
+        view.setDateTime(QDateTime::fromString(QStringLiteral("2026-10-18T10:08:51Z"), Qt::ISODate));
+        chat.appendMessage(view);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        const QString clock = view.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"));
+        const auto bodyText = [&chat] {
+            auto *row = chat.itemWidget(0);
+            auto *body = row ? row->findChild<ChatMessageText *>(QStringLiteral("mamBody")) : nullptr;
+            return body ? body->toPlainText() : QString();
+        };
+        QTRY_VERIFY(bodyText().contains(QStringLiteral("[") + clock + QStringLiteral("] <Peer> Clock text")));
+        chat.setTimestampMode(ChatTimestamp::Mode::Clock);
+        chat.setTimestampMode(ChatTimestamp::Mode::Relative);
+        chat.hide();
+        chat.show();
+        QTRY_VERIFY(bodyText().contains(QStringLiteral("[") + clock + QStringLiteral("] <Peer> Clock text")));
+        QCOMPARE(bodyText().count(clock), 1);
+    }
+
     void hoverClockOnNoticesAndThemeAlerts()
     {
         for (const QString &themeId : { QStringLiteral("classic"), QStringLiteral("modern"),
                                         QStringLiteral("bubble") }) {
+            const bool bubble = themeId == QLatin1String("bubble");
             MamChatWidget chat;
             chat.resize(700, 440);
             chat.setHistoryLoading(true);
@@ -2555,19 +2582,23 @@ private slots:
 
             auto *row = chat.itemWidget(0);
             auto *time = row->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"));
-            QVERIFY(time);
-            QCOMPARE(time->text(), when.toLocalTime().toString(QStringLiteral("HH:mm")));
-            auto *effect = qobject_cast<QGraphicsOpacityEffect *>(time->graphicsEffect());
-            QVERIFY(effect);
-            QCOMPARE(effect->opacity(), 0.0);
-            enterWidget(row);
-            QTRY_VERIFY(effect->opacity() > 0.99);
-            QEvent leave(QEvent::Leave);
-            QApplication::sendEvent(row, &leave);
-            QTRY_VERIFY(effect->opacity() < 0.01);
+            if (bubble) {
+                QVERIFY(time);
+                QCOMPARE(time->text(), when.toLocalTime().toString(QStringLiteral("HH:mm")));
+                auto *effect = qobject_cast<QGraphicsOpacityEffect *>(time->graphicsEffect());
+                QVERIFY(effect);
+                QCOMPARE(effect->opacity(), 0.0);
+                enterWidget(row);
+                QTRY_VERIFY(effect->opacity() > 0.99);
+                QEvent leave(QEvent::Leave);
+                QApplication::sendEvent(row, &leave);
+                QTRY_VERIFY(effect->opacity() < 0.01);
+            } else {
+                QVERIFY(!time);
+            }
 
             auto *emoteRow = chat.itemWidget(1);
-            QVERIFY(emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp")));
+            QCOMPARE(bool(emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"))), bubble);
             QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAuthor")));
             QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
             auto *alertRow = chat.itemWidget(2);
@@ -4383,7 +4414,7 @@ private slots:
         QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
         auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
         const QString hhmm = QDateTime::fromString(QStringLiteral("2026-10-18T10:00:00Z"),
-                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm"));
+                                                      Qt::ISODate).toLocalTime().toString(QStringLiteral("HH:mm:ss"));
         QCOMPARE(body->toPlainText(), QString(QChar::ObjectReplacementCharacter) + QStringLiteral(" [") + hhmm
                      + QStringLiteral("] <Peer> Message body"));
 
@@ -5241,7 +5272,7 @@ private slots:
         classic.avatarSize = 0;
         list.setTheme(classic);
         // Classic has absolute time, so no periodic relative-time polling.
-        QVERIFY(!clock->isActive());
+        QTRY_VERIFY(!clock->isActive());
         list.setTimestampMode(ChatTimestamp::Mode::Clock);
         QVERIFY(!clock->isActive());
     }

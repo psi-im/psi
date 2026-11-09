@@ -2191,7 +2191,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         }
     }
 
-    if (mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart || mv.isEmote()) {
+    if (row->options.noticeHoverTime
+        && (mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart || mv.isEmote())) {
         // Wall-clock time, independent of the ordinary relative time mode.
         auto *noticeTime = new QLabel(mv.dateTime().isValid()
                                          ? mv.dateTime().toLocalTime().toString(QStringLiteral("HH:mm"))
@@ -2904,7 +2905,7 @@ void MamChatWidget::restyleRows()
     }
 }
 
-void MamChatWidget::updateTimestamps()
+void MamChatWidget::updateTimestamps(bool forcePreferenceChange)
 {
     timestampTimer_->stop();
     // One coalesced timer for the visible timeline, including quoted times.
@@ -2918,12 +2919,16 @@ void MamChatWidget::updateTimestamps()
         return;
     const auto now = QDateTime::currentDateTime();
     qint64 nextRefresh = std::numeric_limits<int>::max();
-    const auto refresh = [this, &now, &nextRefresh](const QDateTime &when, const QString &pattern,
-                                                    const auto &setText) {
+    const auto refresh = [this, &now, &nextRefresh, forcePreferenceChange](const QDateTime &when,
+                                                        const QString &pattern, const auto &setText) {
         if (!when.isValid())
             return;
-        setText(ChatTimestamp::formatPattern(when, pattern, timestampMode_, now));
-        if (ChatTimestamp::usesRelative(pattern, timestampMode_)) {
+        const bool relative = ChatTimestamp::usesRelative(pattern, timestampMode_);
+        // Fixed theme clocks are already correct when the row is built.
+        // Only relative labels and preference-dependent clocks need updates.
+        if (relative || (forcePreferenceChange && pattern.isEmpty()))
+            setText(ChatTimestamp::formatPattern(when, pattern, timestampMode_, now));
+        if (relative) {
             const auto delay = ChatTimestamp::nextChangeMs(when, now);
             if (delay > 0)
                 nextRefresh = qMin(nextRefresh, delay);
@@ -2947,10 +2952,21 @@ void MamChatWidget::updateTimestamps()
                             if (!fragment.charFormat().anchorNames().contains(QStringLiteral("psi-time")))
                                 continue;
                             const QString desired = QStringLiteral("[") + value + QStringLiteral("]");
-                            if (fragment.text() != desired) {
+                            // QTextDocument can attach the named psi-time anchor to
+                            // only '[' rather than the complete bracketed timestamp.
+                            // Replacing that fragment alone duplicates the digits.
+                            const QString blockText = block.text();
+                            const int offset = fragment.position() - block.position();
+                            const int opening = blockText.lastIndexOf(QLatin1Char('['), offset);
+                            if (opening < 0 || offset - opening > 3)
+                                return;
+                            const int closing = blockText.indexOf(QLatin1Char(']'), opening + 1);
+                            if (closing < 0 || closing - opening > 96)
+                                return;
+                            if (blockText.mid(opening, closing - opening + 1) != desired) {
                                 QTextCursor cursor(document);
-                                cursor.setPosition(fragment.position());
-                                cursor.setPosition(fragment.position() + fragment.length(), QTextCursor::KeepAnchor);
+                                cursor.setPosition(block.position() + opening);
+                                cursor.setPosition(block.position() + closing + 1, QTextCursor::KeepAnchor);
                                 cursor.insertText(desired, fragment.charFormat());
                             }
                             return;
@@ -3041,8 +3057,9 @@ void MamChatWidget::setTimestampMode(ChatTimestamp::Mode mode)
     if (timestampMode_ == mode)
         return;
     timestampMode_ = mode;
-    // Preserve theme/renderer overrides, and update only delegated clocks.
-    updateTimestamps();
+    // Keep per-theme overrides; only the inherited preference needs
+    // a one-off absolute/relative switch.
+    updateTimestamps(true);
 }
 
 void MamChatWidget::setTheme(const NativeChatTheme &theme)

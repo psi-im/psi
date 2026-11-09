@@ -32,8 +32,6 @@ public:
             const bool light = canvas.row()->palette().color(QPalette::Base).lightness() > 128;
             canvas.setBodyTextColor(light ? QColor(185, 35, 45) : QColor(255, 120, 125));
         }
-        if (auto *time = canvas.take(NativeChatMessageCanvas::NoticeTimestamp))
-            row->addWidget(time, 0, Qt::AlignVCenter);
         row->addWidget(canvas.take(NativeChatMessageCanvas::Body), 1, Qt::AlignTop);
     }
 

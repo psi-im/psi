@@ -52,6 +52,7 @@ struct NativeChatPartOptions {
     QString timeFormat;          // Optional per-message Qt date/time pattern,
                                  // optionally containing {relative}. Empty:
                                  // theme format, then the global preference.
+    bool    noticeHoverTime = false; // Show an HH:mm clock on hovered notices.
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
     qreal   timePointDelta = 0;  // Timestamp size relative to the chat font, in points.

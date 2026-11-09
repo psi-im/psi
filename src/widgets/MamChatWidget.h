@@ -236,7 +236,7 @@ private:
     int                                           displayedTargetIndex() const;
     void                                          resolveDisplayedMarkers();
     void                                          rememberDisplayedIncoming(int index);
-    void                                          updateTimestamps();
+    void                                          updateTimestamps(bool forcePreferenceChange = false);
     NativeChatMessageInfo                         messageInfo(int index) const;
     bool                                          startsNewDate(int index) const;
     void                                          updateAdjacentDateDivider(int index);

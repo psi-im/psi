@@ -21,6 +21,7 @@ code, see [native-chat-themes.md](native-chat-themes.md).
 | `Body`      | `mamBodyPart`: reply preview, text (`mamBody`), file cards, reactions | every row |
 | `UnreadSeparator` | `QFrame#mamUnreadSeparator`, a theme-placeable unread boundary rule | only on the row immediately before unread messages |
 | `DateSeparator` | `QLabel#mamDateSeparator`, localized calendar date | before the first row of each local calendar day |
+| `NoticeTimestamp` | `QLabel#mamNoticeHoverTimestamp`, hover-only `HH:mm` | join/part and /me notices in themes enabling `noticeHoverTime` |
 
 Psi owns selection, hover highlighting and the hover actions toolbar, context
 menus, link and media handling, reply resolution, relative-time refresh,
@@ -61,7 +62,10 @@ public:
 };
 ```
 
-- `partOptions()` is asked before the parts are built. Its `timeFormat`
+- `partOptions()` is asked before the parts are built. A renderer can set
+  `noticeHoverTime = true` to show a fading clock on join/part and /me
+  notices (enabled by Bubble). Other themes do not get an extra label.
+  Its `timeFormat`
   overrides the theme's `timestampFormat` for a message; empty delegates to
   the theme and then the user's preference. The format uses Qt date/time
   patterns such as `HH:mm:ss`, optionally with `{relative}`. Besides avatar

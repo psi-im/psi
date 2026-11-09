@@ -253,6 +253,7 @@ public:
         options.boldAuthor     = true;
         options.timePointDelta = -1.0;
         options.timeAlpha      = 188;
+        options.noticeHoverTime = true;
         return options;
     }
 

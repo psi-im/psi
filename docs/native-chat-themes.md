@@ -88,6 +88,12 @@ The part is a `QFrame#mamUnreadSeparator` that can be customized with QSS.
 Themes that do not take the part receive the same frame beneath their message
 layout automatically.
 
+### Join/part hover time
+
+Bubble shows a hover-only `HH:mm` next to join/part and `/me` notices.
+Classic and Modern keep their existing presentation. Declarative themes can
+opt in with `"noticeTimestamp"` in their JSON `layoutSpec`.
+
 ### Date dividers
 
 Psi supplies `NativeChatMessageCanvas::DateSeparator` only for the first

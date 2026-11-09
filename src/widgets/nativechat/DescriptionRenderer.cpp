@@ -25,7 +25,8 @@ const QHash<QString, Canvas::Part> &slotParts()
                                                       { QStringLiteral("avatar"), Canvas::Avatar },
                                                       { QStringLiteral("body"), Canvas::Body },
                                                       { QStringLiteral("unreadSeparator"), Canvas::UnreadSeparator },
-                                                      { QStringLiteral("dateSeparator"), Canvas::DateSeparator } };
+                                                      { QStringLiteral("dateSeparator"), Canvas::DateSeparator },
+                                                      { QStringLiteral("noticeTimestamp"), Canvas::NoticeTimestamp } };
     return parts;
 }
 
@@ -113,6 +114,7 @@ public:
         options.boldAuthor = true;
         options.timePointDelta = -1.0;
         options.timeAlpha = 188;
+        options.noticeHoverTime = slots_.contains(QStringLiteral("noticeTimestamp"));
         options.timeFormat = theme_.timestampFormat.isEmpty() ? layoutTimeFormat_ : theme_.timestampFormat;
         return options;
     }
