@@ -26,7 +26,7 @@ on:
       - 'src/historyarchive.*'
       - 'src/edbsqlite.*'
       - 'src/historysqlitepolicy.h'
-      - 'src/historywalcheckpoint.h'
+      - 'src/historysqlreadworker.h'
       - 'src/historysqlreadworker.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
