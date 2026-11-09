@@ -62,7 +62,8 @@ void HistorySqlReadWorker::open()
     // latency. This timer and all pending results live in the worker.
     appendCommitTimer_ = new QTimer(this);
     appendCommitTimer_->setSingleShot(true);
-    appendCommitTimer_->setInterval(250); // Bound latency while coalescing real chat bursts.
+    // Preserve EDB's previous 3-record / 1-second commit thresholds.
+    appendCommitTimer_->setInterval(1000);
     connect(appendCommitTimer_, &QTimer::timeout, this, &HistorySqlReadWorker::flushPendingAppends);
 }
 
