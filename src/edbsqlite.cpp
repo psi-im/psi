@@ -30,6 +30,7 @@
 #include "psiaccount.h"
 #include "psicontactlist.h"
 
+#include <QElapsedTimer>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -917,7 +918,14 @@ bool EDBSqLite::transaction(bool now)
 bool EDBSqLite::commit()
 {
     if (status != NotActive) {
-        if (status == Commited || QSqlDatabase::database("history").commit()) {
+        const bool pending = status == NotCommited;
+        QElapsedTimer elapsed;
+        if (pending)
+            elapsed.start();
+        const bool committed = status == Commited || QSqlDatabase::database("history").commit();
+        if (pending && elapsed.elapsed() > 1000)
+            qWarning() << "[history-db] GUI-thread SQLite commit took" << elapsed.elapsed() << "ms";
+        if (committed) {
             transactionsCounter = 0;
             lastCommitTime      = QDateTime::currentDateTime();
             status              = Commited;
