@@ -405,7 +405,7 @@ bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &
     if (!commit())
         return false;
     const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
-    jidsCache.clear(); // A failed transaction must not retain an inserted contact ID.
+    // All contact inserts are now owned by the worker and are transactional.
     return ok;
 }
 
@@ -961,77 +961,18 @@ QString EDBSqLite::QueryStorage::getQueryString(QueryType type, bool allAccounts
     QString queryStr;
     switch (type) {
     case QueryContactsList:
-        queryStr = "SELECT `acc_id`, `jid` FROM `contacts` WHERE `type` = :type";
+        queryStr = QStringLiteral("SELECT acc_id,jid FROM contacts WHERE type=:type");
         if (!allAccounts)
-            queryStr.append(" AND `acc_id` = :acc_id");
-        queryStr.append(" ORDER BY `jid`;");
-        break;
-    case QueryLatest:
-    case QueryOldest:
-    case QueryDateBackward:
-    case QueryDateForward:
-        queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
-                   "`lang`, `extra_data`, `history_state`, "
-                   "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root ON root.id=r.root_id "
-                   "WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
-                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
-                   "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
-                   " FROM `events`, `contacts`"
-                   " WHERE `contacts`.`id` = `contact_id`";
-        if (!allContacts)
-            queryStr.append(" AND `jid` = :jid");
-        if (!allAccounts)
-            queryStr.append(" AND `acc_id` = :acc_id");
-        if (type == QueryDateBackward)
-            queryStr.append(" AND `history_date_ms` < :date");
-        else if (type == QueryDateForward)
-            queryStr.append(" AND `history_date_ms` >= :date");
-        if (type == QueryLatest || type == QueryDateBackward)
-            queryStr.append(" ORDER BY `history_date_ms` DESC, `events`.`id` DESC");
-        else
-            queryStr.append(" ORDER BY `history_date_ms` ASC, `events`.`id` ASC");
-        queryStr.append(" LIMIT :start, :cnt;");
+            queryStr += QStringLiteral(" AND acc_id=:acc_id");
+        queryStr += QStringLiteral(" ORDER BY jid");
         break;
     case QueryRowCount:
-    case QueryRowCountBefore:
-        queryStr = "SELECT count(*) AS `count`"
-                   " FROM `events`, `contacts`"
-                   " WHERE `contacts`.`id` = `contact_id`";
+        queryStr = QStringLiteral("SELECT count(*) AS count FROM events, contacts "
+                                  "WHERE contacts.id=contact_id");
         if (!allContacts)
-            queryStr.append(" AND `jid` = :jid");
+            queryStr += QStringLiteral(" AND jid=:jid");
         if (!allAccounts)
-            queryStr.append(" AND `acc_id` = :acc_id");
-        if (type == QueryRowCountBefore)
-            queryStr.append(" AND `history_date_ms` < :date");
-        queryStr.append(";");
-        break;
-    case QueryJidRowId:
-        queryStr = "SELECT `id` FROM `contacts` WHERE `jid` = :jid AND acc_id = :acc_id;";
-        break;
-    case QueryFindText:
-        queryStr = "SELECT `acc_id`, `events`.`id`, `jid`, `date`, `events`.`type`, `direction`, `subject`, `m_text`, "
-                   "`lang`, `extra_data`, `history_state`, "
-                   "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root ON root.id=r.root_id "
-                   "WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
-                   "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
-                   "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml"
-                   " FROM `events`, `contacts`"
-                   " WHERE `contacts`.`id` = `contact_id`";
-        if (!allContacts)
-            queryStr.append(" AND `jid` = :jid");
-        if (!allAccounts)
-            queryStr.append(" AND `acc_id` = :acc_id");
-        queryStr.append(" AND `m_text` IS NOT NULL");
-        queryStr.append(" ORDER BY `history_date_ms`, `events`.`id`;");
-        break;
-    case QueryInsertEvent:
-        queryStr = "INSERT INTO `events` ("
-                   "`contact_id`, `resource`, `date`, `type`, `direction`, `subject`, `m_text`, `lang`, `extra_data`, "
-                   "`history_state`, `history_date_ms`"
-                   ") VALUES ("
-                   ":contact_id, :resource, :date, :type, :direction, :subject, :m_text, :lang, :extra_data, "
-                   ":history_state, :history_date_ms"
-                   ");";
+            queryStr += QStringLiteral(" AND acc_id=:acc_id");
         break;
     }
     return queryStr;
