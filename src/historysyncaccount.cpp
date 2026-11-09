@@ -68,6 +68,30 @@ HistorySync::Context accountContext(PsiAccount *account)
                                    std::function<void(HistoryArchive::Page, bool)> finished) {
         account->edb()->requestStoreArchivePage(key, before, limit, std::move(page), receiver, std::move(finished));
     };
+    context.resolveAsync = [account](
+        const QList<qint64> &ids, QObject *receiver,
+        std::function<void(QHash<qint64, HistorySync::ResolvedMessage>, bool)> finished) {
+        account->edb()->requestResolvedHistoryEvents(
+            ids, receiver,
+            [finished](QHash<qint64, EDBItemPtr> rows, bool ok) {
+                QHash<qint64, HistorySync::ResolvedMessage> values;
+                for (auto it = rows.cbegin(); it != rows.cend(); ++it) {
+                    const auto &item = it.value();
+                    if (!item || !item->event() || item->event()->type() != PsiEvent::Message)
+                        continue;
+                    HistorySync::ResolvedMessage value;
+                    value.message = item->event().staticCast<MessageEvent>()->message().displayMessage();
+                    value.historyId = item->id().toLongLong();
+                    value.messageState = item->messageFlags();
+                    value.revisionTime = item->revisionTime();
+                    value.reactionTarget = item->reactionTarget();
+                    value.retractionTarget = item->retractionTarget();
+                    value.found = true;
+                    values.insert(it.key(), value);
+                }
+                finished(std::move(values), ok);
+            });
+    };
     return context;
 }
 }
