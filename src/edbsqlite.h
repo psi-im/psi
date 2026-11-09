@@ -162,6 +162,7 @@ private:
     QHash<QString, qint64>  jidsCache;
     QueryStorage            queryes;
     QThread                 *historyReadThread_ = nullptr;
+    HistorySqlReadWorker    *historyReader_ = nullptr;
     QHash<int, item_query_req *> pendingReads_;
 
 private:
