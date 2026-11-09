@@ -411,6 +411,13 @@ int EDBSqLite::append(const QString &accId, const XMPP::Jid &jid, const PsiEvent
         delete r;
         return 0;
     }
+    // PsiEvent and PsiAccount belong to the GUI. SQL receives only values.
+    r->encoded = HistoryEventFactory::encode(r->event);
+    if (!r->encoded.valid) {
+        qWarning("EDBSqLite::append(): Cannot serialize this event.");
+        delete r;
+        return 0;
+    }
     r->id = genUniqueId();
     rlist.append(r);
 
@@ -514,7 +521,7 @@ void EDBSqLite::performRequests()
 
     if (type == item_query_req::Type_append) {
         bool inserted = false;
-        bool ok = appendEvent(r->accId, r->j, r->event, r->jidType, inserted);
+        bool ok = appendEvent(r->accId, r->j, r->encoded, r->jidType, inserted);
         // Account and FileSharingManager are GUI-owned. Keep this side effect
         // out of the SQL insertion routine so the latter can migrate to a
         // database worker without accessing the application's QObject graph.
@@ -617,57 +624,26 @@ void EDBSqLite::performRequests()
     delete r;
 }
 
-bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const PsiEvent::Ptr &e,
-                              int jidType, bool &inserted)
+bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid,
+                              const HistoryEventFactory::Encoded &encoded, int jidType, bool &inserted)
 {
     inserted = false;
+    if (!encoded.valid)
+        return false;
     QSqlDatabase db        = QSqlDatabase::database("history");
     const qint64 contactId = ensureJidRowId(accId, jid, jidType);
     if (contactId == 0)
         return false;
 
-    QDateTime dTime;
-    int       nType = 0;
-
-    if (e->type() == PsiEvent::Message) {
-        MessageEvent::Ptr me = e.staticCast<MessageEvent>();
-        const Message    &m  = me->message().displayMessage();
-        dTime                = m.timeStamp().isValid() ? m.timeStamp() : me->timeStamp();
-        if (m.type() == Message::Type::Chat)
-            nType = 1;
-        else if (m.type() == Message::Type::Error)
-            nType = 4;
-        else if (m.type() == Message::Type::Headline)
-            nType = 5;
-        else if (m.type() == Message::Type::Groupchat)
-            nType = 9;
-
-    } else if (e->type() == PsiEvent::Auth) {
-        AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
-        dTime             = ae->timeStamp();
-        QString subType   = ae->authType();
-        if (subType == "subscribe")
-            nType = 3;
-        else if (subType == "subscribed")
-            nType = 6;
-        else if (subType == "unsubscribe")
-            nType = 7;
-        else if (subType == "unsubscribed")
-            nType = 8;
-    } else
-        return false;
-
-    int nDirection = e->originLocal() ? 1 : 2;
-    if (e->type() == PsiEvent::Message) {
-        const auto           &m = e.staticCast<MessageEvent>()->message().displayMessage();
+    if (encoded.isMessage) {
         HistoryArchive::Entry delivery;
-        delivery.messageId = m.id();
-        delivery.sender    = m.from().full();
-        delivery.timestamp = dTime;
-        delivery.type      = nType;
-        delivery.direction = nDirection;
-        delivery.body      = m.body();
-        delivery.subject   = m.subject();
+        delivery.messageId = encoded.messageId;
+        delivery.sender    = encoded.sender;
+        delivery.timestamp = encoded.timestamp;
+        delivery.type      = encoded.type;
+        delivery.direction = encoded.direction;
+        delivery.body      = encoded.matchBody;
+        delivery.subject   = encoded.matchSubject;
         // A live delivery can be logged after its MAM page finished. Reuse
         // that archived row rather than creating a second local original.
         if (HistoryArchive::matchingDelivery(db, contactId, delivery, true))
@@ -679,21 +655,19 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
     PreparedQuery *query = queryes.getPreparedQuery(QueryInsertEvent, false, false);
     query->bindValue(":contact_id", contactId);
     query->bindValue(":resource", (jidType != GroupChatContact) ? jid.resource() : "");
-    query->bindValue(":date", dTime);
-    query->bindValue(":history_date_ms", dTime.isValid() ? dTime.toMSecsSinceEpoch() : qint64(0));
-    query->bindValue(":type", nType);
-    query->bindValue(":direction", nDirection);
+    query->bindValue(":date", encoded.timestamp);
+    query->bindValue(":history_date_ms",
+                     encoded.timestamp.isValid() ? encoded.timestamp.toMSecsSinceEpoch() : qint64(0));
+    query->bindValue(":type", encoded.type);
+    query->bindValue(":direction", encoded.direction);
     // Authentication events are local history, never MAM message stanzas.
     query->bindValue(":history_state",
-                     e->type() == PsiEvent::Auth ? HistoryArchive::LocalOnly : HistoryArchive::Unverified);
-    if (nType == 0 || nType == 1 || nType == 4 || nType == 5 || nType == 9) {
-        MessageEvent::Ptr me   = e.staticCast<MessageEvent>();
-        const Message    &m    = me->message().displayMessage();
-        QString           lang = m.lang();
-        query->bindValue(":subject", m.subject(lang));
-        query->bindValue(":m_text", m.body(lang));
-        query->bindValue(":lang", lang);
-        query->bindValue(":extra_data", HistoryMessageExtras::encode(m));
+                     encoded.isMessage ? HistoryArchive::Unverified : HistoryArchive::LocalOnly);
+    if (encoded.isMessage) {
+        query->bindValue(":subject", encoded.subject);
+        query->bindValue(":m_text", encoded.body);
+        query->bindValue(":lang", encoded.language);
+        query->bindValue(":extra_data", encoded.extras);
     } else {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         query->bindValue(":subject", QVariant(QVariant::String));
@@ -708,11 +682,10 @@ bool EDBSqLite::appendEvent(const QString &accId, const XMPP::Jid &jid, const Ps
 #endif
     }
     bool res = query->exec();
-    if (res && e->type() == PsiEvent::Message) {
-        const Message &m = e.staticCast<MessageEvent>()->message().displayMessage();
-        if (!HistoryArchive::recordRevision(db,query->lastInsertId().toLongLong(),
-                                             contactId,nType,nDirection,m.from().full(),
-                                             m.id(),m.replaceId())
+    if (res && encoded.isMessage) {
+        if (!HistoryArchive::recordRevision(db, query->lastInsertId().toLongLong(), contactId,
+                                            encoded.type, encoded.direction, encoded.sender,
+                                            encoded.messageId, encoded.replaceId)
             || !HistoryArchive::recordMessageStates(db, { query->lastInsertId().toLongLong() })) {
             rollback();
             return false;
