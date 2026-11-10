@@ -61,7 +61,7 @@ public:
             return {};
         for (int row = 0; row < model->rowCount(parent); ++row) {
             const auto index = model->index(row, 0, parent);
-            if (model->data(index).toString() == "UI Test Peer")
+            if (model->data(index).toString() == qEnvironmentVariable("PSI_UI_PEER_NAME", "UI Test Peer"))
                 return index;
             const auto child = findPeer(model, index, depth + 1);
             if (child.isValid())
@@ -210,7 +210,11 @@ public:
                 if (text->isReadOnly() && text->inherits("ChatMessageText")
                     && text->toPlainText().contains("serverless-ui-test"))
                     ++copies;
-            if (copies < 2)
+            bool echoedFile = false;
+            for (auto *preview : chat->findChildren<QWidget *>("mamFilePreview"))
+                for (auto *label : preview->findChildren<QLabel *>())
+                    echoedFile |= label->text().contains("peer-file.bin");
+            if (copies < 2 || !echoedFile)
                 return;
             qInfo("UI-PROBE MESSAGES: outgoing and echoed message rendered in the native chat");
             if (qEnvironmentVariableIsSet("PSI_UI_DELETE_TEST")) {

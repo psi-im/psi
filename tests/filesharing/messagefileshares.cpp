@@ -180,7 +180,7 @@ private slots:
         auto file = share("https://example.org/photo.png");
         incoming.setReferences({ file });
         // XEP-0428 positions count Unicode code points, not UTF-16 units.
-        incoming.setFallbacks({ { "urn:xmpp:sims:1", { { 2, body.size() - 1 } }, {} } });
+        incoming.setFallbacks({ { "urn:xmpp:sims:1", { { 2, int(body.size()) - 1 } }, {} } });
         const auto normalized = MessageFileShares::collect(incoming).files;
         QCOMPARE(normalized.size(), 1);
         QVERIFY(normalized.first().reference.begin() < 0);

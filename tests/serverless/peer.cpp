@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     });
     QObject::connect(XMPP::ProcessQuit::instance(), &XMPP::ProcessQuit::quit, &service, &XMPP::Stream::close);
     QObject::connect(&service, &XMPP::Stream::connectionClosed, &app, &QCoreApplication::quit);
-    if (!service.start(jid, QHostAddress::LocalHost, "UI Test Peer"))
+    if (!service.start(jid, QHostAddress::LocalHost, qEnvironmentVariable("PSI_UI_PEER_NAME", "UI Test Peer")))
         return 2;
     QTimer::singleShot(85000, &app, [&] { app.exit(4); });
     return app.exec();

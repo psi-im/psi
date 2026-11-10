@@ -102,7 +102,7 @@ FileSharingItem::FileSharingItem(const QUrl &url, const XMPP::Hash &identity, Ps
     _fileName = QFileInfo(url.path()).fileName();
     if (_fileName.isEmpty())
         _fileName = QStringLiteral("download");
-    _urlDisplayName = _fileName;
+    _displayName = _fileName;
     _description = description;
     _mimeType = QMimeDatabase().mimeTypeForFile(_fileName, QMimeDatabase::MatchExtension).name();
     // The URL identity never enters FileCache as a claimed checksum. Resolve
@@ -147,7 +147,7 @@ FileSharingItem::FileSharingItem(const QImage &image, PsiAccount *acc, FileShari
 }
 
 FileSharingItem::FileSharingItem(const QString &fileName, PsiAccount *acc, FileSharingManager *manager) :
-    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::LocalLink), _fileName(fileName)
+    QObject(manager), _acc(acc), _manager(manager), _fileType(FileType::ExternalFile), _fileName(fileName)
 {
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly))
@@ -211,17 +211,15 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
 
     auto md      = cache->metadata();
     _mimeType    = md.value(QString::fromLatin1("type")).toString();
-    QString link = md.value(QString::fromLatin1("link")).toString();
-    if (link.isEmpty()) {
+    if (_displayName.isEmpty())
+        _displayName = md.value(QStringLiteral("name")).toString();
+    if (!cache->isExternal()) {
         _fileType = FileType::LocalFile;
-        _fileName = _manager->cacheDir() + "/" + cache->fileName();
-        _fileSize = cache->size();
     } else {
-        _fileType = FileType::LocalLink;
-        _fileName = link;
-        // note the readability of the filename was aleady checked by this moment
-        _fileSize = QFileInfo(_fileName).size();
+        _fileType = FileType::ExternalFile;
     }
+    _fileName = cache->filePath();
+    _fileSize = cache->size();
 
     _sums = cache->sums();
 
@@ -255,7 +253,7 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
     jfile.setDate(fi.lastModified());
     for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i)
         jfile.addHash(_sums.at(i));
-    jfile.setName(fi.fileName());
+    jfile.setName(displayName());
     jfile.setSize(quint64(fi.size()));
     jfile.setMediaType(_mimeType);
     jfile.setDescription(_description);
@@ -314,8 +312,10 @@ QImage FileSharingItem::preview(const QSize &maxSize) const
 
 QString FileSharingItem::displayName() const
 {
-    if (_urlOnly && !_urlDisplayName.isEmpty())
-        return _urlDisplayName;
+    if (!_displayName.isEmpty())
+        return _displayName;
+    if (!_receivedMetadata.name().isEmpty())
+        return QFileInfo(_receivedMetadata.name()).fileName();
     if (_fileName.isEmpty()) {
         auto ext = FileUtil::mimeToFileExt(_mimeType);
         return QString("psi-%1.%2").arg(QString::fromLatin1(_sums[0].toHex()), ext).replace("/", "");
@@ -373,6 +373,7 @@ bool FileSharingItem::savePublishedFile()
 {
     QVariantMap meta = _metaData;
     meta["type"]     = _mimeType;
+    meta["name"]     = displayName();
     if (auto existing = cache()) {
         auto metadata = existing->metadata();
         for (auto it = meta.cbegin(); it != meta.cend(); ++it)
@@ -385,14 +386,14 @@ bool FileSharingItem::savePublishedFile()
         if (!stored)
             return false;
         _fileType = FileType::LocalFile;
-        _fileName = _manager->cacheDir() + "/" + stored->fileName();
+        _displayName = meta.value("name").toString();
+        _fileName    = stored->filePath();
         return true;
     }
     const auto path = localFilePath();
     if (!QFileInfo(path).isReadable())
         return false;
-    meta["link"] = path;
-    return _manager->saveToCache(_sums, {}, meta, FILE_TTL) != nullptr;
+    return _manager->trackExternal(_sums, QFileInfo(path), meta, FILE_TTL) != nullptr;
 }
 
 void FileSharingItem::publish(const XMPP::Jid &myJid)
@@ -482,6 +483,7 @@ FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader
 
         QVariantMap vm;
         vm.insert(QString::fromLatin1("type"), _mimeType);
+        vm.insert(QStringLiteral("name"), displayName());
         if (thumbUri.size()) { // then thumbMetaType is not empty too
             vm.insert(QString::fromLatin1("thumb-mt"), thumbMetaType);
             vm.insert(QString::fromLatin1("thumb-uri"), thumbUri);
@@ -503,11 +505,12 @@ FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader
                     for (const auto &hash : actualHashes)
                         if (!_sums.contains(hash))
                             _sums.append(hash);
-                    _fileSize = QFileInfo(_manager->cacheDir() + "/" + cache->fileName()).size();
+                    _fileSize = cache->size();
                     _manager->rememberUrlContent(_acc->id(), _sums.first(), actualHashes.first());
                 }
                 _fileType = FileType::LocalFile;
-                _fileName = _manager->cacheDir() + "/" + cache->fileName();
+                _displayName = vm.value("name").toString();
+                _fileName    = cache->filePath();
             }
             emit downloadFinished();
         };
@@ -561,7 +564,7 @@ void FileSharingItem::checkRemote()
             // The extension of the file name in the URL wins over the server's type.
             const QString type
                 = QString::fromLatin1(reply->rawHeader("Content-Type")).section(QLatin1Char(';'), 0, 0).trimmed();
-            if (!type.isEmpty() && QFileInfo(_urlDisplayName).suffix().isEmpty())
+            if (!type.isEmpty() && QFileInfo(_displayName).suffix().isEmpty())
                 _mimeType = type.toLower();
         }
         emit remoteChecked();

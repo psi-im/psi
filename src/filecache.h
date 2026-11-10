@@ -28,7 +28,8 @@
 #include <QHash>
 #include <QObject>
 #include <QVariantMap>
-#include <memory>
+#include <limits>
+#include <optional>
 
 class FileCache;
 class QTimer;
@@ -36,8 +37,6 @@ class QTimer;
 class FileCacheItem : public QObject {
     Q_OBJECT
 public:
-    using Ptr = std::shared_ptr<FileCacheItem>;
-
     enum Flags {
         OnDisk             = 0x1,
         Registered         = 0x2,
@@ -45,29 +44,11 @@ public:
         // Unloadable  = 0x8 // another good idea
     };
 
-    FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata, const QDateTime &dt,
-                  unsigned int maxAge, quint64 size, const QByteArray &data = QByteArray());
-    inline FileCacheItem(FileCache *parent, const XMPP::Hash &id, const QVariantMap &metadata, const QDateTime &dt,
-                         unsigned int maxAge, qint64 size, const QByteArray &data = QByteArray()) :
-        FileCacheItem(parent, QList<XMPP::Hash>() << id, metadata, dt, maxAge, size, data)
-    {
-    }
-
-    void
-    flushToDisk(); // put data to disk, but not to registry. don't call this directly. FileCache will care about it.
-    bool              remove() const; // remove file from disk but not from registry. don't call this directly.
-    void              unload();       // drop file to disk, deallocate memory
     inline bool       inMemory() const { return _data.size() > 0; }
-    inline bool       isOnDisk() const { return bool(_flags & OnDisk); }         // data is on disk and not in rgistry
-    inline bool       isRegistered() const { return bool(_flags & Registered); } // data is on disk and not in rgistry
+    inline bool                     isOnDisk() const { return bool(_flags & OnDisk); }
+    inline bool                     isRegistered() const { return bool(_flags & Registered); }
     bool              isExpired(bool finishSession = false) const;
-    inline FileCache *parentCache() const { return (FileCache *)parent(); }
     inline XMPP::Hash id() const { return _sums.value(0); }
-    inline void       addHashSum(const XMPP::Hash &id)
-    {
-        _sums += id;
-        _flags &= ~Registered;
-    }
     inline const QList<XMPP::Hash> &sums() const { return _sums; }
     inline QVariantMap              metadata() const { return _metadata; }
     inline void                     setMetadata(const QVariantMap &md)
@@ -80,7 +61,9 @@ public:
     inline unsigned int maxAge() const { return _maxAge; }
     inline quint64      size() const { return _size; }
     QByteArray          data();
-    inline QString      fileName() const { return _fileName; }
+    inline QString fileName() const { return _fileName; } // Relative managed name; use filePath() for either placement.
+    QString        filePath() const;
+    bool           isExternal() const { return !_externalPath.isEmpty(); }
 
     inline void setSessionUndeletable(bool state = true)
     {
@@ -95,6 +78,13 @@ public:
 private:
     friend class FileCache;
 
+    FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata, const QDateTime &dt,
+                  unsigned int maxAge, quint64 size, const QByteArray &data = {});
+    FileCache *parentCache() const;
+    void       flushToDisk();
+    bool       remove() const;
+    void       unload();
+
     QList<XMPP::Hash> _sums;
     QVariantMap       _metadata;
     QDateTime         _ctime;
@@ -104,7 +94,9 @@ private:
 
     quint16    _flags;
     QString    _fileName;
-    QByteArray _recordId; // Empty until the item has a database record.
+    QByteArray            _recordId;
+    QString               _externalPath;
+    std::optional<qint64> _externalModified;
 };
 
 class FileCache : public QObject {
@@ -150,9 +142,9 @@ public:
      * @brief Add data to cache
      * @param sums - hash sums of the data (at least 1)
      * @param type e.g. content-type
-     * @param data / if no data(size=0) memory size restiction won't affect this item, also no files will be created
+     * @param data Payload bytes. Empty data creates a real empty managed file.
      * @param maxAge Session/Forever or just seconds to live
-     * @return a new cache item. Not yet synchronized to disk
+     * @return New item, not yet synchronized to disk; nullptr if a prior generation cannot be retired.
      */
     FileCacheItem        *append(const QList<XMPP::Hash> &sums, const QByteArray &data,
                                  const QVariantMap &metadata = QVariantMap(), unsigned int maxAge = Forever);
@@ -170,6 +162,10 @@ public:
     {
         return moveToCache(QList<XMPP::Hash>() << id, file, metadata, maxAge);
     }
+    // Records an original without taking ownership of its bytes. A changed size
+    // or modification time invalidates the record; removal never unlinks it.
+    FileCacheItem *trackExternal(const QList<XMPP::Hash> &sums, const QFileInfo &file, const QVariantMap &metadata = {},
+                                 unsigned int maxAge = Forever);
     void remove(const XMPP::Hash &id, bool needSync = true);
 
     /**
@@ -180,6 +176,9 @@ public:
      */
     FileCacheItem *get(const XMPP::Hash &id, bool reborn = false);
     QByteArray     getData(const XMPP::Hash &id, bool reborn = false);
+    // Commit one payload and its ownership before a durable publication names
+    // its path. Does not trigger a quota sweep.
+    bool           persist(const XMPP::Hash &id);
     void           sync(bool finishSession);
 
 protected:
@@ -196,9 +195,10 @@ public slots:
     void lazySync();
 
 private:
-    void toRegistry(FileCacheItem *);
+    bool toRegistry(FileCacheItem *);
     void load();
-    void replaceRecord(FileCacheItem *item, const QList<XMPP::Hash> &sums);
+    bool replaceRecord(const QList<XMPP::Hash> &sums);
+    void drainTrash();
 
 protected:
     QHash<XMPP::Hash, FileCacheItem *> _items;
@@ -211,7 +211,6 @@ private:
     unsigned int                       _defaultMaxAge;
     SyncPolicy                         _syncPolicy;
     QTimer                            *_syncTimer;
-    QHash<XMPP::Hash, FileCacheItem *> _pendingRegisterItems;
 
     bool _inTransaction = false;
 };

@@ -132,7 +132,7 @@ MediaChunkCache *FileSharingManager::mediaChunkCache()
                             continue;
                         for (const auto &hash : item->sums()) {
                             auto cached = d->cache->get(hash);
-                            if (cached && cached->metadata().value(QStringLiteral("link")).toString() == path)
+                            if (cached && cached->isExternal() && cached->filePath() == path)
                                 d->cache->remove(hash);
                         }
                     }
@@ -162,9 +162,9 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
     if (!item)
         return nullptr;
 
-    QString link     = item->metadata().value(QLatin1String("link")).toString();
-    QString fileName = link.size() ? link : d->cache->cacheDir() + "/" + item->fileName();
-    if (link.startsWith(cacheDir() + QStringLiteral("/media-files-v2/")) && !mediaChunkCache()->isCompleteFile(link))
+    const auto fileName = item->filePath();
+    if (fileName.startsWith(cacheDir() + QStringLiteral("/media-files-v2/"))
+        && !mediaChunkCache()->isCompleteFile(fileName))
         return nullptr; // A restored payload is available only after worker verification.
     if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
         d->cache->remove(id);
@@ -175,16 +175,16 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
     return item;
 }
 
-FileCacheItem *FileSharingManager::saveToCache(const QList<XMPP::Hash> &sums, const QByteArray &data,
-                                               const QVariantMap &metadata, unsigned int maxAge)
-{
-    return d->cache->append(sums, data, metadata, maxAge);
-}
-
 FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &file,
                                                const QVariantMap &metadata, unsigned int maxAge)
 {
     return d->cache->moveToCache(sums, file, metadata, maxAge);
+}
+
+FileCacheItem *FileSharingManager::trackExternal(const QList<XMPP::Hash> &sums, const QFileInfo &file,
+                                                 const QVariantMap &metadata, unsigned int maxAge)
+{
+    return d->cache->trackExternal(sums, file, metadata, maxAge);
 }
 
 std::optional<Hash> FileSharingManager::contentForUrl(const QString &account, const Hash &urlIdentity) const
@@ -223,9 +223,9 @@ FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
     const auto path = stored->readableLocalPath();
     if (!path.isEmpty() && !cacheItem(media.file.computedHashes())) {
         QVariantMap metadata { { "type", media.file.mediaType() },
-                               { "link", path },
+                               { "name", media.file.name() },
                                { "amplitudes", media.file.amplitudes() } };
-        saveToCache(media.file.computedHashes(), {}, metadata, FileCache::Forever);
+        trackExternal(media.file.computedHashes(), QFileInfo(path), metadata, FileCache::Forever);
     }
     auto restored = new FileSharingItem(media, Jid(), account, this);
     for (const auto &peer : stored->peers)
@@ -457,6 +457,16 @@ bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount 
 
 bool FileSharingManager::serve(PsiAccount *account, const MediaSharing &media, const QString &localPath)
 {
+    // A publication can outlive a crash immediately after this call. Its
+    // managed payload must already have an owner in the file registry.
+    for (const auto &hash : media.file.computedHashes()) {
+        auto cached = d->cache->get(hash);
+        if (cached && !cached->isExternal() && cached->filePath() == localPath) {
+            if (!d->cache->persist(hash))
+                return false;
+            break;
+        }
+    }
     const bool stored = d->catalog->serve(account->id(), account->jid(), media, localPath);
     if (!stored)
         qWarning("Could not persist a served file");
