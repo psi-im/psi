@@ -66,6 +66,12 @@ static QString legacyDir()
     return ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + QStringLiteral("/shares");
 }
 
+static bool obsoleteRangePayload(const QString &path)
+{
+    const auto suffix = QStringLiteral("/media-files-v2/");
+    return path.startsWith(legacyDir() + suffix) || path.startsWith(FileSharingManager::cacheDir() + suffix);
+}
+
 // ======================================================================
 // FileSharingManager
 // ======================================================================
@@ -91,15 +97,12 @@ public:
 
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new Private)
 {
-    // Everything used to live above the profile, where two running profiles broke
-    // each other's cache. Each profile copies the complete files. The media cache
-    // can be fetched again, so the first profile simply takes it.
+    // Complete legacy payloads are imported per profile. Unreleased JSON range
+    // sidecars and media-files-v2 payloads are deliberately ignored.
     const auto legacy = legacyDir();
-    const auto media  = QStringLiteral("/media-files-v2");
-    if (!QDir(cacheDir() + media).exists())
-        QDir().rename(legacy + media, cacheDir() + media);
 
     d->cache = new FileCache(QStringLiteral("shares"), cacheDir(), this);
+    d->cache->setFileCacheSize(256 * 1024 * 1024);
     d->cache->importLegacy(legacy);
     d->catalog.reset(new FileSharingCatalog);
 }
@@ -119,11 +122,7 @@ FileSharingJingleSession *FileSharingManager::jingleMediaSessions(PsiAccount *ac
 MediaChunkCache *FileSharingManager::mediaChunkCache()
 {
     if (!d->chunkCache) {
-        d->chunkCache = new MediaChunkCache(cacheDir() + QStringLiteral("/media-files-v2"), this, 4 * 1024 * 1024,
-                                            256 * 1024 * 1024, [](const QString &algorithm, QIODevice *device) {
-                                                XMPP::Hash hash { QStringView(algorithm) };
-                                                return hash.compute(device) ? hash.data() : QByteArray();
-                                            });
+        d->chunkCache = new MediaChunkCache(d->cache->rangeStore(), this);
         connect(d->chunkCache, &MediaChunkCache::integrityError, this,
                 [this](const QString &source, quint64 size, const QString &) {
                     const auto path = d->chunkCache->fileState(source, size).path;
@@ -163,8 +162,9 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
         return nullptr;
 
     const auto fileName = item->filePath();
-    if (fileName.startsWith(cacheDir() + QStringLiteral("/media-files-v2/"))
-        && !mediaChunkCache()->isCompleteFile(fileName))
+    if (obsoleteRangePayload(fileName)
+        || (fileName.startsWith(cacheDir() + QStringLiteral("/ranges/"))
+            && !mediaChunkCache()->isCompleteFile(fileName)))
         return nullptr; // A restored payload is available only after worker verification.
     if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
         d->cache->remove(id);
@@ -184,6 +184,8 @@ FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, co
 FileCacheItem *FileSharingManager::trackExternal(const QList<XMPP::Hash> &sums, const QFileInfo &file,
                                                  const QVariantMap &metadata, unsigned int maxAge)
 {
+    if (obsoleteRangePayload(file.absoluteFilePath()))
+        return nullptr;
     return d->cache->trackExternal(sums, file, metadata, maxAge);
 }
 
@@ -446,8 +448,9 @@ bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount 
             // can supply a fallback path.
             path = publication->readableLocalPath();
             if (!path.isEmpty()) {
-                if (path.startsWith(cacheDir() + QStringLiteral("/media-files-v2/"))
-                    && !mediaChunkCache()->isCompleteFile(path))
+                if (obsoleteRangePayload(path)
+                    || (path.startsWith(cacheDir() + QStringLiteral("/ranges/"))
+                        && !mediaChunkCache()->isCompleteFile(path)))
                     return {};
                 return FileSharingResponder::ServedFile { path, authorized };
             }

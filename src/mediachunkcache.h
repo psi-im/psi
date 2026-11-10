@@ -25,6 +25,7 @@ public:
 
     explicit MediaChunkCache(QString directory, QObject *parent = nullptr, quint64 chunkSize = 4 * 1024 * 1024,
                              quint64 diskLimit = 256 * 1024 * 1024, MediaChunkStore::Hasher hasher = { });
+    explicit MediaChunkCache(MediaChunkStore *store, QObject *parent = nullptr, quint64 chunkSize = 4 * 1024 * 1024);
     ~MediaChunkCache() override;
 
     // Return at most length bytes, bounded by the current chunk and EOF.
@@ -36,7 +37,7 @@ public:
     void    shutdown();
     quint64 diskBytes() const;
     quint64 chunkSize() const { return chunkSize_; }
-    // Persisted downloaded ranges, including bytes restored after a restart.
+    // Available ranges. Durable checkpoints are coalesced and restored after restart.
     // Hashes are verified when their complete span becomes available.
     using Ranges = QList<QPair<quint64, quint64>>; // offset, length
     Ranges         cachedRanges(const QString &source, quint64 fileSize) const;
@@ -83,7 +84,7 @@ private:
     MediaChunkScheduler              scheduler_;
     QCache<QString, QByteArray>      memory_;
     QHash<quint64, Request>          requests_;
-    std::unique_ptr<MediaChunkStore> store_;
+    MediaChunkStore                 *store_;
 };
 
 // A 64 KiB consumer buffer and a bounded window of lookahead within the

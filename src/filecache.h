@@ -32,6 +32,7 @@
 #include <optional>
 
 class FileCache;
+class MediaChunkStore;
 class QTimer;
 
 class FileCacheItem : public QObject {
@@ -129,7 +130,11 @@ public:
     inline void         setMemoryCacheSize(unsigned int size) { _memoryCacheSize = size; }
     inline unsigned int memoryCacheSize() const { return _memoryCacheSize; }
 
-    inline void         setFileCacheSize(unsigned int size) { _fileCacheSize = size; }
+    inline void setFileCacheSize(unsigned int size)
+    {
+        _fileCacheSize = size;
+        lazySync();
+    }
     inline unsigned int fileCacheSize() const { return _fileCacheSize; }
 
     inline void         setDefaultMaxAge(unsigned int maxAge) { _defaultMaxAge = maxAge; }
@@ -179,6 +184,9 @@ public:
     // Commit one payload and its ownership before a durable publication names
     // its path. Does not trigger a quota sweep.
     bool           persist(const XMPP::Hash &id);
+    // Private range backend used by the transitional chunk-cache adapter.
+    // Shares the profile database, retirement protocol and this partition's quota.
+    MediaChunkStore *rangeStore();
     void           sync(bool finishSession);
 
 protected:
@@ -213,6 +221,7 @@ private:
     QTimer                            *_syncTimer;
 
     bool _inTransaction = false;
+    MediaChunkStore *_rangeStore    = nullptr;
 };
 
 #endif // FILECACHE_H

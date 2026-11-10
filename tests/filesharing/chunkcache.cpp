@@ -356,6 +356,8 @@ private slots:
         QCOMPARE(raw, pattern(0, 128)); // Payload has no private container header.
         QVERIFY(file.seek(75));
         QCOMPARE(file.write("bad", 3), qint64(3));
+        QVERIFY(file.flush());
+        QVERIFY(file.setFileTime(QDateTime::currentDateTime().addSecs(2), QFileDevice::FileModificationTime));
         file.close();
         {
             MediaChunkCache cache(dir.path(), nullptr, 128);

@@ -5,7 +5,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(QT_DEFAULT_MAJOR_VERSION 6 CACHE STRING "Qt major version")
     enable_testing()
 endif()
-find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Test)
+find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Core Test Sql)
 add_executable(filesharing_oob_media_policy_test oobmedia.cpp)
 set_target_properties(filesharing_oob_media_policy_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_oob_media_policy_test PRIVATE ../../src)
@@ -16,10 +16,10 @@ set_target_properties(filesharing_download_policy_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_download_policy_test PRIVATE ../../src)
 target_link_libraries(filesharing_download_policy_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Core Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME filesharing_download_policy COMMAND filesharing_download_policy_test)
-add_executable(filesharing_file_store_test filestore.cpp ../../src/mediachunkstore.cpp)
+add_executable(filesharing_file_store_test filestore.cpp rangedatabase.cpp ../../src/filedatabase.cpp ../../src/mediachunkstore.cpp)
 set_target_properties(filesharing_file_store_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_file_store_test PRIVATE ../../src)
-target_link_libraries(filesharing_file_store_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+target_link_libraries(filesharing_file_store_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
 add_test(NAME filesharing_file_store COMMAND filesharing_file_store_test)
 set_tests_properties(filesharing_file_store PROPERTIES TIMEOUT 30)
 add_executable(filesharing_http_test httpranges.cpp ../../src/httputil.cpp)
@@ -34,10 +34,10 @@ target_include_directories(filesharing_chunk_scheduler_test PRIVATE ../../src)
 target_link_libraries(filesharing_chunk_scheduler_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME filesharing_chunk_scheduler COMMAND filesharing_chunk_scheduler_test)
 set_tests_properties(filesharing_chunk_scheduler PROPERTIES TIMEOUT 30)
-add_executable(filesharing_chunk_cache_test chunkcache.cpp ../../src/mediachunkcallback.cpp ../../src/mediachunkcache.cpp ../../src/mediachunkstore.cpp ../../src/mediachunkscheduler.cpp)
+add_executable(filesharing_chunk_cache_test chunkcache.cpp rangedatabase.cpp ../../src/filedatabase.cpp ../../src/mediachunkcallback.cpp ../../src/mediachunkcache.cpp ../../src/mediachunkstore.cpp ../../src/mediachunkscheduler.cpp)
 set_target_properties(filesharing_chunk_cache_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_chunk_cache_test PRIVATE ../../src)
-target_link_libraries(filesharing_chunk_cache_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+target_link_libraries(filesharing_chunk_cache_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
 add_test(NAME filesharing_chunk_cache COMMAND filesharing_chunk_cache_test)
 set_tests_properties(filesharing_chunk_cache PROPERTIES TIMEOUT 30)
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Widgets)
@@ -135,7 +135,7 @@ if(TARGET iris)
     set_tests_properties(filesharing_responder PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 77)
 
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Gui Xml)
-    add_executable(filesharing_bob_cache_test bobcache.cpp ../../src/bobfilecache.cpp ../../src/filecache.cpp
+    add_executable(filesharing_bob_cache_test bobcache.cpp ../../src/bobfilecache.cpp ../../src/filecache.cpp ../../src/mediachunkstore.cpp
         ../../src/filedatabase.cpp
         ../../src/tools/optionstree/optionstree.cpp ../../src/tools/optionstree/optionstreereader.cpp
         ../../src/tools/optionstree/optionstreewriter.cpp ../../src/tools/optionstree/varianttree.cpp
@@ -147,7 +147,7 @@ if(TARGET iris)
     add_test(NAME filesharing_bob_cache COMMAND filesharing_bob_cache_test)
     set_tests_properties(filesharing_bob_cache PROPERTIES TIMEOUT 30)
 
-    add_executable(filesharing_file_cache_test filecache.cpp ../../src/filecache.cpp ../../src/filedatabase.cpp
+    add_executable(filesharing_file_cache_test filecache.cpp ../../src/filecache.cpp ../../src/filedatabase.cpp ../../src/mediachunkstore.cpp
         ../../src/tools/optionstree/optionstree.cpp ../../src/tools/optionstree/optionstreereader.cpp
         ../../src/tools/optionstree/optionstreewriter.cpp ../../src/tools/optionstree/varianttree.cpp
         ../../src/tools/atomicxmlfile/atomicxmlfile.cpp)

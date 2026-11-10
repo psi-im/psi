@@ -23,9 +23,9 @@
 #include "filedatabase.h"
 #include "fileutil.h"
 #include "iris/xmpp_hash.h"
+#include "mediachunkstore.h"
 #include "optionstree.h"
 
-#include <QDataStream>
 #include <QDebug>
 #include <QDir>
 #include <QPointer>
@@ -139,36 +139,11 @@ bool FileCacheItem::isDeletable() const
 // FileCache
 //------------------------------------------------------------------------------
 namespace {
-QByteArray encodeMetadata(const QVariantMap &metadata)
-{
-    QByteArray  bytes;
-    QDataStream stream(&bytes, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_5_15); // One profile may be used by Qt 5 and Qt 6 builds.
-    stream << metadata;
-    return bytes;
-}
-
-QVariantMap decodeMetadata(const QByteArray &bytes)
-{
-    QVariantMap metadata;
-    QDataStream stream(bytes);
-    stream.setVersion(QDataStream::Qt_5_15);
-    stream >> metadata;
-    return metadata;
-}
-
 QString legacyFileName(QList<XMPP::Hash> sums, const QVariantMap &metadata)
 {
     std::sort(sums.begin(), sums.end(), [](const auto &a, const auto &b) { return int(a.type()) < int(b.type()); });
     const auto ext = FileUtil::mimeToFileExt(metadata.value(QStringLiteral("type")).toString());
     return QString::fromLatin1(sums.value(0).toHex()) + (ext.isEmpty() ? QString() : QLatin1Char('.') + ext);
-}
-
-bool safePayloadName(const QString &name)
-{
-    return !name.isEmpty() && name != QLatin1String(".") && name != QLatin1String("..")
-        && !name.contains(QLatin1Char('/')) && !name.contains(QLatin1Char('\\')) && !name.contains(QLatin1Char(':'))
-        && !name.contains(QChar(0));
 }
 }
 
@@ -215,9 +190,9 @@ void FileCache::load()
         const auto sums = hashes.value(id);
         if (sums.isEmpty())
             continue;
-        auto *item = new FileCacheItem(this, sums, decodeMetadata(query.value(4).toByteArray()),
-                                       QDateTime::fromMSecsSinceEpoch(query.value(2).toLongLong()),
-                                       query.value(3).toUInt(), query.value(1).toULongLong());
+        auto *item      = new FileCacheItem(this, sums, FileDatabase::decodeMetadata(query.value(4).toByteArray()),
+                                            QDateTime::fromMSecsSinceEpoch(query.value(2).toLongLong()),
+                                            query.value(3).toUInt(), query.value(1).toULongLong());
         item->_recordId = id;
         if (query.value(5).isNull()) {
             const auto link = item->_metadata.take(QStringLiteral("link")).toString();
@@ -244,7 +219,7 @@ void FileCache::load()
             }
         } else {
             item->_fileName = query.value(5).toString();
-            if (!safePayloadName(item->_fileName)) {
+            if (!FileDatabase::safePayloadName(item->_fileName)) {
                 delete item;
                 continue;
             }
@@ -388,6 +363,21 @@ FileCache::~FileCache()
     sync(true);
 }
 
+MediaChunkStore *FileCache::rangeStore()
+{
+    if (!_rangeStore) {
+        _rangeStore = new MediaChunkStore(_partition + QStringLiteral(":ranges"), _cacheDir + QStringLiteral("/ranges"),
+                                          FileDatabase::path(), _fileCacheSize, this,
+                                          [](const QString &algorithm, QIODevice *device) {
+                                              XMPP::Hash hash { QStringView(algorithm) };
+                                              return hash.compute(device) ? hash.data() : QByteArray();
+                                          });
+        connect(_rangeStore, &MediaChunkStore::availabilityChanged, this, &FileCache::lazySync);
+        lazySync();
+    }
+    return _rangeStore;
+}
+
 void FileCache::gc()
 {
     const auto                  values = _items.values();
@@ -454,7 +444,7 @@ FileCacheItem *FileCache::trackExternal(const QList<XMPP::Hash> &sums, const QFi
     if (sums.isEmpty() || path.isEmpty() || !file.isFile() || !file.isReadable() || !file.lastModified().isValid())
         return nullptr;
     const auto root = QFileInfo(_cacheDir).canonicalFilePath();
-    if (safePayloadName(QDir(root.isEmpty() ? _cacheDir : root).relativeFilePath(path))) {
+    if (FileDatabase::safePayloadName(QDir(root.isEmpty() ? _cacheDir : root).relativeFilePath(path))) {
         for (const auto &hash : sums) {
             auto existing = _items.value(hash);
             if (!existing || existing->isExternal() || QFileInfo(existing->filePath()).canonicalFilePath() != path)
@@ -512,28 +502,10 @@ void FileCache::removeItem(FileCacheItem *item, bool needSync)
 {
     auto db = FileDatabase::connection();
     if (db.isOpen()) {
-        const bool transaction = !_inTransaction;
-        if (transaction && !db.transaction())
-            return;
-        QSqlQuery query(db);
-        bool      ok = true;
-        if (!item->isExternal() && item->isOnDisk()) {
-            query.prepare(QStringLiteral("INSERT OR IGNORE INTO file_trash(partition,path) VALUES(:partition,:path)"));
-            query.bindValue(QStringLiteral(":partition"), _partition);
-            query.bindValue(QStringLiteral(":path"), item->fileName());
-            ok = query.exec();
-        }
-        query.prepare(QStringLiteral("DELETE FROM files WHERE id=:id"));
-        query.bindValue(QStringLiteral(":id"), item->_recordId);
-        ok = ok && query.exec();
-        if (transaction) {
-            if (!ok || !db.commit()) {
-                db.rollback();
-                qWarning() << "Cannot retire a cached file:" << query.lastError().text();
-                return;
-            }
-        } else if (!ok) {
-            qWarning() << "Cannot retire a cached file:" << query.lastError().text();
+        if (!FileDatabase::retireFile(db, item->_recordId, _partition,
+                                      !item->isExternal() && item->isOnDisk() ? item->fileName() : QString(),
+                                      _inTransaction)) {
+            qWarning() << "Cannot retire a cached file:" << db.lastError().text();
             return;
         }
     } else {
@@ -551,42 +523,10 @@ void FileCache::removeItem(FileCacheItem *item, bool needSync)
 
 void FileCache::drainTrash()
 {
+    if (_inTransaction)
+        return;
     auto db = FileDatabase::connection();
-    if (!db.isOpen() || _inTransaction)
-        return;
-    QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT path FROM file_trash WHERE partition=:partition"));
-    query.bindValue(QStringLiteral(":partition"), _partition);
-    if (!query.exec())
-        return;
-    QStringList paths;
-    while (query.next())
-        paths.append(query.value(0).toString());
-    query.finish();
-    if (paths.isEmpty())
-        return;
-    query.prepare(QStringLiteral("SELECT 1 FROM files WHERE partition=:partition AND path IS NULL LIMIT 1"));
-    query.bindValue(QStringLiteral(":partition"), _partition);
-    if (!query.exec() || query.next())
-        return; // An unresolved legacy row may still own any of these paths.
-    query.finish();
-    for (const auto &path : paths) {
-        if (!safePayloadName(path))
-            continue;
-        query.prepare(QStringLiteral("SELECT 1 FROM files WHERE partition=:partition AND path=:path LIMIT 1"));
-        query.bindValue(QStringLiteral(":partition"), _partition);
-        query.bindValue(QStringLiteral(":path"), path);
-        if (!query.exec() || query.next())
-            continue; // A live generation still owns it.
-        query.finish();
-        const auto absolute = _cacheDir + QLatin1Char('/') + path;
-        if (QFileInfo::exists(absolute) && !QFile::remove(absolute))
-            continue; // Sharing violations and other unlink failures are retried at startup/sync.
-        query.prepare(QStringLiteral("DELETE FROM file_trash WHERE partition=:partition AND path=:path"));
-        query.bindValue(QStringLiteral(":partition"), _partition);
-        query.bindValue(QStringLiteral(":path"), path);
-        query.exec();
-    }
+    FileDatabase::drainTrash(db, _partition, _cacheDir);
 }
 
 FileCacheItem *FileCache::get(const XMPP::Hash &id, bool reborn)
@@ -698,8 +638,10 @@ void FileCache::sync(bool finishSession)
         memorySize -= quint64(before - item->_data.size());
     }
     std::sort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
+    const quint64 rangeBytes     = _rangeStore ? _rangeStore->diskBytes() : 0;
+    const quint64 completeBudget = rangeBytes >= _fileCacheSize ? 0 : _fileCacheSize - rangeBytes;
     for (auto item : std::as_const(onDiskItems)) {
-        if (diskSize <= _fileCacheSize)
+        if (diskSize <= completeBudget)
             break;
         if (!item->isDeletable())
             continue;
@@ -723,6 +665,8 @@ void FileCache::sync(bool finishSession)
         }
     }
     drainTrash();
+    if (_rangeStore)
+        _rangeStore->setDiskLimit(diskSize >= _fileCacheSize ? 0 : _fileCacheSize - diskSize);
 }
 
 bool FileCache::toRegistry(FileCacheItem *item)
@@ -751,7 +695,7 @@ bool FileCache::toRegistry(FileCacheItem *item)
     query.bindValue(QStringLiteral(":size"), qlonglong(item->size()));
     query.bindValue(QStringLiteral(":created"), item->created().toMSecsSinceEpoch());
     query.bindValue(QStringLiteral(":max_age"), qlonglong(item->maxAge()));
-    query.bindValue(QStringLiteral(":metadata"), encodeMetadata(item->metadata()));
+    query.bindValue(QStringLiteral(":metadata"), FileDatabase::encodeMetadata(item->metadata()));
     query.bindValue(QStringLiteral(":path"), item->isExternal() ? item->_externalPath : item->fileName());
     query.bindValue(QStringLiteral(":placement"), item->isExternal() ? 1 : 0);
     query.bindValue(QStringLiteral(":modified"),

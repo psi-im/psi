@@ -596,7 +596,7 @@ private slots:
         QCOMPARE(query.value(0).toInt(), 1);
         QVERIFY(query.exec("PRAGMA user_version"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 3);
+        QCOMPARE(query.value(0).toInt(), 4);
         QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
     }
 

@@ -977,11 +977,11 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
   account from before that list, by its own JID among the peers plus a local copy. `url_content`
   moves as it is. Everything else is dropped in favour of history refs. A remote descriptor never
   becomes serving by migration. The import runs once per profile, after the accounts are loaded.
-- **Payloads from `shares/` and `media-files-v2`** are adopted by the first profile that opens
-  them, using validated paths, sizes, ranges and hashes and renaming rather than copying.
-  Adoption is recorded before old metadata is dropped, so the import is idempotent. Published
-  managed payloads are copied, as another profile may need them; everything else is refetchable.
-  Unresolved entries are quarantined for a bounded time, not trusted and not deleted blindly.
+- **Complete payloads from `shares/`** keep their per-profile XML import and shared-directory
+  retirement gate. **`media-files-v2` JSON sidecars and payloads are ignored.** They existed only
+  in unreleased builds and are refetchable. There is no adoption or sidecar migration. New SQL
+  range generations use fresh paths under the profile's `shares/ranges`; old paths are never
+  treated as available or overwritten as a migration shortcut.
 - **Avatars and BoB** keep working through the complete-item API. Their rows join `files.sqlite`
   under their own partitions. Each profile imports the old `cache.xml` once, copying these small
   files. Files are not deduplicated between partitions.
@@ -1029,12 +1029,15 @@ flowchart LR
    rollback, both directions, account and conversation isolation, history, search and reply
    adapters, no XEP-0424 stanza.
 4. **One file store.** In two reviewable parts:
-   1. **Placement and retirement.** Explicit managed/external placement, unique payload generations,
+   1. **Placement and retirement.** *Delivered in #1117.* Explicit managed/external placement, unique payload generations,
       commit-before-unlink trash, real empty files and removal of runtime `link` metadata.
       [Implementation and compatibility](file-cache-placement.md).
-   2. **Range storage and accounting.** Range tables and worker in `FileCache`, single quota, RAM tier,
-      and `media-files-v2` migration. `MediaChunkCache` temporarily sits on the file
-      API, so consumers do not change. *Test:* empty and unknown-size files, restart at each commit
+   2. **Range storage and disk accounting.** SQL range/checksum checkpoints, a worker owned by
+      `FileCache`, shared disk budget and retirement helpers. Old `media-files-v2` is ignored.
+      `MediaChunkCache` temporarily keeps its reader/scheduler interface, so consumers do not change.
+      [Implementation and compatibility](file-cache-ranges.md). A single RAM tier, unknown-size
+      resources and transport-finalization evidence remain access-layer work.
+      *Test:* empty files, restart at each commit
       boundary, damaged payloads, withdraw before overwrite, quotas, in-place files outside the quota,
       no rehash at start, trash retry, memory and I/O bounds.
 5. **Access layer and player.** `FileDownload`, `FileShareTransport`, `FileReader`; proxies, save

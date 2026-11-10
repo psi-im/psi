@@ -6,8 +6,10 @@
 #include <functional>
 #include <memory>
 
-// One payload file and one atomic JSON sidecar per immutable, account-scoped
-// resource. Disk access, range merging and checksum verification run on a worker.
+class FileCache;
+
+// Range-I/O backend owned by FileCache. Payload ownership, ranges and checksums
+// live in files.sqlite; payload I/O and checkpoints run on its private thread.
 class MediaChunkStore : public QObject {
     Q_OBJECT
 public:
@@ -26,12 +28,19 @@ public:
     quint64        diskBytes() const;
     MediaFileState state(const QString &key) const;
     bool           contains(const QString &key, quint64 offset, quint64 length) const;
+    bool           isCompleteFile(const QString &path) const;
+    void           setDiskLimit(quint64 limit);
+    // Force a checkpoint, for pause/close and before publishing a payload path.
+    void checkpoint(Completion done = {});
 
 signals:
     void availabilityChanged();
     void fileChanged(const QString &key);
 
 private:
+    friend class FileCache;
+    MediaChunkStore(QString partition, QString directory, QString databasePath, quint64 diskLimit, QObject *parent,
+                    Hasher hasher);
     class Private;
     std::unique_ptr<Private> d;
 };
