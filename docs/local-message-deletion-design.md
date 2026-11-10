@@ -1021,18 +1021,22 @@ flowchart LR
       union, deleted source gone, nothing served without an explicit decision.
    2. *Delivered in #1100, incorporating #1101.* SFS descriptors in `MessageFileShares` and `HistoryMessageExtras`. *Test:* SFS
       through history and catalog, and the no-hash and `disposition='attachment'` rules.
-3. **Local deletion.** *Delivered by this branch.* Suppression, ingress checks, explicit hidden
+3. **Local deletion.** *Delivered in #1086.* Suppression, ingress checks, explicit hidden
    `HistorySync` positions, the delete transaction, publication reconciliation, and the
    *Delete locally* action keeping bytes. The cleanup outbox is deferred to stage 6 because
    the existing orphan sweep already recovers publication release after a crash.
    *Test:* correction before original, future corrections, new archive UIDs, ambiguous IDs, restart,
    rollback, both directions, account and conversation isolation, history, search and reply
    adapters, no XEP-0424 stanza.
-4. **One file store.** Range tables and worker in `FileCache`, placement, single quota, RAM tier,
-   trash, `media-files-v2` migration, `link` removed. `MediaChunkCache` temporarily sits on the file
-   API, so consumers do not change. *Test:* empty and unknown-size files, restart at each commit
-   boundary, damaged payloads, withdraw before overwrite, quotas, in-place files outside the quota,
-   no rehash at start, trash retry, memory and I/O bounds.
+4. **One file store.** In two reviewable parts:
+   1. **Placement and retirement.** Explicit managed/external placement, unique payload generations,
+      commit-before-unlink trash, real empty files and removal of runtime `link` metadata.
+      [Implementation and compatibility](file-cache-placement.md).
+   2. **Range storage and accounting.** Range tables and worker in `FileCache`, single quota, RAM tier,
+      and `media-files-v2` migration. `MediaChunkCache` temporarily sits on the file
+      API, so consumers do not change. *Test:* empty and unknown-size files, restart at each commit
+      boundary, damaged payloads, withdraw before overwrite, quotas, in-place files outside the quota,
+      no rehash at start, trash retry, memory and I/O bounds.
 5. **Access layer and player.** `FileDownload`, `FileShareTransport`, `FileReader`; proxies, save
    and responder as clients; several-source rules; deduplication at finalize; large-file
    destinations; qite contract; playback source choice; external player tracking. Remove

@@ -47,10 +47,10 @@ class FileSharingItem : public QObject {
 
 public:
     enum class FileType : char {
-        RemoteFile, // not yet downloaded
-        LocalLink,  // an unmanager by cache local file
-        TempFile,   // a temporary file supposed to be eventually moved to the cache
-        LocalFile   // cached local file
+        RemoteFile,   // not yet downloaded
+        ExternalFile, // a local original whose bytes are not owned by the cache
+        TempFile,     // a temporary file supposed to be eventually moved to the cache
+        LocalFile     // cached local file
     };
 
     using HashSums = QList<XMPP::Hash>;
@@ -143,7 +143,7 @@ private:
     QDateTime                    _modifyTime; // utc
     QStringList                  _uris;
     QString                      _fileName; // file name with path
-    QString                      _urlDisplayName; // original filename, even after caching by content hash
+    QString                          _displayName; // display name, independent of physical cache placement
     HashSums                     _sums;
     QString                      _mimeType;
     QString                      _description;

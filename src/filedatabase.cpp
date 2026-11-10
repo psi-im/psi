@@ -12,7 +12,7 @@
 #include <QSqlQuery>
 
 namespace {
-const int SchemaVersion = 2;
+const int SchemaVersion = 3;
 
 // What each schema version adds to the one before it.
 const QList<QStringList> &schemaUpgrades()
@@ -40,7 +40,12 @@ const QList<QStringList> &schemaUpgrades()
           "position INTEGER NOT NULL, uri TEXT NOT NULL, PRIMARY KEY(publication_id, position))",
           "CREATE TABLE url_content ("
           "account TEXT NOT NULL, url_key TEXT NOT NULL, content_hash TEXT NOT NULL, updated INTEGER NOT NULL, "
-          "PRIMARY KEY(account, url_key))" }
+          "PRIMARY KEY(account, url_key))" },
+        { "ALTER TABLE files ADD COLUMN path TEXT", "ALTER TABLE files ADD COLUMN placement INTEGER NOT NULL DEFAULT 0",
+          "ALTER TABLE files ADD COLUMN external_mtime INTEGER",
+          "DROP INDEX IF EXISTS files_partition", "CREATE INDEX files_partition_path ON files(partition,path)",
+          "CREATE TABLE file_trash (partition TEXT NOT NULL, path TEXT NOT NULL, "
+          "PRIMARY KEY(partition,path))" }
     };
     return upgrades;
 }

@@ -619,6 +619,8 @@ public:
         md.insert(QLatin1String("type"), metaType);
         md.insert(QLatin1String("jids"), QStringList() << typedJid(iconType, jid));
         FileCacheItem *item = append(XMPP::Hash { XMPP::Hash::Sha1, hash }, newData, md, 7 * 24 * 3600); // a week
+        if (!item)
+            return NoData;
 
         if (iconType == CustomType) {
             item->setUndeletable();

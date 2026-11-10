@@ -78,10 +78,9 @@ public:
     MediaChunkCache          *mediaChunkCache();
     FileSharingJingleSession *jingleMediaSessions(PsiAccount *account);
     FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
+    FileCacheItem *trackExternal(const QList<XMPP::Hash> &sums, const QFileInfo &file, const QVariantMap &metadata,
+                                 unsigned int maxAge);
     FileCacheItem *cacheItem(const XMPP::Hash &id, bool reborn = false, QString *fileName = nullptr);
-    // id - usually hex(sha1(image data))
-    FileCacheItem *saveToCache(const QList<XMPP::Hash> &sums, const QByteArray &data, const QVariantMap &metadata,
-                               unsigned int maxAge);
     FileCacheItem *moveToCache(const QList<XMPP::Hash> &sums, const QFileInfo &data, const QVariantMap &metadata,
                                unsigned int maxAge);
     std::optional<XMPP::Hash> contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const;

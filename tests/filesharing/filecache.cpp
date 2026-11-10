@@ -5,6 +5,7 @@
 #include "filedatabase.h"
 #include "fileutil.h"
 #include "optionstree.h"
+#include <QDataStream>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -82,7 +83,7 @@ class FileCacheTest : public QObject {
     std::unique_ptr<QTemporaryDir> dir;
 
     std::unique_ptr<FileCache> open() const { return std::make_unique<FileCache>(partitionName, dir->path()); }
-    QString payloadPath(const Hash &hash) const { return dir->filePath(QString::fromLatin1(hash.toHex())); }
+    QString legacyPayloadPath(const Hash &hash) const { return dir->filePath(QString::fromLatin1(hash.toHex())); }
 
 private slots:
     void init()
@@ -108,20 +109,20 @@ private slots:
         QCOMPARE(item->metadata().value(QStringLiteral("type")).toString(), QStringLiteral("image/png"));
     }
 
-    void emptyItemHasNoPayload()
+    void emptyItemHasARealPayload()
     {
         auto       cache = open();
-        const auto hash  = hashOf("reference only");
-        cache->append(hash, {}, { { QStringLiteral("link"), QStringLiteral("/somewhere/else") } });
+        const auto hash  = hashOf({});
+        const auto path  = cache->append(hash, {})->filePath();
         cache->sync();
         QVERIFY(cache->get(hash)->isOnDisk());
-        QVERIFY(!QFile::exists(payloadPath(hash)));
+        QVERIFY(QFile::exists(path));
+        QCOMPARE(QFileInfo(path).size(), qint64(0));
         QVERIFY(cache->get(hash)->data().isEmpty());
         cache.reset();
         cache = open();
         QVERIFY(cache->get(hash));
-        QCOMPARE(cache->get(hash)->metadata().value(QStringLiteral("link")).toString(),
-                 QStringLiteral("/somewhere/else"));
+        QCOMPARE(cache->get(hash)->filePath(), path);
     }
 
     void itemsSurviveRestart()
@@ -169,12 +170,12 @@ private slots:
         const auto       hash = hashOf(bytes);
         {
             auto cache = open();
-            cache->append(hash, bytes);
+            const auto path  = cache->append(hash, bytes)->filePath();
             cache->sync();
-            QVERIFY(QFile::exists(payloadPath(hash)));
+            QVERIFY(QFile::exists(path));
             cache->remove(hash);
             QVERIFY(!cache->get(hash));
-            QVERIFY(!QFile::exists(payloadPath(hash)));
+            QVERIFY(!QFile::exists(path));
         }
         QVERIFY(!open()->get(hash));
     }
@@ -212,6 +213,401 @@ private slots:
         }
         auto cache = open();
         QCOMPARE(cache->get(hash)->metadata().value(QStringLiteral("generation")).toInt(), 2);
+    }
+
+    void replacementUsesANewPayloadGeneration()
+    {
+        const QByteArray bytes("same content, new generation");
+        const auto       hash  = hashOf(bytes);
+        auto             cache = open();
+        const auto       old   = cache->append(hash, bytes)->filePath();
+        cache->sync();
+        const auto current = cache->append(hash, bytes)->filePath();
+        QVERIFY(current != old);
+        cache->sync();
+        QCOMPARE(recordCount(), 1);
+        QVERIFY(!QFileInfo::exists(old));
+        QSqlQuery query(FileDatabase::connection());
+        query.prepare("INSERT INTO file_trash(partition,path) VALUES(?,?)");
+        query.addBindValue(partitionName);
+        query.addBindValue(QFileInfo(old).fileName());
+        QVERIFY(query.exec());
+        cache->sync();
+        QVERIFY(QFileInfo::exists(current));
+        QCOMPARE(cache->getData(hash), bytes);
+    }
+
+    void publishingCanPersistOwnershipWithoutEvictingItsPayload()
+    {
+        auto cache = open();
+        cache->setFileCacheSize(0);
+        const QByteArray bytes("payload being published");
+        const auto       hash = hashOf(bytes);
+        auto             item = cache->append(hash, bytes);
+        const auto       path = item->filePath();
+        QVERIFY(cache->persist(hash));
+        QVERIFY(item->isRegistered());
+        QVERIFY(QFileInfo::exists(path));
+        // A separate connection sees the committed owner before the catalog
+        // writes its own publication transaction.
+        {
+            auto reader = QSqlDatabase::addDatabase("QSQLITE", "publication-owner-proof");
+            reader.setDatabaseName(dir->filePath("files.sqlite"));
+            QVERIFY(reader.open());
+            QSqlQuery query(reader);
+            QVERIFY(query.exec("SELECT COUNT(*) FROM files"));
+            QVERIFY(query.next());
+            QCOMPARE(query.value(0).toInt(), 1);
+            query.finish();
+            reader.close();
+        }
+        QSqlDatabase::removeDatabase("publication-owner-proof");
+        QCOMPARE(item->data(), bytes);
+    }
+
+    void aliasesCountOnceForMemoryAndDiskLimits()
+    {
+        const QByteArray  bytes(100, 'a');
+        const QList<Hash> sums { hashOf(bytes), Hash::from(Hash::Sha256, bytes) };
+        auto              cache = open();
+        cache->setFileCacheSize(150);
+        cache->setMemoryCacheSize(150);
+        auto item = cache->append(sums, bytes);
+        cache->sync();
+        QCOMPARE(cache->get(sums.first()), item);
+        QCOMPARE(cache->get(sums.last()), item);
+        QVERIFY(item->inMemory());
+        QCOMPARE(recordCount(), 1);
+    }
+
+    void externalOriginalSurvivesQuotaRemovalAndRestart()
+    {
+        QTemporaryDir    originalDirectory;
+        const auto       path = originalDirectory.filePath("original.bin");
+        const QByteArray bytes("original bytes");
+        {
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            QCOMPARE(file.write(bytes), qint64(bytes.size()));
+        }
+        const QList<Hash> sums { hashOf(bytes) };
+        {
+            auto cache = open();
+            cache->setFileCacheSize(0);
+            auto item = cache->trackExternal(sums, QFileInfo(path));
+            QVERIFY(item);
+            QVERIFY(item->isExternal());
+            QCOMPARE(item->filePath(), path);
+            QCOMPARE(item->size(), quint64(bytes.size()));
+            cache->sync();
+            QVERIFY(cache->get(sums.first()));
+        }
+        auto cache = open();
+        auto item  = cache->get(sums.first());
+        QVERIFY(item);
+        QVERIFY(item->isExternal());
+        QCOMPARE(item->filePath(), path);
+        QCOMPARE(item->data(), bytes);
+        cache->remove(sums.first());
+        QVERIFY(!cache->get(sums.first()));
+        QVERIFY(QFileInfo::exists(path));
+    }
+
+    void changedExternalOriginalIsUnboundWithoutDeletingIt()
+    {
+        QTemporaryDir originalDirectory;
+        const auto    path = originalDirectory.filePath("original.bin");
+        {
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("before");
+        }
+        const auto hash  = hashOf("before");
+        auto       cache = open();
+        QVERIFY(cache->trackExternal({ hash }, QFileInfo(path)));
+        cache->sync();
+        {
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("different bytes");
+        }
+        QVERIFY(!cache->get(hash));
+        QCOMPARE(recordCount(), 0);
+        QVERIFY(QFileInfo::exists(path));
+    }
+
+    void externalTrackingKeepsExistingManagedOwnership()
+    {
+        auto             cache = open();
+        const QByteArray bytes("already managed");
+        const auto       hash = hashOf(bytes);
+        auto             item = cache->append(hash, bytes);
+        cache->sync();
+        const auto path = item->filePath();
+        QCOMPARE(cache->trackExternal({ hash }, QFileInfo(path)), item);
+        QVERIFY(!item->isExternal());
+        QVERIFY(QFileInfo::exists(path));
+        QCOMPARE(item->data(), bytes);
+    }
+
+    void movingAnExistingManagedFileCreatesANewGeneration()
+    {
+        auto             cache = open();
+        const QByteArray bytes("move existing generation");
+        const auto       hash = hashOf(bytes);
+        const auto       old  = cache->append(hash, bytes)->filePath();
+        cache->sync();
+        auto item = cache->moveToCache(hash, QFileInfo(old));
+        QVERIFY(item);
+        QVERIFY(item->filePath() != old);
+        cache->sync();
+        QVERIFY(!QFileInfo::exists(old));
+        QCOMPARE(item->data(), bytes);
+        QCOMPARE(recordCount(), 1);
+    }
+
+    void retirementFailurePreservesTheRecordAndPayload()
+    {
+        const QByteArray bytes("retirement rollback");
+        const auto       hash  = hashOf(bytes);
+        auto             cache = open();
+        const auto       path  = cache->append(hash, bytes)->filePath();
+        cache->sync();
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("CREATE TRIGGER fail_retire BEFORE DELETE ON files BEGIN SELECT RAISE(ABORT,'test'); END"));
+        cache->remove(hash);
+        QVERIFY(cache->get(hash));
+        QVERIFY(QFileInfo::exists(path));
+        QCOMPARE(recordCount(), 1);
+        QVERIFY(query.exec("SELECT COUNT(*) FROM file_trash"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 0);
+        query.finish();
+        QVERIFY(query.exec("DROP TRIGGER fail_retire"));
+        cache->remove(hash);
+        QVERIFY(!cache->get(hash));
+        QVERIFY(!QFileInfo::exists(path));
+    }
+
+    void failedRegistrationCanBeRetried()
+    {
+        auto      cache = open();
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(
+            query.exec("CREATE TRIGGER fail_register BEFORE INSERT ON files BEGIN SELECT RAISE(ABORT,'test'); END"));
+        const QByteArray bytes("retry registration");
+        auto             item = cache->append(hashOf(bytes), bytes);
+        cache->sync();
+        QVERIFY(item->isOnDisk());
+        QVERIFY(!item->isRegistered());
+        QCOMPARE(recordCount(), 0);
+        QCOMPARE(item->data(), bytes);
+        QVERIFY(query.exec("DROP TRIGGER fail_register"));
+        QTRY_VERIFY_WITH_TIMEOUT(item->isRegistered(), 6500);
+        QCOMPARE(recordCount(), 1);
+    }
+
+    void failedPayloadWriteKeepsTheOnlyCopyInMemory()
+    {
+        auto cache = open();
+        cache->setMemoryCacheSize(0);
+        const QByteArray bytes("unsaved payload");
+        auto             item = cache->append(hashOf(bytes), bytes);
+        const auto       path = item->filePath();
+        QVERIFY(QDir().mkpath(path));
+        cache->sync();
+        QVERIFY(!item->isOnDisk());
+        QVERIFY(!item->isRegistered());
+        QVERIFY(item->inMemory());
+        QCOMPARE(item->data(), bytes);
+        QCOMPARE(recordCount(), 0);
+        QVERIFY(QDir().rmdir(path));
+        cache->sync();
+        QVERIFY(item->isOnDisk());
+        QVERIFY(item->isRegistered());
+        QVERIFY(!item->inMemory());
+        QCOMPARE(item->data(), bytes);
+        QVERIFY(!item->inMemory()); // A read larger than the RAM limit does not pin a second copy.
+    }
+
+    void damagedManagedPayloadIsNotReturnedAsACacheHit()
+    {
+        auto             cache = open();
+        const QByteArray bytes("expected complete payload");
+        const auto       hash = hashOf(bytes);
+        const auto       path = cache->append(hash, bytes)->filePath();
+        cache->sync();
+        {
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("truncated");
+        }
+        QVERIFY(!cache->get(hash));
+        QCOMPARE(recordCount(), 0);
+    }
+
+    void sqlitePathsMigrateWithoutMovingManagedPayloads()
+    {
+        const QByteArray bytes("old SQLite payload");
+        const auto       hash       = hashOf(bytes);
+        const auto       legacyPath = legacyPayloadPath(hash);
+        {
+            QFile file(legacyPath);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(bytes);
+        }
+        QTemporaryDir originals;
+        const auto    original = originals.filePath("original");
+        {
+            QFile file(original);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("changed original");
+        }
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", "pre-placement-schema");
+            db.setDatabaseName(dir->filePath("files.sqlite"));
+            QVERIFY(db.open());
+            QSqlQuery query(db);
+            QVERIFY(query.exec("CREATE TABLE files(id BLOB PRIMARY KEY,partition TEXT NOT NULL,size INTEGER NOT NULL,"
+                               "created INTEGER NOT NULL,max_age INTEGER NOT NULL,metadata BLOB NOT NULL)"));
+            QVERIFY(query.exec("CREATE TABLE file_hashes(file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE,"
+                               "position INTEGER NOT NULL,algorithm TEXT NOT NULL,digest BLOB NOT NULL,"
+                               "PRIMARY KEY(file_id,position))"));
+            QVERIFY(query.exec("PRAGMA user_version=2"));
+            for (int index = 1; index <= 2; ++index) {
+                QVariantMap metadata;
+                if (index == 2)
+                    metadata.insert("link", original);
+                QByteArray  encoded;
+                QDataStream stream(&encoded, QIODevice::WriteOnly);
+                stream.setVersion(QDataStream::Qt_5_15);
+                stream << metadata;
+                const auto sum = index == 1 ? hash : hashOf("old original");
+                const auto id  = QByteArray(16, char(index));
+                query.prepare("INSERT INTO files VALUES(?,?,?,?,?,?)");
+                query.addBindValue(id);
+                query.addBindValue(partitionName);
+                query.addBindValue(index == 1 ? bytes.size() : 0);
+                query.addBindValue(QDateTime::currentMSecsSinceEpoch());
+                query.addBindValue(qlonglong(FileCache::Forever));
+                query.addBindValue(encoded);
+                QVERIFY(query.exec());
+                query.prepare("INSERT INTO file_hashes VALUES(?,?,?,?)");
+                query.addBindValue(id);
+                query.addBindValue(0);
+                query.addBindValue(sum.stringType());
+                query.addBindValue(sum.data());
+                QVERIFY(query.exec());
+            }
+            db.close();
+        }
+        QSqlDatabase::removeDatabase("pre-placement-schema");
+        auto cache = open();
+        auto item  = cache->get(hash);
+        QVERIFY(item);
+        QCOMPARE(item->filePath(), legacyPath);
+        QCOMPARE(item->data(), bytes);
+        {
+            QSqlQuery stamp(FileDatabase::connection());
+            QVERIFY(stamp.exec("SELECT external_mtime FROM files WHERE placement=1"));
+            QVERIFY(stamp.next());
+            QVERIFY(stamp.value(0).isNull()); // Unknown is distinct from a valid timestamp at the Unix epoch.
+        }
+        QVERIFY(!cache->get(hashOf("old original"))); // No stamp existed to prove the old original is unchanged.
+        QVERIFY(QFileInfo::exists(original));
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("SELECT path,placement FROM files"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toString(), QFileInfo(legacyPath).fileName());
+        QCOMPARE(query.value(1).toInt(), 0);
+        QVERIFY(!query.next());
+        query.finish();
+        cache->remove(hash);
+        QVERIFY(!QFileInfo::exists(legacyPath));
+        QVERIFY(QFileInfo::exists(original));
+    }
+
+    void failedUnlinkRemainsInTrashUntilItCanBeRemoved()
+    {
+        const QByteArray bytes("deferred removal");
+        const auto       hash  = hashOf(bytes);
+        auto             cache = open();
+        const auto       path  = cache->append(hash, bytes)->filePath();
+        cache->sync();
+        QVERIFY(QFile::remove(path));
+        QVERIFY(QDir().mkpath(path)); // Portable unlink failure: a file became a non-empty directory.
+        {
+            QFile child(path + "/in-use");
+            QVERIFY(child.open(QIODevice::WriteOnly));
+            child.write("busy");
+        }
+        cache->remove(hash);
+        QVERIFY(!cache->get(hash));
+        QCOMPARE(recordCount(), 0);
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("SELECT COUNT(*) FROM file_trash"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 1);
+        query.finish();
+        QVERIFY(QDir(path).removeRecursively());
+        cache.reset();
+        cache = open();
+        QVERIFY(query.exec("SELECT COUNT(*) FROM file_trash"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 0);
+    }
+
+    void trashCannotRemoveALiveGenerationOrEscapeTheRoot()
+    {
+        QTemporaryDir external;
+        const auto    original = external.filePath("original");
+        {
+            QFile file(original);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("original");
+        }
+        auto             cache = open();
+        const QByteArray bytes("live generation");
+        const auto       path = cache->append(hashOf(bytes), bytes)->filePath();
+        cache->sync();
+        QSqlQuery query(FileDatabase::connection());
+        for (const auto &entry : { QFileInfo(path).fileName(), original, QString("../outside") }) {
+            query.prepare("INSERT INTO file_trash(partition,path) VALUES(?,?)");
+            query.addBindValue(partitionName);
+            query.addBindValue(entry);
+            QVERIFY(query.exec());
+        }
+        cache->sync();
+        QVERIFY(QFileInfo::exists(path));
+        QVERIFY(QFileInfo::exists(original));
+        QCOMPARE(cache->getData(hashOf(bytes)), bytes);
+    }
+
+    void renewalWritesOnlyAfterHalfTheLifetime()
+    {
+        auto       cache = open();
+        const auto hash  = hashOf("renewal");
+        cache->append(hash, "renewal", {}, 10);
+        cache->sync();
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("SELECT total_changes()"));
+        QVERIFY(query.next());
+        const auto before = query.value(0).toLongLong();
+        query.finish();
+        QVERIFY(cache->get(hash, true));
+        QVERIFY(query.exec("SELECT total_changes()"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toLongLong(), before);
+        query.finish();
+        cache.reset();
+        const auto old = QDateTime::currentDateTime().addSecs(-6).toMSecsSinceEpoch();
+        query.prepare("UPDATE files SET created=?");
+        query.addBindValue(old);
+        QVERIFY(query.exec());
+        cache     = open();
+        auto item = cache->get(hash, true);
+        QVERIFY(item);
+        QVERIFY(item->created().toMSecsSinceEpoch() > old + 5000);
     }
 
     void changedMetadataSurvivesRestart()
@@ -271,16 +667,22 @@ private slots:
             QFile file(source);
             QVERIFY(file.open(QIODevice::WriteOnly));
             QCOMPARE(file.write(bytes), qint64(bytes.size()));
+            QVERIFY(file.flush());
+            QVERIFY(file.setFileTime(QDateTime::currentDateTime().addYears(-3), QFileDevice::FileModificationTime));
         }
         const auto modified = QFileInfo(source).lastModified();
+        QVERIFY(modified < QDateTime::currentDateTime().addYears(-2));
         {
             auto  cache = open();
-            auto *item  = cache->moveToCache(hash, QFileInfo(source));
+            const auto inserted = QDateTime::currentDateTime();
+            auto      *item     = cache->moveToCache(hash, QFileInfo(source), {}, 60);
             QVERIFY(item);
             QVERIFY(item->isOnDisk());
-            QCOMPARE(item->created(), modified);
+            QVERIFY(item->created() >= inserted);
+            QCOMPARE(QFileInfo(item->filePath()).lastModified(), modified);
+            QVERIFY(cache->get(hash));
             QVERIFY(!QFile::exists(source));
-            QVERIFY(QFile::exists(payloadPath(hash)));
+            QVERIFY(QFile::exists(item->filePath()));
             QCOMPARE(item->data(), bytes);
         }
         auto cache = open();
@@ -293,12 +695,12 @@ private slots:
         const QByteArray bytes("short lived");
         const auto       hash  = hashOf(bytes);
         auto             cache = open();
-        cache->append(hash, bytes, {}, 1);
+        const auto       path  = cache->append(hash, bytes, {}, 1)->filePath();
         cache->sync();
         QVERIFY(cache->get(hash));
         QTest::qWait(1100);
         QVERIFY(!cache->get(hash));
-        QVERIFY(!QFile::exists(payloadPath(hash)));
+        QVERIFY(!QFile::exists(path));
     }
 
     void expiredItemIsDroppedOnRestart()
@@ -321,13 +723,14 @@ private slots:
     {
         const QByteArray bytes("session only");
         const auto       hash = hashOf(bytes);
+        QString          path;
         {
             auto cache = open();
-            cache->append(hash, bytes, {}, FileCache::Session);
+            path       = cache->append(hash, bytes, {}, FileCache::Session)->filePath();
             cache->sync();
             QVERIFY(cache->get(hash));
         }
-        QVERIFY(!QFile::exists(payloadPath(hash)));
+        QVERIFY(!QFile::exists(path));
         QVERIFY(!open()->get(hash));
     }
 
@@ -338,7 +741,7 @@ private slots:
         auto             cache = open();
         cache->append(hash, bytes);
         cache->sync();
-        QVERIFY(QFile::remove(payloadPath(hash)));
+        QVERIFY(QFile::remove(cache->get(hash)->filePath()));
         cache->gc();
         QVERIFY(!cache->get(hash));
     }
@@ -348,7 +751,7 @@ private slots:
         const QByteArray oldest(100, 'a'), middle(100, 'b'), newest(100, 'c');
         auto             cache = open();
         cache->setFileCacheSize(250);
-        cache->append(hashOf(oldest), oldest);
+        const auto oldestPath = cache->append(hashOf(oldest), oldest)->filePath();
         QTest::qWait(5);
         cache->append(hashOf(middle), middle);
         QTest::qWait(5);
@@ -356,7 +759,7 @@ private slots:
         cache->sync(); // Puts them on disk, and the next pass counts them.
         cache->sync();
         QVERIFY(!cache->get(hashOf(oldest)));
-        QVERIFY(!QFile::exists(payloadPath(hashOf(oldest))));
+        QVERIFY(!QFile::exists(oldestPath));
         QVERIFY(cache->get(hashOf(middle)));
         QVERIFY(cache->get(hashOf(newest)));
     }
@@ -412,7 +815,7 @@ private slots:
         QVERIFY(item->inMemory());
         cache->sync();
         QVERIFY(!item->inMemory());
-        QVERIFY(QFile::exists(payloadPath(hash)));
+        QVERIFY(QFile::exists(item->filePath()));
         QCOMPARE(item->data(), bytes);
     }
 
@@ -440,10 +843,16 @@ private slots:
         const auto        sha1 = Hash::from(Hash::Sha1, bytes), sha256 = Hash::from(Hash::Sha256, bytes);
         const QVariantMap metadata { { QStringLiteral("jids"), QStringList { QStringLiteral("a@b") } } };
         const QByteArray  reference("only a link");
+        const auto        original = legacy.filePath("original.bin");
+        {
+            QFile file(original);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(reference);
+        }
         OptionsTree       registry;
         addLegacyItem(registry, legacy.path(), { sha1, sha256 }, bytes, metadata, FileCache::Forever);
-        addLegacyItem(registry, legacy.path(), { hashOf(reference) }, {},
-                      { { QStringLiteral("link"), QStringLiteral("/an/original") } }, 3600);
+        addLegacyItem(registry, legacy.path(), { hashOf(reference) }, {}, { { QStringLiteral("link"), original } },
+                      3600);
         QVERIFY(saveLegacyRegistry(registry, legacy.path()));
         {
             auto cache = open();
@@ -454,10 +863,10 @@ private slots:
             QCOMPARE(item->data(), bytes);
             QCOMPARE(item->metadata(), metadata);
             QCOMPARE(item->maxAge(), FileCache::Forever);
-            QVERIFY(QFile::exists(payloadPath(sha1)));
+            QVERIFY(QFile::exists(item->filePath()));
             QVERIFY2(QFile::exists(legacy.filePath(QString::fromLatin1(sha1.toHex()))), "another profile may need it");
-            QCOMPARE(cache->get(hashOf(reference))->metadata().value(QStringLiteral("link")).toString(),
-                     QStringLiteral("/an/original"));
+            QVERIFY(!cache->get(hashOf(reference))); // An unstamped legacy link cannot certify today's bytes.
+            QVERIFY(QFileInfo::exists(original));
         }
         auto cache = open();
         QCOMPARE(cache->get(sha256)->data(), bytes);
@@ -510,13 +919,58 @@ private slots:
         addLegacyItem(registry, legacy.path(), { hashOf(bytes) }, bytes, {}, FileCache::Forever);
         QVERIFY(saveLegacyRegistry(registry, legacy.path()));
         {
-            QFile partial(payloadPath(hashOf(bytes)));
+            QFile partial(legacyPayloadPath(hashOf(bytes)));
             QVERIFY(partial.open(QIODevice::WriteOnly));
             partial.write(bytes.left(3));
         }
         auto cache = open();
         cache->importLegacy(legacy.path());
         QCOMPARE(cache->get(hashOf(bytes))->data(), bytes);
+    }
+
+    void legacyImportDoesNotOverwriteAnExistingAlias()
+    {
+        QTemporaryDir    legacy;
+        const QByteArray bytes("existing profile payload");
+        const auto       sha1 = hashOf(bytes), sha256 = Hash::from(Hash::Sha256, bytes);
+        OptionsTree      registry;
+        addLegacyItem(registry, legacy.path(), { sha1, sha256 }, bytes, {}, FileCache::Forever);
+        QVERIFY(saveLegacyRegistry(registry, legacy.path()));
+        auto cache = open();
+        auto item  = cache->append(sha256, bytes, { { "owner", "profile" } });
+        cache->sync();
+        const auto path = item->filePath();
+        cache->importLegacy(legacy.path());
+        QCOMPARE(cache->get(sha256), item);
+        QCOMPARE(item->filePath(), path);
+        QCOMPARE(item->metadata().value("owner").toString(), QString("profile"));
+        QCOMPARE(recordCount(), 1);
+    }
+
+    void failedLegacyImportRollsBackCopiesAndCanBeRetried()
+    {
+        QTemporaryDir    legacy;
+        const QByteArray bytes("legacy import rollback");
+        const auto       hash = hashOf(bytes);
+        OptionsTree      registry;
+        addLegacyItem(registry, legacy.path(), { hash }, bytes, {}, FileCache::Forever);
+        QVERIFY(saveLegacyRegistry(registry, legacy.path()));
+        auto      cache = open();
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("CREATE TRIGGER fail_import BEFORE INSERT ON files BEGIN SELECT RAISE(ABORT,'test'); END"));
+        const auto before = QDir(dir->path()).entryList(QDir::Files);
+        cache->importLegacy(legacy.path());
+        QVERIFY(!cache->get(hash));
+        QCOMPARE(recordCount(), 0);
+        QCOMPARE(QDir(dir->path()).entryList(QDir::Files), before);
+        QVERIFY(query.exec("SELECT COUNT(*) FROM file_legacy_imports"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 0);
+        query.finish();
+        QVERIFY(query.exec("DROP TRIGGER fail_import"));
+        cache->importLegacy(legacy.path());
+        QVERIFY(cache->get(hash));
+        QCOMPARE(cache->getData(hash), bytes);
     }
 
     void importWithoutALegacyDirectoryIsHarmless()

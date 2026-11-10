@@ -71,7 +71,9 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
             try:
                 if run == 0:
                     environment["PSI_UI_CHAT_TEST"] = "1"
-                    peer = subprocess.Popen([sys.argv[3], "test@p-" + uuid.uuid4().hex[:8]],
+                    peer_token = uuid.uuid4().hex[:8]
+                    environment["PSI_UI_PEER_NAME"] = "UI Test Peer " + peer_token
+                    peer = subprocess.Popen([sys.argv[3], "test@p-" + peer_token],
                                             stdout=log, stderr=subprocess.STDOUT, env=environment)
                     deadline = time.monotonic() + 12
                     while "PEER-READY" not in (base / "peer.log").read_text():
@@ -99,7 +101,8 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                     assert "UI-PROBE MESSAGES" in app_log, app_log
                     if deleting:
                         assert "UI-PROBE LOCAL-DELETION" in app_log, app_log
-                    assert "PEER-MESSAGE-OK" in (base / "peer.log").read_text()
+                    peer_log = (base / "peer.log").read_text()
+                    assert "PEER-MESSAGE-OK" in peer_log, f"Expected {environment['PSI_UI_PEER_NAME']}:\n{peer_log}\n{app_log}"
             finally:
                 if peer is not None:
                     peer.terminate()
