@@ -172,7 +172,7 @@ add_test(NAME mam_history_sqlite_policy COMMAND mam_history_sqlite_policy_test)
 # Native EDBHandle get/find and legacy local pages must execute SQLite on a
 # worker thread and return only value records to GUI-side event reconstruction.
 add_executable(mam_history_sql_read_test HistorySqlReadWorkerTest.cpp
-    ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
+    ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h ../../src/historymediaqueries.cpp
     ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
 target_include_directories(mam_history_sql_read_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_history_sql_read_test PRIVATE

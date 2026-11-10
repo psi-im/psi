@@ -264,6 +264,12 @@ int main(int argc, char **argv)
     check(missing.received.isEmpty() && !missing.refusal.isEmpty(), "an unknown file was not refused");
     check(cached.refusal == missing.refusal, "a requester can tell a file not shared here from an unknown one");
 
+    auto mixed = file;
+    mixed.addHash(Hash::from(Hash::Sha1, QByteArray("a different private file")));
+    const auto mixedRequest = request(peer, corporate, corporateLookup, mixed, payload.size());
+    check(mixedRequest.received.isEmpty() && mixedRequest.refusal == missing.refusal,
+          "a served hash authorized an unrelated hash in the same request");
+
     offerIsLeftToTheUser(peer, personal, personalLookup, file);
 
     // Joining the publication of a file already held is this account's own decision.

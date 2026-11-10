@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historymessageextras.h"
+#include "messageattachments.h"
 #include "iris/xmpp_htmlelement.h"
 #include "iris/xmpp_reference.h"
+#include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -40,7 +42,7 @@ bool parseReferenceXml(QDomDocument &doc, const QString &xml)
 #endif
 }
 
-void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message)
+void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message, bool includeSfs = true)
 {
     for (const auto &value : extra.value(QStringLiteral("jabber:x:oob")).toArray()) {
         const auto pair = value.toArray();
@@ -57,6 +59,8 @@ void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message)
     }
     if (!references.isEmpty())
         message.setReferences(references);
+    if (!includeSfs)
+        return;
     for (const auto &value : extra.value(XMPP::StatelessFileSharing::NS).toArray()) {
         QDomDocument doc;
         if (value.isString() && parseReferenceXml(doc, value.toString())) {
@@ -68,12 +72,76 @@ void restoreUrlsAndReferences(const QJsonObject &extra, XMPP::Message &message)
 }
 }
 
-QString HistoryMessageExtras::encode(const XMPP::Message &message)
+namespace {
+// Namespace prefixes and attribute iteration order are not identity. This
+// representation remains stable across Qt versions and parser round trips.
+QJsonArray canonicalElement(const QDomElement &element)
+{
+    QJsonObject attributes;
+    const auto  map = element.attributes();
+    for (int i = 0; i < map.size(); ++i) {
+        const auto attribute = map.item(i).toAttr();
+        if (attribute.name() == QLatin1String("xmlns") || attribute.prefix() == QLatin1String("xmlns"))
+            continue;
+        attributes.insert(attribute.namespaceURI() + QLatin1Char('|')
+                              + (attribute.localName().isEmpty() ? attribute.name() : attribute.localName()),
+                          attribute.value());
+    }
+    QJsonArray children;
+    for (auto child = element.firstChild(); !child.isNull(); child = child.nextSibling()) {
+        if (child.isElement())
+            children.append(canonicalElement(child.toElement()));
+        else if (child.isText())
+            children.append(child.nodeValue());
+    }
+    return { element.namespaceURI(), element.localName().isEmpty() ? element.tagName() : element.localName(),
+             attributes, children };
+}
+}
+
+QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message)
+{
+    QJsonArray index;
+    const auto attachments = MessageAttachments::collect(message).attachments;
+    for (int ordinal = 0; ordinal < attachments.size(); ++ordinal) {
+        const auto &attachment = attachments.at(ordinal);
+        if (!attachment.isFile() && !attachment.url().isValid())
+            continue;
+        QDomDocument doc;
+        const auto  &reference = attachment.reference;
+        const auto  &media     = reference.mediaSharing();
+        // Reference::toXml omits media without sources. Pending SFS files still
+        // need their metadata to distinguish a replacement at the same ordinal.
+        const QJsonArray content { int(reference.type()),
+                                   reference.uri(),
+                                   reference.begin(),
+                                   reference.end(),
+                                   reference.anchor(),
+                                   canonicalElement(media.file.toMetadataXml(&doc)),
+                                   QJsonArray::fromStringList(media.sources),
+                                   attachment.description,
+                                   attachment.manualFetch };
+        const auto       fingerprint = QCryptographicHash::hash(QJsonDocument(content).toJson(QJsonDocument::Compact),
+                                                                QCryptographicHash::Sha256)
+                                     .toHex();
+        index.append(QJsonObject { { "ordinal", ordinal }, { "fingerprint", QString::fromLatin1(fingerprint) } });
+    }
+    return index;
+}
+
+QString HistoryMessageExtras::encode(const XMPP::Message &message) { return encode(message, message.body()); }
+
+QString HistoryMessageExtras::encode(const XMPP::Message &message, const QString &storedBody)
 {
     if (message.isNull())
         return {};
     QJsonObject extra;
     extra.insert("psi:decoded", true);
+    if (MessageAttachments::hasAttachments(message)) {
+        auto projection = message;
+        projection.setBody(storedBody);
+        extra.insert("psi:media-refs", QJsonObject { { "version", 1 }, { "items", mediaRefs(projection) } });
+    }
     if (message.reply().isValid())
         extra.insert(QStringLiteral("urn:xmpp:reply:0"),
                      QJsonObject {{"id", message.reply().id}, {"to", message.reply().to.full()}});
@@ -164,9 +232,9 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     return extra.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
 }
 
-void HistoryMessageExtras::restoreAttachments(const QString &json, XMPP::Message &message)
+void HistoryMessageExtras::restoreAttachments(const QString &json, XMPP::Message &message, bool includeSfs)
 {
-    restoreUrlsAndReferences(QJsonDocument::fromJson(json.toUtf8()).object(), message);
+    restoreUrlsAndReferences(QJsonDocument::fromJson(json.toUtf8()).object(), message, includeSfs);
 }
 
 void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)

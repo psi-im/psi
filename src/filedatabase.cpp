@@ -45,7 +45,10 @@ const QList<QStringList> &schemaUpgrades()
     return upgrades;
 }
 
-QString markerName(const QString &profile) { return QStringLiteral("imported-") + profile; }
+QString markerName(const QString &profile, const QString &component = {})
+{
+    return QStringLiteral("imported-") + (component.isEmpty() ? QString() : component + QLatin1Char('-')) + profile;
+}
 
 bool prepare(QSqlDatabase &db)
 {
@@ -60,7 +63,7 @@ bool prepare(QSqlDatabase &db)
     query.finish();
     if (version == SchemaVersion)
         return true;
-    if (version > SchemaVersion)
+    if (version < 0 || version > SchemaVersion)
         return false; // Written by a newer Psi.
     if (!db.transaction())
         return false;
@@ -99,22 +102,24 @@ QSqlDatabase FileDatabase::connection()
     return db;
 }
 
-void FileDatabase::markLegacyDirectoryImported(const QString &directory)
+void FileDatabase::markLegacyDirectoryImported(const QString &directory, const QString &component)
 {
     const auto profile = QFileInfo(ApplicationInfo::currentProfileDir(ApplicationInfo::DataLocation)).fileName();
-    QFile      marker(directory + QLatin1Char('/') + markerName(profile));
+    QFile      marker(directory + QLatin1Char('/') + markerName(profile, component));
     if (!marker.exists() && !marker.open(QIODevice::WriteOnly))
         qWarning() << "Cannot mark a legacy cache directory as imported:" << marker.errorString();
 }
 
-void FileDatabase::retireLegacyDirectory(const QString &directory, const QStringList &profiles)
+void FileDatabase::retireLegacyDirectory(const QString &directory, const QStringList &profiles,
+                                         const QStringList &components)
 {
     QDir dir(directory);
     if (!dir.exists())
         return;
     for (const auto &profile : profiles)
-        if (!dir.exists(markerName(profile)))
-            return;
+        for (const auto &component : components)
+            if (!dir.exists(markerName(profile, component)))
+                return;
     // Only a directory some profile has imported from is known to be ours to remove.
     if (dir.entryList({ markerName(QStringLiteral("*")) }, QDir::Files).isEmpty())
         return;

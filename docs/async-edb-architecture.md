@@ -13,7 +13,7 @@ page writes introduced additional large transactions.
   `append/get/find/erase` requests, local chat/MUC history pagination,
   displayed-marker restoration, MAM page reads, archive snapshots,
   **atomic MAM page stores**, archived plaintext lookup, own OMEMO
-  plaintext lookup, and resolution of corrections use a single
+  plaintext lookup, resolution of corrections, and attachment-link scans use a single
   `HistorySqlReadWorker` QObject moved to a dedicated QThread.
 - The worker owns its own SQLite connection. SQL commands are processed
   sequentially as queued slots. Results are value objects (`QSqlRecord`,
@@ -21,8 +21,9 @@ page writes introduced additional large transactions.
   `PsiEvent`/account/widget pointers. No shared mutable queues or
   `QMutex`/`QWaitCondition` are needed.
 - `HistoryEventFactory` serializes events before queueing and reconstructs
-  `PsiEvent` on the GUI. FileSharingManager registration is likewise
-  performed only on the GUI after successful worker insertion.
+  `PsiEvent` on the GUI. After successful worker commits, the publication
+  synchronizer reconstructs attachment announcements on the GUI from bounded
+  history snapshots.
 - Live appends use bounded **worker-side batching** to preserve the old
   EDB optimization for SSD wear, CPU and WAL fsync overhead: up to three
   consecutive appends per transaction, with the original 1-second maximum wait. A
@@ -47,6 +48,11 @@ page writes introduced additional large transactions.
   also validates the peer and view generation. Closing, clearing or
   repointing a view invalidates old results without reversing durable
   worker writes.
+- Attachment ordinals/fingerprints are serialized with the GUI-owned message
+  snapshot. History links are updated in the event transaction without parsing
+  SFS/Jingle JIDs on the SQL worker. Changed links trigger catalog reconciliation
+  only after commit. The synchronizer consumes bounded worker snapshots and
+  advances its cursors only after successful catalog batches.
 - The superseded GUI SQL `get/find/append/erase` paths, redundant query
   plans and standalone WAL checkpoint thread have been removed.
   SQLite uses **WAL + synchronous=FULL** on GUI and worker connections;

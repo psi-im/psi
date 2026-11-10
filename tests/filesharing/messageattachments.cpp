@@ -198,14 +198,51 @@ private slots:
     {
         auto reference = share("https://example.org/picture.png");
         auto media     = reference.mediaSharing();
-        media.file.addHash(Hash::from(Hash::Sha256, QByteArrayLiteral("sharing")));
         reference.setMediaSharing(media);
+        auto duplicate = sharing({ "https://example.org/photo.png" });
+        duplicate.setFile(media.file);
         Message incoming;
         incoming.setReferences({ reference });
-        incoming.addFileSharing(sharing({ "https://example.org/photo.png" }));
+        incoming.addFileSharing(duplicate);
         const auto attachments = MessageAttachments::collect(incoming).attachments;
         QCOMPARE(attachments.size(), 1);
         QCOMPARE(attachments.first().reference.uri(), QString("https://example.org/picture.png"));
+    }
+
+    void duplicateProtocolsKeepSourcesAndManualDisposition()
+    {
+        auto reference = share("https://example.org/sims.png");
+        auto media     = reference.mediaSharing();
+        auto sfs       = sharing({ "https://example.org/sfs.png" });
+        sfs.setFile(media.file);
+        sfs.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        Message incoming;
+        incoming.setReferences({ reference });
+        incoming.addFileSharing(sfs);
+        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        QCOMPARE(attachments.size(), 1);
+        QVERIFY(attachments.first().manualFetch);
+        const auto sources = attachments.first().reference.mediaSharing().sources;
+        QVERIFY(sources.contains("https://example.org/sims.png"));
+        QVERIFY(sources.contains("https://example.org/sfs.png"));
+    }
+
+    void sharedWeakHashDoesNotMergeConflictingFiles()
+    {
+        auto       reference = share("https://example.org/first.png");
+        auto       first     = reference.mediaSharing();
+        const auto common    = Hash::from(Hash::Sha1, QByteArrayLiteral("weak alias"));
+        first.file.addHash(common);
+        reference.setMediaSharing(first);
+        auto sfs    = sharing({ "https://example.org/second.png" });
+        auto second = sfs.file();
+        second.addHash(common);
+        second.setSize(*first.file.size());
+        sfs.setFile(second);
+        Message incoming;
+        incoming.setReferences({ reference });
+        incoming.addFileSharing(sfs);
+        QCOMPARE(MessageAttachments::collect(incoming).attachments.size(), 2);
     }
 
     void fileSharingWithoutHashesKeepsOnlySecureSources()
@@ -221,6 +258,48 @@ private slots:
         Message insecure;
         insecure.addFileSharing(sharing({ "http://example.org/photo.png" }, false));
         QVERIFY(MessageAttachments::collect(insecure).attachments.isEmpty());
+    }
+
+    void insecureCompatibilityOobDoesNotBypassHashlessSfs()
+    {
+        Message       incoming;
+        const QString url = "http://example.org/photo.png";
+        incoming.setBody(url);
+        incoming.addFileSharing(sharing({ url }, false));
+        incoming.urlAdd(Url(url));
+        QVERIFY(MessageAttachments::collect(incoming).attachments.isEmpty());
+        QCOMPARE(incoming.body(), url);
+    }
+
+    void weakCompatibilityCopyKeepsManualSourcePolicy()
+    {
+        const QString url       = "https://example.org/photo.png";
+        auto          reference = share(url);
+        auto          media     = reference.mediaSharing();
+        media.file.setHashes({ Hash::from(Hash::Sha1, QByteArrayLiteral("legacy")) });
+        reference.setMediaSharing(media);
+        auto manual = sharing({ url });
+        manual.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        Message incoming;
+        incoming.setReferences({ reference });
+        incoming.addFileSharing(manual);
+        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        QCOMPARE(attachments.size(), 2); // No proven strong identity edge.
+        for (const auto &attachment : attachments)
+            QVERIFY(attachment.manualFetch);
+    }
+
+    void repeatedSfsAnnouncementsUnionSources()
+    {
+        auto manual = sharing({ "https://example.org/two.png" });
+        manual.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        Message incoming;
+        incoming.addFileSharing(sharing({ "https://example.org/one.png" }));
+        incoming.addFileSharing(manual);
+        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        QCOMPARE(attachments.size(), 1);
+        QCOMPARE(attachments.first().reference.mediaSharing().sources.size(), 2);
+        QVERIFY(attachments.first().manualFetch);
     }
 
     void dispositionAttachmentWaitsForTheUser()

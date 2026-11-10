@@ -719,7 +719,7 @@ bool PsiCon::init()
     const auto profiles = getProfilesList();
     FileDatabase::retireLegacyDirectory(ApplicationInfo::homeDir(ApplicationInfo::DataLocation)
                                             + QStringLiteral("/shares"),
-                                        profiles);
+                                        profiles, { QString(), QStringLiteral("publications") });
     FileDatabase::retireLegacyDirectory(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation)
                                             + QStringLiteral("/avatars"),
                                         profiles);

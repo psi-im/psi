@@ -114,6 +114,7 @@ if(TARGET iris)
 
     add_executable(filesharing_publications_test publications.cpp ../../src/filesharingcatalog.cpp
         ../../src/filesharingpublicationsync.cpp ../../src/filedatabase.cpp ../../src/historymediarefs.cpp
+        ../../src/historymediaqueries.cpp ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
         ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
         ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
     set_target_properties(filesharing_publications_test PROPERTIES AUTOMOC ON)

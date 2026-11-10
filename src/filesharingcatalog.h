@@ -10,6 +10,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <QSqlError>
 #include <optional>
 
 // What was announced, by whom and from which sources, per account, and which files an
@@ -33,13 +34,21 @@ public:
     // Forgets URL-to-content mappings that have outlived the files they name.
     FileSharingCatalog();
 
+    struct Announcement {
+        PublicationId                  id;
+        QString                        account;
+        XMPP::Jid                      announcer;
+        MessageAttachments::Attachment attachment;
+    };
+
     // The publications of stored messages. FileSharingPublicationSync keeps them in line
     // with history, so that a message that is not stored leaves nothing here.
     bool                 add(const PublicationId &id, const QString &account, const XMPP::Jid &announcer,
                              const MessageAttachments::Attachment &attachment);
-    void                 remove(const QList<PublicationId> &ids);
-    QList<PublicationId> missing(const QList<PublicationId> &ids) const;
-    QList<PublicationId> announcementsAfter(const PublicationId &id, int limit) const;
+    bool                 addBatch(const QList<Announcement> &announcements);
+    bool                 remove(const QList<PublicationId> &ids);
+    QList<PublicationId> missing(const QList<PublicationId> &ids, QSqlError *error = nullptr) const;
+    QList<PublicationId> announcementsAfter(const PublicationId &id, int limit, QSqlError *error = nullptr) const;
 
     // By a hash of the file, or by the address of a URL-only one.
     std::optional<Record> find(const QString &account, const XMPP::Hash &hash) const;
@@ -51,6 +60,9 @@ public:
                const QString &localPath);
     void stopServing(const QString &account, const QList<XMPP::Hash> &hashes);
     bool isServed(const QString &account, const QList<XMPP::Hash> &hashes) const;
+    // Resolve a request to the hashes of ONE explicitly served publication.
+    // Never use the request's other, untrusted hashes to look up cached bytes.
+    std::optional<Record> servedRecord(const QString &account, const QList<XMPP::Hash> &requested) const;
 
     // An OOB address identity is NOT a content checksum. Keep its lookup in
     // a separate table, referencing only verified downloaded content hashes.

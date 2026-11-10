@@ -15,6 +15,8 @@ QSqlDatabase connection();
 
 // Directories from before caches moved under the profile. A profile records that it
 // has taken what it needs, and the last one to do so removes the directory.
-void markLegacyDirectoryImported(const QString &directory);
-void retireLegacyDirectory(const QString &directory, const QStringList &profiles);
+void markLegacyDirectoryImported(const QString &directory, const QString &component = {});
+// Every required component must finish for every profile before shared inputs go.
+void retireLegacyDirectory(const QString &directory, const QStringList &profiles,
+                           const QStringList &components = { QString() });
 }

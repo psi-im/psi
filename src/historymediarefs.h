@@ -3,6 +3,7 @@
 
 #include "iris/xmpp_jid.h"
 #include "messageattachments.h"
+#include "historymediaqueries.h"
 
 #include <QByteArray>
 #include <QList>
@@ -16,10 +17,6 @@
 // this link and its own copy of the message: the publication lives in the file database
 // and can always be told again from here.
 namespace HistoryMediaRefs {
-struct Link {
-    qint64     position = 0;
-    QByteArray publicationId;
-};
 // What a linked attachment announces, as stored with its message.
 struct Announcement {
     QString                        account;
@@ -29,14 +26,14 @@ struct Announcement {
 
 // Adds the links, for every message stored so far, in one transaction.
 bool needsMigration(QSqlDatabase db);
+// Compatibility for SFS rows written by older development versions; GUI only.
+bool prepareLegacySfs(QSqlDatabase db);
 bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 
 // Gives each attachment of a stored event a new publication ID, unless it has one.
 // Runs inside the transaction storing the event.
-bool link(QSqlDatabase db, qint64 eventId);
+bool link(QSqlDatabase db, qint64 eventId, bool *removed = nullptr);
 
-QList<Link>                 linksAfter(QSqlDatabase db, qint64 position, int limit);
-std::optional<Announcement> announcement(QSqlDatabase db, const QByteArray &publicationId);
-// Which of the publications are linked, or nothing if history cannot tell.
-std::optional<QSet<QByteArray>> linked(QSqlDatabase db, const QList<QByteArray> &publicationIds);
+// Decode an immutable worker projection on the GUI.
+std::optional<Announcement> announcement(const Link &link);
 }

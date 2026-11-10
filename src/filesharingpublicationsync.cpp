@@ -3,80 +3,158 @@
 
 #include "historymediarefs.h"
 
-#include <QSqlDatabase>
+#include <QDebug>
+#include <QSqlError>
+#include <utility>
 
 namespace {
-const int BatchSize = 100;
-const int StepDelay = 10; // ms, so that a long pass leaves the GUI thread alone
+constexpr int BatchSize  = 100;
+constexpr int StepDelay  = 10;
+constexpr int RetryDelay = 1000;
 }
 
-FileSharingPublicationSync::FileSharingPublicationSync(const QString &historyConnection, FileSharingCatalog *catalog,
+FileSharingPublicationSync::FileSharingPublicationSync(HistoryAccess history, FileSharingCatalog *catalog,
                                                        QObject *parent) :
-    QObject(parent), _history(historyConnection), _catalog(catalog)
+    QObject(parent), _history(std::move(history)), _catalog(catalog)
 {
     _timer.setSingleShot(true);
-    _timer.setInterval(StepDelay);
     connect(&_timer, &QTimer::timeout, this, &FileSharingPublicationSync::step);
 }
 
-void FileSharingPublicationSync::linksAdded() { _timer.start(); }
+void FileSharingPublicationSync::linksAdded()
+{
+    _scanLinks = true;
+    // Sustained message traffic must not keep restarting an active timer.
+    if (!_busy && !_timer.isActive())
+        _timer.start(StepDelay);
+}
 
 void FileSharingPublicationSync::reconcile()
 {
+    ++_generation;
     _linkPosition = 0;
     _sweepPosition.clear();
     _sweeping = true;
-    _timer.start();
+    linksAdded();
+}
+
+bool FileSharingPublicationSync::current(quint64 generation)
+{
+    if (generation == _generation)
+        return true;
+    // An erase/reconcile superseded this snapshot. Its successor owns the
+    // cursors; never publish an obsolete response after clearing history.
+    _busy = false;
+    _timer.start(StepDelay);
+    return false;
 }
 
 void FileSharingPublicationSync::step()
 {
-    const auto history = QSqlDatabase::database(_history, false);
-    if (!history.isOpen())
+    if (_busy)
         return;
-    const bool moreLinks        = followLinks(history);
-    const bool morePublications = sweepPublications(history);
-    if (moreLinks || morePublications)
-        _timer.start();
+    _busy                 = true;
+    const auto generation = _generation;
+    if (!_scanLinks) {
+        sweep(generation);
+        return;
+    }
+    _scanLinks = false;
+    _history.readLinks(
+        _linkPosition, BatchSize, this, [this, generation](QList<HistoryMediaRefs::Link> links, bool ok) {
+            if (!current(generation))
+                return;
+            if (!ok) {
+                _scanLinks = true;
+                finish(false);
+                return;
+            }
+            QList<FileSharingCatalog::PublicationId> ids;
+            for (const auto &link : links)
+                ids.append(link.publicationId);
+            QSqlError  error;
+            const auto missing = _catalog->missing(ids, &error);
+            if (error.isValid()) {
+                _scanLinks = true;
+                finish(false);
+                return;
+            }
+            QSet<QByteArray> needed;
+            for (const auto &id : missing)
+                needed.insert(id);
+            QList<FileSharingCatalog::Announcement> announcements;
+            for (const auto &link : links) {
+                if (!needed.contains(link.publicationId))
+                    continue;
+                const auto told = HistoryMediaRefs::announcement(link);
+                if (!told) {
+                    _scanLinks = true;
+                    finish(false);
+                    return;
+                }
+                announcements.append({ link.publicationId, told->account, told->announcer, told->attachment });
+            }
+            if (!_catalog->addBatch(announcements)) {
+                _scanLinks = true;
+                finish(false);
+                return;
+            }
+            if (!links.isEmpty())
+                _linkPosition = links.last().position;
+            _scanLinks = _scanLinks || links.size() == BatchSize;
+            sweep(generation);
+        });
 }
 
-bool FileSharingPublicationSync::followLinks(QSqlDatabase history)
+void FileSharingPublicationSync::sweep(quint64 generation)
 {
-    const auto links = HistoryMediaRefs::linksAfter(history, _linkPosition, BatchSize);
-    if (links.isEmpty())
-        return false;
-    QList<FileSharingCatalog::PublicationId> ids;
-    for (const auto &link : links)
-        ids.append(link.publicationId);
-    for (const auto &id : _catalog->missing(ids)) {
-        const auto told = HistoryMediaRefs::announcement(history, id);
-        if (told && !_catalog->add(id, told->account, told->announcer, told->attachment))
-            qWarning("Could not persist a shared file publication");
+    if (!_sweeping) {
+        finish(true);
+        return;
     }
-    _linkPosition = links.last().position;
-    return links.size() == BatchSize;
+    QSqlError  error;
+    const auto ids = _catalog->announcementsAfter(_sweepPosition, BatchSize, &error);
+    if (error.isValid()) {
+        finish(false);
+        return;
+    }
+    if (ids.isEmpty()) {
+        _sweeping = false;
+        finish(true);
+        return;
+    }
+    _history.readLinked(ids, this, [this, generation, ids](QSet<QByteArray> linked, bool ok) {
+        if (!current(generation))
+            return;
+        if (!ok) {
+            finish(false);
+            return;
+        }
+        QList<FileSharingCatalog::PublicationId> forgotten;
+        for (const auto &id : ids)
+            if (!linked.contains(id))
+                forgotten.append(id);
+        if (!_catalog->remove(forgotten)) {
+            finish(false);
+            return;
+        }
+        _sweepPosition = ids.last();
+        _sweeping      = ids.size() == BatchSize;
+        finish(true);
+    });
 }
 
-bool FileSharingPublicationSync::sweepPublications(QSqlDatabase history)
+void FileSharingPublicationSync::finish(bool success)
 {
-    if (!_sweeping)
-        return false;
-    const auto ids = _catalog->announcementsAfter(_sweepPosition, BatchSize);
-    if (ids.size() < BatchSize)
-        _sweeping = false;
-    if (ids.isEmpty())
-        return false;
-    const auto linked = HistoryMediaRefs::linked(history, ids);
-    if (!linked) {
-        _sweeping = false;
-        return false;
+    _busy = false;
+    if (!success) {
+        if (!_reportedError)
+            qWarning("Could not reconcile file publications; retrying without advancing the cursor");
+        _reportedError = true;
+        _timer.start(RetryDelay);
+    } else {
+        _reportedError = false;
+        if (_scanLinks || _sweeping)
+            _timer.start(StepDelay);
     }
-    QList<FileSharingCatalog::PublicationId> forgotten;
-    for (const auto &id : ids)
-        if (!linked->contains(id))
-            forgotten.append(id);
-    if (!forgotten.isEmpty())
-        _catalog->remove(forgotten);
-    _sweepPosition = ids.last();
-    return _sweeping;
 }

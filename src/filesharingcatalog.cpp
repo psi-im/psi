@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSet>
+#include <QSaveFile>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QUuid>
@@ -189,14 +190,27 @@ bool importSharedFiles(QSqlDatabase legacy, QSqlDatabase db, const QHash<QString
 {
     QSqlQuery     read(legacy);
     QSet<QString> decided, served;
-    if (read.exec(QStringLiteral("SELECT account_id FROM served_files_imported")))
+    const auto    tables = legacy.tables();
+    if (tables.contains(QStringLiteral("served_files_imported"))) {
+        if (!read.exec(QStringLiteral("SELECT account_id FROM served_files_imported")))
+            return false;
         while (read.next())
             decided.insert(read.value(0).toString());
-    if (read.exec(QStringLiteral("SELECT account_id,hash FROM served_files")))
+        if (read.lastError().isValid())
+            return false;
+    }
+    if (tables.contains(QStringLiteral("served_files"))) {
+        if (!read.exec(QStringLiteral("SELECT account_id,hash FROM served_files")))
+            return false;
         while (read.next())
             served.insert(read.value(0).toString() + QLatin1Char('\n') + read.value(1).toString());
-    if (!read.exec(QStringLiteral("SELECT account_id,hash,descriptor FROM shared_files")))
+        if (read.lastError().isValid())
+            return false;
+    }
+    if (!tables.contains(QStringLiteral("shared_files")))
         return true;
+    if (!read.exec(QStringLiteral("SELECT account_id,hash,descriptor FROM shared_files")))
+        return false;
     QSet<QString> imported; // One descriptor was stored per hash of its file.
     while (read.next()) {
         const auto account = read.value(0).toString();
@@ -220,15 +234,26 @@ bool importSharedFiles(QSqlDatabase legacy, QSqlDatabase db, const QHash<QString
         if (!insert(db, QUuid::createUuid().toRfc4122(), account, self, true, {}, descriptor->media, descriptor->local))
             return false;
     }
-    return true;
+    return !read.lastError().isValid();
 }
 
 bool importUrlContent(QSqlDatabase legacy, QSqlDatabase db)
 {
     // The first version of these mappings had no timestamps. They are only a cache.
     QSqlQuery read(legacy);
-    if (!read.exec(QStringLiteral("SELECT account_id,url_key,content_hash,updated FROM url_content")))
+    if (!legacy.tables().contains(QStringLiteral("url_content")))
         return true;
+    if (!read.exec(QStringLiteral("PRAGMA table_info(url_content)")))
+        return false;
+    bool hasTimestamp = false;
+    while (read.next())
+        hasTimestamp |= read.value(1).toString() == QLatin1String("updated");
+    if (read.lastError().isValid())
+        return false;
+    if (!hasTimestamp)
+        return true; // This known old schema had no expirable mappings.
+    if (!read.exec(QStringLiteral("SELECT account_id,url_key,content_hash,updated FROM url_content")))
+        return false;
     QSqlQuery write(db);
     write.prepare(QStringLiteral("INSERT OR IGNORE INTO url_content(account,url_key,content_hash,updated) "
                                  "VALUES(:account,:key,:content_hash,:updated)"));
@@ -240,7 +265,7 @@ bool importUrlContent(QSqlDatabase legacy, QSqlDatabase db)
         if (!write.exec())
             return false;
     }
-    return true;
+    return !read.lastError().isValid();
 }
 }
 
@@ -267,17 +292,35 @@ FileSharingCatalog::FileSharingCatalog()
 bool FileSharingCatalog::add(const PublicationId &id, const QString &account, const XMPP::Jid &announcer,
                              const MessageAttachments::Attachment &attachment)
 {
+    return addBatch({ { id, account, announcer, attachment } });
+}
+
+bool FileSharingCatalog::addBatch(const QList<Announcement> &announcements)
+{
+    if (announcements.isEmpty())
+        return true;
     auto db = FileDatabase::connection();
-    if (!db.isOpen() || account.isEmpty() || !db.transaction())
+    if (!db.isOpen() || !db.transaction())
         return false;
-    bool ok = false;
-    if (attachment.isFile()) {
-        ok = insert(db, id, account, announcer, false, {}, attachment.reference.mediaSharing(), {});
-    } else if (const auto url = attachment.url(); url.isValid()) {
-        XMPP::MediaSharing media;
-        media.file.setDescription(attachment.description);
-        media.sources.append(attachment.reference.uri());
-        ok = insert(db, id, account, announcer, false, MessageAttachments::urlIdentity(url).toString(), media, {});
+    bool ok = true;
+    for (const auto &announcement : announcements) {
+        const auto &attachment = announcement.attachment;
+        if (announcement.id.isEmpty() || announcement.account.isEmpty()) {
+            ok = false;
+        } else if (attachment.isFile()) {
+            ok = insert(db, announcement.id, announcement.account, announcement.announcer, false, {},
+                        attachment.reference.mediaSharing(), {});
+        } else if (const auto url = attachment.url(); url.isValid()) {
+            XMPP::MediaSharing media;
+            media.file.setDescription(attachment.description);
+            media.sources.append(attachment.reference.uri());
+            ok = insert(db, announcement.id, announcement.account, announcement.announcer, false,
+                        MessageAttachments::urlIdentity(url).toString(), media, {});
+        } else {
+            ok = false;
+        }
+        if (!ok)
+            break;
     }
     if (ok && db.commit())
         return true;
@@ -285,47 +328,70 @@ bool FileSharingCatalog::add(const PublicationId &id, const QString &account, co
     return false;
 }
 
-void FileSharingCatalog::remove(const QList<PublicationId> &ids)
+bool FileSharingCatalog::remove(const QList<PublicationId> &ids)
 {
+    if (ids.isEmpty())
+        return true;
     auto db = FileDatabase::connection();
     if (!db.isOpen() || !db.transaction())
-        return;
+        return false;
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("DELETE FROM publications WHERE id=:id"));
+    query.prepare(QStringLiteral("DELETE FROM publications WHERE id=:id AND serving=0"));
+    bool ok = true;
     for (const auto &id : ids) {
         query.bindValue(QStringLiteral(":id"), id);
-        query.exec();
+        if (!query.exec()) {
+            ok = false;
+            break;
+        }
     }
     query.finish();
-    if (!db.commit())
-        db.rollback();
+    if (ok && db.commit())
+        return true;
+    db.rollback();
+    return false;
 }
 
-QList<FileSharingCatalog::PublicationId> FileSharingCatalog::missing(const QList<PublicationId> &ids) const
+QList<FileSharingCatalog::PublicationId> FileSharingCatalog::missing(const QList<PublicationId> &ids,
+                                                                     QSqlError                  *error) const
 {
     const auto db = FileDatabase::connection();
-    if (!db.isOpen())
+    if (!db.isOpen()) {
+        if (error)
+            *error = QSqlError(QStringLiteral("File catalog is closed"), {}, QSqlError::ConnectionError);
         return {};
+    }
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT 1 FROM publications WHERE id=:id"));
     QList<PublicationId> result;
     for (const auto &id : ids) {
         query.bindValue(QStringLiteral(":id"), id);
-        if (!query.exec())
+        if (!query.exec()) {
+            if (error)
+                *error = query.lastError();
             return {};
+        }
         if (!query.next())
             result.append(id);
+        if (query.lastError().isValid()) {
+            if (error)
+                *error = query.lastError();
+            return {};
+        }
         query.finish();
     }
     return result;
 }
 
-QList<FileSharingCatalog::PublicationId> FileSharingCatalog::announcementsAfter(const PublicationId &id,
-                                                                                int                  limit) const
+QList<FileSharingCatalog::PublicationId> FileSharingCatalog::announcementsAfter(const PublicationId &id, int limit,
+                                                                                QSqlError *error) const
 {
     const auto db = FileDatabase::connection();
-    if (!db.isOpen())
+    if (!db.isOpen()) {
+        if (error)
+            *error = QSqlError(QStringLiteral("File catalog is closed"), {}, QSqlError::ConnectionError);
         return {};
+    }
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT id FROM publications WHERE id>:id AND serving=0 ORDER BY id LIMIT :limit"));
     query.bindValue(QStringLiteral(":id"), id.isEmpty() ? QByteArray(1, '\0') : id); // That is below any ID.
@@ -334,6 +400,11 @@ QList<FileSharingCatalog::PublicationId> FileSharingCatalog::announcementsAfter(
     if (query.exec())
         while (query.next())
             result.append(query.value(0).toByteArray());
+    if (query.lastError().isValid()) {
+        if (error)
+            *error = query.lastError();
+        return {};
+    }
     return result;
 }
 
@@ -389,23 +460,58 @@ void FileSharingCatalog::stopServing(const QString &account, const QList<XMPP::H
 
 bool FileSharingCatalog::isServed(const QString &account, const QList<XMPP::Hash> &hashes) const
 {
+    return bool(servedRecord(account, hashes));
+}
+
+std::optional<FileSharingCatalog::Record> FileSharingCatalog::servedRecord(const QString           &account,
+                                                                           const QList<XMPP::Hash> &requested) const
+{
     const auto db = FileDatabase::connection();
-    if (!db.isOpen() || account.isEmpty())
-        return false;
+    if (!db.isOpen() || account.isEmpty() || requested.isEmpty())
+        return {};
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT 1 FROM publication_hashes h JOIN publications p ON p.id=h.publication_id "
-                                 "WHERE h.algorithm=:algorithm AND h.digest=:digest AND p.account=:account "
-                                 "AND p.serving=1 LIMIT 1"));
-    for (const auto &hash : hashes) {
+    query.prepare(
+        QStringLiteral("SELECT p.id,p.descriptor,p.local_path,p.local_size,p.local_modified FROM publication_hashes h "
+                       "JOIN publications p ON p.id=h.publication_id "
+                       "WHERE h.algorithm=:algorithm AND h.digest=:digest AND p.account=:account "
+                       "AND p.serving=1 ORDER BY p.rowid"));
+    QSet<PublicationId> checked;
+    for (const auto &hash : requested) {
         if (!hash.isValid() || hash.data().isEmpty())
-            continue;
+            return {};
         query.bindValue(QStringLiteral(":algorithm"), hash.stringType());
         query.bindValue(QStringLiteral(":digest"), hash.data());
         query.bindValue(QStringLiteral(":account"), account);
-        if (query.exec() && query.next())
-            return true;
+        if (!query.exec())
+            return {};
+        while (query.next()) {
+            const auto id = query.value(0).toByteArray();
+            if (checked.contains(id))
+                continue;
+            checked.insert(id);
+            QDomDocument doc;
+            if (!parseXml(doc, query.value(1).toString()))
+                continue;
+            const File file(doc.documentElement());
+            if (!file.isValid())
+                continue;
+            const auto known = file.computedHashes();
+            if (std::all_of(requested.cbegin(), requested.cend(), [&known](const XMPP::Hash &value) {
+                    return value.isValid() && !value.data().isEmpty() && known.contains(value);
+                })) {
+                Record record;
+                record.media.file    = file;
+                record.localPath     = query.value(2).toString();
+                record.localSize     = query.value(3).toLongLong();
+                record.localModified = query.value(4).toLongLong();
+                return record;
+            }
+        }
+        if (query.lastError().isValid())
+            return {};
+        query.finish();
     }
-    return false;
+    return {};
 }
 
 std::optional<XMPP::Hash> FileSharingCatalog::contentForUrl(const QString &account, const XMPP::Hash &urlIdentity) const
@@ -456,6 +562,16 @@ bool FileSharingCatalog::importLegacy(const QString &path, const QHash<QString, 
     auto db = FileDatabase::connection();
     if (!db.isOpen() || !db.transaction())
         return false;
+    // This migration consumes an old serving decision exactly once per
+    // profile, even if the rebuildable file database is later lost. Keeping
+    // the completion marker outside that database prevents accidental re-sharing.
+    const auto marker       = db.databaseName() + QStringLiteral(".publications-imported");
+    const auto markImported = [&marker] {
+        if (QFile::exists(marker))
+            return true;
+        QSaveFile file(marker);
+        return file.open(QIODevice::WriteOnly) && file.commit();
+    };
     QSqlQuery query(db);
     query.prepare(QStringLiteral("INSERT OR IGNORE INTO file_legacy_imports(partition) VALUES(:mark)"));
     query.bindValue(QStringLiteral(":mark"), legacyImportMark);
@@ -463,26 +579,29 @@ bool FileSharingCatalog::importLegacy(const QString &path, const QHash<QString, 
         db.rollback();
         return false;
     }
-    if (query.numRowsAffected() < 1) { // Imported earlier.
+    if (query.numRowsAffected() < 1) {
         db.rollback();
-        return true;
+        return markImported();
     }
     query.finish();
 
     bool ok = true;
-    if (QFile::exists(path)) {
+    if (!QFile::exists(marker) && QFile::exists(path)) {
         const auto connection = QStringLiteral("psi-legacy-shared-files");
         {
             auto legacy = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connection);
             legacy.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
             legacy.setDatabaseName(path);
-            ok = !legacy.open() || (importSharedFiles(legacy, db, accounts) && importUrlContent(legacy, db));
+            ok = legacy.open() && !legacy.tables().isEmpty() && importSharedFiles(legacy, db, accounts)
+                && importUrlContent(legacy, db);
+            if (!ok)
+                qWarning() << "Cannot read the legacy shared file catalog:" << path << legacy.lastError().text();
             legacy.close();
         }
         QSqlDatabase::removeDatabase(connection);
     }
     if (ok && db.commit())
-        return true;
+        return markImported();
     qWarning() << "Cannot import the legacy shared file catalog:" << db.lastError().text();
     db.rollback();
     return false;

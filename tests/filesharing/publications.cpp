@@ -7,6 +7,10 @@
 #include "historyarchive.h"
 #include "historymediarefs.h"
 #include "historymessageextras.h"
+#include "historysqlreadworker.h"
+#include <QSignalSpy>
+#include <QThread>
+#include <iris/jingle-pub.h>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -211,9 +215,30 @@ class PublicationsTest : public QObject {
                                          [db](qint64 event) { return HistoryMediaRefs::link(db, event); });
     }
 
+    FileSharingPublicationSync::HistoryAccess historyAccess()
+    {
+        FileSharingPublicationSync::HistoryAccess access;
+        access.readLinks = [this](qint64 position, int limit, QObject *receiver,
+                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> done) {
+            QTimer::singleShot(0, receiver, [this, position, limit, done] {
+                QSqlError  error;
+                const auto links = HistoryMediaRefs::linksAfter(history, position, limit, &error);
+                done(links, !error.isValid());
+            });
+        };
+        access.readLinked = [this](const QList<QByteArray> &ids, QObject *receiver,
+                                   std::function<void(QSet<QByteArray>, bool)> done) {
+            QTimer::singleShot(0, receiver, [this, ids, done] {
+                const auto linked = HistoryMediaRefs::linked(history, ids);
+                done(linked.value_or(QSet<QByteArray>()), bool(linked));
+            });
+        };
+        return access;
+    }
+
     void syncEverything()
     {
-        FileSharingPublicationSync sync(historyConnection, catalog.get());
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
         sync.reconcile();
         QTRY_VERIFY(sync.isIdle());
     }
@@ -328,6 +353,39 @@ private slots:
         QVERIFY(!reopened.isServed(corporate, hashes));
         QVERIFY(reopened.isServed(personal, hashes));
         QVERIFY2(reopened.find(corporate, hashes.first()), "unsharing leaves what a message announced");
+    }
+
+    void oneServedHashCannotAuthorizeAnUnrelatedCacheLookup()
+    {
+        const auto publicFile  = mediaOf("public", {});
+        const auto privateFile = mediaOf("private", {});
+        QVERIFY(catalog->serve(personal, self, publicFile, {}));
+        QVERIFY(catalog->serve(corporate, self, privateFile, {}));
+        const auto publicHash  = publicFile.file.computedHashes().first();
+        const auto privateHash = privateFile.file.computedHashes().last();
+        QVERIFY(!catalog->isServed(personal, { privateHash, publicHash }));
+        QVERIFY(!catalog->servedRecord(personal, { privateHash, publicHash }));
+        const auto grant = catalog->servedRecord(personal, { publicHash });
+        QVERIFY(grant);
+        QCOMPARE(grant->media.file.computedHashes(), publicFile.file.computedHashes());
+        QVERIFY(!catalog->servedRecord(personal, { privateHash }));
+    }
+
+    void receivedHashAliasesDoNotExpandServingAuthority()
+    {
+        auto       own  = mediaOf("public", {});
+        const auto sha1 = own.file.computedHashes().last();
+        own.file.setHashes({ sha1 }); // Legacy own files may have only this hash.
+        QVERIFY(catalog->serve(personal, self, own, {}));
+        auto       forged  = mediaOf("secret", { "https://example.org/forged" });
+        const auto foreign = forged.file.computedHashes().first();
+        forged.file.setHashes({ sha1, foreign });
+        QVERIFY(catalog->add(newId(), personal, alice, attachmentOf(forged)));
+        const auto grant = catalog->servedRecord(personal, { sha1 });
+        QVERIFY(grant);
+        QCOMPARE(grant->media.file.computedHashes(), QList<Hash> { sha1 });
+        QVERIFY(!grant->media.file.computedHashes().contains(foreign));
+        QVERIFY(!catalog->servedRecord(personal, { sha1, foreign }));
     }
 
     void servingAgainReplacesThePublication()
@@ -585,7 +643,7 @@ private slots:
     {
         migrateHistory();
         const auto                 media = mediaOf("payload", { QStringLiteral("https://one.example/f") });
-        FileSharingPublicationSync sync(historyConnection, catalog.get());
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
         sync.reconcile();
         QTRY_VERIFY(sync.isIdle());
         QVERIFY(!catalog->find(corporate, media.file.computedHashes().first()));
@@ -721,8 +779,13 @@ private slots:
         QVERIFY(store(messageWith(alice, { referenceOf(media) })));
         syncEverything();
         QSqlQuery query(history);
-        QVERIFY(query.exec("DROP TABLE message_media_refs"));
-        syncEverything();
+        QVERIFY(query.exec("ALTER TABLE message_media_refs RENAME TO unavailable_refs"));
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
+        sync.reconcile();
+        QTest::qWait(100);
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(query.exec("ALTER TABLE unavailable_refs RENAME TO message_media_refs"));
+        QTRY_VERIFY(sync.isIdle());
         QVERIFY(catalog->find(corporate, media.file.computedHashes().first()));
     }
 
@@ -753,11 +816,14 @@ private slots:
         migrateHistory();
         QVERIFY(
             store(messageWith(alice, { referenceOf(mediaOf("payload", { QStringLiteral("https://f.example/") })) })));
-        FileSharingPublicationSync sync(historyConnection, catalog.get());
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
         sync.reconcile();
         history.close();
-        QTRY_VERIFY(sync.isIdle());
+        QTest::qWait(100);
         QCOMPARE(publicationCount(), 0);
+        QVERIFY(history.open());
+        QTRY_VERIFY(sync.isIdle());
+        QCOMPARE(publicationCount(), 1);
     }
 
     // ------------------------------------------------------------------ upgrades
@@ -909,6 +975,353 @@ private slots:
         QSqlDatabase::removeDatabase(name);
         catalog->importLegacy(path, { { corporate, self } });
         QVERIFY(!catalog->contentForUrl(corporate, sha256("address")));
+    }
+
+    void linkScanPositionsAreNotReusedAfterDeletion()
+    {
+        migrateHistory();
+        auto       message = messageWith(alice, { referenceOf(mediaOf("first", {})) });
+        const auto event   = store(message);
+        const auto before  = HistoryMediaRefs::linksAfter(history, 0, 100);
+        QCOMPARE(before.size(), 1);
+        QSqlQuery erase(history);
+        QVERIFY(erase.exec(QStringLiteral("DELETE FROM events WHERE id=%1").arg(event)));
+        QVERIFY(store(messageWith(alice, { referenceOf(mediaOf("second", {})) })));
+        const auto after = HistoryMediaRefs::linksAfter(history, before.first().position, 100);
+        QCOMPARE(after.size(), 1);
+        QVERIFY(after.first().position > before.first().position);
+    }
+
+    void removingAttachmentsRetiresTheirLinks()
+    {
+        migrateHistory();
+        const auto event = store(messageWith(alice, { referenceOf(mediaOf("first", {})) }));
+        QSqlQuery  change(history);
+        change.prepare("UPDATE events SET extra_data=:extra WHERE id=:id");
+        change.bindValue(":extra", HistoryMessageExtras::encode(messageWith(alice, {})));
+        change.bindValue(":id", event);
+        QVERIFY(change.exec());
+        bool removed = false;
+        QVERIFY(HistoryMediaRefs::link(history, event, &removed));
+        QVERIFY(removed);
+        QVERIFY(links(event).isEmpty());
+    }
+
+    void localizedBodyUsesTheStoredAttachmentProjection()
+    {
+        migrateHistory();
+        Message       message;
+        const QString url = "https://example.org/report";
+        message.setBody("See " + url + " in this text");
+        message.urlAdd(Url(url));
+        const auto id = insertEvent(url, HistoryMessageExtras::encode(message, url));
+        QVERIFY(HistoryMediaRefs::link(history, id));
+        QCOMPARE(links(id).size(), 1);
+        syncEverything();
+        QVERIFY(catalog->find(corporate, MessageAttachments::urlIdentity(QUrl(url))));
+    }
+
+    void pendingSfsFilesHaveDistinctStableFingerprints()
+    {
+        migrateHistory();
+        StatelessFileSharing::FileSharing first, second;
+        first.setFile(mediaOf("pending-first", {}).file);
+        second.setFile(mediaOf("pending-second", {}).file);
+        auto before = messageWith(alice, {});
+        before.addFileSharing(first);
+        auto after = messageWith(alice, {});
+        after.addFileSharing(second);
+        const auto event    = store(before);
+        const auto original = links(event);
+        QCOMPARE(original.size(), 1);
+        QVERIFY(HistoryMediaRefs::link(history, event));
+        QCOMPARE(links(event), original);
+        QSqlQuery change(history);
+        change.prepare("UPDATE events SET extra_data=:extra WHERE id=:id");
+        change.bindValue(":id", event);
+        change.bindValue(":extra", HistoryMessageExtras::encode(after));
+        QVERIFY(change.exec());
+        QVERIFY(HistoryMediaRefs::link(history, event));
+        QVERIFY(links(event) != original);
+    }
+
+    void aFailedCatalogBatchRollsBackEveryAnnouncement()
+    {
+        const auto first = mediaOf("first", {}), second = mediaOf("second", {});
+        QSqlQuery  fail(FileDatabase::connection());
+        QVERIFY(fail.exec("CREATE TRIGGER reject_second BEFORE INSERT ON publications "
+                          "WHEN (SELECT count(*) FROM publications)>0 "
+                          "BEGIN SELECT RAISE(ABORT,'test batch failure'); END"));
+        QVERIFY(!catalog->addBatch(
+            { { newId(), corporate, alice, attachmentOf(first) }, { newId(), corporate, bob, attachmentOf(second) } }));
+        QCOMPARE(publicationCount(), 0);
+    }
+
+    void sweepingRetriesFailedDeletes()
+    {
+        migrateHistory();
+        const auto media = mediaOf("payload", {});
+        const auto id    = newId();
+        QVERIFY(catalog->add(id, corporate, alice, attachmentOf(media)));
+        QSqlQuery fail(FileDatabase::connection());
+        QVERIFY(fail.exec("CREATE TRIGGER reject_delete BEFORE DELETE ON publications "
+                          "BEGIN SELECT RAISE(ABORT,'test delete failure'); END"));
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
+        sync.reconcile();
+        QTest::qWait(100);
+        QCOMPARE(publicationCount(), 1);
+        QVERIFY(fail.exec("DROP TRIGGER reject_delete"));
+        QTRY_COMPARE(publicationCount(), 0);
+        QTRY_VERIFY(sync.isIdle());
+    }
+
+    void staleLinkSnapshotCannotRecreateAnErasedPublication()
+    {
+        migrateHistory();
+        const auto media = mediaOf("payload", {});
+        QVERIFY(store(messageWith(alice, { referenceOf(media) })));
+        auto                                                     access     = historyAccess();
+        auto                                                     normalRead = access.readLinks;
+        std::function<void(QList<HistoryMediaRefs::Link>, bool)> pending;
+        QList<HistoryMediaRefs::Link>                            old;
+        access.readLinks = [normalRead, &pending, &old](qint64 position, int limit, QObject *receiver,
+                                                        std::function<void(QList<HistoryMediaRefs::Link>, bool)> done) {
+            normalRead(position, limit, receiver, [&pending, &old, done](QList<HistoryMediaRefs::Link> links, bool ok) {
+                if (pending) {
+                    done(std::move(links), ok);
+                } else {
+                    old     = std::move(links);
+                    pending = done;
+                }
+            });
+        };
+        FileSharingPublicationSync sync(std::move(access), catalog.get());
+        sync.reconcile();
+        QTRY_VERIFY(bool(pending));
+        QSqlQuery erase(history);
+        QVERIFY(erase.exec("DELETE FROM events"));
+        sync.reconcile();
+        pending(old, true);
+        QTRY_VERIFY(sync.isIdle());
+        QCOMPARE(publicationCount(), 0);
+    }
+
+    void oldDevelopmentSfsIsPreparedBeforeThreadedMigration()
+    {
+        QVERIFY(HistoryArchive::migrate(history));
+        Jingle::JinglePub publication;
+        publication.setFrom(alice);
+        publication.setId("legacy");
+        publication.addDescription(Jingle::FileTransfer::NS);
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromJinglePub(publication));
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setFile(mediaOf("payload", {}).file);
+        sharing.setSources(sources);
+        auto message = messageWith(alice, {});
+        message.addFileSharing(sharing);
+        auto extra = QJsonDocument::fromJson(HistoryMessageExtras::encode(message).toUtf8()).object();
+        extra.remove("psi:media-refs");
+        QVERIFY(insertEvent({}, QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact))));
+        const auto migrate = [this] {
+            bool       success = false;
+            const auto path    = history.databaseName();
+            auto      *thread  = QThread::create([path, &success] {
+                const auto name = QStringLiteral("legacy-media-worker");
+                {
+                    auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+                    db.setDatabaseName(path);
+                    success = db.open() && HistoryMediaRefs::migrate(db);
+                    db.close();
+                }
+                QSqlDatabase::removeDatabase(name);
+            });
+            thread->start();
+            if (!thread->wait(5000))
+                qFatal("Migration worker did not stop");
+            delete thread;
+            return success;
+        };
+        QVERIFY(!migrate()); // Never prepare a legacy Jingle JID on the worker.
+        QVERIFY(HistoryMediaRefs::prepareLegacySfs(history));
+        QVERIFY(migrate());
+        QCOMPARE(linkCount(), 1);
+    }
+
+    void sfsJingleIsIndexedBeforeEnteringTheWorker()
+    {
+        migrateHistory();
+        Jingle::JinglePub publication;
+        publication.setFrom(alice);
+        publication.setId("source");
+        publication.addDescription(Jingle::FileTransfer::NS);
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromJinglePub(publication));
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setFile(mediaOf("payload", {}).file);
+        sharing.setSources(sources);
+        Message message = messageWith(alice, {});
+        message.addFileSharing(sharing);
+        const auto extra = HistoryMessageExtras::encode(message);
+        QVERIFY(QJsonDocument::fromJson(extra.toUtf8()).object().value("psi:media-refs").isObject());
+
+        struct Worker {
+            QThread               thread;
+            HistorySqlReadWorker *db;
+            explicit Worker(const QString &path) : db(new HistorySqlReadWorker(path))
+            {
+                db->setEventStoredHook([](QSqlDatabase connection, qint64 id, bool *removed) {
+                    return HistoryMediaRefs::link(connection, id, removed);
+                });
+                db->moveToThread(&thread);
+                QObject::connect(&thread, &QThread::started, db, &HistorySqlReadWorker::open);
+                QObject::connect(db, &HistorySqlReadWorker::stopped, &thread, &QThread::quit, Qt::DirectConnection);
+                QObject::connect(&thread, &QThread::finished, db, &QObject::deleteLater);
+                thread.start();
+            }
+            ~Worker()
+            {
+                QMetaObject::invokeMethod(db, "close", Qt::QueuedConnection);
+                if (!thread.wait(5000))
+                    qFatal("History worker did not stop");
+            }
+        } worker(history.databaseName());
+        QSignalSpy read(worker.db, &HistorySqlReadWorker::completed);
+        QSignalSpy wrote(worker.db, &HistorySqlReadWorker::writeCompleted);
+        qRegisterMetaType<HistoryReadRequest>("HistoryReadRequest");
+        qRegisterMetaType<HistoryWriteRequest>("HistoryWriteRequest");
+        HistoryWriteRequest append;
+        append.account       = corporate;
+        append.contactPeer   = key.peer;
+        append.jidType       = 1;
+        append.encoded.valid = append.encoded.isMessage = true;
+        append.encoded.type                             = 1;
+        append.encoded.direction                        = 2;
+        append.encoded.timestamp                        = QDateTime::currentDateTimeUtc();
+        append.encoded.extras                           = extra;
+        append.encoded.sender                           = alice.full();
+        QVERIFY(
+            QMetaObject::invokeMethod(worker.db, "write", Qt::QueuedConnection, Q_ARG(HistoryWriteRequest, append)));
+        HistoryReadRequest request;
+        request.type = HistoryReadRequest::MediaLinks;
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        QCOMPARE(wrote.count(), 1);
+        QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.first().first()).success);
+        const auto result = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(result.success);
+        QCOMPARE(result.mediaLinks.size(), 1);
+        const auto told = HistoryMediaRefs::announcement(result.mediaLinks.first());
+        QVERIFY(told);
+        QCOMPARE(told->attachment.reference.mediaSharing().sources,
+                 QStringList { "xmpp:alice@example.org/desktop?jingle-ft" });
+        request.type           = HistoryReadRequest::MediaLinked;
+        request.publicationIds = { result.mediaLinks.first().publicationId };
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        const auto linked = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(linked.success);
+        QVERIFY(linked.linkedPublications.contains(request.publicationIds.first()));
+    }
+
+    void legacyDirectoryWaitsForBothPayloadsAndPublications()
+    {
+        const auto legacy = dir->filePath(QStringLiteral("legacy"));
+        QVERIFY(QDir().mkpath(legacy));
+        const QStringList profiles { QFileInfo(profileDirectory).fileName() };
+        const QStringList components { QString(), QStringLiteral("publications") };
+        FileDatabase::markLegacyDirectoryImported(legacy);
+        FileDatabase::retireLegacyDirectory(legacy, profiles, components);
+        QVERIFY(QDir(legacy).exists()); // A payload import alone cannot retire the only catalog.
+        FileDatabase::markLegacyDirectoryImported(legacy, QStringLiteral("publications"));
+        FileDatabase::retireLegacyDirectory(legacy, profiles, components);
+        QVERIFY(!QDir(legacy).exists());
+    }
+
+    void unreadableLegacyCatalogCanBeRetried()
+    {
+        const auto path = dir->filePath(QStringLiteral("broken.sqlite"));
+        QFile      file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write("not a SQLite database"), qint64(21));
+        file.close();
+        QVERIFY(!catalog->importLegacy(path, { { corporate, self } }));
+        QSqlQuery check(FileDatabase::connection());
+        QVERIFY(check.exec("SELECT count(*) FROM file_legacy_imports WHERE partition='publications'") && check.next());
+        QCOMPARE(check.value(0).toInt(), 0);
+    }
+
+    void aChangedStoredAttachmentReplacesItsPublication()
+    {
+        migrateHistory();
+        const auto old   = mediaOf("first", { QStringLiteral("https://example.org/old") });
+        const auto fresh = mediaOf("second", { QStringLiteral("https://example.org/new") });
+        const auto event = store(messageWith(alice, { referenceOf(old) }));
+        syncEverything();
+        const auto before = links(event);
+        QSqlQuery  change(history);
+        change.prepare("UPDATE events SET extra_data=:extra WHERE id=:id");
+        change.bindValue(":extra", HistoryMessageExtras::encode(messageWith(alice, { referenceOf(fresh) })));
+        change.bindValue(":id", event);
+        QVERIFY(change.exec());
+        QVERIFY(HistoryMediaRefs::link(history, event));
+        QVERIFY(links(event) != before);
+        syncEverything();
+        QVERIFY(!catalog->find(corporate, old.file.computedHashes().first()));
+        QVERIFY(catalog->find(corporate, fresh.file.computedHashes().first()));
+    }
+
+    void publicationWriteFailureIsRetriedWithoutRestart()
+    {
+        migrateHistory();
+        FileSharingPublicationSync sync(historyAccess(), catalog.get());
+        sync.reconcile();
+        QTRY_VERIFY(sync.isIdle());
+        QSqlQuery fail(FileDatabase::connection());
+        QVERIFY(fail.exec("CREATE TRIGGER reject_publication BEFORE INSERT ON publications "
+                          "BEGIN SELECT RAISE(ABORT,'test write failure'); END"));
+        const auto media = mediaOf("payload", { QStringLiteral("https://example.org/file") });
+        QVERIFY(store(messageWith(alice, { referenceOf(media) })));
+        sync.linksAdded();
+        QTest::qWait(100);
+        QVERIFY(!catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(fail.exec("DROP TRIGGER reject_publication"));
+        QTRY_VERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+    }
+
+    void legacyServingIsNotReimportedAfterFileDatabaseLoss()
+    {
+        const auto path  = dir->filePath(QStringLiteral("legacy-serving.sqlite"));
+        const auto media = mediaOf("shared", { QStringLiteral("https://example.org/shared") });
+        const auto name  = QStringLiteral("legacy-serving");
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+            db.setDatabaseName(path);
+            QVERIFY(db.open());
+            QSqlQuery query(db);
+            QVERIFY(query.exec("CREATE TABLE shared_files(account_id TEXT,hash TEXT,descriptor TEXT)"));
+            QVERIFY(query.exec("CREATE TABLE served_files(account_id TEXT,hash TEXT)"));
+            QVERIFY(query.exec("CREATE TABLE served_files_imported(account_id TEXT)"));
+            QVERIFY(query.exec("INSERT INTO served_files_imported VALUES('corporate')"));
+            query.prepare("INSERT INTO shared_files VALUES('corporate',:hash,:descriptor)");
+            query.bindValue(":hash", media.file.computedHashes().first().toString());
+            query.bindValue(
+                ":descriptor",
+                QString::fromUtf8(
+                    QJsonDocument(legacyDescriptor(media, { self.full() })).toJson(QJsonDocument::Compact)));
+            QVERIFY(query.exec());
+            query.prepare("INSERT INTO served_files VALUES('corporate',:hash)");
+            query.bindValue(":hash", media.file.computedHashes().first().toString());
+            QVERIFY(query.exec());
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(name);
+        QVERIFY(catalog->importLegacy(path, { { corporate, self } }));
+        QVERIFY(catalog->isServed(corporate, media.file.computedHashes()));
+        loseFileDatabase();
+        QVERIFY(QFile::exists(path)); // Another profile may still need this input.
+        QVERIFY(catalog->importLegacy(path, { { corporate, self } }));
+        QVERIFY(!catalog->isServed(corporate, media.file.computedHashes()));
     }
 
     void aMissingLegacyCatalogIsNothingToImport()

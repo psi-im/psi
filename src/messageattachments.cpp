@@ -38,6 +38,8 @@ namespace {
         const auto  items = sharing.sources().items();
         for (const auto &source : items) {
             if (source.type() == Source::Type::UrlData) {
+                if (!OobMediaPolicy::normalizedHttpSource(source.url().toString(QUrl::FullyEncoded)).isValid())
+                    continue;
                 sources.append(source.url().toString(QUrl::FullyEncoded));
                 if (source.url().scheme() == QLatin1String("https"))
                     secure.append(sources.last());
@@ -65,14 +67,27 @@ namespace {
         return attachment;
     }
 
-    bool sameFile(const XMPP::Reference &reference, const XMPP::Reference &other)
+    bool mergeFile(Attachment &target, const Attachment &incoming)
     {
-        if (!reference.isValid() || !reference.mediaSharing().isValid())
+        if (!target.isFile() || !incoming.isFile())
             return false;
-        const auto hashes = reference.mediaSharing().file.computedHashes();
-        const auto others = other.mediaSharing().file.computedHashes();
-        return std::any_of(hashes.cbegin(), hashes.cend(),
-                           [&others](const XMPP::Hash &hash) { return others.contains(hash); });
+        auto       media  = target.reference.mediaSharing();
+        const auto other  = incoming.reference.mediaSharing();
+        const auto hashes = media.file.computedHashes();
+        const auto others = other.file.computedHashes();
+        const bool common = std::any_of(hashes.cbegin(), hashes.cend(), [&others](const XMPP::Hash &hash) {
+            return hash.type() != XMPP::Hash::Sha1 && !hash.data().isEmpty() && others.contains(hash);
+        });
+        if (!common || (media.file.size() && other.file.size() && media.file.size() != other.file.size())
+            || !media.file.merge(other.file))
+            return false;
+        media.sources += other.sources;
+        media.sources.removeDuplicates();
+        target.reference.setMediaSharing(media);
+        target.manualFetch = target.manualFetch || incoming.manualFetch;
+        if (target.description.isEmpty())
+            target.description = incoming.description;
+        return true;
     }
 
     bool overlapsRange(const QList<Attachment> &attachments, int begin, int end)
@@ -101,16 +116,36 @@ QUrl Attachment::url() const
 Result collect(const XMPP::Message &message)
 {
     Result        result;
-    QSet<QString> covered;
+    QSet<QString> covered, blocked, manualSources;
+    for (const auto &sharing : message.fileSharings()) {
+        for (const auto &source : sharing.sources().items()) {
+            if (source.type() != XMPP::StatelessFileSharing::Source::Type::UrlData)
+                continue;
+            const auto url = OobMediaPolicy::normalizedHttpSource(source.url().toString(QUrl::FullyEncoded));
+            if (!url.isValid())
+                continue;
+            const auto canonical = url.toString(QUrl::FullyEncoded);
+            if (sharing.disposition() == XMPP::StatelessFileSharing::Disposition::Attachment)
+                manualSources.insert(canonical);
+            if (!sharing.file().hasComputedHashes() && url.scheme() != QLatin1String("https"))
+                blocked.insert(canonical);
+        }
+    }
     for (const auto &reference : message.references())
         result.attachments.append({ reference, {} });
     // After the references: links in history count attachments by their position.
     for (const auto &sharing : message.fileSharings()) {
         const auto attachment = fromFileSharing(sharing);
-        if (attachment
-            && std::none_of(result.attachments.cbegin(), result.attachments.cend(), [&attachment](const Attachment &a) {
-                   return sameFile(attachment->reference, a.reference);
-               }))
+        if (!attachment)
+            continue;
+        bool merged = false;
+        for (auto &existing : result.attachments) {
+            if (mergeFile(existing, *attachment)) {
+                merged = true;
+                break;
+            }
+        }
+        if (!merged)
             result.attachments.append(*attachment);
     }
     for (const auto &attachment : std::as_const(result.attachments))
@@ -132,6 +167,8 @@ Result collect(const XMPP::Message &message)
             continue;
         }
         const QString canonical = candidate.source.toString(QUrl::FullyEncoded);
+        if (blocked.contains(canonical))
+            continue; // Preserve the fallback body instead of automatically fetching an insecure SFS source.
         if (candidate.redundant) {
             // Already an attachment, but the OOB description may still name it.
             if (!url.desc().isEmpty()) {
@@ -162,6 +199,12 @@ Result collect(const XMPP::Message &message)
             reference.setRange(at, end);
         result.attachments.append({ reference, url.desc() });
     }
+    // Compatibility copies with only weak/no common hashes still must not
+    // automatically fetch the very HTTP source declared manual by SFS.
+    for (auto &attachment : result.attachments)
+        for (const auto &source : httpSources(attachment.reference))
+            if (manualSources.contains(source))
+                attachment.manualFetch = true;
     return result;
 }
 

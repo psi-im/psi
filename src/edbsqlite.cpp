@@ -421,10 +421,14 @@ bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &
 {
 
     const auto db = QSqlDatabase::database("history");
-    const bool ok = HistoryArchive::storePage(db, key, before, limit, page,
-                                             [db](qint64 id) { return HistoryMediaRefs::link(db, id); });
-    if (ok)
+    bool       removed = false;
+    const bool ok      = HistoryArchive::storePage(
+        db, key, before, limit, page, [db, &removed](qint64 id) { return HistoryMediaRefs::link(db, id, &removed); });
+    if (ok) {
+        if (removed)
+            emit mediaLinksRemoved();
         emit mediaLinksAdded();
+    }
     // All contact inserts are now owned by the worker and are transactional.
     return ok;
 }
@@ -505,9 +509,8 @@ bool EDBSqLite::init()
         historyReadThread_ = new QThread(this);
         historyReader_ = new HistorySqlReadWorker(db.databaseName());
         // The callback carries no GUI objects and executes on the worker's SQLite connection.
-        historyReader_->setEventStoredHook([](QSqlDatabase db, qint64 id) {
-            return HistoryMediaRefs::link(db, id);
-        });
+        historyReader_->setEventStoredHook(
+            [](QSqlDatabase db, qint64 id, bool *removed) { return HistoryMediaRefs::link(db, id, removed); });
         historyReader_->moveToThread(historyReadThread_);
         connect(historyReadThread_, &QThread::started, historyReader_, &HistorySqlReadWorker::open);
         connect(this, &EDBSqLite::historyReadRequested, historyReader_,
@@ -528,7 +531,34 @@ bool EDBSqLite::init()
     return true;
 }
 
-QString EDBSqLite::connectionName() const { return QStringLiteral("history"); }
+void EDBSqLite::requestMediaLinks(qint64 position, int limit, QObject *receiver,
+                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished)
+{
+    if (!receiver)
+        return;
+    auto *r        = new item_query_req;
+    r->id          = genUniqueId();
+    r->type        = item_query_req::Type_mediaLinks;
+    r->localBefore = position;
+    r->len         = limit;
+    pendingMediaLinks_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(0, this, SLOT(performRequests()));
+}
+
+void EDBSqLite::requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiver,
+                                   std::function<void(QSet<QByteArray>, bool)> finished)
+{
+    if (!receiver)
+        return;
+    auto *r           = new item_query_req;
+    r->id             = genUniqueId();
+    r->type           = item_query_req::Type_mediaLinked;
+    r->publicationIds = ids;
+    pendingMediaLinked_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(0, this, SLOT(performRequests()));
+}
 
 int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache; }
 
@@ -690,6 +720,8 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 
 void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 {
+    if (written.success && written.mediaLinksRemoved)
+        emit mediaLinksRemoved();
     if (pendingArchiveWrites_.contains(written.id)) {
         auto pending = pendingArchiveWrites_.take(written.id);
         if (written.success)
@@ -713,6 +745,18 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 
 void EDBSqLite::onHistoryReadCompleted(HistoryReadResult read)
 {
+    if (pendingMediaLinks_.contains(read.id)) {
+        auto pending = pendingMediaLinks_.take(read.id);
+        if (pending.receiver)
+            pending.finished(std::move(read.mediaLinks), read.success);
+        return;
+    }
+    if (pendingMediaLinked_.contains(read.id)) {
+        auto pending = pendingMediaLinked_.take(read.id);
+        if (pending.receiver)
+            pending.finished(std::move(read.linkedPublications), read.success);
+        return;
+    }
     if (pendingMessageLookups_.contains(read.id)) {
         auto pending = pendingMessageLookups_.take(read.id);
         if (!pending.receiver)
@@ -829,7 +873,15 @@ void EDBSqLite::performRequests()
     // Migration/init is the only reason a request could arrive without the
     // database worker. Never silently drop it or fall back to GUI SQL.
     if (!historyReadThread_) {
-        if (type == item_query_req::Type_local) {
+        if (type == item_query_req::Type_mediaLinks) {
+            auto pending = pendingMediaLinks_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
+        } else if (type == item_query_req::Type_mediaLinked) {
+            auto pending = pendingMediaLinked_.take(r->id);
+            if (pending.receiver)
+                pending.finished({}, false);
+        } else if (type == item_query_req::Type_local) {
             auto pending = pendingLocalPages_.take(r->id);
             if (pending.receiver)
                 pending.finished({}, false);
@@ -862,10 +914,11 @@ void EDBSqLite::performRequests()
         return;
     }
 
-    if (type == item_query_req::Type_get || type == item_query_req::Type_find
-        || type == item_query_req::Type_local || type == item_query_req::Type_displayed
-        || type == item_query_req::Type_archiveRead || type == item_query_req::Type_resolved
-        || type == item_query_req::Type_lookup || type == item_query_req::Type_plaintext) {
+    if (type == item_query_req::Type_get || type == item_query_req::Type_find || type == item_query_req::Type_local
+        || type == item_query_req::Type_displayed || type == item_query_req::Type_archiveRead
+        || type == item_query_req::Type_resolved || type == item_query_req::Type_lookup
+        || type == item_query_req::Type_plaintext || type == item_query_req::Type_mediaLinks
+        || type == item_query_req::Type_mediaLinked) {
         HistoryReadRequest read;
         read.id = r->id;
         read.account = r->accId;
@@ -881,10 +934,15 @@ void EDBSqLite::performRequests()
         read.archiveIndex = r->archiveIndex;
         read.snapshotCount = r->snapshotCount;
         read.eventIds = r->eventIds;
+        read.publicationIds = r->publicationIds;
         read.sender = r->ownSender;
         read.messageId = r->ownMessageId;
         read.messageTime = r->ownTime;
-        if (type == item_query_req::Type_local)
+        if (type == item_query_req::Type_mediaLinks)
+            read.type = HistoryReadRequest::MediaLinks;
+        else if (type == item_query_req::Type_mediaLinked)
+            read.type = HistoryReadRequest::MediaLinked;
+        else if (type == item_query_req::Type_local)
             read.type = HistoryReadRequest::LocalPage;
         else if (type == item_query_req::Type_displayed)
             read.type = HistoryReadRequest::DisplayedCursor;

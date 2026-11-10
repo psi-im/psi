@@ -405,10 +405,13 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
 
     _published = false;
     // Cache temporary files before registering a factory that will serve them.
-    const bool serveLocally = savePublishedFile();
+    bool serveLocally = savePublishedFile();
+    // Capture the old upload URLs before replacing the serving publication.
+    // They are no longer stored in account-independent cache metadata.
+    const auto knownSources = _uris + _manager->knownSources(_acc, _sums);
     const auto file         = fileMetadata();
     if (serveLocally)
-        _manager->serve(_acc, { file, {} }, localFilePath());
+        serveLocally = _manager->serve(_acc, { file, {} }, localFilePath());
     if (serveLocally && _fileSize) {
         auto cache = _manager->mediaChunkCache();
         if (cache->isCompleteFile(localFilePath()))
@@ -429,12 +432,12 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
         publication->deleteLater();
         if (_acc && !_published)
             _manager->stopServing(_acc, _sums);
-        else if (_acc && serveLocally)
-            _manager->serve(_acc, { file, _uris }, localFilePath());
+        else if (_acc)
+            _manager->serve(_acc, { file, _uris }, serveLocally ? localFilePath() : QString());
         emit publishFinished();
     });
     // An earlier upload of this file may still be there to reuse.
-    publication->start(_uris + _manager->knownSources(_acc, _sums), serveLocally);
+    publication->start(knownSources, serveLocally);
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }

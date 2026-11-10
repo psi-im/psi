@@ -104,7 +104,7 @@ public:
     // the session is not a request, such as a file offer for the user to accept.
     bool answerFileRequest(XMPP::Jingle::Session *session, PsiAccount *account);
     // The account answers remote requests for the file from now on, or no longer does.
-    void serve(PsiAccount *account, const XMPP::MediaSharing &media, const QString &localPath);
+    bool serve(PsiAccount *account, const XMPP::MediaSharing &media, const QString &localPath);
     void stopServing(PsiAccount *account, const QList<XMPP::Hash> &hashes);
     // Every source the account was told of for the file.
     QStringList knownSources(PsiAccount *account, const QList<XMPP::Hash> &hashes) const;

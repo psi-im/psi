@@ -22,6 +22,7 @@
 #include "applicationinfo.h"
 #include "edbsqlite.h"
 #include "filecache.h"
+#include "filedatabase.h"
 #include "filesharingcatalog.h"
 #include "filesharingchunksource.h"
 #include "filesharingdownloader.h"
@@ -457,27 +458,35 @@ bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount 
     const QPointer<PsiAccount> guard(account);
     return FileSharingResponder::answer(
         session, [this, guard](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
-            if (!guard || !d->catalog->isServed(guard->id(), hashes))
+            if (!guard)
                 return {};
+            const auto publication = d->catalog->servedRecord(guard->id(), hashes);
+            if (!publication)
+                return {};
+            const auto authorized = publication->media.file.computedHashes();
             QString path;
-            if (auto cached = cacheItem(hashes, true, &path))
+            if (auto cached = cacheItem(authorized, true, &path))
                 return FileSharingResponder::ServedFile { path, cached->sums() };
-            for (const auto &hash : hashes) {
-                auto known = item(hash, guard);
-                if (!known)
-                    continue;
-                path = known->localFilePath();
-                if (!path.isEmpty())
-                    return FileSharingResponder::ServedFile { path, known->sums() };
+            // Runtime items and received source unions are not authorization
+            // records. Only the unchanged local copy of this own publication
+            // can supply a fallback path.
+            path = publication->readableLocalPath();
+            if (!path.isEmpty()) {
+                if (path.startsWith(cacheDir() + QStringLiteral("/media-files-v2/"))
+                    && !mediaChunkCache()->isCompleteFile(path))
+                    return {};
+                return FileSharingResponder::ServedFile { path, authorized };
             }
             return {};
         });
 }
 
-void FileSharingManager::serve(PsiAccount *account, const MediaSharing &media, const QString &localPath)
+bool FileSharingManager::serve(PsiAccount *account, const MediaSharing &media, const QString &localPath)
 {
-    if (!d->catalog->serve(account->id(), account->jid(), media, localPath))
+    const bool stored = d->catalog->serve(account->id(), account->jid(), media, localPath);
+    if (!stored)
         qWarning("Could not persist a served file");
+    return stored;
 }
 
 void FileSharingManager::stopServing(PsiAccount *account, const QList<Hash> &hashes)
@@ -502,13 +511,29 @@ void FileSharingManager::importLegacyCatalog(const QList<PsiAccount *> &accounts
         own.insert(account->id(), account->jid());
     // A profile has had its own copy since caches moved under the profile.
     const auto copy = cacheDir() + QStringLiteral("/shared-files.sqlite");
-    if (d->catalog->importLegacy(QFile::exists(copy) ? copy : legacyDir() + QStringLiteral("/shared-files.sqlite"), own))
+    if (d->catalog->importLegacy(QFile::exists(copy) ? copy : legacyDir() + QStringLiteral("/shared-files.sqlite"),
+                                 own)) {
+        if (QDir(legacyDir()).exists())
+            FileDatabase::markLegacyDirectoryImported(legacyDir(), QStringLiteral("publications"));
         QFile::remove(copy);
+    }
 }
 
 void FileSharingManager::followHistory(EDBSqLite *history)
 {
-    auto *sync = new FileSharingPublicationSync(history->connectionName(), d->catalog.get(), this);
+    const QPointer<EDBSqLite>                 database(history);
+    FileSharingPublicationSync::HistoryAccess access;
+    access.readLinks = [database](qint64 position, int limit, QObject *receiver,
+                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished) {
+        if (database)
+            database->requestMediaLinks(position, limit, receiver, std::move(finished));
+    };
+    access.readLinked = [database](const QList<QByteArray> &ids, QObject *receiver,
+                                   std::function<void(QSet<QByteArray>, bool)> finished) {
+        if (database)
+            database->requestLinkedMedia(ids, receiver, std::move(finished));
+    };
+    auto *sync = new FileSharingPublicationSync(std::move(access), d->catalog.get(), this);
     connect(history, &EDBSqLite::mediaLinksAdded, sync, &FileSharingPublicationSync::linksAdded);
     connect(history, &EDBSqLite::mediaLinksRemoved, sync, &FileSharingPublicationSync::reconcile);
     sync->reconcile();

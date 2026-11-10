@@ -3,6 +3,7 @@
 
 #include "historyarchive.h"
 #include "historyeventpayload.h"
+#include "historymediaqueries.h"
 
 #include <QDateTime>
 #include <QHash>
@@ -18,7 +19,20 @@
 // Only immutable value objects cross the EDB reader's queued connections.
 // No PsiEvent, PsiAccount or SQLite connection ever crosses into the worker.
 struct HistoryReadRequest {
-    enum Type { Get, Find, LocalPage, DisplayedCursor, ArchiveBefore, ArchiveAfter, ArchiveIndex, ResolveBatch, ArchiveLookup, OwnPlaintext };
+    enum Type {
+        Get,
+        Find,
+        LocalPage,
+        DisplayedCursor,
+        ArchiveBefore,
+        ArchiveAfter,
+        ArchiveIndex,
+        ResolveBatch,
+        ArchiveLookup,
+        OwnPlaintext,
+        MediaLinks,
+        MediaLinked
+    };
     int id = 0;
     Type type = Get;
     QString account, peer, text;
@@ -28,6 +42,7 @@ struct HistoryReadRequest {
     QDateTime messageTime;
     int archiveIndex = -1, snapshotCount = -1;
     QList<qint64> eventIds;
+    QList<QByteArray>   publicationIds;
     QDateTime date;
     qint64 before = 0;
     int direction = 0, start = 0, limit = 40;
@@ -44,6 +59,8 @@ struct HistoryReadResult {
     HistoryArchive::Snapshot archiveSnapshot;
     QHash<qint64, QSqlRecord> resolvedRows;
     bool archiveExact = false;
+    QList<HistoryMediaRefs::Link>   mediaLinks;
+    QSet<QByteArray>                linkedPublications;
 };
 Q_DECLARE_METATYPE(HistoryReadResult)
 
@@ -65,6 +82,7 @@ struct HistoryWriteResult {
     int id = 0;
     bool success = false;
     bool inserted = false;
+    bool                 mediaLinksRemoved = false;
     HistoryArchive::Page archivePage;
 };
 Q_DECLARE_METATYPE(HistoryWriteResult)
@@ -75,7 +93,7 @@ public:
     explicit HistorySqlReadWorker(QString path) : path_(std::move(path)) { }
 
     // Called before moveToThread; no GUI-owned data is captured.
-    void setEventStoredHook(std::function<bool(QSqlDatabase, qint64)> hook)
+    void setEventStoredHook(std::function<bool(QSqlDatabase, qint64, bool *)> hook)
     {
         eventStoredHook_ = std::move(hook);
     }
@@ -97,7 +115,7 @@ private:
     void flushPendingAppends();
     QString path_, connectionName_;
     QSqlDatabase db_;
-    std::function<bool(QSqlDatabase, qint64)> eventStoredHook_;
+    std::function<bool(QSqlDatabase, qint64, bool *)> eventStoredHook_;
     QTimer *appendCommitTimer_ = nullptr;
     QList<HistoryWriteResult> pendingAppends_;
     bool appendTransactionOpen_ = false;
