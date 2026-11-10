@@ -1,15 +1,22 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ImageViewer.h"
+#include "fileutil.h"
 
+#include <QClipboard>
 #include <QCloseEvent>
+#include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QCursor>
 #include <QDateTime>
 #include <QDir>
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImageReader>
+#include <QImageWriter>
 #include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QPainter>
@@ -29,6 +36,8 @@ constexpr qreal ZoomStep = 1.2;
 
 ImageViewer::SizeLoader imageViewerSizeLoader;
 ImageViewer::SizeSaver  imageViewerSizeSaver;
+ImageViewer::PathLoader imageViewerSavePathLoader;
+ImageViewer::PathSaver  imageViewerSavePathSaver;
 
 QPointer<ImageViewer> &currentImageViewer()
 {
@@ -52,6 +61,12 @@ void ImageViewer::setSizePersistence(SizeLoader loader, SizeSaver saver)
 {
     imageViewerSizeLoader = std::move(loader);
     imageViewerSizeSaver  = std::move(saver);
+}
+
+void ImageViewer::setSavePathPersistence(PathLoader loader, PathSaver saver)
+{
+    imageViewerSavePathLoader = std::move(loader);
+    imageViewerSavePathSaver  = std::move(saver);
 }
 
 void ImageViewer::showImage(const QImage &image, const QString &fileName)
@@ -161,6 +176,78 @@ void ImageViewer::bringToFront()
     activateWindow();
     if (QWindow *window = windowHandle())
         window->requestActivate();
+}
+
+QString ImageViewer::currentFilePath() const
+{
+    if (directoryPath_.isEmpty() || currentFileName_.isEmpty())
+        return {};
+    return QDir(directoryPath_).filePath(currentFileName_);
+}
+
+void ImageViewer::showInFolder()
+{
+    const QString path = currentFilePath();
+    if (!path.isEmpty())
+        FileUtil::openFolder(path);
+}
+
+void ImageViewer::saveImageAs()
+{
+    QString currentName = currentFileName_.isEmpty() ? QStringLiteral("image.png") : currentFileName_;
+    if (QFileInfo(currentName).suffix().isEmpty())
+        currentName += QStringLiteral(".png");
+    QString initialPath;
+    if (imageViewerSavePathLoader)
+        initialPath = imageViewerSavePathLoader();
+    if (initialPath.isEmpty()) {
+        initialPath = QDir::home().filePath(currentName);
+    } else {
+        const QFileInfo info(initialPath);
+        if (info.isDir())
+            initialPath = QDir(initialPath).filePath(currentName);
+        else if (!info.dir().exists())
+            initialPath = QDir::home().filePath(currentName);
+    }
+
+    QStringList imagePatterns;
+    for (const QByteArray &format : QImageWriter::supportedImageFormats())
+        imagePatterns.append(QStringLiteral("*.") + QString::fromLatin1(format).toLower());
+    const QString filter = imagePatterns.isEmpty()
+        ? tr("All files (*)")
+        : tr("Images (%1);;All files (*)").arg(imagePatterns.join(QLatin1Char(' ')));
+
+    const QString path = QFileDialog::getSaveFileName(this, tr("Save image"), initialPath, filter);
+    if (path.isEmpty())
+        return;
+    if (!image_.save(path)) {
+        QMessageBox::warning(this, tr("Error"), tr("Could not save the image."));
+        return;
+    }
+    if (imageViewerSavePathSaver)
+        imageViewerSavePathSaver(path);
+}
+
+void ImageViewer::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu menu(this);
+
+    const QString filePath = currentFilePath();
+    auto         *showInFolder = menu.addAction(tr("Show in folder"));
+    showInFolder->setObjectName(QStringLiteral("imageViewerShowInFolder"));
+    showInFolder->setEnabled(!filePath.isEmpty() && QFileInfo(filePath).dir().exists());
+    connect(showInFolder, &QAction::triggered, this, &ImageViewer::showInFolder);
+
+    auto *copyImage = menu.addAction(tr("Copy image"));
+    copyImage->setObjectName(QStringLiteral("imageViewerCopyImage"));
+    connect(copyImage, &QAction::triggered, this, [this] { QGuiApplication::clipboard()->setImage(image_); });
+
+    auto *saveAs = menu.addAction(tr("Save as..."));
+    saveAs->setObjectName(QStringLiteral("imageViewerSaveAs"));
+    connect(saveAs, &QAction::triggered, this, &ImageViewer::saveImageAs);
+
+    menu.exec(event->globalPos());
+    event->accept();
 }
 
 void ImageViewer::resetImageListToCurrent()

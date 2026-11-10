@@ -768,6 +768,11 @@ bool PsiCon::init()
     ImageViewer::setSizePersistence(
         [] { return PsiOptions::instance()->getOption("options.ui.save.image-viewer-size").toSize(); },
         [](const QSize &size) { PsiOptions::instance()->setOption("options.ui.save.image-viewer-size", size); });
+    ImageViewer::setSavePathPersistence(
+        [] { return PsiOptions::instance()->getOption("options.ui.save.image-viewer-save-path").toString(); },
+        [](const QString &path) {
+            PsiOptions::instance()->setOption("options.ui.save.image-viewer-save-path", path);
+        });
 
     // try autologin if needed
     for (PsiAccount *account : d->contactList->accounts()) {

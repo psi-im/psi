@@ -115,7 +115,9 @@ add_test(NAME mam_chat_widget COMMAND mam_chat_widget_test)
 
 add_executable(image_viewer_test ImageViewerTest.cpp
     ${PSI_WIDGETS}/ImageViewer.cpp ${PSI_WIDGETS}/ImageViewer.h)
-target_include_directories(image_viewer_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_include_directories(image_viewer_test BEFORE PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/mock
+    ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(image_viewer_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME image_viewer COMMAND image_viewer_test)

@@ -12,6 +12,7 @@
 #include <functional>
 
 class QCloseEvent;
+class QContextMenuEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QMoveEvent;
@@ -29,11 +30,14 @@ class ImageViewer final : public QWidget {
 public:
     using SizeLoader = std::function<QSize()>;
     using SizeSaver  = std::function<void(const QSize &)>;
+    using PathLoader = std::function<QString()>;
+    using PathSaver  = std::function<void(const QString &)>;
 
     explicit ImageViewer(const QImage &image, QWidget *parent = nullptr);
     ImageViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
+    static void setSavePathPersistence(PathLoader loader, PathSaver saver);
     static void showImage(const QImage &image, const QString &fileName);
 
     QRectF displayedImageRect() const;
@@ -42,6 +46,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -63,6 +68,9 @@ private:
     void    setImage(const QImage &image, const QString &fileName);
     void    saveWindowSize() const;
     void    bringToFront();
+    QString currentFilePath() const;
+    void    showInFolder();
+    void    saveImageAs();
     void    zoomBy(qreal factor);
     void    resetTemporaryZoom();
 
