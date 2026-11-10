@@ -21,6 +21,7 @@
 
 #include "contactlistdragmodel.h"
 #include "contactlistitem.h"
+#include "contactlistmodel.h"
 #include "contactlistproxymodel.h"
 #include "debug.h"
 #ifdef MODELTEST
@@ -35,12 +36,14 @@
 #include "widgets/OverlayScrollBarManager.h"
 #include "widgets/iconaction.h"
 
+#include <QItemSelectionModel>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QSortFilterProxyModel>
 #include <QStackedWidget>
+#include <QSet>
 #include <QVBoxLayout>
 
 static const QString contactSortStyleOptionPath   = "options.ui.contactlist.contact-sort-style";
@@ -315,7 +318,34 @@ void PsiRosterWidget::setPickContactMode(bool value)
     filterPageView_->setActivateAction(value ? ContactListView::SignalSelected : ContactListView::Activate);
 }
 
-QList<PsiContact *> PsiRosterWidget::selectedContacts() const { return {}; }
+QList<PsiContact *> PsiRosterWidget::selectedContacts() const
+{
+    // Pick mode displays the filtered view. Its proxy model preserves the
+    // contact-item role, so selections must be read from the visible view,
+    // not from the hidden unfiltered roster.
+    const PsiContactListView *view
+        = stackedWidget_->currentWidget() == filterPage_ ? static_cast<PsiContactListView *>(filterPageView_)
+                                                         : contactListPageView_;
+    if (!view || !view->model())
+        return {};
+
+    QModelIndexList indexes = view->selectionModel() ? view->selectionModel()->selectedIndexes() : QModelIndexList();
+    // Keyboard navigation may change the current item without selecting it.
+    if (indexes.isEmpty() && view->currentIndex().isValid())
+        indexes.append(view->currentIndex());
+
+    QList<PsiContact *> contacts;
+    QSet<PsiContact *>  seen;
+    for (const auto &index : indexes) {
+        auto *item = qvariant_cast<ContactListItem *>(index.data(ContactListModel::ContactListItemRole));
+        auto *contact = item ? item->contact() : nullptr;
+        if (contact && !seen.contains(contact)) {
+            seen.insert(contact);
+            contacts.append(contact);
+        }
+    }
+    return contacts;
+}
 
 void PsiRosterWidget::clearFilterEdit()
 {
