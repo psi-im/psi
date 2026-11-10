@@ -6,6 +6,7 @@
 #include <QPointF>
 #include <QRectF>
 #include <QString>
+#include <QStringList>
 #include <QWidget>
 
 class QKeyEvent;
@@ -18,7 +19,8 @@ class QWheelEvent;
 // zoom, capped at 100% of the original. Ctrl+wheel and keyboard shortcuts zoom
 // temporarily, deliberately decoupled from both the original size and the
 // window fit factor; Ctrl+0 restores the fit. An oversized image can be dragged
-// with the left mouse button.
+// with the left mouse button. Without Ctrl, the wheel browses the other images
+// in the same directory, oldest first.
 class ImageViewer final : public QWidget {
     Q_OBJECT
 public:
@@ -45,13 +47,20 @@ private:
     bool    canPan() const;
     QPointF constrainedPanOffset(const QPointF &offset) const;
     void    updatePanCursor();
+    bool    showAdjacentImage(int step);
+    void    rebuildImageList();
+    void    resetImageListToCurrent();
     void    zoomBy(qreal factor);
     void    resetTemporaryZoom();
 
-    QImage  image_;
-    qreal   temporaryScale_ = 1.0;
-    QPointF panOffset_;
-    QPoint  lastDragPosition_;
-    bool    temporaryZoom_ = false;
-    bool    dragging_      = false;
+    QImage      image_;
+    qreal       temporaryScale_ = 1.0;
+    QPointF     panOffset_;
+    QPoint      lastDragPosition_;
+    QString     directoryPath_;
+    QString     currentFileName_;
+    QStringList imageFileNames_;
+    int         currentImageIndex_ = -1;
+    bool        temporaryZoom_     = false;
+    bool        dragging_          = false;
 };
