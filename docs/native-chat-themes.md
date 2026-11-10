@@ -34,6 +34,9 @@ Prefer these over a style sheet for colours that should apply everywhere.
 
 ## 2. Customizing a theme with a style sheet
 
+For an element-by-element selector table, copy/paste examples and an explicit list
+of current QSS limitations, see [native-chat-qss-reference.md](native-chat-qss-reference.md).
+
 `options.ui.chat.css` is a Qt style sheet
 ([QSS reference](https://doc.qt.io/qt-6/stylesheet-reference.html)) that Psi
 sets on chat and group chat windows. Edit it in Options → Advanced. Changes
