@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
 #include "OverlayScrollBarManager.h"
-#include "MamImageViewer.h"
+#include "ImageViewer.h"
 #include "ChatMessageText.h"
 #include "ChatMessageBody.h"
 #include "MessagePreview.h"
@@ -3686,7 +3686,7 @@ static void openImageViewer(const QImage &image)
 {
     if (image.isNull())
         return;
-    auto *viewer = new MamImageViewer(image);
+    auto *viewer = new ImageViewer(image);
     viewer->show();
 }
 

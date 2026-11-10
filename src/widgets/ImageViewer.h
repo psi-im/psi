@@ -2,9 +2,12 @@
 #pragma once
 
 #include <QImage>
+#include <QPoint>
+#include <QPointF>
 #include <QRectF>
 #include <QWidget>
 
+class QMouseEvent;
 class QMoveEvent;
 class QResizeEvent;
 class QWheelEvent;
@@ -12,10 +15,10 @@ class QWheelEvent;
 // A lightweight, independent window. Window geometry determines fit-to-image
 // zoom, capped at 100% of the original. Wheel zoom is temporary and deliberately
 // decoupled from both the original size and the window fit factor.
-class MamImageViewer final : public QWidget {
+class ImageViewer final : public QWidget {
     Q_OBJECT
 public:
-    explicit MamImageViewer(const QImage &image, QWidget *parent = nullptr);
+    explicit ImageViewer(const QImage &image, QWidget *parent = nullptr);
 
     QRectF displayedImageRect() const;
     qreal  currentScale() const;
@@ -23,6 +26,9 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
     void moveEvent(QMoveEvent *event) override;
@@ -30,9 +36,15 @@ protected:
 
 private:
     qreal autoFitScale() const;
+    bool canPan() const;
+    QPointF constrainedPanOffset(const QPointF &offset) const;
+    void updatePanCursor();
     void resetTemporaryZoom();
 
     QImage image_;
     qreal temporaryScale_ = 1.0;
-    bool temporaryZoom_   = false;
+    QPointF panOffset_;
+    QPoint lastDragPosition_;
+    bool temporaryZoom_ = false;
+    bool dragging_      = false;
 };

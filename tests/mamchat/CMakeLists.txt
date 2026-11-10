@@ -85,7 +85,7 @@ set(NATIVE_CHAT_THEME_SOURCES
 add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
     ${NATIVE_CHAT_THEME_SOURCES}
-    ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h
+    ${PSI_WIDGETS}/ImageViewer.cpp ${PSI_WIDGETS}/ImageViewer.h
     ${PSI_WIDGETS}/MamHistorySource.cpp ${PSI_WIDGETS}/MamHistorySource.h
     ${PSI_WIDGETS}/ChatMessageBody.cpp ${PSI_WIDGETS}/ChatMessageBody.h
     ${PSI_WIDGETS}/ChatMessageText.cpp ${PSI_WIDGETS}/ChatMessageText.h
@@ -113,12 +113,12 @@ target_link_libraries(mam_chat_widget_test PRIVATE qsourcehighlite
     Qt${QT_DEFAULT_MAJOR_VERSION}::Multimedia Qt${QT_DEFAULT_MAJOR_VERSION}::Network)
 add_test(NAME mam_chat_widget COMMAND mam_chat_widget_test)
 
-add_executable(mam_image_viewer_test MamImageViewerTest.cpp
-    ${PSI_WIDGETS}/MamImageViewer.cpp ${PSI_WIDGETS}/MamImageViewer.h)
-target_include_directories(mam_image_viewer_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
-target_link_libraries(mam_image_viewer_test PRIVATE
+add_executable(image_viewer_test ImageViewerTest.cpp
+    ${PSI_WIDGETS}/ImageViewer.cpp ${PSI_WIDGETS}/ImageViewer.h)
+target_include_directories(image_viewer_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(image_viewer_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
-add_test(NAME mam_image_viewer COMMAND mam_image_viewer_test)
+add_test(NAME image_viewer COMMAND image_viewer_test)
 
 add_executable(mam_native_theme_test NativeChatThemeTest.cpp ${NATIVE_CHAT_THEME_SOURCES})
 target_include_directories(mam_native_theme_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)

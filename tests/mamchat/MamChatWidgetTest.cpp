@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
 #include "widgets/OverlayScrollBarManager.h"
-#include "widgets/MamImageViewer.h"
+#include "widgets/ImageViewer.h"
 #include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
 #include "widgets/CodeBlockWidget.h"
@@ -1024,10 +1024,10 @@ private slots:
         QCOMPARE(QApplication::clipboard()->image().size(), original.size());
         QCOMPARE(QApplication::clipboard()->image().pixelColor(0, 0), QColor(Qt::red));
 
-        const auto viewerWindow = []() -> MamImageViewer * {
+        const auto viewerWindow = []() -> ImageViewer * {
             for (auto *widget : QApplication::topLevelWidgets())
-                if (widget->isVisible() && widget->objectName() == QLatin1String("mamImageViewer"))
-                    return qobject_cast<MamImageViewer *>(widget);
+                if (widget->isVisible() && widget->objectName() == QLatin1String("imageViewer"))
+                    return qobject_cast<ImageViewer *>(widget);
             return nullptr;
         };
         auto *viewAction = menu->findChild<QAction *>(QStringLiteral("mamViewImage"));
@@ -1824,10 +1824,10 @@ private slots:
         QVERIFY(text);
         QTRY_VERIFY(text->viewport()->isVisible());
 
-        const auto viewerWindow = []() -> MamImageViewer * {
+        const auto viewerWindow = []() -> ImageViewer * {
             for (auto *widget : QApplication::topLevelWidgets())
-                if (widget->isVisible() && widget->objectName() == QLatin1String("mamImageViewer"))
-                    return qobject_cast<MamImageViewer *>(widget);
+                if (widget->isVisible() && widget->objectName() == QLatin1String("imageViewer"))
+                    return qobject_cast<ImageViewer *>(widget);
             return nullptr;
         };
         // Collapsed, the thumbnail is as high as three lines, keeping its 3:2 aspect.
