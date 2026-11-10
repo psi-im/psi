@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historyarchive.h"
 #include "historymessageextras.h"
+#include "iris/jingle-pub.h"
 #include "messageattachments.h"
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -259,6 +260,55 @@ private slots:
         QCOMPARE(message.id(), QStringLiteral("old-id"));
         QCOMPARE(message.from().full(), QStringLiteral("old@example/phone"));
         QCOMPARE(message.to().full(), QStringLiteral("new@example/desktop"));
+    }
+    void fileSharingSurvivesHistory()
+    {
+        Jingle::FileTransfer::File file;
+        file.setName(QString::fromUtf8("Фильм.webm"));
+        file.setMediaType("video/webm");
+        file.setSize(9007199254740993ULL);
+        file.setDescription("A film");
+        file.setWidth(1920);
+        file.addHash(Hash(Hash::Sha256, QCryptographicHash::hash("payload", QCryptographicHash::Sha256)));
+        Jingle::JinglePub publication;
+        publication.setFrom(Jid("alice@example.org/desktop"));
+        publication.setId("published");
+        publication.addDescription(Jingle::FileTransfer::NS);
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromUrl(QUrl("https://example.org/film.webm")));
+        sources.add(StatelessFileSharing::Source::fromJinglePub(publication));
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        sharing.setId("first");
+        sharing.setFile(file);
+        sharing.setSources(sources);
+        Message original;
+        original.addFileSharing(sharing);
+
+        const auto encoded = HistoryMessageExtras::encode(original);
+        const auto check   = [&](const Message &restored) {
+            QCOMPARE(restored.fileSharings().size(), 1);
+            const auto copy = restored.fileSharings().first();
+            QCOMPARE(copy.disposition(), StatelessFileSharing::Disposition::Attachment);
+            QCOMPARE(copy.id(), QString("first"));
+            QCOMPARE(copy.file().name(), file.name());
+            QCOMPARE(copy.file().size().value(), 9007199254740993ULL);
+            QCOMPARE(copy.file().description(), QString("A film"));
+            QCOMPARE(copy.file().width().value(), quint32(1920));
+            QVERIFY(copy.file().computedHashes() == file.computedHashes());
+            QCOMPARE(copy.sources().items().size(), 2);
+            QCOMPARE(copy.sources().items().first().url(), QUrl("https://example.org/film.webm"));
+            QCOMPARE(copy.sources().items().last().jinglePub().from().full(), QString("alice@example.org/desktop"));
+        };
+        Message full, attachmentsOnly;
+        HistoryMessageExtras::restore(encoded, full);
+        HistoryMessageExtras::restoreAttachments(encoded, attachmentsOnly);
+        check(full);
+        check(attachmentsOnly);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(MessageAttachments::collect(full).attachments.size(), 1);
+        QVERIFY(MessageAttachments::collect(full).attachments.first().manualFetch);
     }
     void uriLessShareAndFallbackSurviveHistory()
     {

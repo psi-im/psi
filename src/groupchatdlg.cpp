@@ -40,6 +40,7 @@
 #include "lastactivitytask.h"
 #include "mcmdmanager.h"
 #include "mcmdsimplesite.h"
+#include "messageattachments.h"
 #include "messageview.h"
 #include "mucalertpolicy.h"
 #include "historysync.h"
@@ -2406,9 +2407,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         return;
     }
 
-    // An attachment-only SIMS or jabber:x:oob stanza is still a
-    // visible message, even with no ordinary <body>.
-    if (dm.body().isEmpty() && dm.references().isEmpty() && dm.urlList().isEmpty())
+    // An attachment-only stanza is visible even with no ordinary <body>.
+    if (dm.body().isEmpty() && !MessageAttachments::hasAttachments(dm))
         return;
 
     // Do not mistake a nickname mentioned inside somebody else's quote for

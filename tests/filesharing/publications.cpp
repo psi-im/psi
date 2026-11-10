@@ -627,6 +627,47 @@ private slots:
         QCOMPARE(record->media.file.description(), QStringLiteral("A report"));
     }
 
+    void aFileSharingFollowsItsMessage()
+    {
+        migrateHistory();
+        const auto    sims = mediaOf("payload", { QStringLiteral("https://sims.example/f") });
+        const QString url  = QStringLiteral("https://sfs.example/f");
+        auto          file = mediaOf("payload", {}).file;
+        file.setDescription(QStringLiteral("Described"));
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromUrl(QUrl(url)));
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setFile(file);
+        sharing.setSources(sources);
+        auto message = messageWith(bob, {});
+        message.addFileSharing(sharing);
+        const auto event = store(message);
+        QCOMPARE(links(event).size(), 1);
+        syncEverything();
+        auto record = catalog->find(corporate, file.computedHashes().first());
+        QVERIFY(record);
+        QVERIFY(!record->urlOnly);
+        QCOMPARE(record->media.sources, QStringList { url });
+        QCOMPARE(record->media.file.name(), QStringLiteral("payload"));
+        QCOMPARE(record->media.file.description(), QStringLiteral("Described"));
+        QCOMPARE(record->peers, QStringList { bob.full() });
+
+        // Whatever the protocol, it is one file.
+        QVERIFY(store(messageWith(alice, { referenceOf(sims) })));
+        syncEverything();
+        record = catalog->find(corporate, file.computedHashes().first());
+        QCOMPARE(record->media.sources.size(), 2);
+        QCOMPARE(record->peers.size(), 2);
+
+        HistoryArchive::Page page;
+        page.stable = true;
+        auto later  = messageWith(alice, {});
+        later.addFileSharing(sharing);
+        page.entries.append(archived(later, QStringLiteral("uid-1")));
+        QVERIFY(storePage(page));
+        QCOMPARE(links(page.entries.first().eventId).size(), 1);
+    }
+
     void aLostFileDatabaseIsToldAgainFromHistory()
     {
         migrateHistory();

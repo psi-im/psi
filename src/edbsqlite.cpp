@@ -29,6 +29,7 @@
 #include "historymessageextras.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
+#include "messageattachments.h"
 #include "psiaccount.h"
 #include "psicontactlist.h"
 
@@ -701,7 +702,8 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
     if (!r)
         return;
     if (written.success && written.inserted && r->type == item_query_req::Type_append
-        && r->event && r->event->type() == PsiEvent::Message)
+        && r->event && r->event->type() == PsiEvent::Message
+        && MessageAttachments::hasAttachments(r->event.staticCast<MessageEvent>()->message().displayMessage()))
         emit mediaLinksAdded();
     if (written.success && r->type == item_query_req::Type_erase)
         emit mediaLinksRemoved();

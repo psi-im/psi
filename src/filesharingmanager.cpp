@@ -340,14 +340,15 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     // fallbacks instead of reference begin/end. Assign those ranges, in
     // body order, to the media shares that have no range of their own.
     QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
-    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), QStringLiteral("jabber:x:oob") }) {
+    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), XMPP::StatelessFileSharing::NS,
+                            QStringLiteral("jabber:x:oob") }) {
         for (const auto &range : m.bodyFallbacks(ns)) {
             int from = -1, to = -1;
             if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
                 fallbackRanges.append({ from, to });
         }
         if (!fallbackRanges.isEmpty())
-            break; // SIMS ranges take precedence; OOB ranges are a fallback for them.
+            break; // Ranges for the shares take precedence; OOB ranges are a fallback for them.
     }
     std::sort(fallbackRanges.begin(), fallbackRanges.end());
     for (auto &attachment : attachments) {
@@ -392,6 +393,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             continue;
         }
         mv.addReference(item);
+        const QString itemAuto = attachment.manualFetch ? QString() : autoAttr;
 
         if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
             auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
@@ -402,7 +404,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
             QString shareStr(
                 QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"%4/>")
-                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), autoAttr));
+                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), itemAuto));
 
             // add text before reference
             htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
@@ -410,7 +412,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             lastEnd = r.end() + 1;
         } else {
             tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"%3/>")
-                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), autoAttr);
+                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), itemAuto);
         }
     }
     if (lastEnd < desc.size()) {

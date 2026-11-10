@@ -6,6 +6,9 @@
 
 #include <QCryptographicHash>
 #include <QSet>
+#include <algorithm>
+#include <optional>
+#include <utility>
 
 namespace MessageAttachments {
 namespace {
@@ -23,6 +26,53 @@ namespace {
                 sources.append(http.toString(QUrl::FullyEncoded));
         }
         return sources;
+    }
+
+    // A file sharing in the form references have, or nothing if none of its sources can
+    // be used. Without sources it is pending, and the sender may still have it.
+    std::optional<Attachment> fromFileSharing(const XMPP::StatelessFileSharing::FileSharing &sharing)
+    {
+        using XMPP::StatelessFileSharing::Disposition;
+        using XMPP::StatelessFileSharing::Source;
+        QStringList sources, secure;
+        const auto  items = sharing.sources().items();
+        for (const auto &source : items) {
+            if (source.type() == Source::Type::UrlData) {
+                sources.append(source.url().toString(QUrl::FullyEncoded));
+                if (source.url().scheme() == QLatin1String("https"))
+                    secure.append(sources.last());
+            } else if (source.type() == Source::Type::JinglePub) {
+                sources.append(QStringLiteral("xmpp:%1?jingle-ft").arg(source.jinglePub().from().full()));
+            }
+        }
+        if (!items.isEmpty() && sources.isEmpty())
+            return {};
+        Attachment attachment;
+        attachment.manualFetch = sharing.disposition() == Disposition::Attachment;
+        if (sharing.file().hasComputedHashes()) {
+            XMPP::MediaSharing media;
+            media.file    = sharing.file();
+            media.sources = sources;
+            attachment.reference = XMPP::Reference(XMPP::Reference::Data, sources.value(0));
+            attachment.reference.setMediaSharing(media);
+            return attachment;
+        }
+        // Without hashes nothing could tell a tampered file, so XEP-0447 leaves only secure sources.
+        if (secure.isEmpty())
+            return {};
+        attachment.reference   = XMPP::Reference(XMPP::Reference::Data, secure.first());
+        attachment.description = sharing.file().description();
+        return attachment;
+    }
+
+    bool sameFile(const XMPP::Reference &reference, const XMPP::Reference &other)
+    {
+        if (!reference.isValid() || !reference.mediaSharing().isValid())
+            return false;
+        const auto hashes = reference.mediaSharing().file.computedHashes();
+        const auto others = other.mediaSharing().file.computedHashes();
+        return std::any_of(hashes.cbegin(), hashes.cend(),
+                           [&others](const XMPP::Hash &hash) { return others.contains(hash); });
     }
 
     bool overlapsRange(const QList<Attachment> &attachments, int begin, int end)
@@ -52,11 +102,20 @@ Result collect(const XMPP::Message &message)
 {
     Result        result;
     QSet<QString> covered;
-    for (const auto &reference : message.references()) {
+    for (const auto &reference : message.references())
         result.attachments.append({ reference, {} });
-        for (const auto &source : httpSources(reference))
-            covered.insert(source);
+    // After the references: links in history count attachments by their position.
+    for (const auto &sharing : message.fileSharings()) {
+        const auto attachment = fromFileSharing(sharing);
+        if (attachment
+            && std::none_of(result.attachments.cbegin(), result.attachments.cend(), [&attachment](const Attachment &a) {
+                   return sameFile(attachment->reference, a.reference);
+               }))
+            result.attachments.append(*attachment);
     }
+    for (const auto &attachment : std::as_const(result.attachments))
+        for (const auto &source : httpSources(attachment.reference))
+            covered.insert(source);
 
     const auto  urls = message.urlList();
     QStringList originals;

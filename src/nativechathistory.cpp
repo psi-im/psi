@@ -5,6 +5,7 @@
 #include "filesharingmanager.h"
 #include "historysync.h"
 #include "iris/xmpp_htmlelement.h"
+#include "messageattachments.h"
 #include "messageview.h"
 #include "psiaccount.h"
 #include "psioptions.h"
@@ -15,8 +16,8 @@
 
 MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, const XMPP::Message &message, bool local)
 {
-    const bool subject = message.body().isEmpty() && !message.subject().isNull() && message.references().isEmpty()
-        && message.urlList().isEmpty() && message.html().body().isNull();
+    const bool subject = message.body().isEmpty() && !message.subject().isNull()
+        && !MessageAttachments::hasAttachments(message) && message.html().body().isNull();
     QString body = subject ? message.subject() : message.body();
     auto    html = message.html();
 #ifdef PSI_PLUGINS

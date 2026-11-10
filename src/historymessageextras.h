@@ -7,7 +7,8 @@
 namespace HistoryMessageExtras {
 QString encode(const XMPP::Message &message);
 void    restore(const QString &json, XMPP::Message &message);
-// Only what the message attaches. This one works off the GUI thread, as it involves no
-// JID: Iris prepares JIDs through a cache without locks.
+// Only what the message attaches. The history upgrade calls this off the GUI thread, where
+// it must not touch a JID, as Iris prepares those through a cache without locks. Only a
+// XEP-0447 Jingle source would, and messages stored with those came after that upgrade.
 void restoreAttachments(const QString &json, XMPP::Message &message);
 }
