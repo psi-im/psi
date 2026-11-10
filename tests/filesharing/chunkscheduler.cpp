@@ -241,6 +241,41 @@ private slots:
         QCOMPARE(scheduler.activeCount(), 0);
     }
 
+    void backgroundWorkLeavesInteractiveAdmission()
+    {
+        MediaChunkScheduler scheduler;
+        scheduler.setMaxActive(4);
+        scheduler.setBackgroundLimit(3);
+        scheduler.setLaneMaxActive("account", 4);
+        QMap<int, MediaChunkCompletion> held;
+        QList<int>                      started;
+        auto                            add = [&](int i, int priority) {
+            scheduler.request(
+                QString::number(i), 0, "account", priority,
+                [&, i](MediaChunkCompletion done) {
+                    started.append(i);
+                    held.insert(i, std::move(done));
+                },
+                [](QByteArray, MediaChunkError) {});
+        };
+        for (int i = 0; i < 4; ++i)
+            add(i, 25);
+        QTRY_COMPARE(started.size(), 3);
+        add(4, 100);
+        QTRY_COMPARE(started.size(), 4);
+        QCOMPARE(started.last(), 4);
+        QVERIFY(!started.contains(3));
+        QCOMPARE(scheduler.pendingCount(), 1);
+        held.take(0)({}, {});
+        QTRY_COMPARE(scheduler.activeCount(), 3);
+        QCOMPARE(started.size(), 4); // No more background admission while the reader is waiting.
+        held.take(4)({}, {});
+        QTRY_COMPARE(started.size(), 5);
+        for (const auto &done : held)
+            done({}, {});
+        QTRY_COMPARE(scheduler.activeCount(), 0);
+    }
+
     void immutableKeysAndTransportGroupsAreIsolated()
     {
         MediaChunkScheduler scheduler;

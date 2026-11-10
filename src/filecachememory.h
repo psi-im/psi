@@ -47,6 +47,16 @@ public:
         limit_ = limit;
         trim();
     }
+    quint64 available(const QByteArray &generation, quint64 offset, quint64 maximum) const
+    {
+        quint64    length = 0;
+        const auto spans  = generations_.constFind(generation);
+        if (spans != generations_.cend())
+            for (const auto &span : *spans)
+                if (span.offset <= offset && offset - span.offset < span.length)
+                    length = qMax(length, qMin(maximum, span.length - (offset - span.offset)));
+        return length;
+    }
     bool contains(const QByteArray &generation, quint64 offset, quint64 length) const
     {
         return bool(find(generation, offset, length));

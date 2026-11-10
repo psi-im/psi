@@ -1,6 +1,7 @@
 #include "mediachunkstore.h"
 #include "filecachememory.h"
 #include "filedatabase.h"
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDebug>
@@ -12,6 +13,8 @@
 #include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QStorageInfo>
+#include <QTemporaryFile>
 #include <QThread>
 #include <QTimer>
 #include <QUuid>
@@ -198,13 +201,13 @@ public:
             if (!validKey(key) || size < 0 || !FileDatabase::safePayloadName(path))
                 continue;
             Entry entry;
-            entry.id             = query.value(0).toByteArray();
+            entry.id               = query.value(0).toByteArray();
             entry.state.generation = entry.id;
-            entry.state.size     = quint64(size);
-            entry.state.path     = directory_ + QLatin1Char('/') + path;
-            entry.state.metadata = FileDatabase::decodeMetadata(query.value(4).toByteArray());
-            entry.state.complete = query.value(5).toBool();
-            entry.state.error    = query.value(6).toString();
+            entry.state.size       = quint64(size);
+            entry.state.path       = directory_ + QLatin1Char('/') + path;
+            entry.state.metadata   = FileDatabase::decodeMetadata(query.value(4).toByteArray());
+            entry.state.complete   = query.value(5).toBool();
+            entry.state.error      = query.value(6).toString();
             if (!query.value(7).isNull())
                 entry.modified = query.value(7).toLongLong();
             entry.age = ++age_;
@@ -389,17 +392,21 @@ public:
             finish(id, {}, QStringLiteral("Cannot checkpoint completed shared file"));
             return;
         }
-        entry->age = ++age_;
+        accessed(*entry);
         if (beforeComplete != entry->state.complete)
             publish(key);
         finish(id, bytes, {}, entry->id);
     }
     void write(quint64 id, QString key, quint64 size, quint64 offset, QByteArray bytes)
     {
-        auto entry = get(key, size);
-        if (!entry || offset >= size || bytes.isEmpty() || quint64(bytes.size()) > size - offset
+        if (offset >= size || bytes.isEmpty() || quint64(bytes.size()) > size - offset
             || quint64(bytes.size()) > MediaChunkMaxSize) {
             finish(id, {}, QStringLiteral("Invalid shared file write"));
+            return;
+        }
+        auto entry = get(key, size);
+        if (!entry) {
+            finish(id, {}, { MediaChunkError::StorageUnavailable, QStringLiteral("Shared file storage unavailable") });
             return;
         }
         validatePayload(*entry);
@@ -426,34 +433,47 @@ public:
         // Only previously checkpointed bytes require a durable withdrawal.
         if (overwrite && !save(key, *entry)) {
             publish(key);
-            finish(id, {}, QStringLiteral("Cannot withdraw cached file range"));
+            finish(id, {},
+                   { MediaChunkError::StorageUnavailable, QStringLiteral("Cannot withdraw cached file range") });
+            return;
+        }
+        const QStorageInfo volume(directory_);
+        constexpr qint64   reserve = 16 * 1024 * 1024;
+        if (volume.isValid() && volume.bytesAvailable() >= 0 && volume.bytesAvailable() < bytes.size() + reserve) {
+            publish(key);
+            finish(id, {},
+                   { MediaChunkError::StorageUnavailable,
+                     QStringLiteral("Not enough space to cache the file; playback can continue in memory") });
             return;
         }
         if (!ensurePayload(*entry)) {
             publish(key);
-            finish(id, {}, QStringLiteral("Cannot create shared file payload"));
+            finish(id, {},
+                   { MediaChunkError::StorageUnavailable, QStringLiteral("Cannot create shared file payload") });
             return;
         }
         QFile file(entry->state.path);
         if (!file.open(QIODevice::ReadWrite | QIODevice::ExistingOnly)) {
             publish(key);
-            finish(id, {}, QStringLiteral("Cannot open shared file payload: ") + file.errorString());
+            finish(id, {},
+                   { MediaChunkError::StorageUnavailable,
+                     QStringLiteral("Cannot open shared file payload: ") + file.errorString() });
             return;
         }
-#ifdef Q_OS_WIN
-        if (!file.size()) {
-            const auto native = _get_osfhandle(file.handle());
-            if (native != -1) {
-                DWORD returned = 0;
-                DeviceIoControl(reinterpret_cast<HANDLE>(native), FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &returned,
-                                nullptr);
-            }
+        if (offset > quint64(file.size()) && !sparse(file)) {
+            publish(key);
+            finish(
+                id, {},
+                { MediaChunkError::StorageUnavailable,
+                  QStringLiteral("This filesystem cannot cache sparse file ranges; playback can continue in memory") });
+            return;
         }
-#endif
         entry->payloadDirty = true;
         if (!file.seek(qint64(offset)) || file.write(bytes) != bytes.size() || !file.flush()) {
             publish(key);
-            finish(id, {}, QStringLiteral("Cannot write shared file payload: ") + file.errorString());
+            finish(id, {},
+                   { MediaChunkError::StorageUnavailable,
+                     QStringLiteral("Cannot write shared file payload: ") + file.errorString() });
             return;
         }
         file.close();
@@ -461,12 +481,33 @@ public:
         auto error = verify(*entry);
         if ((entry->state.complete || !error.isEmpty()) && !save(key, *entry)) {
             entry->state.complete = false;
-            error                 = QStringLiteral("Cannot checkpoint shared file payload");
+            if (error.code() != MediaChunkError::IntegrityError)
+                error
+                    = { MediaChunkError::StorageUnavailable, QStringLiteral("Cannot checkpoint shared file payload") };
         }
-        entry->age = ++age_;
+        accessed(*entry);
         publish(key);
         trim(key);
         finish(id, error.isEmpty() ? bytes : QByteArray(), error);
+    }
+    void verifyBytes(quint64 id, quint64 offset, QByteArray bytes, QList<MediaFileChecksum> checksums,
+                     QByteArray generation)
+    {
+        for (const auto &h : checksums) {
+            if (h.offset < offset || h.offset - offset > quint64(bytes.size())
+                || h.length > quint64(bytes.size()) - (h.offset - offset))
+                continue;
+            auto    span = bytes.mid(qsizetype(h.offset - offset), qsizetype(h.length));
+            QBuffer input(&span);
+            input.open(QIODevice::ReadOnly);
+            const auto actual = hasher_(h.algorithm, &input);
+            if (actual.isEmpty() || actual != h.digest) {
+                finish(id, {},
+                       { MediaChunkError::IntegrityError, QStringLiteral("Shared file checksum verification failed") });
+                return;
+            }
+        }
+        finish(id, std::move(bytes), {}, generation);
     }
     void resume(quint64 id, const QString &key)
     {
@@ -489,7 +530,7 @@ public:
     {
         auto it = entries_.find(key);
         if (it != entries_.end())
-            it->age = ++age_;
+            accessed(*it);
     }
     void pin(const QString &key, bool active)
     {
@@ -500,6 +541,36 @@ public:
             trim({});
         } else
             --pins_[key];
+    }
+    void removeIncomplete(quint64 id, qint64 olderThan)
+    {
+        if (!ready_) {
+            emit cleaned(id, 0, QStringLiteral("File storage unavailable"));
+            return;
+        }
+        auto       db = database();
+        QString    error;
+        const auto keys = entries_.keys();
+        for (const auto &key : keys) {
+            const auto entry      = entries_.value(key);
+            const auto lastAccess = entry.state.metadata
+                                        .value(QStringLiteral("last-access"),
+                                               QFileInfo(entry.state.path).lastModified().toSecsSinceEpoch())
+                                        .toLongLong();
+            if (entry.state.complete || pins_.contains(key)
+                || entry.state.metadata.value(QStringLiteral("published")).toBool()
+                || (olderThan && lastAccess >= olderThan))
+                continue;
+            if (!FileDatabase::retireFile(db, entry.id, partition_, QFileInfo(entry.state.path).fileName())) {
+                error = QStringLiteral("Cannot retire an incomplete file");
+                break;
+            }
+            bytes_ -= entry.accounted;
+            entries_.remove(key);
+            emit changed(key, {}, diskBytes());
+        }
+        const auto freed = FileDatabase::drainTrash(db, partition_, directory_);
+        emit       cleaned(id, freed, error);
     }
     void invalidate(quint64 id, QString key, quint64 size, quint64 offset, quint64 length, QString message)
     {
@@ -519,6 +590,7 @@ public:
     }
 signals:
     void changed(QString key, MediaFileState state, quint64 diskBytes);
+    void cleaned(quint64 id, quint64 freed, QString error);
     void completed(quint64 id, QByteArray bytes, MediaChunkError error, quint64 diskBytes, QByteArray generation);
 
 private:
@@ -528,6 +600,36 @@ private:
         entry.dirty = true;
         if (timer_ && !timer_->isActive())
             timer_->start();
+    }
+    bool sparse(QFile &file)
+    {
+#ifdef Q_OS_WIN
+        const auto native   = _get_osfhandle(file.handle());
+        DWORD      returned = 0;
+        return native != -1
+            && DeviceIoControl(reinterpret_cast<HANDLE>(native), FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &returned,
+                               nullptr);
+#else
+        if (!sparse_) {
+            // Probe this payload directory with bounded disk usage. SEEK_HOLE
+            // alone does not prove that holes avoid allocation on a filesystem.
+            QTemporaryFile probe(directory_ + QStringLiteral("/.sparse-XXXXXX"));
+            const bool written   = probe.open() && probe.seek(256 * 1024) && probe.write("x", 1) == 1 && probe.flush();
+            const auto allocated = written ? FileDatabase::allocatedBytes(probe.fileName()) : 0;
+            sparse_              = written && allocated > 0 && allocated < 256 * 1024;
+        }
+        Q_UNUSED(file);
+        return *sparse_;
+#endif
+    }
+    void accessed(Entry &entry)
+    {
+        entry.age      = ++age_;
+        const auto now = QDateTime::currentSecsSinceEpoch();
+        if (now - entry.state.metadata.value(QStringLiteral("last-access")).toLongLong() >= 60) {
+            entry.state.metadata.insert(QStringLiteral("last-access"), now);
+            dirty(entry);
+        }
     }
     bool ensurePayload(Entry &entry)
     {
@@ -553,12 +655,12 @@ private:
         if (entries_.size() >= MaxFiles)
             return nullptr;
         Entry entry;
-        entry.id         = QUuid::createUuid().toRfc4122();
+        entry.id               = QUuid::createUuid().toRfc4122();
         entry.state.generation = entry.id;
-        entry.state.size = size;
+        entry.state.size       = size;
         entry.state.path
             = directory_ + QLatin1Char('/') + QString::fromLatin1(entry.id.toHex()) + QStringLiteral(".data");
-        entry.age = ++age_;
+        accessed(entry);
         // Register the generation before creating its payload. A crash here is a miss.
         if (!save(key, entry))
             return nullptr;
@@ -804,6 +906,7 @@ private:
     QHash<QString, int>     pins_;
     QTimer                 *timer_ = nullptr;
     bool                    ready_ = false;
+    std::optional<bool>     sparse_;
 };
 }
 
@@ -813,17 +916,38 @@ public:
         Completion done;
         QString    key;
         quint64    offset = 0, length = 0;
-        bool       read = false, mutation = false;
+        bool       read = false, mutation = false, volatileWrite = false;
+        quint64    revision = 0;
     };
-    QThread                          thread;
-    DiskWorker                      *worker;
-    quint64                          next = 0, bytes = 0;
-    QHash<quint64, Pending>          pending;
-    QHash<QString, int>              mutations;
-    QHash<QString, MediaFileState> states;
-    QHash<QString, QString>          paths;
-    std::unique_ptr<FileCacheMemory> ownedMemory;
-    FileCacheMemory                 *memory;
+    struct Volatile {
+        quint64                  size     = 0;
+        quint64                  revision = 0;
+        QByteArray               generation;
+        QList<MediaFileChecksum> checksums;
+    };
+    QHash<QString, Volatile> volatileFiles;
+    Volatile                &volatileFile(const QString &key, quint64 size)
+    {
+        auto it = volatileFiles.find(key);
+        if (it != volatileFiles.end() && it->size == size)
+            return *it;
+        if (volatileFiles.size() >= 2048) {
+            const auto victim = volatileFiles.begin();
+            memory->remove(victim->generation);
+            volatileFiles.erase(victim);
+        }
+        return volatileFiles.insert(key, { size, 0, QUuid::createUuid().toRfc4122(), {} }).value();
+    }
+    QThread                           thread;
+    DiskWorker                       *worker;
+    quint64                           next = 0, bytes = 0;
+    QHash<quint64, Pending>           pending;
+    QHash<quint64, CleanupCompletion> cleanups;
+    QHash<QString, int>               mutations;
+    QHash<QString, MediaFileState>    states;
+    QHash<QString, QString>           paths;
+    std::unique_ptr<FileCacheMemory>  ownedMemory;
+    FileCacheMemory                  *memory;
 };
 MediaChunkStore::MediaChunkStore(QString directory, quint64 limit, QObject *parent, Hasher hasher) :
     MediaChunkStore(QStringLiteral("ranges"), directory, directory + QStringLiteral("/files.sqlite"), limit, nullptr,
@@ -845,8 +969,12 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
     d->worker->moveToThread(&d->thread);
     connect(&d->thread, &QThread::finished, d->worker, &QObject::deleteLater);
     connect(d->worker, &DiskWorker::changed, this, [this](QString key, MediaFileState state, quint64 bytes) {
-        d->bytes = bytes;
+        d->bytes            = bytes;
         const auto previous = d->states.value(key);
+        if (state.path.isEmpty() || !state.error.isEmpty()) {
+            d->memory->remove(d->volatileFiles.value(key).generation);
+            d->volatileFiles.remove(key);
+        }
         if (previous.generation != state.generation || !state.error.isEmpty() || (previous.complete && !state.complete))
             d->memory->remove(previous.generation);
         d->paths.remove(d->states.value(key).path);
@@ -865,6 +993,16 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
                 if (request.mutation && --d->mutations[request.key] == 0)
                     d->mutations.remove(request.key);
                 const auto state = d->states.value(request.key);
+                if (request.volatileWrite && error.isEmpty()) {
+                    const auto info = d->volatileFiles.value(request.key);
+                    if (info.generation == generation && info.revision == request.revision
+                        && !d->mutations.contains(request.key) && state.error.isEmpty())
+                        d->memory->put(generation, request.offset, bytes);
+                    else
+                        error = { MediaChunkError::Cancelled, QStringLiteral("Volatile file bytes were invalidated") };
+                    if (!error.isEmpty())
+                        bytes.clear();
+                }
                 if (request.read && error.isEmpty() && !bytes.isEmpty() && generation == state.generation
                     && !d->mutations.contains(request.key) && state.error.isEmpty()
                     && covers(state.ranges, request.offset, request.length))
@@ -872,6 +1010,11 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
                 if (request.done)
                     request.done(std::move(bytes), error);
             });
+    connect(d->worker, &DiskWorker::cleaned, this, [this](quint64 id, quint64 freed, const QString &error) {
+        const auto done = d->cleanups.take(id);
+        if (done)
+            done(freed, error);
+    });
     d->thread.start();
     QMetaObject::invokeMethod(d->worker, [worker = d->worker] { worker->initialize(); }, Qt::QueuedConnection);
 }
@@ -905,9 +1048,28 @@ void MediaChunkStore::checkpoint(Completion done)
     d->pending.insert(id, { std::move(done) });
     QMetaObject::invokeMethod(d->worker, [worker = d->worker, id] { worker->checkpoint(id); }, Qt::QueuedConnection);
 }
+void MediaChunkStore::removeIncomplete(qint64 olderThan, CleanupCompletion done)
+{
+    const auto id = ++d->next;
+    d->cleanups.insert(id, std::move(done));
+    QMetaObject::invokeMethod(
+        d->worker, [worker = d->worker, id, olderThan] { worker->removeIncomplete(id, olderThan); },
+        Qt::QueuedConnection);
+}
 void MediaChunkStore::configure(QString key, quint64 size, QList<MediaFileChecksum> hashes, QVariantMap metadata,
                                 Completion done)
 {
+    auto &volatileFile = d->volatileFile(key, size);
+    for (const auto &h : hashes) {
+        bool known = false;
+        for (const auto &old : volatileFile.checksums)
+            known |= checksumId(h) == checksumId(old);
+        if (!known && volatileFile.checksums.size() < 4096) {
+            volatileFile.checksums.append(h);
+            d->memory->remove(volatileFile.generation);
+            volatileFile.generation = QUuid::createUuid().toRfc4122();
+        }
+    }
     bool requirementsChanged = false;
     auto current             = d->states.find(key);
     if (current != d->states.end()) {
@@ -935,18 +1097,47 @@ void MediaChunkStore::configure(QString key, quint64 size, QList<MediaFileChecks
         },
         Qt::QueuedConnection);
 }
+quint64 MediaChunkStore::availableLength(const QString &key, quint64 size, quint64 offset, quint64 maximum) const
+{
+    if (offset >= size || d->mutations.contains(key))
+        return 0;
+    const auto state = d->states.value(key);
+    if (!state.error.isEmpty())
+        return 0;
+    maximum        = std::min(maximum, size - offset);
+    quint64 length = 0;
+    if (state.size == size)
+        for (const auto &range : state.ranges)
+            if (range.first <= offset && offset - range.first < range.second) {
+                length = std::min(maximum, range.second - (offset - range.first));
+                break;
+            }
+    const auto info = d->volatileFiles.value(key);
+    if (info.size == size)
+        length = std::max(length, d->memory->available(info.generation, offset, maximum));
+    return length;
+}
 bool MediaChunkStore::containsCached(const QString &key, quint64 size, quint64 offset, quint64 length) const
 {
     if (size > quint64(std::numeric_limits<qint64>::max()) || offset > size || length > size - offset
         || length > MediaChunkMaxSize)
         return false;
     const auto state = d->states.value(key);
-    return state.size == size && !d->mutations.contains(key) && state.error.isEmpty()
-        && covers(state.ranges, offset, length) && d->memory->contains(state.generation, offset, length);
+    if (d->mutations.contains(key) || !state.error.isEmpty())
+        return false;
+    const auto volatileFile = d->volatileFiles.value(key);
+    return (state.size == size && covers(state.ranges, offset, length)
+            && d->memory->contains(state.generation, offset, length))
+        || (volatileFile.size == size && d->memory->contains(volatileFile.generation, offset, length));
 }
 quint64 MediaChunkStore::beginMutation(const QString &key, Completion done, quint64 offset, quint64 length)
 {
-    const auto generation = d->states.value(key).generation;
+    const auto generation   = d->states.value(key).generation;
+    auto       volatileFile = d->volatileFiles.find(key);
+    if (volatileFile != d->volatileFiles.end())
+        ++volatileFile->revision;
+    const auto volatileGeneration = d->volatileFiles.value(key).generation;
+    d->memory->remove(volatileGeneration, offset, length);
     if (length == std::numeric_limits<quint64>::max())
         d->memory->remove(generation);
     else
@@ -973,7 +1164,10 @@ void MediaChunkStore::read(QString key, quint64 size, quint64 offset, quint64 le
     QTimer::singleShot(0, this, [this, id, key, size, offset, length] {
         if (containsCached(key, size, offset, length)) {
             const auto generation = d->states.value(key).generation;
-            if (auto bytes = d->memory->get(generation, offset, length)) {
+            auto       bytes      = d->memory->get(generation, offset, length);
+            if (!bytes)
+                bytes = d->memory->get(d->volatileFiles.value(key).generation, offset, length);
+            if (bytes) {
                 touch(key);
                 auto request = d->pending.take(id);
                 if (request.done)
@@ -991,6 +1185,26 @@ void MediaChunkStore::write(QString key, quint64 size, quint64 offset, QByteArra
         d->worker,
         [worker = d->worker, id, key, size, offset, bytes = std::move(bytes)] {
             worker->write(id, key, size, offset, bytes);
+        },
+        Qt::QueuedConnection);
+}
+void MediaChunkStore::cacheVolatile(QString key, quint64 size, quint64 offset, QByteArray bytes, Completion done)
+{
+    if (!validKey(key) || offset >= size || bytes.isEmpty() || quint64(bytes.size()) > size - offset
+        || quint64(bytes.size()) > MediaChunkMaxSize) {
+        QTimer::singleShot(0, this, [done] { done({}, QStringLiteral("Invalid volatile file range")); });
+        return;
+    }
+    const auto info      = d->volatileFile(key, size);
+    auto       checksums = info.checksums;
+    for (const auto &h : d->states.value(key).checksums)
+        checksums.append(h);
+    const auto id = ++d->next;
+    d->pending.insert(id, { std::move(done), key, offset, quint64(bytes.size()), false, false, true, info.revision });
+    QMetaObject::invokeMethod(
+        d->worker,
+        [worker = d->worker, id, offset, bytes = std::move(bytes), checksums, generation = info.generation] {
+            worker->verifyBytes(id, offset, bytes, checksums, generation);
         },
         Qt::QueuedConnection);
 }

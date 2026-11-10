@@ -1,5 +1,6 @@
 #include "opt_messages_common.h"
 
+#include "filesharingmanager.h"
 #include "mediadownloadpolicy.h"
 
 #include "psioptions.h"
@@ -48,6 +49,22 @@ QWidget *OptionsTabMsgCommon::widget()
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_showTabButtons, &QCheckBox::setEnabled);
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_tabShortcuts, &QCheckBox::setEnabled);
 
+    connect(d->pb_clearPartial, &QPushButton::clicked, this, [this, d] {
+        if (!psi_)
+            return;
+        d->pb_clearPartial->setEnabled(false);
+        d->lb_partialResult->setText(tr("Deleting incomplete files…"));
+        const QPointer<OptMsgCommonUI> guard(d);
+        psi_->fileSharingManager()->removeIncomplete([guard](quint64 freed, const QString &error) {
+            if (!guard)
+                return;
+            guard->pb_clearPartial->setEnabled(true);
+            guard->lb_partialResult->setText(error.isEmpty()
+                                                 ? OptionsTabMsgCommon::tr("Freed %1. Files in use were kept.")
+                                                       .arg(QLocale().formattedDataSize(qint64(freed)))
+                                                 : error);
+        });
+    });
     d->ck_tabChats->setToolTip(tr("Makes Psi open chats in a tabbed window."));
     d->ck_showPreviews->setToolTip(tr("Show under links to some media content preview of the content."
                                       " It's also possible to play audio and video right in chat."));
@@ -69,9 +86,11 @@ QWidget *OptionsTabMsgCommon::widget()
                                      " Check this if you want to know how long is your message."
                                      " Can be useful when you're using SMS transport."));
     d->ck_contactsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using the deprecated XHTML-IM (XEP-0071)"));
+        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using "
+           "the deprecated XHTML-IM (XEP-0071)"));
     d->ck_sendHtmlsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will send outcoming formatted messages with additional XHTML-IM (XEP-0071). Note: it's deprecated badly supported."));
+        tr("If enabled, Psi will send outcoming formatted messages with additional XHTML-IM (XEP-0071). Note: it's "
+           "deprecated badly supported."));
 
     d->cb_tabMdlClick->addItems(clickActList);
     d->cb_tabDblClick->addItems(clickActList);
@@ -126,6 +145,7 @@ void OptionsTabMsgCommon::applyOptions()
 
     if (d->ck_tabShortcuts->isEnabled())
         o->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
+    o->setOption("options.media.incomplete-max-age-days", d->sb_partialDays->value());
     o->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
     // The options tree stores these as int, as declared in default.xml
     o->setOption("options.ui.chat.auto-download-size", d->cb_autoDownloadChats->currentData().toInt());
@@ -144,6 +164,7 @@ void OptionsTabMsgCommon::restoreOptions()
 
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions     *o = PsiOptions::instance();
+    d->sb_partialDays->setValue(o->getOption("options.media.incomplete-max-age-days").toInt());
     d->ck_showCounter->setChecked(o->getOption("options.ui.message.show-character-count").toBool());
     d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render", true).toBool());
     d->ck_sendHtmlsMessageFormatting->setChecked(o->getOption("options.html.chat.send", true).toBool());

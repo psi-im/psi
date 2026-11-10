@@ -39,6 +39,7 @@
         </extended-presence>
         <media>
             <audio-message comment="Record and share audio messages" type="bool">true</audio-message>
+            <incomplete-max-age-days comment="Remove inactive incomplete shared files after this many days" type="int">10</incomplete-max-age-days>
         </media>
         <muc comment="Multi-User Chat options">
             <bookmarks comment="Options for bookmarked conference rooms">

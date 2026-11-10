@@ -37,6 +37,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             ccache cmake ninja-build g++ pkg-config dbus \
             qt6-base-dev qt6-multimedia-dev qt6-svg-dev libqt6sql6-sqlite \
+            gstreamer1.0-plugins-good gstreamer1.0-libav \
             libhttp-parser-dev libhunspell-dev libminizip-dev libomemo-c-dev \
             libotr5-dev libprotobuf-c-dev libsm-dev libssl-dev \
             libsrtp2-dev libtidy-dev libusrsctp-dev libxss-dev zlib1g-dev
@@ -81,7 +82,7 @@ jobs:
       - name: Run native regressions
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_memory_cache|filesharing_file_store|filesharing_chunk_cache|filesharing_file_cache|filesharing_bob_cache|filesharing_responder|filesharing_publications|filesharing_sims_history|filesharing_download_policy|filesharing_hash_job|filesharing_message_file_shares|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_memory_cache|filesharing_file_store|filesharing_chunk_cache|filesharing_chunk_scheduler|filesharing_file_reader|filesharing_media_device|filesharing_media_save|filesharing_http|filesharing_chunk_transfer|filesharing_file_cache|filesharing_bob_cache|filesharing_responder|filesharing_publications|filesharing_sims_history|filesharing_download_policy|filesharing_hash_job|filesharing_message_file_shares|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
       - name: Benchmark actual MUC AvatarCache (non-gating timings)
         env:
           QT_QPA_PLATFORM: offscreen

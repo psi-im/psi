@@ -81,6 +81,30 @@
     </layout>
    </item>
    <item>
+    <widget class="QGroupBox" name="gb_partialFiles">
+     <property name="title"><string>Incomplete shared files</string></property>
+     <layout class="QGridLayout" name="gl_partialFiles">
+      <item row="0" column="0"><widget class="QLabel" name="lb_partialAge">
+       <property name="text"><string>Delete after inactivity:</string></property>
+       <property name="buddy"><cstring>sb_partialDays</cstring></property>
+      </widget></item>
+      <item row="0" column="1"><widget class="QSpinBox" name="sb_partialDays">
+       <property name="minimum"><number>1</number></property>
+       <property name="maximum"><number>3650</number></property>
+       <property name="suffix"><string> days</string></property>
+      </widget></item>
+      <item row="0" column="2"><widget class="QPushButton" name="pb_clearPartial">
+       <property name="text"><string>Delete now</string></property>
+       <property name="toolTip"><string>Delete inactive incomplete files. Files being played or downloaded are kept.</string></property>
+      </widget></item>
+      <item row="1" column="0" colspan="3"><widget class="QLabel" name="lb_partialResult">
+       <property name="text"><string/></property>
+       <property name="wordWrap"><bool>true</bool></property>
+      </widget></item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_contactsMessageFormatting">
      <property name="text">
       <string>Display received messages in deprecated XHTML-IM formatting (XEP-0071)</string>

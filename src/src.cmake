@@ -435,6 +435,10 @@ list(APPEND SOURCES
     mediachunktransfer.h
     mediachunktypes.h
     mediachunkcache.cpp
+    filedownload.cpp
+    filedownload.h
+    filereader.cpp
+    filereader.h
     mediachunkscheduler.cpp
     filesharingitem.cpp
     filesharinghashjob.cpp

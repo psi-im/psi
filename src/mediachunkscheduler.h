@@ -20,10 +20,11 @@
 // network transfer. Providers keep transport verification and cache ownership.
 class MediaChunkScheduler final : public QObject {
 public:
-    using Completion      = MediaChunkCompletion;
-    using Fetch           = std::function<void(Completion)>;
-    using Abort           = MediaChunkAbort;
-    using CancelableFetch = std::function<Abort(Completion)>;
+    static constexpr int BackgroundPriority = 25;
+    using Completion                        = MediaChunkCompletion;
+    using Fetch                             = std::function<void(Completion)>;
+    using Abort                             = MediaChunkAbort;
+    using CancelableFetch                   = std::function<Abort(Completion)>;
 
     explicit MediaChunkScheduler(QObject *parent = nullptr);
     ~MediaChunkScheduler() override;
@@ -44,6 +45,7 @@ public:
     bool reprioritize(quint64 ticket, int priority);
 
     void setMaxActive(int count);
+    void setBackgroundLimit(int count);
     void setLaneMaxActive(const QString &lane, int count);
     int  activeCount() const { return active_; }
     int  pendingCount() const;
@@ -77,12 +79,13 @@ private:
     QHash<quint64, QString>              ticketKeys_;
     QHash<QString, int>                  laneLimits_;
     QHash<QString, int>                  laneActive_;
-    quint64                              nextTicket_   = 0;
-    quint64                              nextSequence_ = 0;
-    int                                  maxActive_    = 3;
-    int                                  active_       = 0;
-    bool                                 scheduled_    = false;
-    bool                                 stopped_      = false;
+    quint64                              nextTicket_      = 0;
+    quint64                              nextSequence_    = 0;
+    int                                  maxActive_       = 3;
+    int                                  active_          = 0;
+    int                                  backgroundLimit_ = 2147483647;
+    bool                                 scheduled_       = false;
+    bool                                 stopped_         = false;
 };
 
 #endif // PSI_MEDIACHUNKSCHEDULER_H

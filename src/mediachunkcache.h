@@ -4,11 +4,8 @@
 #include "mediachunkstore.h"
 
 #include <QHash>
-#include <QIODevice>
 #include <QPointer>
 #include <QSet>
-#include <memory>
-#include <optional>
 
 // Shared payload and range metadata. A source identity must include account,
 // immutable content identity and size. Fetchers validate ranges before completion.
@@ -23,7 +20,7 @@ public:
     using Fetch                               = std::function<Abort(quint64 offset, quint64 length, Completion)>;
 
     explicit MediaChunkCache(QString directory, QObject *parent = nullptr, quint64 chunkSize = 4 * 1024 * 1024,
-                             quint64 diskLimit = 256 * 1024 * 1024, MediaChunkStore::Hasher hasher = { });
+                             quint64 diskLimit = 256 * 1024 * 1024, MediaChunkStore::Hasher hasher = {});
     explicit MediaChunkCache(MediaChunkStore *store, QObject *parent = nullptr, quint64 chunkSize = 4 * 1024 * 1024);
     ~MediaChunkCache() override;
 
@@ -31,7 +28,10 @@ public:
     // Cache hits also complete asynchronously. Each reader owns its own ticket.
     // Zero rejects admission without retaining a callback; the caller handles overload.
     quint64 read(QString source, quint64 fileSize, quint64 offset, quint64 length, QString lane, Fetch fetch,
-                 Completion done, bool urgent = true);
+                 Completion done, bool urgent = true, quint64 quantum = 0);
+    quint64 ensure(QString source, quint64 size, quint64 offset, quint64 length, QString lane, Fetch fetch,
+                   Completion done, quint64 quantum = 0);
+    void    checkpoint(Completion done = {});
     bool    cancel(quint64 ticket);
     void    shutdown();
     quint64 diskBytes() const;
@@ -41,7 +41,7 @@ public:
     using Ranges = QList<QPair<quint64, quint64>>; // offset, length
     Ranges         cachedRanges(const QString &source, quint64 fileSize) const;
     void           configure(const QString &source, quint64 fileSize, QList<MediaFileChecksum> checksums,
-                             QVariantMap metadata = { });
+                             QVariantMap metadata = {});
     MediaFileState fileState(const QString &source, quint64 fileSize) const;
     bool           isCompleteFile(const QString &path) const;
     void           resume(const QString &source, quint64 fileSize);
@@ -61,59 +61,28 @@ private:
         QString    key, file, source, lane;
         quint64    size = 0, start = 0, expected = 0, inside = 0, count = 0;
         Fetch      fetch;
-        bool       urgent = true;
+        bool       urgent             = true;
+        bool       payload            = true;
+        bool       storageReadPending = false;
     };
-    QString recordKey(const QString &source, quint64 size, quint64 index) const;
+    QString recordKey(const QString &source, quint64 size, quint64 start, quint64 length) const;
+    quint64 request(QString source, quint64 size, quint64 offset, quint64 length, QString lane, Fetch fetch,
+                    Completion done, bool payload, bool urgent, quint64 quantum);
     QString fileKey(const QString &source, quint64 size) const;
-    Abort   fetchChunk(const QString &file, quint64 size, quint64 start, quint64 expected,
-                       Fetch fetch, Completion complete);
+    Abort   fetchChunk(const QString &file, quint64 size, quint64 start, quint64 expected, Fetch fetch,
+                       Completion complete);
     void    deliver(quint64 ticket, QByteArray bytes, MediaChunkError error);
     void    schedule(quint64 ticket);
+    void    readAvailable(quint64 ticket);
     void    notifyRanges(const QString &source, quint64 size);
     QHash<QString, QPair<QString, quint64>> files_;
     QSet<QString>                           resuming_;
     QSet<QPair<QString, quint64>>           pendingRanges_;
     bool                                    rangesPending_ = false;
 
-    quint64                          chunkSize_, nextTicket_ = 0;
-    bool                             stopped_ = false;
-    MediaChunkScheduler              scheduler_;
-    QHash<quint64, Request>          requests_;
-    MediaChunkStore                 *store_;
-};
-
-// A 64 KiB consumer buffer and a bounded window of lookahead within the
-// requested range. Network work never blocks readData().
-class MediaChunkReader : public QIODevice {
-    Q_OBJECT
-public:
-    MediaChunkReader(MediaChunkCache *cache, QString source, quint64 fileSize, quint64 offset, quint64 length,
-                     QString lane, MediaChunkCache::Fetch fetch, QObject *parent = nullptr);
-    ~MediaChunkReader() override;
-    bool                  open(OpenMode mode = ReadOnly) override;
-    void                  abort();
-    bool                  isSequential() const override { return true; }
-    qint64                bytesAvailable() const override;
-    bool                  isConnected() const;
-    MediaChunkError::Code errorCode() const { return errorCode_; }
-
-signals:
-    void failed();
-    void disconnected();
-
-protected:
-    qint64 readData(char *data, qint64 maxSize) override;
-    qint64 writeData(const char *, qint64) override { return -1; }
-
-private:
-    void                      schedule();
-    void                      prefetch();
-    QPointer<MediaChunkCache> cache_;
-    QString                   source_, lane_;
-    quint64                   size_, offset_, left_, ticket_ = 0;
-    QHash<quint64, quint64>   prefetchTickets_; // offset -> ticket, zero after completion
-    MediaChunkCache::Fetch    fetch_;
-    QByteArray                buffer_;
-    bool                      stopped_ = false, scheduled_ = false, first_ = true, ended_ = false, pinned_ = false;
-    MediaChunkError::Code     errorCode_ = MediaChunkError::None;
+    quint64                 chunkSize_, nextTicket_ = 0;
+    bool                    stopped_ = false;
+    MediaChunkScheduler     scheduler_;
+    QHash<quint64, Request> requests_;
+    MediaChunkStore        *store_;
 };

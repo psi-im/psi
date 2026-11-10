@@ -76,12 +76,16 @@ public:
         });
     }
     bool stopped() const { return stopped_; }
+    void stopFullDownload()
+    {
+        finish({ MediaChunkError::RangeUnsupported, QStringLiteral("Source requires downloading the whole file") });
+    }
     ~SequentialDownload() override
     {
         download_->abort();
-        const auto waiters = std::exchange(waiters_, { });
+        const auto waiters = std::exchange(waiters_, {});
         for (const auto &waiter : waiters)
-            waiter.done({ }, { MediaChunkError::Cancelled, QStringLiteral("Shared file source removed") });
+            waiter.done({}, { MediaChunkError::Cancelled, QStringLiteral("Shared file source removed") });
     }
     MediaChunkAbort add(quint64 offset, quint64 length, MediaChunkCompletion done)
     {
@@ -93,7 +97,7 @@ public:
                 return;
             auto waiter = guard->waiters_.take(id);
             if (waiter.done)
-                waiter.done({ }, { MediaChunkError::Cancelled, QStringLiteral("Shared file request cancelled") });
+                waiter.done({}, { MediaChunkError::Cancelled, QStringLiteral("Shared file request cancelled") });
             if (guard && guard->waiters_.isEmpty())
                 guard->finish({ MediaChunkError::Cancelled, QStringLiteral("Shared file download cancelled") });
         };
@@ -142,7 +146,7 @@ private:
             if (position_ != size_)
                 finish(QStringLiteral("Incomplete sequential shared file"));
             else
-                finish({ });
+                finish({});
         }
     }
     void finish(MediaChunkError error)
@@ -153,7 +157,7 @@ private:
         stall_.stop();
         download_->disconnect(this);
         download_->abort();
-        const auto waiters  = std::exchange(waiters_, { });
+        const auto waiters  = std::exchange(waiters_, {});
         const auto cache    = cache_;
         const auto identity = identity_;
         const auto size     = size_;
@@ -162,7 +166,7 @@ private:
             if (error.isEmpty() && cache)
                 cache->readStored(identity, size, waiter.offset, waiter.length, waiter.done);
             else
-                waiter.done({ },
+                waiter.done({},
                             error.isEmpty() ? MediaChunkError(QStringLiteral("Shared file storage closed")) : error);
         }
     }
@@ -183,6 +187,15 @@ FileSharingChunkSource *FileSharingChunkSource::state(FileSharingItem *item)
     if (!item->_chunkSource)
         item->_chunkSource = new FileSharingChunkSource(item);
     return item->_chunkSource;
+}
+
+void FileSharingChunkSource::cancelFullDownloadFallback(FileSharingItem *item)
+{
+    if (!item || !item->_chunkSource)
+        return;
+    auto provider = item->_chunkSource;
+    if (provider->sequential_ && !provider->sequential_->stopped())
+        provider->sequential_->stopFullDownload();
 }
 
 MediaChunkAbort FileSharingChunkSource::sequential(FileSharingItem *item, const QString &source, quint64 offset,
@@ -228,7 +241,7 @@ MediaChunkCache *FileSharingChunkSource::configure(const FileSharingItem *item)
 QString FileSharingChunkSource::localFile(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
-        return { };
+        return {};
     auto       cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
     const auto state = cache->fileState(identity(item), *item->fileSize());
     return state.complete && state.error.isEmpty() && QFileInfo(state.path).isReadable() ? state.path : QString();
@@ -237,17 +250,18 @@ QString FileSharingChunkSource::localFile(const FileSharingItem *item)
 QString FileSharingChunkSource::error(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
-        return { };
+        return {};
     auto cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
     return cache->fileState(identity(item), *item->fileSize()).error;
 }
 
 MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 offset, quint64 length,
-                                              MediaChunkCompletion done, QObject *owner)
+                                              MediaChunkCompletion done, QObject *owner,
+                                              std::function<bool()> allowWhole)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly()) {
-        QTimer::singleShot(0, owner, [done] { done({ }, QStringLiteral("Media source unavailable")); });
-        return { };
+        QTimer::singleShot(0, owner, [done] { done({}, QStringLiteral("Media source unavailable")); });
+        return {};
     }
     configure(item);
     auto provider   = state(item);
@@ -271,13 +285,14 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
     };
     auto                            request = std::make_shared<Request>();
     const QPointer<FileSharingItem> resource(item);
-    auto                            complete
-        = [deliver, resource, source, offset, length, request](QByteArray bytes, MediaChunkError error) mutable {
-              if (error.code() == MediaChunkError::RangeUnsupported && resource && !request->cancelled) {
-                  request->fallback = sequential(resource, source, offset, length, std::move(deliver));
-              } else
-                  deliver(std::move(bytes), error);
-          };
+    auto complete = [deliver, resource, source, offset, length, request, allowWhole](QByteArray      bytes,
+                                                                                     MediaChunkError error) mutable {
+        if (error.code() == MediaChunkError::RangeUnsupported && allowWhole && allowWhole() && resource
+            && !request->cancelled) {
+            request->fallback = sequential(resource, source, offset, length, std::move(deliver));
+        } else
+            deliver(std::move(bytes), error);
+    };
     auto download = item->download(FileShareDownloader::Range { offset, length }, source);
     download->setJingleSessionPool(item->account()->psi()->fileSharingManager()->jingleMediaSessions(item->account()));
     auto transfer = new MediaChunkTransfer(
@@ -319,7 +334,7 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
     return [guard, request] {
         request->cancelled = true;
         if (request->fallback) {
-            auto abort = std::exchange(request->fallback, { });
+            auto abort = std::exchange(request->fallback, {});
             abort();
         } else if (guard)
             guard->cancel();

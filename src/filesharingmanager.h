@@ -33,6 +33,8 @@ class FileCache;
 class FileCacheItem;
 class FileSharingDownloader;
 class FileSharingMediaSave;
+class FileDownload;
+class FileReader;
 class FileSharingManager;
 class MessageView;
 class PsiAccount;
@@ -74,8 +76,11 @@ public:
     explicit FileSharingManager(QObject *parent = nullptr);
     ~FileSharingManager();
 
-    static QString            cacheDir();
-    MediaChunkCache          *mediaChunkCache();
+    static QString   cacheDir();
+    MediaChunkCache *mediaChunkCache();
+    FileDownload    *download(FileSharingItem *item);
+    FileReader *reader(FileSharingItem *item, QObject *parent, quint64 offset = 0, std::optional<quint64> length = {});
+    void        removeIncomplete(const std::function<void(quint64, const QString &)> &completed);
     FileSharingJingleSession *jingleMediaSessions(PsiAccount *account);
     FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
     FileCacheItem *trackExternal(const QList<XMPP::Hash> &sums, const QFileInfo &file, const QVariantMap &metadata,
@@ -127,23 +132,24 @@ class FileSharingDeviceOpener : public ITEMediaOpener {
 
 public:
     inline FileSharingDeviceOpener(PsiAccount *acc) : acc(acc) { }
-    virtual ~FileSharingDeviceOpener() { }
+    ~FileSharingDeviceOpener() override;
 
     static XMPP::Hash urlToSourceId(const QUrl &url);
     QIODevice        *open(QUrl &url) override;
     void              close(QIODevice *dev) override;
+    void              abort(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;
     ITEMediaState    *mediaState(const QUrl &url) override;
     void              retry(const QUrl &url) override;
-    using SaveCallback = std::function<void(const QString &path, const QString &error)>;
+    using SaveCallback     = std::function<void(const QString &path, const QString &error)>;
     using ProgressCallback = std::function<void(qreal)>;
-    bool              saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed = {},
-                             const ProgressCallback &progress = {});
-    bool              saveTo(const QUrl &url, const QString &path, const SaveCallback &completed = {},
-                             const ProgressCallback &progress = {});
-    void              cancelSave(const QUrl &url);
+    bool saveAs(const QUrl &url, QWidget *parent, const SaveCallback &completed = {},
+                const ProgressCallback &progress = {});
+    bool saveTo(const QUrl &url, const QString &path, const SaveCallback &completed = {},
+                const ProgressCallback &progress = {});
+    void cancelSave(const QUrl &url);
 
-    FileSharingItem *sharedItem(const QString &id);
+    FileSharingItem         *sharedItem(const QString &id);
     FileSharingDeviceOpener *forAccount(const QString &id) const;
 };
 
