@@ -1429,6 +1429,11 @@ void GCMainDlg::activated()
 {
     TabbableWidget::activated();
 
+    // Restoring an already selected room from the tray does not move the
+    // scrollbar or change its visible row range. Re-evaluate read progress
+    // once the window is active and its viewport has settled.
+    QTimer::singleShot(0, nativeTimeline_, &MamChatWidget::refreshVisibleUnreadState);
+
     if (d->pending > 0) {
         d->pending      = 0;
         d->hPending     = 0;

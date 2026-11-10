@@ -6855,6 +6855,39 @@ private slots:
         QCOMPARE(chat.unreadIncomingCount(), 0);
     }
 
+    void activeRoomAtTailRechecksUnreadWithoutScrolling()
+    {
+        MamChatWidget chat;
+        chat.setGroupChat(true);
+        chat.setHistoryLoading(true);
+        chat.resize(440, 260);
+        chat.appendMessage(message(QStringLiteral("before"), QStringLiteral("Already read"), 1));
+        chat.show();
+        chat.activateWindow();
+        QTRY_VERIFY(chat.isActiveWindow());
+        QTRY_VERIFY(chat.isAtEnd());
+        chat.markUnreadBoundary();
+
+        // A different active window models a room minimized into the tray.
+        // The room remains visible geometrically and attached to the tail.
+        QWidget other;
+        other.show();
+        other.activateWindow();
+        QTRY_VERIFY(!chat.isActiveWindow());
+
+        chat.appendMessage(message(QStringLiteral("new"), QStringLiteral("Unread while inactive"), 2));
+        QCOMPARE(chat.unreadIncomingCount(), 1);
+        QVERIFY(chat.hasUnreadTail());
+        QVERIFY(chat.isAtEnd());
+
+        chat.activateWindow();
+        QTRY_VERIFY(chat.isActiveWindow());
+        // GCMainDlg::activated() calls this without moving the scrollbar.
+        chat.refreshVisibleUnreadState();
+        QCOMPARE(chat.unreadIncomingCount(), 0);
+        QVERIFY(!chat.hasUnreadTail());
+    }
+
     void unreadEdgeBadgeCountsOnlyUnseenIncomingMessages()
     {
         MamChatWidget chat;
