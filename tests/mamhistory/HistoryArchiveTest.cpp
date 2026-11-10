@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historyarchive.h"
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -124,6 +125,236 @@ private slots:
         QCOMPARE(readPage(db, key, "edge", 1).entries.first().uid, QString("sims-body"));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
     }
+    void deletionSuppressesFutureCorrectionsAndReplacementArchiveUids()
+    {
+        QVERIFY(migrate(db));
+        auto original = page({ "old-uid" }, true);
+        auto extra    = QJsonDocument::fromJson(original.entries[0].extra.toUtf8()).object();
+        extra.insert("psi:origin", "stable-origin");
+        original.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, original));
+        QVERIFY(deleteLocalMessage(db, key, original.entries[0].eventId).success);
+        auto replacement             = page({ "new-uid" }, true);
+        replacement.entries[0].extra = original.entries[0].extra;
+        QVERIFY(storePage(db, key, "", 1, replacement));
+        QVERIFY(replacement.entries[0].suppressed);
+        QVERIFY(replacement.entries[0].xml.isEmpty());
+        QVERIFY(resolvedRecord(db, replacement.entries[0].eventId).isEmpty());
+        // An invisible cached event remains a complete, seekable archive page.
+        const auto cached = readPage(db, key, "", 1);
+        QVERIFY(cached.found && cached.entries[0].suppressed);
+        QVERIFY(cached.entries[0].timestamp.isValid());
+        QVERIFY(storePage(db, key, "", 1, replacement));
+        auto correction      = entry("future", 50);
+        correction.replaceId = "old-uid-client";
+        auto checked         = checkLocalSuppression(db, key, correction);
+        QVERIFY(checked.success && checked.suppressed);
+        correction.replaceId.clear(); // Its newly learned client ID remains hidden too.
+        checked = checkLocalSuppression(db, key, correction);
+        QVERIFY(checked.success && checked.suppressed);
+        QCOMPARE(scalar("SELECT count(*) FROM events WHERE m_text<>''").toInt(), 0);
+    }
+
+    void deletionOfCorrectionSuppressesAnOriginalThatArrivesLater()
+    {
+        QVERIFY(migrate(db));
+        auto correction                 = page({ "correction" }, true);
+        correction.entries[0].replaceId = "not-yet-seen";
+        QVERIFY(storePage(db, key, "", 1, correction));
+        QVERIFY(deleteLocalMessage(db, key, correction.entries[0].eventId).success);
+        auto original      = entry("late-original");
+        original.messageId = "not-yet-seen";
+        const auto checked = checkLocalSuppression(db, key, original);
+        QVERIFY(checked.success && checked.suppressed);
+    }
+
+    void suppressionIsScopedByAccountConversationDirectionAndIdKind()
+    {
+        QVERIFY(migrate(db));
+        auto original = page({ "same" }, true);
+        QVERIFY(storePage(db, key, "", 1, original));
+        QVERIFY(deleteLocalMessage(db, key, original.entries[0].eventId).success);
+        auto candidate      = entry("different-archive-uid");
+        candidate.messageId = original.entries[0].messageId;
+        auto other          = key;
+        other.account       = "other-account";
+        QVERIFY(!checkLocalSuppression(db, other, candidate).suppressed);
+        other      = key;
+        other.peer = "other@example.org";
+        QVERIFY(!checkLocalSuppression(db, other, candidate).suppressed);
+        candidate.direction = 1;
+        QVERIFY(!checkLocalSuppression(db, key, candidate).suppressed);
+        candidate.direction = 2;
+        candidate.messageId.clear();
+        candidate.extra = "{\"psi:origin\":\"same-client\"}";
+        QVERIFY(!checkLocalSuppression(db, key, candidate).suppressed);
+        candidate.extra = "{}";
+        candidate.uid   = "same";
+        other           = key;
+        other.archive   = "unrelated.example.org";
+        QVERIFY(!checkLocalSuppression(db, other, candidate).suppressed);
+        QVERIFY(checkLocalSuppression(db, key, candidate).suppressed);
+    }
+
+    void aLearnedAliasScrubsAnAlreadyStoredDelivery()
+    {
+        QVERIFY(migrate(db));
+        auto messages             = page({ "deleted", "alias-learned-later" }, true);
+        messages.entries[1].extra = "{\"psi:decoded\":false}";
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QVERIFY(deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        auto correction      = entry("alias-learned-later", 50);
+        correction.messageId = "alias-learned-later-client";
+        correction.replaceId = "deleted-client";
+        const auto checked   = checkLocalSuppression(db, key, correction);
+        QVERIFY(checked.success && checked.suppressed);
+        QVERIFY(checked.hiddenEvents.contains(messages.entries[1].eventId));
+        QVERIFY(resolvedRecord(db, messages.entries[1].eventId).isEmpty());
+    }
+
+    void aConflictingCorrectionCannotDeleteAnotherStoredMessage()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "deleted", "keep" }, true);
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QVERIFY(deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        auto attack        = entry("forged-new-uid", 50);
+        attack.messageId   = "keep-client";
+        attack.replaceId   = "deleted-client";
+        const auto checked = checkLocalSuppression(db, key, attack);
+        QVERIFY(checked.success && checked.suppressed);
+        QVERIFY(checked.hiddenEvents.isEmpty());
+        QVERIFY(!checkLocalSuppression(db, key, messages.entries[1]).suppressed);
+        Page replay;
+        replay.stable = replay.complete = true;
+        replay.entries                  = { attack };
+        QVERIFY(storePage(db, key, "", 1, replay));
+        QVERIFY(replay.entries[0].suppressed && !replay.entries[0].storable);
+        QCOMPARE(resolvedRecord(db, messages.entries[1].eventId).value("m_text").toString(), QString("hello"));
+        QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 2);
+    }
+
+    void observedOriginAliasSurvivesReplayOmissionBeforeDeletion()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "original" }, true);
+        auto extra    = QJsonDocument::fromJson(messages.entries[0].extra.toUtf8()).object();
+        extra.insert("psi:origin", "observed-origin");
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        extra.remove("psi:origin");
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        QVERIFY(deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        auto replay      = entry("new-uid");
+        replay.messageId = "different-client-id";
+        replay.extra     = "{\"psi:origin\":\"observed-origin\"}";
+        QVERIFY(checkLocalSuppression(db, key, replay).suppressed);
+    }
+
+    void trustedStanzaAliasesSurviveReplayOmissions()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "original" }, true);
+        auto extra    = QJsonDocument::fromJson(messages.entries[0].extra.toUtf8()).object();
+        extra.insert("psi:ids", QJsonArray { QJsonObject { { "by", key.archive }, { "id", "assigned-id" } } });
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        extra.remove("psi:ids");
+        messages.entries[0].extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        QVERIFY(storePage(db, key, "", 1, messages));
+        QVERIFY(deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        auto replay      = entry("new-uid");
+        replay.messageId = "different-client-id";
+        replay.extra     = "{\"psi:ids\":[{\"by\":\"untrusted.example\",\"id\":\"assigned-id\"}]}";
+        QVERIFY(!checkLocalSuppression(db, key, replay).suppressed);
+        replay.extra       = QString("{\"psi:ids\":[{\"by\":\"%1\",\"id\":\"assigned-id\"}]}").arg(key.archive);
+        const auto checked = checkLocalSuppression(db, key, replay);
+        QVERIFY(checked.success && checked.suppressed);
+    }
+
+    void conflictingOriginOrAssignedIdsCannotAuthorizeDeletion_data()
+    {
+        QTest::addColumn<bool>("origin");
+        QTest::newRow("origin") << true;
+        QTest::newRow("assigned-id") << false;
+    }
+    void conflictingOriginOrAssignedIdsCannotAuthorizeDeletion()
+    {
+        QFETCH(bool, origin);
+        QVERIFY(migrate(db));
+        auto messages = page({ "first", "second" }, true);
+        for (auto &message : messages.entries) {
+            auto extra = QJsonDocument::fromJson(message.extra.toUtf8()).object();
+            if (origin)
+                extra.insert("psi:origin", "collision");
+            else
+                extra.insert("psi:ids", QJsonArray { QJsonObject { { "by", key.archive }, { "id", "collision" } } });
+            message.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        }
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QVERIFY(!deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 10).size(), 2);
+        QCOMPARE(scalar("SELECT count(*) FROM message_suppressions").toInt(), 0);
+    }
+
+    void anUndecodedArchivedMessageCanBeDeletedBeforeKeysArrive()
+    {
+        QVERIFY(migrate(db));
+        auto encrypted             = page({ "encrypted" }, true);
+        encrypted.entries[0].body  = QStringLiteral("");
+        encrypted.entries[0].extra = "{\"psi:decoded\":false}";
+        QVERIFY(storePage(db, key, "", 1, encrypted));
+        QVERIFY(deleteLocalMessage(db, key, encrypted.entries[0].eventId).success);
+        QVERIFY(deleteLocalMessage(db, key, encrypted.entries[0].eventId).success);
+        QVERIFY(checkLocalSuppression(db, key, encrypted.entries[0]).suppressed);
+    }
+
+    void migrationSeedsOldDeletionsWithoutClaimingAmbiguousAliases()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "old-deleted", "unrelated" }, true);
+        for (auto &message : messages.entries) {
+            auto extra = QJsonDocument::fromJson(message.extra.toUtf8()).object();
+            extra.insert("psi:origin", "reused-origin");
+            message.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        }
+        QVERIFY(storePage(db, key, "", 2, messages));
+        QSqlQuery q(db);
+        QVERIFY(q.exec(QString("UPDATE events SET m_text='',extra_data='',message_flags=16 WHERE id=%1")
+                           .arg(messages.entries[0].eventId)));
+        QVERIFY(q.exec(QString("UPDATE archive_items SET xml='' WHERE event_id=%1").arg(messages.entries[0].eventId)));
+        QVERIFY(q.exec("DROP TABLE message_suppressions"));
+        QVERIFY(q.exec("DROP TABLE message_stanza_ids"));
+        QVERIFY(q.exec("UPDATE system SET value='0.5' WHERE key='version'"));
+        QVERIFY(needsMigration(db));
+        QVERIFY(migrate(db));
+        QVERIFY(!needsMigration(db));
+        QVERIFY(checkLocalSuppression(db, key, messages.entries[0]).suppressed);
+        QVERIFY(!checkLocalSuppression(db, key, messages.entries[1]).suppressed);
+        QCOMPARE(scalar("SELECT count(*) FROM message_suppressions WHERE value='reused-origin'").toInt(), 0);
+        QCOMPARE(localRecords(db, key.account, key.peer, 0, 10).size(), 1);
+    }
+
+    void deletionAndAttachmentReleaseRollBackTogether()
+    {
+        QVERIFY(migrate(db));
+        auto messages = page({ "with-media" }, true);
+        QVERIFY(storePage(db, key, "", 1, messages));
+        QSqlQuery q(db);
+        QVERIFY(q.exec("CREATE TABLE message_media_refs(event_id INTEGER,publication_id BLOB)"));
+        QVERIFY(q.exec(QString("INSERT INTO message_media_refs VALUES(%1,x'1234')").arg(messages.entries[0].eventId)));
+        QVERIFY(q.exec("CREATE TRIGGER reject_suppression BEFORE INSERT ON message_suppressions "
+                       "BEGIN SELECT RAISE(ABORT,'test rollback'); END"));
+        QVERIFY(!deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        QCOMPARE(scalar("SELECT count(*) FROM message_media_refs").toInt(), 1);
+        QCOMPARE(scalar("SELECT count(*) FROM message_suppressions").toInt(), 0);
+        QCOMPARE(resolvedRecord(db, messages.entries[0].eventId).value("m_text").toString(), QString("hello"));
+        QVERIFY(q.exec("DROP TRIGGER reject_suppression"));
+        QVERIFY(deleteLocalMessage(db, key, messages.entries[0].eventId).success);
+        QCOMPARE(scalar("SELECT count(*) FROM message_media_refs").toInt(), 0);
+    }
+
     void localDeletionScrubsEveryRevisionAndPreventsMamReplay()
     {
         QVERIFY(migrate(db));
@@ -758,7 +989,7 @@ private slots:
         QCOMPARE(scalar("SELECT m_text FROM events WHERE id=17").toString(), QString("original"));
         QCOMPARE(scalar("SELECT extra_data FROM events WHERE id=17").toString(),
                  QString("{\"jabber:x:oob\":[[\"https://example.org/file\"]]}"));
-        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.5"));
+        QCOMPARE(scalar("SELECT value FROM system WHERE key='version'").toString(), QString("0.6"));
         QVERIFY(migrate(db));
         QCOMPARE(scalar("SELECT count(*) FROM events").toInt(), 1);
     }

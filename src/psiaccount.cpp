@@ -28,6 +28,7 @@
 #include "Certificates/CertificateHelpers.h"
 #include "accountconnectionguard.h"
 #include "accountincomingmessage.h"
+#include "historymessageextras.h"
 #include "accountmanagedlg.h"
 #include "accountmodifydlg.h"
 #include "activity.h"
@@ -425,6 +426,7 @@ public:
     UserListItem                  self;
     QString                       cur_pgpSecretKey;
     QList<AccountIncomingMessage> messageQueue;
+    bool                          pgpDecryptPending = false;
     BlockTransportPopupList      *blockTransportPopupList = nullptr;
     int                           userCounter             = 0;
     PsiPrivacyManager            *privacyManager          = nullptr;
@@ -1534,6 +1536,23 @@ Client *PsiAccount::client() const { return d->client; }
 PsiEncryptionController *PsiAccount::encryptionController() const { return d->encryptionController; }
 
 EventQueue *PsiAccount::eventQueue() const { return d->eventQueue; }
+
+void PsiAccount::forgetLocallyDeletedEvents(const QString &peer, const QStringList &incomingIds,
+                                            const QStringList &outgoingIds)
+{
+    const auto events = d->eventQueue->eventsFor(XMPP::Jid(peer), false);
+    for (const auto &queued : events) {
+        const auto event = queued.second;
+        if (!event || event->type() != PsiEvent::Message)
+            continue;
+        const auto message = event.staticCast<MessageEvent>()->message().displayMessage();
+        if (findGCContact(message.from()) || message.hasMUCUser())
+            continue;
+        const auto &ids = event->originLocal() ? outgoingIds : incomingIds;
+        if (ids.contains(message.id()) || (!message.replaceId().isEmpty() && ids.contains(message.replaceId())))
+            d->eventQueue->dequeue(event);
+    }
+}
 
 EDB *PsiAccount::edb() const { return d->psi->edb(); }
 
@@ -3132,8 +3151,48 @@ void PsiAccount::wbRequest(const Jid &j, int id)
  * processing in one common function that could be applied to the messages
  * loaded from the event queue, and settings were changed prior to that.
  */
-void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
+void PsiAccount::checkLocalMessage(const AccountIncomingMessage &incoming, std::function<void(bool)> finished)
 {
+    if (!edb()) {
+        QTimer::singleShot(1000, this, [this, incoming, finished] { checkLocalMessage(incoming, finished); });
+        return;
+    }
+    const auto message = incoming.message.displayMessage();
+    if (!(edb()->features() & EDB::LocalDeletion)
+        || (message.type() != Message::Type::Chat && message.type() != Message::Type::Normal)
+        || findGCContact(message.from()) || message.hasMUCUser()) {
+        finished(false);
+        return;
+    }
+    const bool local = incoming.message.forwarded().type() == Forwarding::ForwardedCarbonsSent
+        || (message.from().compare(jid(), false) && !message.to().compare(jid(), false));
+    const auto peer = local ? message.to().bare() : message.from().bare();
+    if (peer.isEmpty()) {
+        finished(false);
+        return;
+    }
+    const HistoryArchive::Key key { id(), jid().bare(), peer, false };
+    edb()->requestLocalSuppression(
+        key, HistoryMessageExtras::identity(message, local), this, [this, incoming, finished](bool hidden, bool ok) {
+            if (!ok) {
+                // Preserve the incoming delivery while storage is unavailable.
+                // Never turn a failed privacy check into permission to display.
+                QTimer::singleShot(1000, this, [this, incoming, finished] { checkLocalMessage(incoming, finished); });
+                return;
+            }
+            finished(hidden);
+        });
+}
+
+void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming, bool suppressionChecked)
+{
+    if (!suppressionChecked) {
+        checkLocalMessage(incoming, [this, incoming](bool hidden) {
+            if (!hidden)
+                processIncomingMessage(incoming, true);
+        });
+        return;
+    }
     const Message &_m          = incoming.message;
     bool           selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
     Message        dm          = _m.displayMessage();
@@ -5499,7 +5558,17 @@ void PsiAccount::dj_rosterExchange(const RosterExchangeItems &items)
     }
 }
 
-void PsiAccount::eventFromXml(const PsiEvent::Ptr &e) { handleEvent(e, FromXml); }
+void PsiAccount::eventFromXml(const PsiEvent::Ptr &e)
+{
+    if (e && e->type() == PsiEvent::Message) {
+        checkLocalMessage(AccountIncomingMessage(e.staticCast<MessageEvent>()->message()), [this, e](bool hidden) {
+            if (!hidden)
+                handleEvent(e, FromXml);
+        });
+    } else {
+        handleEvent(e, FromXml);
+    }
+}
 
 #ifdef PSI_PLUGINS
 void PsiAccount::createNewPluginEvent(int account, const QString &jid, const QString &descr, QObject *receiver,
@@ -6713,12 +6782,28 @@ void PsiAccount::processMessageQueue()
 
 void PsiAccount::processPgpEncryptedMessageNext()
 {
+    if (d->pgpDecryptPending || d->messageQueue.isEmpty())
+        return;
+    // Reserve the queue head across both the asynchronous privacy check and
+    // decryption. A message from another peer must not start this head twice.
+    d->pgpDecryptPending = true;
     // 'peek' and try to process it
-    processPgpEncryptedMessage(d->messageQueue.first().message);
+    const auto incoming = d->messageQueue.first();
+    checkLocalMessage(incoming, [this, incoming](bool hidden) {
+        if (d->messageQueue.isEmpty()) {
+            d->pgpDecryptPending = false;
+            return;
+        }
+        if (hidden)
+            processPgpEncryptedMessageDone();
+        else
+            processPgpEncryptedMessage(incoming.message);
+    });
 }
 
 void PsiAccount::processPgpEncryptedMessageDone()
 {
+    d->pgpDecryptPending = false;
     // 'pop' the message
     if (!d->messageQueue.isEmpty())
         d->messageQueue.removeFirst();

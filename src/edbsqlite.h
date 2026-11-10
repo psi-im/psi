@@ -46,6 +46,10 @@ public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
     bool    init();
+    void       requestDeleteLocalMessage(const HistoryArchive::Key &, qint64, const QString &, int, QObject *,
+                                         std::function<void(bool)>) override;
+    void       requestLocalSuppression(const HistoryArchive::Key &, HistoryArchive::Entry, QObject *,
+                                       std::function<void(bool, bool)>) override;
     void       requestMediaLinks(qint64 position, int limit, QObject *receiver,
                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished);
     void       requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiver,
@@ -105,6 +109,7 @@ private:
         HistoryEventFactory::Encoded encoded;
         HistoryArchive::Key archiveKey;
         HistoryArchive::Page archivePage;
+        HistoryArchive::Entry        suppressionIdentity;
         QList<qint64> eventIds;
         QList<QByteArray>            publicationIds;
         QString archiveCursor;
@@ -126,7 +131,9 @@ private:
             Type_lookup,
             Type_plaintext,
             Type_mediaLinks,
-            Type_mediaLinked
+            Type_mediaLinked,
+            Type_deleteLocal,
+            Type_checkSuppression
         };
     };
     bool                    active_ = false;
@@ -145,6 +152,11 @@ private:
     };
     QHash<int, PendingMediaLinks>  pendingMediaLinks_;
     QHash<int, PendingMediaLinked> pendingMediaLinked_;
+    struct PendingLocalDeletion {
+        QPointer<QObject>               receiver;
+        std::function<void(bool, bool)> finished;
+    };
+    QHash<int, PendingLocalDeletion> pendingLocalDeletion_;
     struct PendingLocalPage {
         QPointer<QObject> receiver;
         std::function<void(EDBResult, bool)> finished;

@@ -170,6 +170,10 @@ void SearchProxy::handleResult()
 
 void SearchProxy::reset()
 {
+    for (auto *pending : findChildren<EDBHandle *>()) {
+        pending->disconnect(this);
+        pending->deleteLater();
+    }
     active   = false;
     acc_     = "";
     jid_     = XMPP::Jid();
@@ -183,6 +187,7 @@ void SearchProxy::reset()
 EDBHandle *SearchProxy::getEDBHandle()
 {
     EDBHandle *h = new EDBHandle(psi->edb());
+    h->setParent(this);
     connect(h, SIGNAL(finished()), this, SLOT(handleResult()));
     return h;
 }
@@ -500,6 +505,7 @@ void DisplayProxy::handleResult()
 EDBHandle *DisplayProxy::getEDBHandle()
 {
     EDBHandle *h = new EDBHandle(psi->edb());
+    h->setParent(this);
     connect(h, SIGNAL(finished()), this, SLOT(handleResult()));
     return h;
 }
@@ -689,6 +695,17 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa) :
     connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionUpdated(QString)));
 
     connect(pa, SIGNAL(removedContact(PsiContact *)), SLOT(removedContact(PsiContact *)));
+
+    connect(d->psi->edb(), &EDB::localMessagesDeleted, this,
+            [this](const QString &account, const QString &peer, const HistoryArchive::LocalDeletionResult &) {
+                if ((!getCurrentAccountId().isEmpty() && getCurrentAccountId() != account)
+                    || (!d->jid.isEmpty() && d->jid.bare() != peer))
+                    return;
+                searchProxy->invalidate();
+                ui_.msgLog->clear();
+                ui_.searchResult->clear();
+                refresh();
+            });
 
     listAccounts();
 

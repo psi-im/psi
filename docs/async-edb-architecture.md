@@ -53,6 +53,12 @@ page writes introduced additional large transactions.
   SFS/Jingle JIDs on the SQL worker. Changed links trigger catalog reconciliation
   only after commit. The synchronizer consumes bounded worker snapshots and
   advances its cursors only after successful catalog batches.
+- Device-local message deletion is a worker commit barrier. Suppression aliases,
+  plaintext/XML scrubbing and media-ref removal commit together; views update
+  afterward. Identity-only ingress probes that miss may read the worker's pending
+  append transaction without flushing it. A hit flushes that batch before learning
+  aliases or hiding content. Payload projections retain their existing snapshot
+  and commit-order guarantees. See [local deletion](local-message-deletion.md).
 - The superseded GUI SQL `get/find/append/erase` paths, redundant query
   plans and standalone WAL checkpoint thread have been removed.
   SQLite uses **WAL + synchronous=FULL** on GUI and worker connections;

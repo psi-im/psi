@@ -1,11 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 #include "iris/xmpp_message.h"
+#include "historyarchivevalues.h"
 #include <QJsonArray>
 
 // SQLite events.extra_data remains backwards compatible with existing OOB rows.
 // Store protocol data, never rendered <share> markup or runtime player state.
 namespace HistoryMessageExtras {
+// Identity-only projection for local suppression, before decrypt/display.
+HistoryArchive::Entry identity(const XMPP::Message &, bool local, const QString &archiveUid = {});
 QString encode(const XMPP::Message &message);
 // The live EDB may store a localized body. Index exactly that projection.
 QString encode(const XMPP::Message &message, const QString &storedBody);

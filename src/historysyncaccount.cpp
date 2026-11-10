@@ -25,6 +25,10 @@ HistorySync::Context accountContext(PsiAccount *account)
     context.connected = [account] { return !account->isServerless() && account->isConnected(); };
     context.logging
         = [account] { return account->userAccount().opt_log && (account->edb()->features() & EDB::ArchiveCache); };
+    context.suppressionAsync = [account](const HistoryArchive::Key &key, HistoryArchive::Entry entry, QObject *receiver,
+                                         std::function<void(bool, bool)> finished) {
+        account->edb()->requestLocalSuppression(key, std::move(entry), receiver, std::move(finished));
+    };
 
     // All database I/O is queued; callbacks and XMPP::Message reconstruction
     // run on the GUI thread. No legacy synchronous SQL callback is installed.

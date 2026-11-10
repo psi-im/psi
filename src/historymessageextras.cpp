@@ -129,6 +129,31 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message)
     return index;
 }
 
+HistoryArchive::Entry HistoryMessageExtras::identity(const XMPP::Message &message, bool local, const QString &uid)
+{
+    HistoryArchive::Entry entry;
+    entry.uid       = uid;
+    entry.direction = local ? 1 : 2;
+    entry.type      = message.type() == XMPP::Message::Type::Chat ? 1
+             : message.type() == XMPP::Message::Type::Normal      ? 0
+                                                                  : -1;
+    entry.messageId = message.id();
+    entry.replaceId = message.replaceId();
+    entry.sender    = message.from().full();
+    QJsonObject extra;
+    if (!message.originId().isEmpty())
+        extra.insert("psi:origin", message.originId());
+    QJsonArray ids;
+    for (const auto &id : message.stanzaIds())
+        ids.append(QJsonObject { { "by", id.by.full() }, { "id", id.id } });
+    extra.insert("psi:ids", ids);
+    if (message.messageReceipt() == XMPP::ReceiptReceived || !message.displayedMarkerId().isEmpty()
+        || !message.reactions().targetId.isEmpty() || !message.retraction().isEmpty())
+        extra.insert("psi:protocol-only", true);
+    entry.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+    return entry;
+}
+
 QString HistoryMessageExtras::encode(const XMPP::Message &message) { return encode(message, message.body()); }
 
 QString HistoryMessageExtras::encode(const XMPP::Message &message, const QString &storedBody)

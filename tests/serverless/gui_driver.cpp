@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Test-only style plugin: exercises the real application without production test hooks.
 #include <QApplication>
+#include <QAction>
+#include <QContextMenuEvent>
+#include <QMenu>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QElapsedTimer>
@@ -25,6 +28,7 @@ public:
     QElapsedTimer     elapsed;
     int               stage   = 0;
     bool              bounced = false;
+    qint64            deletionStarted = -1;
     QPointer<QWidget> options, chat;
     explicit Driver(QObject *parent) : QObject(parent)
     {
@@ -81,7 +85,7 @@ public:
     }
     void step()
     {
-        if (elapsed.elapsed() > 40000) {
+        if (elapsed.elapsed() > (qEnvironmentVariableIsSet("PSI_UI_DELETE_TEST") ? 55000 : 40000)) {
             fail("Timed out");
             return;
         }
@@ -209,6 +213,58 @@ public:
             if (copies < 2)
                 return;
             qInfo("UI-PROBE MESSAGES: outgoing and echoed message rendered in the native chat");
+            if (qEnvironmentVariableIsSet("PSI_UI_DELETE_TEST")) {
+                if (deletionStarted < 0)
+                    deletionStarted = elapsed.elapsed();
+                if (elapsed.elapsed() - deletionStarted < 1500)
+                    return;
+                QList<QTextEdit *> messages;
+                for (auto *text : chat->findChildren<QTextEdit *>())
+                    if (text->isReadOnly() && text->inherits("ChatMessageText")
+                        && text->toPlainText().contains("serverless-ui-test"))
+                        messages.append(text);
+                QWidget *row = messages.last();
+                while (row && !row->property("_psiMamRowKey").isValid())
+                    row = row->parentWidget();
+                if (!row) {
+                    fail("Incoming message row missing");
+                    return;
+                }
+                QContextMenuEvent menuEvent(QContextMenuEvent::Mouse, QPoint(3, 3), row->mapToGlobal(QPoint(3, 3)));
+                QApplication::sendEvent(row, &menuEvent);
+                auto *menu   = chat->findChild<QMenu *>("mamMessageContextMenu");
+                auto *remove = menu ? menu->findChild<QAction *>("mamDeleteLocally") : nullptr;
+                if (!remove) {
+                    fail("Delete locally action missing");
+                    return;
+                }
+                remove->trigger();
+                menu->close();
+                deletionStarted = elapsed.elapsed();
+                stage           = 8;
+            } else {
+                disable();
+            }
+        } else if (stage == 8) {
+            int visible = 0;
+            for (auto *text : chat->findChildren<QTextEdit *>()) {
+                if (!text->isReadOnly() || !text->inherits("ChatMessageText"))
+                    continue;
+                if (text->toPlainText().contains("serverless-ui-correction")) {
+                    fail("A future correction resurrected the deleted message");
+                    return;
+                }
+                visible += text->toPlainText().contains("serverless-ui-test");
+            }
+            if (elapsed.elapsed() - deletionStarted < 2000)
+                return;
+            if (visible != 1) {
+                fail("Deleted message remained or reappeared");
+                return;
+            }
+            if (elapsed.elapsed() - deletionStarted < 8000)
+                return;
+            qInfo("UI-PROBE LOCAL-DELETION: committed, replay and correction stayed hidden");
             disable();
         } else if (stage == 7) {
             auto *status = options->findChild<QLabel *>("serverlessStatus");

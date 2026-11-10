@@ -104,7 +104,7 @@ if(TARGET iris)
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
     add_executable(filesharing_sims_history_test simshistory.cpp
         ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
-        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
+        ../../src/historyarchive.cpp ../../src/historylocaldeletion.cpp ../../src/historymessagestate.cpp)
     set_target_properties(filesharing_sims_history_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_sims_history_test PRIVATE ../../src)
     target_link_libraries(filesharing_sims_history_test PRIVATE iris
@@ -116,7 +116,7 @@ if(TARGET iris)
         ../../src/filesharingpublicationsync.cpp ../../src/filedatabase.cpp ../../src/historymediarefs.cpp
         ../../src/historymediaqueries.cpp ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
         ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
-        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
+        ../../src/historyarchive.cpp ../../src/historylocaldeletion.cpp ../../src/historymessagestate.cpp)
     set_target_properties(filesharing_publications_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_publications_test PRIVATE ../../src)
     target_link_libraries(filesharing_publications_test PRIVATE iris

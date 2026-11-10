@@ -69,6 +69,7 @@ list(APPEND FORMS
 list(APPEND HEADERS
     messagestate.h
     historyarchive.h
+    historyarchivevalues.h
     historysqlitepolicy.h
     historysqlreadworker.h
     historymediaqueries.h
@@ -406,6 +407,7 @@ list(APPEND SOURCES
     historyeventfactory.cpp
     historysqlreadworker.cpp
     historyarchive.cpp
+    historylocaldeletion.cpp
     historymessagestate.cpp
     historysync.cpp
     historysyncaccount.cpp

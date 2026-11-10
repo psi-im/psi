@@ -24,7 +24,7 @@ namespace {
         QString     peer, sender, occupant, stanza, replace;
         QJsonObject extra;
         QList<Ref>  refs;
-        bool        content = false, validTime = false, edited = false;
+        bool        content = false, validTime = false, edited = false, deleted = false;
     };
     bool run(QSqlQuery &query)
     {
@@ -116,7 +116,8 @@ namespace {
         event.peer      = row.value("jid").toString();
         event.extra     = QJsonDocument::fromJson(row.value("extra_data").toString().toUtf8()).object();
         query.finish();
-        if (row.value("message_flags").toInt() & MessageState::LocalDeleted) {
+        event.deleted = row.value("message_flags").toInt() & MessageState::LocalDeleted;
+        if (event.deleted) {
             // Scrubbed payloads cannot reconstruct origin IDs or other aliases.
             // Keep the existing identity index through replay and state rebuilds;
             // never decode deleted XML or infer new effects from empty content.
@@ -166,7 +167,8 @@ namespace {
         const auto effects = event.extra.value("psi:events").toObject();
         event.content      = effects.isEmpty() && !event.extra.value("psi:protocol-only").toBool()
             && (row.value("has_body").toBool() || row.value("has_subject").toBool() || event.extra.contains("psi:html")
-                || event.extra.contains("urn:xmpp:reference:0") || event.extra.contains("jabber:x:oob"));
+                || event.extra.contains("urn:xmpp:reference:0") || event.extra.contains("urn:xmpp:sfs:0")
+                || event.extra.contains("jabber:x:oob"));
         auto add = [&event](int kind, const QString &target) {
             if (kind == Content || !target.isEmpty())
                 event.refs.append({ kind, target });
@@ -328,6 +330,25 @@ namespace {
                     || !loadEvent(db, id, event)))
                 return false;
         }
+        if (!event.deleted) {
+            // MAM is allowed to omit stanza-id elements. Retain every
+            // observed identity alias rather than replacing it with a replay's subset.
+            query.prepare("INSERT OR IGNORE INTO message_stanza_ids(event_id,contact_id,authority,value) "
+                          "VALUES(:id,:contact,:authority,:value)");
+            for (const auto &value : event.extra.value("psi:ids").toArray()) {
+                const auto assigned   = value.toObject();
+                const auto authority  = assigned.value("by").toString();
+                const auto assignedId = assigned.value("id").toString();
+                if (authority.isEmpty() || assignedId.isEmpty())
+                    continue;
+                query.bindValue(":id", id);
+                query.bindValue(":contact", event.contact);
+                query.bindValue(":authority", authority);
+                query.bindValue(":value", assignedId);
+                if (!run(query))
+                    return false;
+            }
+        }
         query.prepare("SELECT kind,target FROM message_state_refs WHERE event_id=:id ORDER BY kind,target");
         query.bindValue(":id", id);
         if (!run(query))
@@ -337,6 +358,15 @@ namespace {
             previous.append({ query.value(0).toInt(), query.value(1).toString() });
         query.finish();
         std::sort(previous.begin(), previous.end());
+        if (event.content) {
+            // A replay may omit identity extensions already seen live. Keep
+            // those aliases while recomputing content/effect references.
+            for (const auto &ref : previous)
+                if (ref.first >= ClientId && ref.first <= RoomId)
+                    event.refs.append(ref);
+            std::sort(event.refs.begin(), event.refs.end());
+            event.refs.erase(std::unique(event.refs.begin(), event.refs.end()), event.refs.end());
+        }
         rebuild |= !previous.isEmpty() && previous != event.refs;
         if (previous != event.refs) {
             query.prepare("DELETE FROM message_state_refs WHERE event_id=:id");

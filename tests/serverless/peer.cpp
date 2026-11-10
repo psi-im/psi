@@ -23,6 +23,11 @@ int main(int argc, char **argv)
     });
     QObject::connect(&service, &XMPP::Stream::error, &app, [&](int) { app.exit(2); });
     QObject::connect(&client, &XMPP::Client::messageReceived, &app, [&](const XMPP::Message &message) {
+        if (!message.retraction().isEmpty()) {
+            qCritical("Unexpected message retraction during local deletion");
+            app.exit(5);
+            return;
+        }
         if (message.body().isEmpty())
             return;
         if (message.body() != QLatin1String("serverless-ui-test")) {
@@ -33,6 +38,7 @@ int main(int argc, char **argv)
         reply.setTo(message.from());
         reply.setType(XMPP::Message::Type::Chat);
         reply.setBody(message.body());
+        reply.setId("serverless-ui-echo");
         // Too large to be fetched by itself, and nothing listens at the source.
         XMPP::MediaSharing media;
         media.file.setName(QStringLiteral("peer-file.bin"));
@@ -54,6 +60,15 @@ int main(int argc, char **argv)
         reply.addFileSharing(sharing);
         client.sendMessage(reply);
         qInfo("PEER-MESSAGE-OK");
+        if (qEnvironmentVariableIsSet("PSI_UI_DELETE_TEST")) {
+            QTimer::singleShot(4000, &app, [&, reply]() mutable { client.sendMessage(reply); });
+            QTimer::singleShot(6000, &app, [&, reply]() mutable {
+                reply.setId("serverless-ui-correction");
+                reply.setReplaceId("serverless-ui-echo");
+                reply.setBody("serverless-ui-correction");
+                client.sendMessage(reply);
+            });
+        }
     });
     QObject::connect(XMPP::ProcessQuit::instance(), &XMPP::ProcessQuit::quit, &service, &XMPP::Stream::close);
     QObject::connect(&service, &XMPP::Stream::connectionClosed, &app, &QCoreApplication::quit);

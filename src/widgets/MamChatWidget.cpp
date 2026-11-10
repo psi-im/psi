@@ -1807,6 +1807,53 @@ void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
             replaceRow(i);
 }
 
+void MamChatWidget::removeLocallyDeleted(const QList<qint64> &events, const QStringList &incomingIds,
+                                         const QStringList &outgoingIds)
+{
+    hideMessageActions();
+    for (auto *menu : findChildren<QMenu *>(QStringLiteral("mamMessageContextMenu")))
+        menu->close();
+    cancelArchiveRanges();
+    cancelMessageSelection();
+    clearTextSearch();
+    QSet<qint64>  removedEvents;
+    QSet<QString> incoming, outgoing;
+    for (const auto id : events)
+        removedEvents.insert(id);
+    for (const auto &id : incomingIds)
+        incoming.insert(id);
+    for (const auto &id : outgoingIds)
+        outgoing.insert(id);
+    for (int at = items_.size() - 1; at >= 0; --at) {
+        const auto &row     = items_.at(at);
+        const auto &ids     = row.message.isLocal() ? outgoing : incoming;
+        const bool  matched = ids.contains(row.message.messageId())
+            || std::any_of(row.stanzaIds.cbegin(), row.stanzaIds.cend(),
+                           [&ids](const QString &id) { return ids.contains(id); });
+        if (!removedEvents.contains(row.message.historyId()) && !matched)
+            continue;
+        const auto key = row.key;
+        keys_.remove(key);
+        searchPlainTextCache_.remove(key);
+        measuredMessageHeights_.remove(key);
+        for (auto alias = sourceAliases_.begin(); alias != sourceAliases_.end();) {
+            if (alias.key() == key || alias.value() == key)
+                alias = sourceAliases_.erase(alias);
+            else
+                ++alias;
+        }
+        if (unreadBoundaryKey_ == key)
+            unreadBoundaryKey_.clear();
+        if (unreadReadProgressKey_ == key)
+            unreadReadProgressKey_.clear();
+        items_.removeAt(at);
+        removeHistoryRows(at, 1);
+    }
+    unreadCountsDirty_ = true;
+    refreshReplyPreviews(true);
+    refreshUnreadEdgeBadge();
+}
+
 void MamChatWidget::clearMessages()
 {
     clearTextSearch();
@@ -3757,6 +3804,19 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
             const auto &message = items_.at(index).message;
             if (message.isLocal() && !message.messageId().isEmpty())
                 emit editMessageRequested(message.messageId(), plainMessage(items_.at(index)));
+        });
+    }
+    if (localDeletionEnabled_ && !groupChat_
+        && (items_.at(at).message.historyId() > 0 || !items_.at(at).message.messageId().isEmpty())) {
+        auto *remove = menu->addAction(tr("Delete locally"));
+        remove->setObjectName(QStringLiteral("mamDeleteLocally"));
+        remove->setToolTip(tr("Remove this message from this device. Cached files are kept."));
+        connect(remove, &QAction::triggered, this, [this, key] {
+            const int at = indexOfKey(key);
+            if (at < 0)
+                return;
+            const auto message = items_.at(at).message;
+            emit       deleteMessageLocallyRequested(message.historyId(), message.messageId(), message.isLocal());
         });
     }
     auto *select = menu->addAction(tr("Select message"));

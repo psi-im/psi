@@ -733,6 +733,11 @@ bool PsiCon::init()
         if (!edb->init())
             return false;
         d->fileSharingManager->followHistory(edb);
+        connect(edb, &EDB::localMessagesDeleted, this,
+                [this](const QString &owner, const QString &peer, const HistoryArchive::LocalDeletionResult &changes) {
+                    if (auto *account = d->contactList->getAccount(owner))
+                        account->forgetLocallyDeletedEvents(peer, changes.incomingIds, changes.outgoingIds);
+                });
     }
 
     if (d->contactList->defaultAccount())

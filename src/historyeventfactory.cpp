@@ -71,6 +71,8 @@ HistoryEventFactory::Encoded HistoryEventFactory::encode(const PsiEvent::Ptr &ev
 
 PsiEvent::Ptr HistoryEventFactory::decode(PsiCon *psi, const QSqlRecord &record)
 {
+    if (record.value("message_flags").toInt() & MessageState::LocalDeleted)
+        return {};
     PsiAccount *pa = psi->contactList()->getAccount(record.value("acc_id").toString());
 
     int type = record.value("type").toInt();

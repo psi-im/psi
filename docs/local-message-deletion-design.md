@@ -1,8 +1,10 @@
 # Shared files, publications and local message deletion
 
-Status: **in delivery**. Stages 0 and 1 are in master, stage 2 is under way. On this branch
-there is also `HistoryArchive::scrubStoredMessage`, a storage primitive for stage 3. Names
-below are proposed unless marked *existing* or described as delivered.
+Status: **in delivery**. Stages 0–2 are in master (#1096, #1099 and #1100, which includes
+#1101). This branch delivers stage 3: device-local deletion of stored direct messages,
+keeping cached files. See [the implementation notes](local-message-deletion.md) for its
+boundaries, migration and verification. Names below remain proposed for stages 4–6
+unless marked *existing* or described as delivered.
 Local deletion initially covers direct conversations backed by SQLite/MAM. The file
 architecture covers every chat type, playback, downloads, publishing and serving.
 
@@ -41,7 +43,7 @@ user's original or exported file. UI removal follows a successful history commit
 ## What is wrong today
 
 This is the starting point. Stage 0 dealt with the first two rows, stage 1 with the next two,
-and stage 2 deals with `FileSharingStore`.
+and stage 2 replaced `FileSharingStore`. The remaining file-access changes belong to stages 4–6.
 
 | Existing code | Observed behaviour | Consequence |
 | --- | --- | --- |
@@ -240,10 +242,12 @@ erDiagram
         blob publication_id "no foreign key across databases"
     }
     message_suppressions {
-        int id PK
-        text scope "account, conversation, direction"
-        text id_kind "stanza id, archive uid, origin id"
-        text id_value
+        text account PK
+        text peer PK
+        int direction PK
+        int kind PK "client, origin, assigned stanza, archive UID"
+        text authority PK "empty for client and origin IDs"
+        text value PK
     }
     cleanup_outbox {
         blob publication_id
@@ -830,19 +834,35 @@ Check suppression before display, durable append and decryption when identity is
 known, and again before persistence or display for aliases learned after decrypting; discard
 the decoded payload then. XEP-0308 makes every correction reference the original `id`, so a
 correction joins by its target. When a correction adds an alias, rows already stored under that
-alias are scrubbed too. The check repeats inside `appendEvent`, because a write may be queued
-while a deletion commits.
+alias are scrubbed too. The check repeats inside the worker append transaction, because a write may be queued
+while a deletion commits. Assigned stanza IDs have a derived, authority-qualified index
+(`message_stanza_ids`); replay may omit these IDs without forgetting previously observed
+aliases. Client/origin IDs reuse the existing message-state index.
 
-`HistorySync` needs explicit suppressed entries, not fake XML. Preserve MAM event counts, UID
+`HistorySync` carries explicit suppressed entries, not fake XML. Preserve MAM event counts, UID
 positions and indexed island coordinates while omitting deleted rows from rendering. A page of
-suppressed entries is a valid cached page, not a reason to refetch, whereas today an empty XML
-is a cache miss. Apply the same rule to archive pages, local preload, reply resolution, the
+suppressed entries is a valid cached page, not a reason to refetch. Its event positions and
+coverage survive while its payload is absent. Apply the same rule to archive pages, local preload, reply resolution, the
 history dialog and search, and invalidate materialized views after commit.
 
 SQLite updates do not erase old pages, WAL, journals or backups. Evaluate `secure_delete` and
 checkpointing separately, and never promise physical erasure.
 
-### The delete operation
+### The delivered stage 3 operation
+
+The context menu of a stored direct-chat message offers **Delete locally**. The ordered
+history worker commits suppression aliases, payload/XML scrubbing and media-ref removal
+in one transaction. Only then do chat views, local search, reply resolution, the history
+dialog and the unread event queue discard the message. A queued append repeats the check.
+No retraction is sent. Cached bytes, originals and exports are retained.
+
+For this operation, `FileSharingPublicationSync` is already a durable cleanup mechanism:
+missing links make non-serving publications orphaned, and its existing bounded sweep runs
+after commit and on every startup. No separate outbox duplicates that ownership state.
+The outbox in the next sequence belongs to stage 6, where a durable user choice to remove
+bytes must survive unlinking the publication.
+
+### The stage 6 extension with optional file removal
 
 ```mermaid
 sequenceDiagram
@@ -921,7 +941,9 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 - **History refs** run in the existing upgrade pass, after `HistoryArchive::migrate` and on the
   same worker with progress. Each event with attachments in `extra_data` gets its refs in one
   transaction, so no partially covered state exists at run time. This touches history only, and
-  decodes no JID, because Iris prepares JIDs through a cache without locks. The publications
+  decodes no JID on the worker, because Iris prepares JIDs through a cache without locks.
+  A versioned ordinal/fingerprint index is prepared with the GUI-owned protocol snapshot;
+  only old development SFS rows need a GUI compatibility pass. The publications
   follow from `FileSharingPublicationSync` after the start, as for a lost `files.sqlite`.
 - **`shared-files.sqlite`** may hold the only record of a local path or of what was shared. What
   an account published is imported with `serving = 1`, recognized by `served_files` or, for an
@@ -966,14 +988,16 @@ flowchart LR
    import `cache.xml`. Behaviour is unchanged. *Test:* avatars and BoB across restart, TTL,
    undeletable items, interrupted import, two profiles running at once.
 2. **Publications.** In two steps:
-   1. *In #1100.* Catalog and tables, media refs written with the history row, backfill, the sync
+   1. *Delivered in #1100.* Catalog and tables, media refs written with the history row, backfill, the sync
       between the two, retiring `shared_files`, no descriptors in sidecars and `cache.xml`. *Test:* a message
       not stored leaves nothing, MAM duplicate, restart, lost `files.sqlite` heals, sibling source
       union, deleted source gone, nothing served without an explicit decision.
-   2. *In #1101.* SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS
+   2. *Delivered in #1100, incorporating #1101.* SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS
       through history and catalog, and the no-hash and `disposition='attachment'` rules.
-3. **Local deletion.** Suppression, ingress checks, suppressed `HistorySync` entries, the delete
-   transaction, outbox release of publications, and the *Delete locally* action keeping bytes.
+3. **Local deletion.** *Delivered by this branch.* Suppression, ingress checks, explicit hidden
+   `HistorySync` positions, the delete transaction, publication reconciliation, and the
+   *Delete locally* action keeping bytes. The cleanup outbox is deferred to stage 6 because
+   the existing orphan sweep already recovers publication release after a crash.
    *Test:* correction before original, future corrections, new archive UIDs, ambiguous IDs, restart,
    rollback, both directions, account and conversation isolation, history, search and reply
    adapters, no XEP-0424 stanza.

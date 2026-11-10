@@ -174,6 +174,11 @@ struct Fixture {
                   }
                   return cached;
               };
+        c.suppressionAsync = [this](const HistoryArchive::Key &k, HistoryArchive::Entry entry, QObject *receiver,
+                                    std::function<void(bool, bool)> finished) {
+            const auto checked = HistoryArchive::checkLocalSuppression(db, k, std::move(entry));
+            QTimer::singleShot(0, receiver, [checked, finished] { finished(checked.suppressed, checked.success); });
+        };
         return c;
     }
     bool logOwnMessage(bool marker, const QString &target = QStringLiteral("previous-message"))
@@ -238,6 +243,7 @@ public:
     int          decryptions = 0;
     bool         replay      = false;
     bool         fail        = false;
+    QString      correctionTarget;
     QString      id() const override { return "test-archive"; }
     QString      name() const override { return id(); }
     Capabilities capabilities() const override { return XmppStanza; }
@@ -266,6 +272,11 @@ public:
             auto body = doc.createElementNS("jabber:client", "body");
             body.appendChild(doc.createTextNode("decrypted"));
             plain.appendChild(body);
+            if (!method->correctionTarget.isEmpty()) {
+                auto replace = doc.createElementNS("urn:xmpp:message-correct:0", "replace");
+                replace.setAttribute("id", method->correctionTarget);
+                plain.appendChild(replace);
+            }
             QTimer::singleShot(0, job, [job, plain] { job->complete(plain); });
             return job;
         }
@@ -279,6 +290,78 @@ public:
 class HistorySyncTest final : public QObject {
     Q_OBJECT
 private slots:
+    void fullySuppressedOfflinePageRetainsArchivePositions()
+    {
+        Fixture f;
+        f.seed("edge");
+        const auto stored = HistoryArchive::readPage(f.db, f.key, "edge", 40);
+        QVERIFY(HistoryArchive::deleteLocalMessage(f.db, f.key, stored.entries[0].eventId).success);
+        f.online = false;
+        HistorySync sync(f.context(), f.key.peer, false, "edge");
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+        QVERIFY(sync.fromCache());
+        QCOMPARE(sync.entries().size(), 1);
+        QVERIFY(sync.entries()[0].suppressed);
+        QVERIFY(sync.archive().isEmpty());
+        QVERIFY(sync.message("seed").isNull());
+        QVERIFY(f.wire.sent.isEmpty());
+    }
+
+    void encryptedCorrectionIsSuppressedAfterDecodeWithLoggingDisabled()
+    {
+        Fixture f;
+        f.seed("edge");
+        const auto stored = HistoryArchive::readPage(f.db, f.key, "edge", 40);
+        QVERIFY(HistoryArchive::deleteLocalMessage(f.db, f.key, stored.entries[0].eventId).success);
+        auto *cipher             = new ArchiveCipher;
+        cipher->correctionTarget = "seed";
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        auto context    = f.context();
+        context.logging = [] { return false; };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(),
+                        { f.result("new-cipher-uid", 5, "<encrypted xmlns='test:cipher'/>", "new-id") }));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+        QCOMPARE(cipher->decryptions, 1); // The target was not available before decryption.
+        QVERIFY(sync.entries()[0].suppressed);
+        QVERIFY(sync.archive().isEmpty());
+        QVERIFY(sync.message("new-cipher-uid").isNull());
+    }
+
+    void hiddenArchiveReplayDoesNotDecryptOrDependOnLogging()
+    {
+        Fixture f;
+        f.seed("edge");
+        const auto stored = HistoryArchive::readPage(f.db, f.key, "edge", 40);
+        QVERIFY(HistoryArchive::deleteLocalMessage(f.db, f.key, stored.entries[0].eventId).success);
+        auto *cipher = new ArchiveCipher;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        auto context    = f.context();
+        context.logging = [] { return false; };
+        HistorySync sync(context, f.key.peer, false, {});
+        QSignalSpy  done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        QVERIFY(f.reply(f.wire.sent.last(),
+                        { f.result("replacement-uid", 5, "<encrypted xmlns='test:cipher'/>", "seed") }));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+        QCOMPARE(cipher->decryptions, 0);
+        QCOMPARE(sync.entries().size(), 1);
+        QVERIFY(sync.entries()[0].suppressed);
+        QVERIFY(sync.archive().isEmpty());
+        QVERIFY(sync.message("replacement-uid").isNull());
+    }
+
     void cachedPageWithoutRsmMetadataDoesNotProbeArchive()
     {
         Fixture f;

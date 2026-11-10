@@ -65,7 +65,7 @@ struct HistoryReadResult {
 Q_DECLARE_METATYPE(HistoryReadResult)
 
 struct HistoryWriteRequest {
-    enum Type { Append, Erase, StorePage };
+    enum Type { Append, Erase, StorePage, DeleteLocal, CheckSuppression };
     int id = 0;
     Type type = Append;
     QString account, peer, contactPeer, resource;
@@ -75,6 +75,8 @@ struct HistoryWriteRequest {
     HistoryArchive::Page archivePage;
     QString before;
     int limit = 0;
+    qint64                       eventId = 0;
+    HistoryArchive::Entry        identity;
 };
 Q_DECLARE_METATYPE(HistoryWriteRequest)
 
@@ -83,6 +85,8 @@ struct HistoryWriteResult {
     bool success = false;
     bool inserted = false;
     bool                 mediaLinksRemoved = false;
+    HistoryArchive::Key                 changedKey;
+    HistoryArchive::LocalDeletionResult localDeletion;
     HistoryArchive::Page archivePage;
 };
 Q_DECLARE_METATYPE(HistoryWriteResult)

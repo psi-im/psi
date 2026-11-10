@@ -123,17 +123,16 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
                                     const QString &ownNick, const std::function<QString(bool)> &nickname)
 {
     NativeHistoryPage page;
-    for (const auto &result : task->archive()) {
-        const QString uid = result.attribute(QStringLiteral("id"));
+    for (const auto &entry : task->entries()) {
+        const QString uid = entry.uid;
         if (uid.isEmpty())
             continue;
         page.uids.append(uid);
-        auto       archived  = task->message(uid);
-        const auto forwarded = result.firstChildElement(QStringLiteral("forwarded"));
-        const auto stamp     = QDateTime::fromString(
-            forwarded.firstChildElement(QStringLiteral("delay")).attribute(QStringLiteral("stamp")), Qt::ISODate);
-        if (stamp.isValid())
-            archived.setTimeStamp(stamp);
+        if (entry.suppressed)
+            continue;
+        auto archived = task->message(uid);
+        if (entry.timestamp.isValid())
+            archived.setTimeStamp(entry.timestamp);
         QDateTime revisionTime;
         qint64    historyId        = task->eventId(uid);
         MessageState::Flags messageState;
