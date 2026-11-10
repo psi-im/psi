@@ -2109,9 +2109,9 @@ void PsiCon::invokeForwardMessage(const QString &fromMessageId, const Jid &from,
 
     auto btn = new QPushButton(tr("Forward"));
     connect(btn, &QPushButton::clicked, dlg, [roster, sender, dlg](bool) {
-        auto contacts = roster->selectedContacts();
-        if (!contacts.empty()) {
-            sender(roster->selectedContacts());
+        const auto contacts = roster->selectedContacts();
+        if (!contacts.isEmpty()) {
+            sender(contacts);
             roster->deleteLater();
             dlg->close();
         }
