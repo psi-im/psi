@@ -5,10 +5,13 @@
 #include <QPoint>
 #include <QPointF>
 #include <QRectF>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QWidget>
+#include <functional>
 
+class QCloseEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QMoveEvent;
@@ -24,14 +27,21 @@ class QWheelEvent;
 class ImageViewer final : public QWidget {
     Q_OBJECT
 public:
+    using SizeLoader = std::function<QSize()>;
+    using SizeSaver  = std::function<void(const QSize &)>;
+
     explicit ImageViewer(const QImage &image, QWidget *parent = nullptr);
     ImageViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
+
+    static void setSizePersistence(SizeLoader loader, SizeSaver saver);
+    static void showImage(const QImage &image, const QString &fileName);
 
     QRectF displayedImageRect() const;
     qreal  currentScale() const;
     bool   hasTemporaryZoom() const { return temporaryZoom_; }
 
 protected:
+    void closeEvent(QCloseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -50,6 +60,9 @@ private:
     bool    showAdjacentImage(int step);
     void    rebuildImageList();
     void    resetImageListToCurrent();
+    void    setImage(const QImage &image, const QString &fileName);
+    void    saveWindowSize() const;
+    void    bringToFront();
     void    zoomBy(qreal factor);
     void    resetTemporaryZoom();
 

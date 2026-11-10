@@ -3747,10 +3747,7 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
 
 static void openImageViewer(const FullImage &full)
 {
-    if (full.image.isNull())
-        return;
-    auto *viewer = new ImageViewer(full.image, full.fileName);
-    viewer->show();
+    ImageViewer::showImage(full.image, full.fileName);
 }
 
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)

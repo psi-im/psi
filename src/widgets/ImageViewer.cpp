@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "ImageViewer.h"
 
+#include <QCloseEvent>
+#include <QCoreApplication>
 #include <QCursor>
 #include <QDateTime>
 #include <QDir>
@@ -11,16 +13,28 @@
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QPainter>
+#include <QPointer>
 #include <QResizeEvent>
 #include <QScreen>
 #include <QSet>
+#include <QWindow>
 #include <QWheelEvent>
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace {
 constexpr int   Margin   = 16;
 constexpr qreal ZoomStep = 1.2;
+
+ImageViewer::SizeLoader imageViewerSizeLoader;
+ImageViewer::SizeSaver  imageViewerSizeSaver;
+
+QPointer<ImageViewer> &currentImageViewer()
+{
+    static QPointer<ImageViewer> viewer;
+    return viewer;
+}
 
 const QSet<QString> &supportedImageSuffixes()
 {
@@ -34,6 +48,27 @@ const QSet<QString> &supportedImageSuffixes()
 }
 }
 
+void ImageViewer::setSizePersistence(SizeLoader loader, SizeSaver saver)
+{
+    imageViewerSizeLoader = std::move(loader);
+    imageViewerSizeSaver  = std::move(saver);
+}
+
+void ImageViewer::showImage(const QImage &image, const QString &fileName)
+{
+    if (image.isNull())
+        return;
+    if (ImageViewer *viewer = currentImageViewer()) {
+        viewer->setImage(image, fileName);
+        viewer->bringToFront();
+        return;
+    }
+    auto *viewer = new ImageViewer(image, fileName);
+    currentImageViewer() = viewer;
+    viewer->show();
+    viewer->bringToFront();
+}
+
 ImageViewer::ImageViewer(const QImage &image, QWidget *parent)
     : ImageViewer(image, QString(), parent)
 {
@@ -43,15 +78,6 @@ ImageViewer::ImageViewer(const QImage &image, const QString &fileName, QWidget *
     : QWidget(parent, Qt::Window), image_(image)
 {
     setObjectName(QStringLiteral("imageViewer"));
-    const QFileInfo fileInfo(fileName);
-    currentFileName_ = fileInfo.fileName();
-    setWindowTitle(currentFileName_.isEmpty() ? tr("Image") : currentFileName_);
-    if (!fileName.isEmpty() && fileInfo.isAbsolute() && fileInfo.dir().exists()) {
-        directoryPath_ = fileInfo.absolutePath();
-        rebuildImageList();
-    } else {
-        resetImageListToCurrent();
-    }
     setAttribute(Qt::WA_DeleteOnClose);
     setAutoFillBackground(true);
     setFocusPolicy(Qt::StrongFocus);
@@ -63,8 +89,19 @@ ImageViewer::ImageViewer(const QImage &image, const QString &fileName, QWidget *
     const QSize available = screen ? screen->availableGeometry().size() : QSize(1024, 768);
     const QSize cap(qMax(minimumWidth(), qRound(available.width() * 0.90)),
                     qMax(minimumHeight(), qRound(available.height() * 0.90)));
-    resize(qBound(minimumWidth(), image_.width() + 2 * Margin, cap.width()),
-           qBound(minimumHeight(), image_.height() + 2 * Margin, cap.height()));
+    QSize windowSize(qBound(minimumWidth(), image_.width() + 2 * Margin, cap.width()),
+                     qBound(minimumHeight(), image_.height() + 2 * Margin, cap.height()));
+    if (imageViewerSizeLoader) {
+        const QSize savedSize = imageViewerSizeLoader();
+        if (savedSize.isValid() && !savedSize.isEmpty())
+            windowSize = savedSize;
+    }
+    resize(windowSize.expandedTo(minimumSize()));
+
+    setImage(image, fileName);
+
+    if (auto *app = QCoreApplication::instance())
+        connect(app, &QCoreApplication::aboutToQuit, this, &ImageViewer::saveWindowSize);
 }
 
 qreal ImageViewer::autoFitScale() const
@@ -79,6 +116,51 @@ qreal ImageViewer::autoFitScale() const
 qreal ImageViewer::currentScale() const
 {
     return temporaryZoom_ ? temporaryScale_ : autoFitScale();
+}
+
+void ImageViewer::setImage(const QImage &image, const QString &fileName)
+{
+    image_ = image;
+    const QFileInfo fileInfo(fileName);
+    currentFileName_ = fileInfo.fileName();
+    setWindowTitle(currentFileName_.isEmpty() ? tr("Image") : currentFileName_);
+    if (!fileName.isEmpty() && fileInfo.isAbsolute() && fileInfo.dir().exists()) {
+        directoryPath_ = fileInfo.absolutePath();
+        rebuildImageList();
+    } else {
+        directoryPath_.clear();
+        resetImageListToCurrent();
+    }
+    resetTemporaryZoom();
+    update();
+}
+
+void ImageViewer::saveWindowSize() const
+{
+    if (imageViewerSizeSaver)
+        imageViewerSizeSaver(size());
+}
+
+void ImageViewer::bringToFront()
+{
+    if (isMinimized())
+        showNormal();
+    else
+        show();
+
+    // Qt's raise/activate may be ignored by a Wayland compositor. Psi uses the
+    // same short hint toggle in common.cpp to make the window appear on top.
+    if (QGuiApplication::platformName() == QLatin1String("wayland")
+        && (QGuiApplication::applicationState() & Qt::ApplicationInactive)) {
+        setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+        setWindowFlags(windowFlags() & ~Qt::WindowStaysOnTopHint);
+        show();
+    }
+
+    raise();
+    activateWindow();
+    if (QWindow *window = windowHandle())
+        window->requestActivate();
 }
 
 void ImageViewer::resetImageListToCurrent()
@@ -319,6 +401,14 @@ void ImageViewer::resetTemporaryZoom()
     dragging_       = false;
     updatePanCursor();
     update();
+}
+
+void ImageViewer::closeEvent(QCloseEvent *event)
+{
+    saveWindowSize();
+    if (currentImageViewer() == this)
+        currentImageViewer() = nullptr;
+    QWidget::closeEvent(event);
 }
 
 void ImageViewer::resizeEvent(QResizeEvent *event)
