@@ -36,6 +36,7 @@
 #include "widgets/OverlayScrollBarManager.h"
 #include "widgets/iconaction.h"
 
+#include <QItemSelectionModel>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -328,7 +329,7 @@ QList<PsiContact *> PsiRosterWidget::selectedContacts() const
     if (!view || !view->model())
         return {};
 
-    QModelIndexList indexes = view->selectedIndexes();
+    QModelIndexList indexes = view->selectionModel() ? view->selectionModel()->selectedIndexes() : QModelIndexList();
     // Keyboard navigation may change the current item without selecting it.
     if (indexes.isEmpty() && view->currentIndex().isValid())
         indexes.append(view->currentIndex());
