@@ -15,7 +15,7 @@ void zoom(ImageViewer &viewer, int notches)
     const QPoint centre = viewer.rect().center();
     QWheelEvent wheel(QPointF(centre), QPointF(viewer.mapToGlobal(centre)),
                       QPoint(), QPoint(0, notches * 120), Qt::NoButton,
-                      Qt::NoModifier, Qt::NoScrollPhase, false);
+                      Qt::ControlModifier, Qt::NoScrollPhase, false);
     QApplication::sendEvent(&viewer, &wheel);
     QVERIFY(wheel.isAccepted());
 }

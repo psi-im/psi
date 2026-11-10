@@ -2,7 +2,9 @@
 #include "ImageViewer.h"
 
 #include <QCursor>
+#include <QFileInfo>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QPainter>
@@ -13,16 +15,24 @@
 #include <cmath>
 
 namespace {
-constexpr int Margin = 16;
+constexpr int   Margin   = 16;
+constexpr qreal ZoomStep = 1.2;
 }
 
 ImageViewer::ImageViewer(const QImage &image, QWidget *parent)
+    : ImageViewer(image, QString(), parent)
+{
+}
+
+ImageViewer::ImageViewer(const QImage &image, const QString &fileName, QWidget *parent)
     : QWidget(parent, Qt::Window), image_(image)
 {
     setObjectName(QStringLiteral("imageViewer"));
-    setWindowTitle(tr("Image"));
+    const QString title = QFileInfo(fileName).fileName();
+    setWindowTitle(title.isEmpty() ? tr("Image") : title);
     setAttribute(Qt::WA_DeleteOnClose);
     setAutoFillBackground(true);
+    setFocusPolicy(Qt::StrongFocus);
     setMinimumSize(200, 160);
 
     const QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
@@ -131,8 +141,38 @@ void ImageViewer::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
+void ImageViewer::keyPressEvent(QKeyEvent *event)
+{
+    const auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+    if (modifiers == Qt::ControlModifier || modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
+        switch (event->key()) {
+        case Qt::Key_Plus:
+        case Qt::Key_Equal:
+            zoomBy(ZoomStep);
+            event->accept();
+            return;
+        case Qt::Key_Minus:
+        case Qt::Key_Underscore:
+            zoomBy(1.0 / ZoomStep);
+            event->accept();
+            return;
+        case Qt::Key_0:
+            resetTemporaryZoom();
+            event->accept();
+            return;
+        default:
+            break;
+        }
+    }
+    QWidget::keyPressEvent(event);
+}
+
 void ImageViewer::wheelEvent(QWheelEvent *event)
 {
+    if (!(event->modifiers() & Qt::ControlModifier)) {
+        event->ignore();
+        return;
+    }
     const int delta = event->angleDelta().y();
     const int pixels = event->pixelDelta().y();
     if (!delta && !pixels) {
@@ -142,12 +182,17 @@ void ImageViewer::wheelEvent(QWheelEvent *event)
     // High-resolution trackpads and traditional wheel notches both adjust
     // the current scale. Zoom can cross the native 100% boundary and the fit.
     const qreal turns = delta ? qreal(delta) / 120.0 : qreal(pixels) / 120.0;
-    temporaryScale_ = std::max(0.02, std::min(32.0, currentScale() * std::pow(1.2, turns)));
+    zoomBy(std::pow(ZoomStep, turns));
+    event->accept();
+}
+
+void ImageViewer::zoomBy(qreal factor)
+{
+    temporaryScale_ = std::max(0.02, std::min(32.0, currentScale() * factor));
     temporaryZoom_  = true;
-    panOffset_ = constrainedPanOffset(panOffset_);
+    panOffset_      = constrainedPanOffset(panOffset_);
     updatePanCursor();
     update();
-    event->accept();
 }
 
 void ImageViewer::resetTemporaryZoom()
@@ -156,8 +201,8 @@ void ImageViewer::resetTemporaryZoom()
         return;
     temporaryZoom_  = false;
     temporaryScale_ = 1.0;
-    panOffset_ = {};
-    dragging_ = false;
+    panOffset_      = {};
+    dragging_       = false;
     updatePanCursor();
     update();
 }

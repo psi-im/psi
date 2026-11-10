@@ -3707,33 +3707,49 @@ static QString httpImageLink(const QTextImageFormat &format, const QString &mess
     return url.toString(QUrl::FullyEncoded);
 }
 
-static QImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
-                        ChatMessageText *body, FileSharingDeviceOpener *mediaOpener)
+struct FullImage {
+    QImage  image;
+    QString fileName;
+};
+
+static FullImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
+                           ChatMessageText *body, FileSharingDeviceOpener *mediaOpener)
 {
+    FullImage result;
     if (auto *item = sharedImageItem(format, messageHtml, mediaOpener)) {
         // Use the cached original when available. The chat's inline resource
         // is commonly just a downscaled 640x480 preview.
         const QString path = item->fileName();
         if (!path.isEmpty() && QFileInfo(path).isFile()) {
+            result.fileName = path;
             QImageReader reader(path);
             reader.setAutoTransform(true);
             QImage original = reader.read();
-            if (!original.isNull())
-                return original;
+            if (!original.isNull()) {
+                result.image = original;
+                return result;
+            }
         }
+        if (result.fileName.isEmpty())
+            result.fileName = item->displayName();
     }
     const QVariant value = body->document()->resource(QTextDocument::ImageResource, QUrl(format.name()));
-    QImage preview = value.value<QImage>();
-    if (preview.isNull())
-        preview = value.value<QPixmap>().toImage();
-    return preview;
+    result.image = value.value<QImage>();
+    if (result.image.isNull())
+        result.image = value.value<QPixmap>().toImage();
+    if (result.fileName.isEmpty()) {
+        const QUrl url(format.name());
+        if (url.isLocalFile())
+            result.fileName = url.toLocalFile();
+    }
+    return result;
 }
 
-static void openImageViewer(const QImage &image)
+static void openImageViewer(const FullImage &full)
 {
-    if (image.isNull())
+    if (full.image.isNull())
         return;
-    auto *viewer = new ImageViewer(image);
+    auto *viewer = new ImageViewer(full.image, full.fileName);
     viewer->show();
 }
 
@@ -3844,19 +3860,19 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
         if (format) {
             const auto &message = items_.at(at).message;
             const QString html = message.hasReplyFallback() ? message.replyFormattedText() : message.formattedText();
-            const QImage image = fullImage(*format, html, body, mediaOpener_);
+            const FullImage full = fullImage(*format, html, body, mediaOpener_);
             const QString link = httpImageLink(*format, html, mediaOpener_);
-            if (!image.isNull() || !link.isEmpty()) {
+            if (!full.image.isNull() || !link.isEmpty()) {
                 menu->addSeparator();
-                if (!image.isNull()) {
+                if (!full.image.isNull()) {
                     auto *copyImage = menu->addAction(tr("Copy image"));
                     copyImage->setObjectName(QStringLiteral("mamCopyImage"));
                     connect(copyImage, &QAction::triggered, this,
-                            [image] { QApplication::clipboard()->setImage(image); });
+                            [image = full.image] { QApplication::clipboard()->setImage(image); });
                     auto *viewImage = menu->addAction(tr("View image"));
                     viewImage->setObjectName(QStringLiteral("mamViewImage"));
                     connect(viewImage, &QAction::triggered, this,
-                            [image] { openImageViewer(image); });
+                            [full] { openImageViewer(full); });
                 }
                 if (!link.isEmpty()) {
                     auto *copyImageLink = menu->addAction(tr("Copy image link"));
@@ -4330,9 +4346,9 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                         const auto &message = items_.at(quoted >= 0 ? quoted : at).message;
                         const QString html = message.hasReplyFallback() ? message.replyFormattedText()
                                                                          : message.formattedText();
-                        const QImage image = fullImage(*format, html, body, mediaOpener_);
-                        if (!image.isNull()) {
-                            openImageViewer(image);
+                        const FullImage full = fullImage(*format, html, body, mediaOpener_);
+                        if (!full.image.isNull()) {
+                            openImageViewer(full);
                             mouse->accept();
                             return true;
                         }
