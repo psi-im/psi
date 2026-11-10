@@ -103,6 +103,7 @@ FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new
 
     d->cache = new FileCache(QStringLiteral("shares"), cacheDir(), this);
     d->cache->setFileCacheSize(256 * 1024 * 1024);
+    d->cache->setMemoryCacheSize(16 * 1024 * 1024);
     d->cache->importLegacy(legacy);
     d->catalog.reset(new FileSharingCatalog);
 }

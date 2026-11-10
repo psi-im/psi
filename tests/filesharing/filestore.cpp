@@ -44,6 +44,93 @@ class FileStoreTest : public QObject {
                  QCryptographicHash::hash(bytes, QCryptographicHash::Sha256) };
     }
 private slots:
+    void metadataOnlyConfigurationKeepsHotBytesAvailable()
+    {
+        QTemporaryDir directory;
+        MediaChunkStore store(directory.path(), 1024);
+        int completed = 0;
+        auto done = [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty()); QCOMPARE(bytes, QByteArray("abcdefgh")); ++completed;
+        };
+        store.write(key, 8, 0, "abcdefgh", done);
+        QTRY_COMPARE(completed, 1);
+        store.read(key, 8, 0, 8, done);
+        QTRY_COMPARE(completed, 2);
+        store.configure(key, 8, {}, { { "published", true } });
+        QVERIFY(store.containsCached(key, 8, 0, 8));
+        QVERIFY(store.isCompleteFile(store.state(key).path));
+        store.read(key, 8, 0, 8, done);
+        QTRY_COMPARE(completed, 3);
+    }
+    void queuedMemoryHitHonorsInvalidationBeforeDelivery()
+    {
+        QTemporaryDir   directory;
+        MediaChunkStore store(directory.path(), 1024);
+        int             completed = 0;
+        auto            done      = [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, QByteArray("abcdefgh"));
+            ++completed;
+        };
+        store.write(key, 8, 0, "abcdefgh", done);
+        QTRY_COMPARE(completed, 1);
+        store.read(key, 8, 0, 8, done);
+        QTRY_COMPARE(completed, 2);
+        QVERIFY(store.containsCached(key, 8, 0, 8));
+        store.read(key, 8, 0, 8, [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(bytes.isEmpty());
+            QCOMPARE(error.code(), MediaChunkError::IntegrityError);
+            ++completed;
+        });
+        store.invalidate(key, 8, 0, 8, "withdrawn");
+        QVERIFY(!store.containsCached(key, 8, 0, 8));
+        QVERIFY(!store.isCompleteFile(store.state(key).path));
+        QCOMPARE(completed, 2);
+        QTRY_COMPARE(completed, 3);
+    }
+    void queuedMemoryHitCannotBypassNewChecksums()
+    {
+        QTemporaryDir   directory;
+        MediaChunkStore store(directory.path(), 1024);
+        int             completed = 0;
+        auto            done      = [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++completed;
+        };
+        store.write(key, 8, 0, "abcdefgh", done);
+        QTRY_COMPARE(completed, 1);
+        store.read(key, 8, 0, 8, done);
+        QTRY_COMPARE(completed, 2);
+        store.read(key, 8, 0, 8, [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(bytes.isEmpty());
+            QCOMPARE(error.code(), MediaChunkError::IntegrityError);
+            ++completed;
+        });
+        store.configure(key, 8, { checksum(0, "XXXXXXXX") }, {});
+        QVERIFY(!store.containsCached(key, 8, 0, 8));
+        QTRY_COMPARE(completed, 3);
+    }
+    void queuedMemoryHitReadsTheCommittedReplacement()
+    {
+        QTemporaryDir   directory;
+        MediaChunkStore store(directory.path(), 1024);
+        int             completed = 0;
+        auto            done      = [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++completed;
+        };
+        store.write(key, 8, 0, "abcdefgh", done);
+        QTRY_COMPARE(completed, 1);
+        store.read(key, 8, 0, 8, done);
+        QTRY_COMPARE(completed, 2);
+        store.read(key, 8, 0, 8, [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, QByteArray("newbytes"));
+            ++completed;
+        });
+        store.write(key, 8, 0, "newbytes", done);
+        QTRY_COMPARE(completed, 4);
+    }
     void activeAndExplicitPartialFilesSurviveEviction()
     {
         QTemporaryDir   directory;

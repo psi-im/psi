@@ -42,8 +42,8 @@
 
 FileCacheItem::FileCacheItem(FileCache *parent, const QList<XMPP::Hash> &sums, const QVariantMap &metadata,
                              const QDateTime &dt, unsigned int maxAge, quint64 size, const QByteArray &data) :
-    QObject(parent), _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _data(data), _flags(0),
-    _recordId(QUuid::createUuid().toRfc4122())
+    QObject(parent), _sums(sums), _metadata(metadata), _ctime(dt), _maxAge(maxAge), _size(size), _pendingData(data),
+    _flags(0), _recordId(QUuid::createUuid().toRfc4122())
 {
     Q_ASSERT(sums.size() > 0);
     std::sort(_sums.begin(), _sums.end(),
@@ -66,9 +66,11 @@ void FileCacheItem::flushToDisk()
     if (_flags & OnDisk)
         return;
     QSaveFile file(filePath());
-    if (file.open(QIODevice::WriteOnly) && file.write(_data) == _data.size() && file.commit())
+    if (file.open(QIODevice::WriteOnly) && file.write(_pendingData) == _pendingData.size() && file.commit()) {
         _flags |= OnDisk;
-    else
+        parentCache()->_memory.put(memoryKey(), 0, std::move(_pendingData));
+        _pendingData.clear();
+    } else
         qWarning() << "Cannot save cached file:" << file.errorString();
 }
 
@@ -79,11 +81,20 @@ bool FileCacheItem::remove() const
     return !(_flags & OnDisk) || QFile::remove(filePath()) || !QFileInfo::exists(filePath());
 }
 
-void FileCacheItem::unload()
+QByteArray FileCacheItem::memoryKey() const
 {
-    flushToDisk();
-    if (isOnDisk())
-        _data.clear();
+    if (isExternal() && _externalPath.startsWith(parentCache()->cacheDir() + QStringLiteral("/ranges/"))) {
+        const auto name = QFileInfo(_externalPath).completeBaseName().toLatin1();
+        const auto id   = QByteArray::fromHex(name);
+        if (id.size() == 16 && id.toHex() == name)
+            return id;
+    }
+    return _recordId;
+}
+
+bool FileCacheItem::inMemory() const
+{
+    return !_pendingData.isEmpty() || parentCache()->_memory.contains(memoryKey(), 0, _size);
 }
 
 bool FileCacheItem::isExpired(bool finishSession) const
@@ -95,25 +106,25 @@ bool FileCacheItem::isExpired(bool finishSession) const
 
 QByteArray FileCacheItem::data()
 {
-    if (!_size) {
-        return QByteArray();
+    if (!_pendingData.isEmpty())
+        return _pendingData;
+    if (!_size || _size > quint64(std::numeric_limits<qint64>::max()))
+        return {};
+    const auto generation = memoryKey();
+    if (generation != _recordId && !parentCache()->rangeStore()->isCompleteFile(filePath()))
+        return {};
+    if (auto bytes = parentCache()->_memory.get(generation, 0, _size))
+        return *bytes;
+    QFile file(filePath());
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning("Cannot open cached file %s for reading", qPrintable(_fileName));
+        return {};
     }
-    if (!_data.size()) {
-        QFile f(filePath());
-        if (f.open(QIODevice::ReadOnly)) {
-            const auto bytes = f.readAll();
-            if (quint64(bytes.size()) != _size)
-                return {};
-            if (quint64(bytes.size()) <= parentCache()->memoryCacheSize()) {
-                _data = bytes;
-                parentCache()->lazySync();
-            }
-            return bytes;
-        } else {
-            qWarning("Can't open file %s for reading", qPrintable(_fileName));
-        }
-    }
-    return _data;
+    const auto bytes = file.read(qint64(_size));
+    if (quint64(bytes.size()) != _size)
+        return {};
+    parentCache()->_memory.put(generation, 0, bytes);
+    return bytes;
 }
 
 void FileCacheItem::setUndeletable(bool state)
@@ -148,7 +159,7 @@ QString legacyFileName(QList<XMPP::Hash> sums, const QVariantMap &metadata)
 }
 
 FileCache::FileCache(const QString &partition, const QString &cacheDir, QObject *parent) :
-    QObject(parent), _partition(partition), _cacheDir(cacheDir), _memoryCacheSize(FileCache::DefaultMemoryCacheSize),
+    QObject(parent), _partition(partition), _cacheDir(cacheDir), _memory(FileCache::DefaultMemoryCacheSize),
     _fileCacheSize(FileCache::DefaultFileCacheSize), _defaultMaxAge(Forever), _syncPolicy(InstantFLush)
 {
     _syncTimer = new QTimer(this);
@@ -361,13 +372,14 @@ FileCache::~FileCache()
 {
     gc();
     sync(true);
+    delete _rangeStore;
 }
 
 MediaChunkStore *FileCache::rangeStore()
 {
     if (!_rangeStore) {
         _rangeStore = new MediaChunkStore(_partition + QStringLiteral(":ranges"), _cacheDir + QStringLiteral("/ranges"),
-                                          FileDatabase::path(), _fileCacheSize, this,
+                                          FileDatabase::path(), _fileCacheSize, &_memory, this,
                                           [](const QString &algorithm, QIODevice *device) {
                                               XMPP::Hash hash { QStringView(algorithm) };
                                               return hash.compute(device) ? hash.data() : QByteArray();
@@ -514,6 +526,7 @@ void FileCache::removeItem(FileCacheItem *item, bool needSync)
     for (const auto &sum : item->sums())
         if (_items.value(sum) == item)
             _items.remove(sum);
+    _memory.remove(item->memoryKey());
     delete item;
     if (!_inTransaction)
         drainTrash();
@@ -606,8 +619,8 @@ void FileCache::sync(bool finishSession)
             snapshot.append(item);
         }
     }
-    QList<FileCacheItem *> loadedItems, onDiskItems;
-    quint64                memorySize = 0, diskSize = 0;
+    QList<FileCacheItem *> onDiskItems;
+    quint64                diskSize = 0;
     bool                   ok = true;
     for (const auto &guard : snapshot) {
         auto item = guard.data();
@@ -620,22 +633,10 @@ void FileCache::sync(bool finishSession)
         item->flushToDisk();
         if (!item->isRegistered())
             ok = toRegistry(item) && ok;
-        if (item->inMemory()) {
-            loadedItems.append(item);
-            memorySize += quint64(item->_data.size());
-        }
         if (item->isOnDisk() && !item->isExternal()) {
             onDiskItems.append(item);
             diskSize += item->size();
         }
-    }
-    std::sort(loadedItems.begin(), loadedItems.end(), ctimeLessThan);
-    for (auto item : std::as_const(loadedItems)) {
-        if (memorySize <= _memoryCacheSize)
-            break;
-        const auto before = item->_data.size();
-        item->unload();
-        memorySize -= quint64(before - item->_data.size());
     }
     std::sort(onDiskItems.begin(), onDiskItems.end(), ctimeLessThan);
     const quint64 rangeBytes     = _rangeStore ? _rangeStore->diskBytes() : 0;

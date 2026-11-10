@@ -1,4 +1,5 @@
 #include "mediachunkstore.h"
+#include "filecachememory.h"
 #include "filedatabase.h"
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -198,6 +199,7 @@ public:
                 continue;
             Entry entry;
             entry.id             = query.value(0).toByteArray();
+            entry.state.generation = entry.id;
             entry.state.size     = quint64(size);
             entry.state.path     = directory_ + QLatin1Char('/') + path;
             entry.state.metadata = FileDatabase::decodeMetadata(query.value(4).toByteArray());
@@ -390,7 +392,7 @@ public:
         entry->age = ++age_;
         if (beforeComplete != entry->state.complete)
             publish(key);
-        finish(id, bytes, {});
+        finish(id, bytes, {}, entry->id);
     }
     void write(quint64 id, QString key, quint64 size, quint64 offset, QByteArray bytes)
     {
@@ -499,22 +501,25 @@ public:
         } else
             --pins_[key];
     }
-    void invalidate(QString key, quint64 size, quint64 offset, quint64 length, QString message)
+    void invalidate(quint64 id, QString key, quint64 size, quint64 offset, quint64 length, QString message)
     {
         auto entry = get(key, size);
-        if (!entry || offset >= size || !length || length > size - offset)
+        if (!entry || offset >= size || !length || length > size - offset) {
+            finish(id, {}, QStringLiteral("Invalid shared file invalidation"));
             return;
+        }
         removeRange(entry->state.ranges, offset, length);
         entry->state.complete = false;
         entry->state.error    = message;
         entry->verified.clear();
         dirty(*entry);
-        save(key, *entry);
+        const bool saved = save(key, *entry);
         publish(key);
+        finish(id, {}, saved ? MediaChunkError() : MediaChunkError(QStringLiteral("Cannot checkpoint invalidation")));
     }
 signals:
     void changed(QString key, MediaFileState state, quint64 diskBytes);
-    void completed(quint64 id, QByteArray bytes, MediaChunkError error, quint64 diskBytes);
+    void completed(quint64 id, QByteArray bytes, MediaChunkError error, quint64 diskBytes, QByteArray generation);
 
 private:
     QSqlDatabase database() const { return FileDatabase::connection(databasePath_); }
@@ -549,6 +554,7 @@ private:
             return nullptr;
         Entry entry;
         entry.id         = QUuid::createUuid().toRfc4122();
+        entry.state.generation = entry.id;
         entry.state.size = size;
         entry.state.path
             = directory_ + QLatin1Char('/') + QString::fromLatin1(entry.id.toHex()) + QStringLiteral(".data");
@@ -765,7 +771,10 @@ private:
         it->accounted = next;
         emit changed(key, it->state, bytes_);
     }
-    void finish(quint64 id, QByteArray bytes, MediaChunkError error) { emit completed(id, bytes, error, diskBytes()); }
+    void finish(quint64 id, QByteArray bytes, MediaChunkError error, const QByteArray &generation = {})
+    {
+        emit completed(id, bytes, error, diskBytes(), generation);
+    }
     void trim(const QString &keep)
     {
         while ((diskBytes() > limit_ || entries_.size() >= MaxFiles) && entries_.size() > 1) {
@@ -800,21 +809,34 @@ private:
 
 class MediaChunkStore::Private {
 public:
-    QThread                        thread;
-    DiskWorker                    *worker;
-    quint64                        next = 0, bytes = 0;
-    QHash<quint64, Completion>     pending;
+    struct Pending {
+        Completion done;
+        QString    key;
+        quint64    offset = 0, length = 0;
+        bool       read = false, mutation = false;
+    };
+    QThread                          thread;
+    DiskWorker                      *worker;
+    quint64                          next = 0, bytes = 0;
+    QHash<quint64, Pending>          pending;
+    QHash<QString, int>              mutations;
     QHash<QString, MediaFileState> states;
-    QHash<QString, QString>        paths;
+    QHash<QString, QString>          paths;
+    std::unique_ptr<FileCacheMemory> ownedMemory;
+    FileCacheMemory                 *memory;
 };
 MediaChunkStore::MediaChunkStore(QString directory, quint64 limit, QObject *parent, Hasher hasher) :
-    MediaChunkStore(QStringLiteral("ranges"), directory, directory + QStringLiteral("/files.sqlite"), limit, parent,
-                    std::move(hasher))
+    MediaChunkStore(QStringLiteral("ranges"), directory, directory + QStringLiteral("/files.sqlite"), limit, nullptr,
+                    parent, std::move(hasher))
 {
 }
 MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString databasePath, quint64 limit,
-                                 QObject *parent, Hasher hasher) : QObject(parent), d(new Private)
+                                 FileCacheMemory *memory, QObject *parent, Hasher hasher) :
+    QObject(parent), d(new Private)
 {
+    if (!memory)
+        d->ownedMemory = std::make_unique<FileCacheMemory>(16 * 1024 * 1024);
+    d->memory = memory ? memory : d->ownedMemory.get();
     qRegisterMetaType<MediaFileState>();
     qRegisterMetaType<MediaChunkError>();
     d->worker
@@ -824,6 +846,9 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
     connect(&d->thread, &QThread::finished, d->worker, &QObject::deleteLater);
     connect(d->worker, &DiskWorker::changed, this, [this](QString key, MediaFileState state, quint64 bytes) {
         d->bytes = bytes;
+        const auto previous = d->states.value(key);
+        if (previous.generation != state.generation || !state.error.isEmpty() || (previous.complete && !state.complete))
+            d->memory->remove(previous.generation);
         d->paths.remove(d->states.value(key).path);
         if (!state.path.isEmpty()) {
             d->paths.insert(state.path, key);
@@ -834,11 +859,18 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
         emit availabilityChanged();
     });
     connect(d->worker, &DiskWorker::completed, this,
-            [this](quint64 id, QByteArray bytes, MediaChunkError error, quint64 total) {
-                d->bytes  = total;
-                auto done = d->pending.take(id);
-                if (done)
-                    done(std::move(bytes), error);
+            [this](quint64 id, QByteArray bytes, MediaChunkError error, quint64 total, QByteArray generation) {
+                d->bytes     = total;
+                auto request = d->pending.take(id);
+                if (request.mutation && --d->mutations[request.key] == 0)
+                    d->mutations.remove(request.key);
+                const auto state = d->states.value(request.key);
+                if (request.read && error.isEmpty() && !bytes.isEmpty() && generation == state.generation
+                    && !d->mutations.contains(request.key) && state.error.isEmpty()
+                    && covers(state.ranges, request.offset, request.length))
+                    d->memory->put(generation, request.offset, bytes);
+                if (request.done)
+                    request.done(std::move(bytes), error);
             });
     d->thread.start();
     QMetaObject::invokeMethod(d->worker, [worker = d->worker] { worker->initialize(); }, Qt::QueuedConnection);
@@ -859,7 +891,8 @@ bool           MediaChunkStore::contains(const QString &key, quint64 offset, qui
 bool MediaChunkStore::isCompleteFile(const QString &path) const
 {
     const auto state = d->states.value(d->paths.value(path));
-    return state.path == path && state.complete && state.error.isEmpty();
+    return state.path == path && state.complete && state.error.isEmpty()
+        && !d->mutations.contains(d->paths.value(path));
 }
 void MediaChunkStore::setDiskLimit(quint64 limit)
 {
@@ -869,13 +902,14 @@ void MediaChunkStore::setDiskLimit(quint64 limit)
 void MediaChunkStore::checkpoint(Completion done)
 {
     const auto id = ++d->next;
-    d->pending.insert(id, std::move(done));
+    d->pending.insert(id, { std::move(done) });
     QMetaObject::invokeMethod(d->worker, [worker = d->worker, id] { worker->checkpoint(id); }, Qt::QueuedConnection);
 }
 void MediaChunkStore::configure(QString key, quint64 size, QList<MediaFileChecksum> hashes, QVariantMap metadata,
                                 Completion done)
 {
-    auto current = d->states.find(key);
+    bool requirementsChanged = false;
+    auto current             = d->states.find(key);
     if (current != d->states.end()) {
         for (const auto &h : hashes) {
             bool known = false;
@@ -885,13 +919,15 @@ void MediaChunkStore::configure(QString key, quint64 size, QList<MediaFileChecks
                     break;
                 }
             if (!known) {
-                current->complete = false;
+                requirementsChanged = true;
+                current->complete   = false;
                 break;
             }
         }
     }
-    const auto id = ++d->next;
-    d->pending.insert(id, std::move(done));
+    const auto id = requirementsChanged ? beginMutation(key, std::move(done)) : ++d->next;
+    if (!requirementsChanged)
+        d->pending.insert(id, { std::move(done), key });
     QMetaObject::invokeMethod(
         d->worker,
         [worker = d->worker, id, key, size, hashes = std::move(hashes), metadata = std::move(metadata)] {
@@ -899,18 +935,58 @@ void MediaChunkStore::configure(QString key, quint64 size, QList<MediaFileChecks
         },
         Qt::QueuedConnection);
 }
-void MediaChunkStore::read(QString key, quint64 size, quint64 offset, quint64 length, Completion done)
+bool MediaChunkStore::containsCached(const QString &key, quint64 size, quint64 offset, quint64 length) const
 {
+    if (size > quint64(std::numeric_limits<qint64>::max()) || offset > size || length > size - offset
+        || length > MediaChunkMaxSize)
+        return false;
+    const auto state = d->states.value(key);
+    return state.size == size && !d->mutations.contains(key) && state.error.isEmpty()
+        && covers(state.ranges, offset, length) && d->memory->contains(state.generation, offset, length);
+}
+quint64 MediaChunkStore::beginMutation(const QString &key, Completion done, quint64 offset, quint64 length)
+{
+    const auto generation = d->states.value(key).generation;
+    if (length == std::numeric_limits<quint64>::max())
+        d->memory->remove(generation);
+    else
+        d->memory->remove(generation, offset, length);
+    ++d->mutations[key];
     const auto id = ++d->next;
-    d->pending.insert(id, std::move(done));
+    d->pending.insert(id, { std::move(done), key, 0, 0, false, true });
+    return id;
+}
+void MediaChunkStore::dispatchRead(quint64 id, const QString &key, quint64 size, quint64 offset, quint64 length)
+{
     QMetaObject::invokeMethod(
         d->worker, [worker = d->worker, id, key, size, offset, length] { worker->read(id, key, size, offset, length); },
         Qt::QueuedConnection);
 }
-void MediaChunkStore::write(QString key, quint64 size, quint64 offset, QByteArray bytes, Completion done)
+void MediaChunkStore::read(QString key, quint64 size, quint64 offset, quint64 length, Completion done)
 {
     const auto id = ++d->next;
-    d->pending.insert(id, std::move(done));
+    d->pending.insert(id, { std::move(done), key, offset, length, true, false });
+    if (!containsCached(key, size, offset, length)) {
+        dispatchRead(id, key, size, offset, length);
+        return;
+    }
+    QTimer::singleShot(0, this, [this, id, key, size, offset, length] {
+        if (containsCached(key, size, offset, length)) {
+            const auto generation = d->states.value(key).generation;
+            if (auto bytes = d->memory->get(generation, offset, length)) {
+                touch(key);
+                auto request = d->pending.take(id);
+                if (request.done)
+                    request.done(std::move(*bytes), {});
+                return;
+            }
+        }
+        dispatchRead(id, key, size, offset, length);
+    });
+}
+void MediaChunkStore::write(QString key, quint64 size, quint64 offset, QByteArray bytes, Completion done)
+{
+    const auto id = beginMutation(key, std::move(done), offset, quint64(bytes.size()));
     QMetaObject::invokeMethod(
         d->worker,
         [worker = d->worker, id, key, size, offset, bytes = std::move(bytes)] {
@@ -920,8 +996,7 @@ void MediaChunkStore::write(QString key, quint64 size, quint64 offset, QByteArra
 }
 void MediaChunkStore::resume(QString key, Completion done)
 {
-    const auto id = ++d->next;
-    d->pending.insert(id, std::move(done));
+    const auto id = beginMutation(key, std::move(done));
     QMetaObject::invokeMethod(
         d->worker, [worker = d->worker, id, key] { worker->resume(id, key); }, Qt::QueuedConnection);
 }
@@ -936,10 +1011,11 @@ void MediaChunkStore::pin(const QString &key, bool active)
 }
 void MediaChunkStore::invalidate(QString key, quint64 size, quint64 offset, quint64 length, QString message)
 {
+    const auto id = beginMutation(key, {});
     QMetaObject::invokeMethod(
         d->worker,
-        [worker = d->worker, key, size, offset, length, message] {
-            worker->invalidate(key, size, offset, length, message);
+        [worker = d->worker, id, key, size, offset, length, message] {
+            worker->invalidate(id, key, size, offset, length, message);
         },
         Qt::QueuedConnection);
 }
