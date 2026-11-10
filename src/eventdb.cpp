@@ -329,3 +329,17 @@ void EDB::writeFinished(int req, bool b)
 }
 
 PsiCon *EDB::psi() { return d->psi; }
+
+void EDB::requestDeleteLocalMessage(const HistoryArchive::Key &, qint64, const QString &, int, QObject *receiver,
+                                    std::function<void(bool)> finished)
+{
+    if (receiver)
+        QTimer::singleShot(0, receiver, [finished] { finished(false); });
+}
+
+void EDB::requestLocalSuppression(const HistoryArchive::Key &, HistoryArchive::Entry, QObject *receiver,
+                                  std::function<void(bool, bool)> finished)
+{
+    if (receiver)
+        QTimer::singleShot(0, receiver, [finished] { finished(false, true); });
+}

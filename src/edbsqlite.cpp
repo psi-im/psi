@@ -20,18 +20,18 @@
 #include "applicationinfo.h"
 // #include "common.h"
 #include "edbsqlite.h"
-#include "historymediarefs.h"
-#include "historyupgrade.h"
 #include "historyeventfactory.h"
+#include "historymediarefs.h"
+#include "historymessageextras.h"
 #include "historysqlitepolicy.h"
 #include "historysqlreadworker.h"
-#include <QThread>
-#include "historymessageextras.h"
+#include "historyupgrade.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "psiaccount.h"
 #include "psicontactlist.h"
+#include <QThread>
 
 #include <QElapsedTimer>
 #include <QJsonArray>
@@ -560,7 +560,42 @@ void EDBSqLite::requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiv
     QTimer::singleShot(0, this, SLOT(performRequests()));
 }
 
-int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache; }
+void EDBSqLite::requestDeleteLocalMessage(const HistoryArchive::Key &key, qint64 id, const QString &clientId,
+                                          int direction, QObject *receiver, std::function<void(bool)> finished)
+{
+    if (!receiver)
+        return;
+    auto *r                          = new item_query_req;
+    r->id                            = genUniqueId();
+    r->type                          = item_query_req::Type_deleteLocal;
+    r->archiveKey                    = key;
+    r->localBefore                   = id;
+    r->suppressionIdentity.messageId = clientId;
+    r->suppressionIdentity.direction = direction;
+    pendingLocalDeletion_.insert(r->id, { receiver, [finished](bool, bool ok) { finished(ok); } });
+    rlist.append(r);
+    QTimer::singleShot(0, this, &EDBSqLite::performRequests);
+}
+
+void EDBSqLite::requestLocalSuppression(const HistoryArchive::Key &key, HistoryArchive::Entry identity,
+                                        QObject *receiver, std::function<void(bool, bool)> finished)
+{
+    if (!receiver)
+        return;
+    auto *r                = new item_query_req;
+    r->id                  = genUniqueId();
+    r->type                = item_query_req::Type_checkSuppression;
+    r->archiveKey          = key;
+    r->suppressionIdentity = std::move(identity);
+    pendingLocalDeletion_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(0, this, &EDBSqLite::performRequests);
+}
+
+int EDBSqLite::features() const
+{
+    return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache | LocalDeletion;
+}
 
 int EDBSqLite::get(const QString &accId, const XMPP::Jid &jid, QDateTime date, int direction, int start, int len)
 {
@@ -660,7 +695,8 @@ QList<EDB::ContactItem> EDBSqLite::contacts(const QString &accId, int type)
 quint64 EDBSqLite::eventsCount(const QString &accId, const XMPP::Jid &jid)
 {
     QSqlQuery q(QSqlDatabase::database("history"));
-    QString sql = QStringLiteral("SELECT count(*) FROM events e JOIN contacts c ON c.id=e.contact_id WHERE 1=1");
+    QString   sql = QStringLiteral(
+        "SELECT count(*) FROM events e JOIN contacts c ON c.id=e.contact_id WHERE (e.message_flags & 16)=0");
     if (!accId.isEmpty())
         sql += QStringLiteral(" AND c.acc_id=:account");
     if (!jid.isEmpty())
@@ -720,7 +756,17 @@ void EDBSqLite::setStorageParam(const QString &key, const QString &val)
 
 void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 {
-    if (written.success && written.mediaLinksRemoved)
+    if (written.success && !written.localDeletion.hiddenEvents.isEmpty())
+        emit localMessagesDeleted(written.changedKey.account, written.changedKey.peer, written.localDeletion);
+    if (pendingLocalDeletion_.contains(written.id)) {
+        if (written.mediaLinksRemoved || (written.success && !written.localDeletion.hiddenEvents.isEmpty()))
+            emit mediaLinksRemoved();
+        auto pending = pendingLocalDeletion_.take(written.id);
+        if (pending.receiver)
+            pending.finished(written.localDeletion.suppressed, written.success);
+        return;
+    }
+    if (written.success && (written.mediaLinksRemoved || !written.localDeletion.hiddenEvents.isEmpty()))
         emit mediaLinksRemoved();
     if (pendingArchiveWrites_.contains(written.id)) {
         auto pending = pendingArchiveWrites_.take(written.id);
@@ -733,9 +779,9 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
     auto *r = pendingWrites_.take(written.id);
     if (!r)
         return;
-    if (written.success && written.inserted && r->type == item_query_req::Type_append
-        && r->event && r->event->type() == PsiEvent::Message
-        && MessageAttachments::hasAttachments(r->event.staticCast<MessageEvent>()->message().displayMessage()))
+    if (written.success && written.inserted && r->type == item_query_req::Type_append && r->event
+        && r->event->type() == PsiEvent::Message
+        && MessageFileShares::hasFileShares(r->event.staticCast<MessageEvent>()->message().displayMessage()))
         emit mediaLinksAdded();
     if (written.success && r->type == item_query_req::Type_erase)
         emit mediaLinksRemoved();
@@ -873,7 +919,11 @@ void EDBSqLite::performRequests()
     // Migration/init is the only reason a request could arrive without the
     // database worker. Never silently drop it or fall back to GUI SQL.
     if (!historyReadThread_) {
-        if (type == item_query_req::Type_mediaLinks) {
+        if (type == item_query_req::Type_deleteLocal || type == item_query_req::Type_checkSuppression) {
+            auto pending = pendingLocalDeletion_.take(r->id);
+            if (pending.receiver)
+                pending.finished(false, false);
+        } else if (type == item_query_req::Type_mediaLinks) {
             auto pending = pendingMediaLinks_.take(r->id);
             if (pending.receiver)
                 pending.finished({}, false);
@@ -971,8 +1021,11 @@ void EDBSqLite::performRequests()
 
     HistoryWriteRequest write;
     write.id = r->id;
-    write.type = type == item_query_req::Type_append ? HistoryWriteRequest::Append
-        : type == item_query_req::Type_archiveWrite ? HistoryWriteRequest::StorePage : HistoryWriteRequest::Erase;
+    write.type        = type == item_query_req::Type_deleteLocal ? HistoryWriteRequest::DeleteLocal
+               : type == item_query_req::Type_checkSuppression   ? HistoryWriteRequest::CheckSuppression
+               : type == item_query_req::Type_append             ? HistoryWriteRequest::Append
+               : type == item_query_req::Type_archiveWrite       ? HistoryWriteRequest::StorePage
+                                                                 : HistoryWriteRequest::Erase;
     write.account = r->accId;
     write.peer = r->j.full();
     write.contactPeer = r->jidType == GroupChatContact ? r->j.full() : r->j.bare();
@@ -983,7 +1036,10 @@ void EDBSqLite::performRequests()
     write.before = r->archiveCursor;
     write.archivePage = r->archivePage;
     write.limit = r->len;
-    if (type == item_query_req::Type_archiveWrite)
+    write.eventId     = r->localBefore;
+    write.identity    = r->suppressionIdentity;
+    if (type == item_query_req::Type_archiveWrite || type == item_query_req::Type_deleteLocal
+        || type == item_query_req::Type_checkSuppression)
         delete r;
     else
         pendingWrites_.insert(r->id, r);

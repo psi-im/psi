@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "nativechathistory.h"
-#include <QPointer>
 #include "eventdb.h"
 #include "filesharingmanager.h"
 #include "historysync.h"
 #include "iris/xmpp_htmlelement.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "messageview.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "widgets/MamChatWidget.h"
+#include <QPointer>
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -17,7 +17,7 @@
 MessageView nativeHistoryMessage(PsiAccount *account, const XMPP::Jid &peer, const XMPP::Message &message, bool local)
 {
     const bool subject = message.body().isEmpty() && !message.subject().isNull()
-        && !MessageAttachments::hasAttachments(message) && message.html().body().isNull();
+        && !MessageFileShares::hasFileShares(message) && message.html().body().isNull();
     QString body = subject ? message.subject() : message.body();
     auto    html = message.html();
 #ifdef PSI_PLUGINS
@@ -123,17 +123,16 @@ NativeHistoryPage nativeArchivePage(PsiAccount *account, HistorySync *task, cons
                                     const QString &ownNick, const std::function<QString(bool)> &nickname)
 {
     NativeHistoryPage page;
-    for (const auto &result : task->archive()) {
-        const QString uid = result.attribute(QStringLiteral("id"));
+    for (const auto &entry : task->entries()) {
+        const QString uid = entry.uid;
         if (uid.isEmpty())
             continue;
         page.uids.append(uid);
-        auto       archived  = task->message(uid);
-        const auto forwarded = result.firstChildElement(QStringLiteral("forwarded"));
-        const auto stamp     = QDateTime::fromString(
-            forwarded.firstChildElement(QStringLiteral("delay")).attribute(QStringLiteral("stamp")), Qt::ISODate);
-        if (stamp.isValid())
-            archived.setTimeStamp(stamp);
+        if (entry.suppressed)
+            continue;
+        auto archived = task->message(uid);
+        if (entry.timestamp.isValid())
+            archived.setTimeStamp(entry.timestamp);
         QDateTime revisionTime;
         qint64    historyId        = task->eventId(uid);
         MessageState::Flags messageState;

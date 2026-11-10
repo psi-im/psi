@@ -1,11 +1,42 @@
 #pragma once
 #include <QHash>
+#include <QMultiMap>
 #include <QStringList>
+#include <QUrl>
 #include <algorithm>
 
 // Owner-thread policy. Probe sources, then prefer estimated completion time.
 class FileSourceSelector {
 public:
+    enum class Type { None, BOB, FTP, Jingle, HTTP }; // lowest priority first
+
+    static Type type(const QString &uri)
+    {
+        const auto scheme = QUrl(uri).scheme();
+        if (scheme == QLatin1String("http") || scheme == QLatin1String("https"))
+            return Type::HTTP;
+        if (scheme == QLatin1String("xmpp"))
+            return Type::Jingle;
+        if (scheme == QLatin1String("ftp"))
+            return Type::FTP;
+        if (scheme == QLatin1String("cid"))
+            return Type::BOB;
+        return Type::None;
+    }
+
+    // Consume from the end: preferred transports first, preserving the
+    // sender's order within each transport. Unsupported schemes are omitted.
+    static QStringList prioritized(const QStringList &uris)
+    {
+        QMultiMap<int, QString> sorted;
+        for (const auto &uri : uris) {
+            const auto sourceType = type(uri);
+            if (sourceType != Type::None)
+                sorted.insert(int(sourceType), uri);
+        }
+        return sorted.values();
+    }
+
     QString acquire(const QStringList &uris)
     {
         QString best;

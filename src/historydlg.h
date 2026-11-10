@@ -42,6 +42,7 @@ public:
     void find(const QString &str, const QString &acc_id, const XMPP::Jid &jid, int dir);
     int  totalFound() const { return total_found; }
     int  cursorPosition() const { return general_pos; }
+    void invalidate() { reset(); }
 
 private slots:
     void handleResult();

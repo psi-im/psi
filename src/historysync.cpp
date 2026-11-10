@@ -8,7 +8,7 @@
 #include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_stream.h"
 #include "iris/xmpp_xmlcommon.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "widgets/MamArchivePeerPolicy.h"
 #include "widgets/MamHistorySourcePolicy.h"
 #include <QJsonDocument>
@@ -64,6 +64,8 @@ QList<QDomElement> HistorySync::archive() const
 {
     QList<QDomElement> results;
     for (const auto &entry : page_.entries) {
+        if (entry.suppressed)
+            continue;
         const auto element = readResult(entry.xml);
         if (!element.isNull())
             results.append(element);
@@ -139,11 +141,15 @@ bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive
         if (decryptionFailures_.contains(entry.uid))
             extra.insert("psi:decryption-error", true);
         const bool textless = !stanza.isNull() && !hasBody && stanza.firstChildElement("subject").isNull()
-            && stanza.firstChildElement("html").isNull() && !MessageAttachments::hasAttachments(message)
+            && stanza.firstChildElement("html").isNull() && !MessageFileShares::hasFileShares(message)
             && message.body().isEmpty();
         if (protocolOnly_.contains(entry.uid) || textless)
             extra.insert("psi:protocol-only", true);
         entry.extra     = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        if (suppressionChecks_.value(entry.uid)) {
+            entry.suppressed = true;
+            entry.xml = entry.body = entry.subject = entry.extra = entry.language = QStringLiteral("");
+        }
         entry.type      = key_.room                                ? 9
                  : message.type() == XMPP::Message::Type::Chat     ? 1
                  : message.type() == XMPP::Message::Type::Error    ? 4
@@ -159,6 +165,9 @@ bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive
 
 XMPP::Message HistorySync::message(const QString &uid) const
 {
+    for (const auto &entry : page_.entries)
+        if (entry.uid == uid && entry.suppressed)
+            return {};
     if (decoded_.contains(uid))
         return decoded_.value(uid);
     const auto resolved = resolvedMessage(uid);
@@ -251,10 +260,18 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
             && !savedLookupsStarted_) {
             savedLookupsStarted_ = true;
             pendingSavedPage_ = std::move(saved);
-            savedLookupsRemaining_ = pendingSavedPage_.entries.size();
+            savedLookupsRemaining_ = 0;
+            for (const auto &entry : pendingSavedPage_.entries)
+                savedLookupsRemaining_ += !entry.suppressed;
+            if (!savedLookupsRemaining_) {
+                processSavedPage(std::move(pendingSavedPage_));
+                return;
+            }
             // Every read runs on the same SQL worker. Collect all decoded
             // projections before validating/replaying the cached MAM page.
             for (const auto &entry : pendingSavedPage_.entries) {
+                if (entry.suppressed)
+                    continue;
                 const auto element = readResult(entry.xml);
                 const QDateTime stamp = QDateTime::fromString(
                     element.firstChildElement("forwarded").firstChildElement("delay").attribute("stamp"),
@@ -281,10 +298,13 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
                                         << "stable=" << saved.stable << "events=" << saved.entries.size();
             HistoryArchive::Page validated;
             QList<QDomElement>   xml;
+            bool                 valid = true;
             for (const auto &entry : saved.entries) {
+                if (entry.suppressed)
+                    continue;
                 const auto element = readResult(entry.xml);
                 if (element.isNull()) {
-                    xml.clear();
+                    valid = false;
                     break;
                 }
                 xml.append(element);
@@ -303,10 +323,23 @@ void HistorySync::processSavedPage(HistoryArchive::Page saved)
                         protocolOnly_.insert(entry.uid);
                 }
             }
-            if (saved.found && saved.stable && xml.size() == saved.entries.size() && parseResults(xml, validated)
-                && std::equal(
-                    validated.entries.cbegin(), validated.entries.cend(), saved.entries.cbegin(),
-                    [](const HistoryArchive::Entry &a, const HistoryArchive::Entry &b) { return a.uid == b.uid; })) {
+            valid = valid && parseResults(xml, validated);
+            QList<HistoryArchive::Entry> ordered;
+            int                          visible = 0;
+            for (const auto &entry : saved.entries) {
+                if (entry.suppressed) {
+                    ordered.append(entry);
+                } else if (visible >= validated.entries.size() || validated.entries.at(visible).uid != entry.uid) {
+                    valid = false;
+                    break;
+                } else {
+                    auto decoded    = validated.entries.at(visible++);
+                    decoded.eventId = entry.eventId;
+                    ordered.append(decoded);
+                }
+            }
+            validated.entries = std::move(ordered);
+            if (saved.found && saved.stable && valid) {
                 validated.found    = true;
                 validated.stable   = saved.stable;
                 validated.complete = saved.complete;
@@ -424,6 +457,34 @@ void HistorySync::decodeNext()
         const QString uid       = result.attribute("id");
         const auto    forwarded = result.firstChildElement("forwarded");
         const auto    stanza    = forwarded.firstChildElement("message");
+        if (context_.suppressionAsync && !key_.room && !suppressionChecks_.contains(uid)) {
+            XMPP::Forwarding identity;
+            if (!identity.fromXml(forwarded, context_.client)) {
+                finishError(tr("Invalid archive message"));
+                return;
+            }
+            const auto message = identity.message();
+            if (!PsiMam::belongsToConversation(context_.owner.bare(), key_.peer, message.from().bare(),
+                                               message.to().bare())) {
+                finishError(tr("Invalid archive conversation"));
+                return;
+            }
+            auto entry = HistoryMessageExtras::identity(message, message.from().compare(context_.owner, false), uid);
+            context_.suppressionAsync(key_, std::move(entry), this, [this, uid](bool hidden, bool ok) {
+                if (cancelled_)
+                    return;
+                if (!ok) {
+                    finishError(tr("Could not check locally deleted messages"));
+                    return;
+                }
+                suppressionChecks_.insert(uid, hidden);
+                --decodeIndex_;
+                QTimer::singleShot(0, this, &HistorySync::decodeNext);
+            });
+            return;
+        }
+        if (suppressionChecks_.value(uid))
+            continue;
         auto         *crypto    = context_.client->encryptionManager();
         const bool    supported = crypto && crypto->methodForStanza(stanza);
         const auto    encrypted = stanza.firstChildElement("encrypted");
@@ -555,6 +616,53 @@ void HistorySync::acceptPage()
         finishError(tr("Invalid archive page"));
         return;
     }
+    checkAcceptedPage(std::move(received));
+}
+
+void HistorySync::checkAcceptedPage(HistoryArchive::Page received, int index)
+{
+    if (cancelled_)
+        return;
+    while (index < received.entries.size() && received.entries.at(index).suppressed)
+        ++index;
+    if (!context_.suppressionAsync || key_.room || index == received.entries.size()) {
+        acceptDecodedPage(std::move(received));
+        return;
+    }
+    // A correction target or origin ID may become visible only after decrypt.
+    // Check again even when logging is disabled, before exposing plaintext.
+    auto        identity = received.entries.at(index);
+    const auto  extra    = QJsonDocument::fromJson(identity.extra.toUtf8()).object();
+    QJsonObject ids;
+    for (const auto &name : { "psi:origin", "psi:ids", "psi:events", "psi:protocol-only" })
+        if (extra.contains(QLatin1String(name)))
+            ids.insert(QLatin1String(name), extra.value(QLatin1String(name)));
+    identity.extra = QString::fromUtf8(QJsonDocument(ids).toJson(QJsonDocument::Compact));
+    identity.body.clear();
+    identity.subject.clear();
+    identity.xml.clear();
+    context_.suppressionAsync(
+        key_, std::move(identity), this, [this, received = std::move(received), index](bool hidden, bool ok) mutable {
+            if (cancelled_)
+                return;
+            if (!ok) {
+                finishError(tr("Could not check locally deleted messages"));
+                return;
+            }
+            if (hidden) {
+                auto &entry      = received.entries[index];
+                entry.suppressed = true;
+                entry.xml = entry.body = entry.subject = entry.extra = entry.language = QStringLiteral("");
+                decoded_.remove(entry.uid);
+            }
+            checkAcceptedPage(std::move(received), index + 1);
+        });
+}
+
+void HistorySync::acceptDecodedPage(HistoryArchive::Page received)
+{
+    if (cancelled_)
+        return;
     if (decodingSaved_) {
         decodingSaved_    = false;
         received.complete = tail_.complete;
@@ -565,8 +673,22 @@ void HistorySync::acceptPage()
         received.queryComplete = tail_.queryComplete;
         received.checkpoint    = tail_.checkpoint;
         received.previous      = tail_.previous;
-        for (int i = 0; i < received.entries.size(); ++i)
-            received.entries[i].eventId = tail_.entries.at(i).eventId;
+        QList<HistoryArchive::Entry> ordered;
+        int                          visible = 0;
+        for (const auto &entry : tail_.entries) {
+            if (entry.suppressed) {
+                ordered.append(entry);
+            } else {
+                if (visible >= received.entries.size() || received.entries.at(visible).uid != entry.uid) {
+                    finishError(tr("Cached archive positions changed"));
+                    return;
+                }
+                auto decoded    = received.entries.at(visible++);
+                decoded.eventId = entry.eventId;
+                ordered.append(decoded);
+            }
+        }
+        received.entries = std::move(ordered);
         // Repair the saved projection through the same atomic worker
         // transaction as a network MAM page, without emitting notifications.
         auto repaired = [this](HistoryArchive::Page page, bool ok) {

@@ -69,6 +69,7 @@ list(APPEND FORMS
 list(APPEND HEADERS
     messagestate.h
     historyarchive.h
+    historyarchivevalues.h
     historysqlitepolicy.h
     historysqlreadworker.h
     historymediaqueries.h
@@ -156,7 +157,7 @@ list(APPEND HEADERS
     filesharingmanager.h
     oobmediapolicy.h
     mediadownloadpolicy.h
-    messageattachments.h
+    messagefileshares.h
     filesharingproxy.h
     filesharingurl.h
     filetransdlg.h
@@ -406,6 +407,7 @@ list(APPEND SOURCES
     historyeventfactory.cpp
     historysqlreadworker.cpp
     historyarchive.cpp
+    historylocaldeletion.cpp
     historymessagestate.cpp
     historysync.cpp
     historysyncaccount.cpp
@@ -439,7 +441,7 @@ list(APPEND SOURCES
     filesharingpublication.cpp
     accountincomingmessage.cpp
     filesharingmanager.cpp
-    messageattachments.cpp
+    messagefileshares.cpp
     filesharingmediasave.cpp
     filesharingmediasave.h
     filesharingproxy.cpp

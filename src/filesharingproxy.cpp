@@ -66,7 +66,7 @@ public:
     QPointer<FileSharingItem>             item;
     QPointer<FileShareDownloader>         downloader;
     QPointer<MediaChunkReader>            chunkReader;
-    std::optional<FileSharingItem::Range> requestedRange;
+    std::optional<FileShareDownloader::Range> requestedRange;
     std::optional<quint64>                bytesLeft; // if not set - unknown
     qint64                                totalTranferred = 0;
     bool                                  headersSent     = false;
@@ -202,7 +202,7 @@ public:
 
         switch (parseResult) {
         case Http::Parsed:
-            requestedRange = FileSharingItem::Range { start, size };
+            requestedRange = FileShareDownloader::Range { start, size };
             return StatusCode::Ok;
         case Http::Unparsed:
             return StatusCode::BadRequest;
@@ -329,7 +329,7 @@ public:
     }
 
     void setupHeaders(std::optional<quint64> fileSize, QString contentType, QDateTime lastModified,
-                      const std::optional<FileSharingItem::Range> &range)
+                      const std::optional<FileShareDownloader::Range> &range)
     {
         auto self = static_cast<Impl *>(this);
         if (contentType == QLatin1String("audio/x-vorbis+ogg")) {

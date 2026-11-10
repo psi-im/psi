@@ -40,7 +40,7 @@ HistoryEventFactory::Encoded HistoryEventFactory::encode(const PsiEvent::Ptr &ev
         out.language = message.lang();
         out.subject = message.subject(out.language);
         out.body = message.body(out.language);
-        out.extras   = HistoryMessageExtras::encode(message, out.body);
+        out.extras   = HistoryMessageExtras::encode(message);
         // The live/MAM match uses the default-language payload, not the
         // localized fields chosen for the EDB text columns.
         out.matchBody = message.body();
@@ -71,6 +71,8 @@ HistoryEventFactory::Encoded HistoryEventFactory::encode(const PsiEvent::Ptr &ev
 
 PsiEvent::Ptr HistoryEventFactory::decode(PsiCon *psi, const QSqlRecord &record)
 {
+    if (record.value("message_flags").toInt() & MessageState::LocalDeleted)
+        return {};
     PsiAccount *pa = psi->contactList()->getAccount(record.value("acc_id").toString());
 
     int type = record.value("type").toInt();

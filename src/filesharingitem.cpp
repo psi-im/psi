@@ -23,6 +23,7 @@
 #include "filesharinghashjob.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
+#include "filesourceselector.h"
 #include "fileutil.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_reference.h"
@@ -233,7 +234,7 @@ Reference FileSharingItem::toReference() const
     // as a verified SIMS file hash when forwarding/sending files.
     if (_urlOnly)
         return {};
-    auto uris = sortSourcesByPriority(_uris);
+    auto uris = FileSourceSelector::prioritized(_uris);
     uris.removeDuplicates();
     std::reverse(uris.begin(), uris.end());
     if (uris.isEmpty())
@@ -330,13 +331,12 @@ QString FileSharingItem::fileName() const
 
 QString FileSharingItem::localFilePath() const
 {
-    if (!FileSharingChunkSource::error(const_cast<FileSharingItem *>(this)).isEmpty())
+    if (!FileSharingChunkSource::error(this).isEmpty())
         return { };
     QString path;
     if (_manager->cacheItem(_sums, false, &path))
         return path;
-    return _fileType == FileType::RemoteFile ? FileSharingChunkSource::localFile(const_cast<FileSharingItem *>(this))
-                                             : _fileName;
+    return _fileType == FileType::RemoteFile ? FileSharingChunkSource::localFile(this) : _fileName;
 }
 
 void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
@@ -359,7 +359,7 @@ void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
 
 FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
-    if (!FileSharingChunkSource::error(const_cast<FileSharingItem *>(this)).isEmpty())
+    if (!FileSharingChunkSource::error(this).isEmpty())
         return nullptr;
     for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i) {
         auto c = _manager->cacheItem(_sums.at(i), reborn);
@@ -449,11 +449,9 @@ XMPP::Jingle::FileTransfer::File FileSharingItem::fileMetadata() const
     return fileInfo();
 }
 
-FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const QString &preferredSource)
+FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader::Range> range,
+                                               const QString                            &preferredSource)
 {
-    // if (range && range->start == 0 && _fileSize && range->size == *_fileSize)
-    //     range = {};
-
     XMPP::Jingle::FileTransfer::File file;
     file.setDate(_modifyTime);
     file.setMediaType(_mimeType);
@@ -464,27 +462,16 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
         for (auto const &h : std::as_const(_sums))
             file.addHash(h);
 
-    auto downloaderRange = std::optional<FileShareDownloader::Range> {};
-    if (range) {
-        downloaderRange = FileShareDownloader::Range { range->start, range->size };
-    }
-
-    // if (_downloader && _downloader->requestedRange() == downloaderRange) {
-    //     qWarning("double download for the same file: %s", qPrintable(_fileName));
-    //     return _downloader;
-    // }
-
     auto downloader = new FileShareDownloader(_acc, _urlOnly ? HashSums() : _sums, file, _jids, _uris, this);
     if (!preferredSource.isEmpty())
         downloader->preferSource(preferredSource);
-    if (downloaderRange) {
-        downloader->setRequestRange(downloaderRange);
+    if (range) {
+        downloader->setRequestRange(range);
         return downloader;
     }
     connect(downloader, &FileShareDownloader::cacheReady, this, [this, downloader]() {
         QString dlFileName = downloader->takeFile();
         downloader->disconnect(this);
-        // downloader = nullptr;
 
         if (_modifyTime.isValid())
             FileUtil::setModificationTime(dlFileName, _modifyTime);
@@ -539,41 +526,11 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
 
     connect(downloader, &FileShareDownloader::failed, this, [downloader, this]() {
         downloader->disconnect(this);
-        // downloader = nullptr;
         _autoFailed |= std::exchange(_autoDownloading, false);
         emit downloadFinished();
     });
 
-    // connect(downloader, &FileShareDownloader::destroyed, this, [this]() { _downloader = nullptr; });
-
     return downloader;
-}
-
-FileSharingItem::SourceType FileSharingItem::sourceType(const QString &uri)
-{
-    if (uri.startsWith(QLatin1String("http"))) {
-        return SourceType::HTTP;
-    } else if (uri.startsWith(QLatin1String("xmpp"))) {
-        return SourceType::Jingle;
-    } else if (uri.startsWith(QLatin1String("ftp"))) {
-        return SourceType::FTP;
-    } else if (uri.startsWith(QLatin1String("cid"))) {
-        return SourceType::BOB;
-    }
-    return FileSharingItem::SourceType::None;
-}
-
-QStringList FileSharingItem::sortSourcesByPriority(const QStringList &uris)
-{
-    // sort uris by priority first
-    QMultiMap<int, QString> sorted;
-    for (auto const &u : uris) {
-        auto type = sourceType(u);
-        if (type != SourceType::None)
-            sorted.insert(int(type), u);
-    }
-
-    return sorted.values();
 }
 
 void FileSharingItem::checkRemote()
@@ -653,10 +610,12 @@ QUrl FileSharingItem::simpleSource() const
     if (!_uris.size())
         return QUrl();
 
-    auto    sorted = sortSourcesByPriority(_uris);
+    auto sorted = FileSourceSelector::prioritized(_uris);
+    if (sorted.isEmpty())
+        return {};
     QString srcUrl = sorted.last();
-    auto    t      = sourceType(srcUrl);
-    if (t == SourceType::HTTP || t == SourceType::FTP) {
+    auto    t      = FileSourceSelector::type(srcUrl);
+    if (t == FileSourceSelector::Type::HTTP || t == FileSourceSelector::Type::FTP) {
         return QUrl(srcUrl);
     }
     return QUrl();

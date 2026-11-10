@@ -103,7 +103,14 @@ class EDB : public QObject {
 public:
     enum { Forward, Backward };
     enum { Contact = 1, GroupChatContact = 2, GroupChat = 3 };
-    enum { SeparateAccounts = 1, PrivateContacts = 2, AllContacts = 4, AllAccounts = 8, ArchiveCache = 16 };
+    enum {
+        SeparateAccounts = 1,
+        PrivateContacts  = 2,
+        AllContacts      = 4,
+        AllAccounts      = 8,
+        ArchiveCache     = 16,
+        LocalDeletion    = 32
+    };
     struct ContactItem {
         QString   accId;
         XMPP::Jid jid;
@@ -166,7 +173,17 @@ public:
     virtual void requestStoreArchivePage(const HistoryArchive::Key &key, const QString &before, int limit,
                                          HistoryArchive::Page page, QObject *receiver,
                                          std::function<void(HistoryArchive::Page, bool)> finished);
+    virtual void requestDeleteLocalMessage(const HistoryArchive::Key &, qint64 eventId, const QString &clientId,
+                                           int direction, QObject *, std::function<void(bool)>);
+    virtual void requestLocalSuppression(const HistoryArchive::Key &, HistoryArchive::Entry, QObject *,
+                                         std::function<void(bool suppressed, bool success)>);
 
+signals:
+    // GUI notification after commit, shared by every materialized history view.
+    void localMessagesDeleted(const QString &account, const QString &peer,
+                              const HistoryArchive::LocalDeletionResult &changes);
+
+public:
     // Older storage providers may omit island persistence while still displaying
     // them. Never reinterpret an island as their legacy tail checkpoint.
     virtual bool mergeArchiveIsland(const HistoryArchive::Key &, int, HistoryArchive::Page &) { return true; }

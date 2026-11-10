@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historymessageextras.h"
-#include "messageattachments.h"
 #include "iris/xmpp_htmlelement.h"
 #include "iris/xmpp_reference.h"
+#include "oobmediapolicy.h"
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <algorithm>
 
 namespace {
 const QString fallbackNS = QStringLiteral("urn:xmpp:fallback:0");
@@ -99,16 +100,109 @@ QJsonArray canonicalElement(const QDomElement &element)
 }
 }
 
-QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message)
+QList<MessageFileShares::FileShare> HistoryMessageExtras::indexedFiles(const XMPP::Message &message, int version)
+{
+    if (version == mediaRefsVersion)
+        return MessageFileShares::collect(message).files;
+    if (version != 1)
+        return {};
+
+    // Frozen version-1 projection. Normalize SIMS/SFS first, retaining the
+    // original non-file slots, then process OOB in its historical order. In
+    // particular, an unsupported reference could consume an OOB description.
+    // Current presentation code must never reinterpret persisted ordinals.
+    XMPP::Message withoutOob;
+    withoutOob.setReferences(message.references());
+    for (const auto &sharing : message.fileSharings())
+        withoutOob.addFileSharing(sharing);
+    const auto                          files = MessageFileShares::collect(withoutOob).files;
+    QList<MessageFileShares::FileShare> legacy;
+    int                                 next = 0;
+    for (const auto &reference : message.references()) {
+        const MessageFileShares::FileShare file { reference, {} };
+        legacy.append(file.hasContentHashes() || file.url().isValid() ? files.at(next++) : file);
+    }
+    for (; next < files.size(); ++next)
+        legacy.append(files.at(next));
+
+    QSet<QString> blocked, seen;
+    for (const auto &sharing : message.fileSharings()) {
+        if (sharing.file().hasComputedHashes())
+            continue;
+        for (const auto &source : sharing.sources().items()) {
+            if (source.type() != XMPP::StatelessFileSharing::Source::Type::UrlData)
+                continue;
+            const auto url = OobMediaPolicy::normalizedHttpSource(source.url().toString(QUrl::FullyEncoded));
+            if (url.isValid() && url.scheme() != QLatin1String("https"))
+                blocked.insert(url.toString(QUrl::FullyEncoded));
+        }
+    }
+    // Reuse source eligibility and manual-fetch policy, but not version 2's
+    // description distribution or its compact reference ordinal space.
+    const auto normalized = MessageFileShares::collect(message).files;
+    const auto body       = message.body();
+    for (const auto &oob : message.urlList()) {
+        const auto source = OobMediaPolicy::normalizedHttpSource(oob.url());
+        if (!source.isValid())
+            continue;
+        const auto canonical = source.toString(QUrl::FullyEncoded);
+        if (blocked.contains(canonical))
+            continue;
+        const auto candidate = std::find_if(normalized.cbegin(), normalized.cend(), [&source](const auto &file) {
+            return file.fromOob && file.url() == source;
+        });
+        const bool redundant = seen.contains(canonical) || candidate == normalized.cend();
+        seen.insert(canonical);
+        if (redundant) {
+            if (oob.desc().isEmpty())
+                continue;
+            for (auto &file : legacy) {
+                const auto &r = file.reference;
+                if (!file.description.isEmpty() || !r.isValid() || r.type() != XMPP::Reference::Data)
+                    continue;
+                const auto sources = r.mediaSharing().isValid() ? r.mediaSharing().sources : QStringList { r.uri() };
+                if (std::any_of(sources.cbegin(), sources.cend(), [&source](const auto &uri) {
+                        return OobMediaPolicy::normalizedHttpSource(uri) == source;
+                    })) {
+                    file.description = oob.desc();
+                    break;
+                }
+            }
+            continue;
+        }
+        auto inBody = oob.url();
+        int  at     = body.indexOf(inBody);
+        if (at < 0 && inBody.indexOf(QLatin1Char('#')) > 0) {
+            inBody = inBody.left(inBody.indexOf(QLatin1Char('#')));
+            at     = body.indexOf(inBody);
+        }
+        const bool onlyUrl = at >= 0 && body.trimmed() == inBody;
+        if (at >= 0 && !onlyUrl)
+            continue;
+        auto file           = *candidate;
+        file.description    = oob.desc();
+        const int  end      = at + int(inBody.size()) - 1;
+        const bool overlaps = std::any_of(legacy.cbegin(), legacy.cend(), [at, end](const auto &other) {
+            const auto &r = other.reference;
+            return r.begin() >= 0 && r.end() >= at && r.begin() <= end;
+        });
+        if (onlyUrl && !overlaps)
+            file.reference.setRange(at, end);
+        legacy.append(file);
+    }
+    return legacy;
+}
+
+QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message, int version)
 {
     QJsonArray index;
-    const auto attachments = MessageAttachments::collect(message).attachments;
-    for (int ordinal = 0; ordinal < attachments.size(); ++ordinal) {
-        const auto &attachment = attachments.at(ordinal);
-        if (!attachment.isFile() && !attachment.url().isValid())
+    const auto files = indexedFiles(message, version);
+    for (int ordinal = 0; ordinal < files.size(); ++ordinal) {
+        const auto &file = files.at(ordinal);
+        if (!file.hasContentHashes() && !file.url().isValid())
             continue;
         QDomDocument doc;
-        const auto  &reference = attachment.reference;
+        const auto  &reference = file.reference;
         const auto  &media     = reference.mediaSharing();
         // Reference::toXml omits media without sources. Pending SFS files still
         // need their metadata to distinguish a replacement at the same ordinal.
@@ -119,8 +213,8 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message)
                                    reference.anchor(),
                                    canonicalElement(media.file.toMetadataXml(&doc)),
                                    QJsonArray::fromStringList(media.sources),
-                                   attachment.description,
-                                   attachment.manualFetch };
+                                   file.description,
+                                   file.manualFetch };
         const auto       fingerprint = QCryptographicHash::hash(QJsonDocument(content).toJson(QJsonDocument::Compact),
                                                                 QCryptographicHash::Sha256)
                                      .toHex();
@@ -129,18 +223,40 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message)
     return index;
 }
 
-QString HistoryMessageExtras::encode(const XMPP::Message &message) { return encode(message, message.body()); }
+HistoryArchive::Entry HistoryMessageExtras::identity(const XMPP::Message &message, bool local, const QString &uid)
+{
+    HistoryArchive::Entry entry;
+    entry.uid       = uid;
+    entry.direction = local ? 1 : 2;
+    entry.type      = message.type() == XMPP::Message::Type::Chat ? 1
+             : message.type() == XMPP::Message::Type::Normal      ? 0
+                                                                  : -1;
+    entry.messageId = message.id();
+    entry.replaceId = message.replaceId();
+    entry.sender    = message.from().full();
+    QJsonObject extra;
+    if (!message.originId().isEmpty())
+        extra.insert("psi:origin", message.originId());
+    QJsonArray ids;
+    for (const auto &id : message.stanzaIds())
+        ids.append(QJsonObject { { "by", id.by.full() }, { "id", id.id } });
+    extra.insert("psi:ids", ids);
+    if (message.messageReceipt() == XMPP::ReceiptReceived || !message.displayedMarkerId().isEmpty()
+        || !message.reactions().targetId.isEmpty() || !message.retraction().isEmpty())
+        extra.insert("psi:protocol-only", true);
+    entry.extra = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+    return entry;
+}
 
-QString HistoryMessageExtras::encode(const XMPP::Message &message, const QString &storedBody)
+QString HistoryMessageExtras::encode(const XMPP::Message &message)
 {
     if (message.isNull())
         return {};
     QJsonObject extra;
     extra.insert("psi:decoded", true);
-    if (MessageAttachments::hasAttachments(message)) {
-        auto projection = message;
-        projection.setBody(storedBody);
-        extra.insert("psi:media-refs", QJsonObject { { "version", 1 }, { "items", mediaRefs(projection) } });
+    if (MessageFileShares::hasFileShares(message)) {
+        extra.insert("psi:media-refs",
+                     QJsonObject { { "version", mediaRefsVersion }, { "items", mediaRefs(message) } });
     }
     if (message.reply().isValid())
         extra.insert(QStringLiteral("urn:xmpp:reply:0"),
@@ -232,7 +348,7 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message, const QString
     return extra.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
 }
 
-void HistoryMessageExtras::restoreAttachments(const QString &json, XMPP::Message &message, bool includeSfs)
+void HistoryMessageExtras::restoreFileSharing(const QString &json, XMPP::Message &message, bool includeSfs)
 {
     restoreUrlsAndReferences(QJsonDocument::fromJson(json.toUtf8()).object(), message, includeSfs);
 }

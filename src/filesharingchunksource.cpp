@@ -15,37 +15,20 @@
 #include <algorithm>
 #include <utility>
 
-namespace {
-class Sources : public QObject {
-public:
-    using QObject::QObject;
-    FileSourceSelector selector;
-};
-Sources *sources(FileSharingItem *item)
-{
-    const auto name = QStringLiteral("shared-file-sources");
-    if (auto object = item->findChild<QObject *>(name, Qt::FindDirectChildrenOnly))
-        return static_cast<Sources *>(object);
-    auto object = new Sources(item);
-    object->setObjectName(name);
-    return object;
-}
-
 // Servers without Range support use one shared sequential transfer. Its bytes
 // still enter the same result file, with the same metadata and hash validation.
-class SequentialDownload : public QObject {
+class FileSharingChunkSource::SequentialDownload : public QObject {
     struct Waiter {
         quint64              offset, length;
         MediaChunkCompletion done;
     };
 
 public:
-    SequentialDownload(FileSharingItem *item, const QString &source) :
-        QObject(item), item_(item), cache_(FileSharingChunkSource::configure(item)),
+    SequentialDownload(FileSharingItem *item, const QString &source, QObject *owner) :
+        QObject(owner), item_(item), cache_(FileSharingChunkSource::configure(item)),
         identity_(FileSharingChunkSource::identity(item)), size_(*item->fileSize())
     {
-        setObjectName(QStringLiteral("shared-file-sequential"));
-        download_ = item->download(FileSharingItem::Range { 0, 0 }, source);
+        download_ = item->download(FileShareDownloader::Range { 0, 0 }, source);
         download_->setParent(this);
         stall_.setSingleShot(true);
         stall_.setInterval(60000);
@@ -92,6 +75,7 @@ public:
             }
         });
     }
+    bool stopped() const { return stopped_; }
     ~SequentialDownload() override
     {
         download_->abort();
@@ -167,7 +151,6 @@ private:
             return;
         stopped_ = true;
         stall_.stop();
-        setObjectName({ });
         download_->disconnect(this);
         download_->abort();
         const auto waiters  = std::exchange(waiters_, { });
@@ -192,20 +175,30 @@ private:
     QHash<quint64, Waiter>    waiters_;
     bool                      stopped_ = false, writing_ = false, accepted_ = false;
 };
-MediaChunkAbort sequential(FileSharingItem *item, const QString &source, quint64 offset, quint64 length,
-                           MediaChunkCompletion done)
+FileSharingChunkSource::FileSharingChunkSource(FileSharingItem *item) : QObject(item) { }
+FileSharingChunkSource::~FileSharingChunkSource() = default;
+
+FileSharingChunkSource *FileSharingChunkSource::state(FileSharingItem *item)
 {
-    auto object   = item->findChild<QObject *>(QStringLiteral("shared-file-sequential"), Qt::FindDirectChildrenOnly);
-    auto download = object ? static_cast<SequentialDownload *>(object) : new SequentialDownload(item, source);
-    return download->add(offset, length, std::move(done));
-}
+    if (!item->_chunkSource)
+        item->_chunkSource = new FileSharingChunkSource(item);
+    return item->_chunkSource;
 }
 
-QString FileSharingChunkSource::identity(FileSharingItem *item)
+MediaChunkAbort FileSharingChunkSource::sequential(FileSharingItem *item, const QString &source, quint64 offset,
+                                                   quint64 length, MediaChunkCompletion done)
+{
+    auto provider = state(item);
+    if (!provider->sequential_ || provider->sequential_->stopped())
+        provider->sequential_ = new SequentialDownload(item, source, provider);
+    return provider->sequential_->add(offset, length, std::move(done));
+}
+
+QString FileSharingChunkSource::identity(const FileSharingItem *item)
 {
     return item && item->account() ? item->account()->id() + QChar(0) + item->sums().value(0).toString() : QString();
 }
-void FileSharingChunkSource::addChecksums(FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
+void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return;
@@ -225,14 +218,14 @@ void FileSharingChunkSource::addChecksums(FileSharingItem *item, const XMPP::Jin
     }
     item->account()->psi()->fileSharingManager()->mediaChunkCache()->configure(identity(item), size, hashes);
 }
-MediaChunkCache *FileSharingChunkSource::configure(FileSharingItem *item)
+MediaChunkCache *FileSharingChunkSource::configure(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return nullptr;
     addChecksums(item, item->fileMetadata());
     return item->account()->psi()->fileSharingManager()->mediaChunkCache();
 }
-QString FileSharingChunkSource::localFile(FileSharingItem *item)
+QString FileSharingChunkSource::localFile(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return { };
@@ -241,7 +234,7 @@ QString FileSharingChunkSource::localFile(FileSharingItem *item)
     return state.complete && state.error.isEmpty() && QFileInfo(state.path).isReadable() ? state.path : QString();
 }
 
-QString FileSharingChunkSource::error(FileSharingItem *item)
+QString FileSharingChunkSource::error(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return { };
@@ -257,18 +250,18 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
         return { };
     }
     configure(item);
-    auto provider   = sources(item);
-    auto candidates = FileSharingItem::sortSourcesByPriority(item->uris());
+    auto provider   = state(item);
+    auto candidates = FileSourceSelector::prioritized(item->uris());
     std::reverse(candidates.begin(), candidates.end());
     candidates.removeDuplicates();
-    const auto source = provider->selector.acquire(candidates);
+    const auto source = provider->selector_.acquire(candidates);
     auto       timer  = std::make_shared<QElapsedTimer>();
     timer->start();
-    const QPointer<Sources> providerGuard(provider);
+    const QPointer<FileSharingChunkSource> providerGuard(provider);
     auto deliver = [done = std::move(done), providerGuard, source, timer](QByteArray bytes, MediaChunkError error) {
         if (providerGuard) {
-            providerGuard->selector.release(source, quint64(bytes.size()), timer->elapsed(), error.isEmpty(),
-                                            error.code() == MediaChunkError::Cancelled);
+            providerGuard->selector_.release(source, quint64(bytes.size()), timer->elapsed(), error.isEmpty(),
+                                             error.code() == MediaChunkError::Cancelled);
         }
         done(std::move(bytes), error);
     };
@@ -285,7 +278,7 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
               } else
                   deliver(std::move(bytes), error);
           };
-    auto download = item->download(FileSharingItem::Range { offset, length }, source);
+    auto download = item->download(FileShareDownloader::Range { offset, length }, source);
     download->setJingleSessionPool(item->account()->psi()->fileSharingManager()->jingleMediaSessions(item->account()));
     auto transfer = new MediaChunkTransfer(
         download, *item->fileSize(), offset, length, std::move(complete), [download] { download->abort(); }, owner);

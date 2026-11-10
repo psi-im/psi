@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
-#include "messagestate.h"
+#include "historyarchivevalues.h"
 
 #include <QDateTime>
 #include <QList>
@@ -9,54 +9,11 @@
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QString>
+#include <QStringList>
 #include <functional>
+#include <optional>
 
 namespace HistoryArchive {
-// Low bits describe provenance; adjacency is independent of provenance.
-// Unknown is deliberately the SQLite default, including imported history.
-enum State { Unverified = 0, Archived = 1, LocalOnly = 2, ProvenanceMask = 3, LinkedPrevious = 4, LinkedNext = 8 };
-struct Key {
-    QString account, archive, peer;
-    bool    room = false;
-};
-struct Entry {
-    QString uid, xml;
-    qint64  eventId = 0;
-    // Application-parsed fields for the existing EDB events table.
-    QDateTime timestamp;
-    QString   body, subject, language, extra, messageId, sender, replaceId;
-    int       type = 1, direction = 2;
-    bool      storable = true;
-};
-// A scoped observation, not a claim that the entire archive is cached. Count
-// describes MAM events and may be approximate. A valid observation with count
-// -1 records that this server omitted RSM metadata (avoid probing every page).
-struct Snapshot {
-    int       resultCount = -1;
-    QString   lastUid;
-    QDateTime observedAt;
-    bool      stable = false;
-};
-// Last known incoming position acknowledged by one of our stored displayed
-// markers. Read directly from the materialized message-state mask.
-struct DisplayedCursor {
-    QString   messageId;
-    QDateTime time;
-    qint64    eventId = 0;
-};
-struct Page {
-    Snapshot     snapshot;
-    QList<Entry> entries;
-    int          requestIndex  = -1;
-    bool         queryComplete = false;
-    int          resultCount = -1, firstIndex = -1; // Optional RSM event coordinates.
-    bool         checkpoint = true;                 // Indexed/forward islands do not replace a tail checkpoint.
-    QString      previous; // Proven neighbour before the first entry, for forward catch-up.
-    bool         found    = false;
-    bool         complete = false;
-    bool         stable   = false;
-};
-
 // Additive, atomic migration of the original EDB schema. Never reimports or
 // rewrites existing event payloads. Safe to call again after an interrupted start.
 bool needsMigration(QSqlDatabase db);
@@ -93,6 +50,20 @@ Page readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotC
 // identities, adjacency and the page checkpoint, or rolls all of them back.
 bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &,
                const std::function<bool(qint64)> &eventStored = {});
+// Compatibility wrapper for device-local deletion, including suppression and
+// transactional media-ref release. New runtime callers use the async EDB API.
+// The caller must flush pending EDB writes first and must not send XEP-0424.
+bool scrubStoredMessage(QSqlDatabase db, const Key &, qint64 eventId);
+// All identities are scoped to an account, direct conversation and direction.
+// Delete/check own transactions; a pure match may share the worker's pending batch.
+LocalDeletionResult deleteLocalMessage(QSqlDatabase db, const Key &, qint64 eventId, const QString &clientId = {},
+                                       int direction = 0);
+LocalDeletionResult checkLocalSuppression(QSqlDatabase db, const Key &, Entry);
+std::optional<bool> matchesLocalSuppression(QSqlDatabase db, const Key &, const Entry &);
+// Internal transaction participants shared by live appends, MAM and migration.
+std::optional<bool> applyLocalSuppression(QSqlDatabase         db, const Key &, Entry &,
+                                          LocalDeletionResult *changes = nullptr);
+bool                backfillLocalSuppressions(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 // Erasure must invalidate coverage, including empty boundary pages.
 bool invalidate(QSqlDatabase db, const QString &account, const QString &peer);
 }

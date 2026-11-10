@@ -76,10 +76,12 @@ namespace {
 bool needsMigration(QSqlDatabase db)
 {
     QSqlQuery q(db);
-    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.5"
+    if (!q.exec("SELECT value FROM system WHERE key='version'") || !q.next() || q.value(0).toString() != "0.6"
         || !revisionsExist(db) || !db.tables().contains(QStringLiteral("archive_index_pages"))
         || !db.tables().contains(QStringLiteral("archive_snapshots"))
-        || !db.tables().contains(QStringLiteral("message_state_refs")))
+        || !db.tables().contains(QStringLiteral("message_state_refs"))
+        || !db.tables().contains(QStringLiteral("message_suppressions"))
+        || !db.tables().contains(QStringLiteral("message_stanza_ids")))
         return true;
     return !q.exec("SELECT 1 FROM events WHERE history_date_ms IS NULL LIMIT 1") || q.next();
 }
@@ -92,7 +94,7 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     const QString originalVersion = version.next() ? version.value(0).toString() : QString();
     if (!originalVersion.isEmpty() && originalVersion != QLatin1String("0.1") && originalVersion != QLatin1String("0.2")
         && originalVersion != QLatin1String("0.3") && originalVersion != QLatin1String("0.4")
-        && originalVersion != QLatin1String("0.5")) {
+        && originalVersion != QLatin1String("0.5") && originalVersion != QLatin1String("0.6")) {
         qWarning("[history-cache] Unsupported history schema version");
         return false; // Never downgrade a database created by a future client.
     }
@@ -101,8 +103,9 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         return false;
     QSqlQuery columns(db);
     bool      hasState = false, hasTime = false, hasMessageFlags = false;
-    bool      backfillStates = originalVersion != QLatin1String("0.5")
-        || !db.tables().contains(QStringLiteral("message_state_refs"));
+    bool      backfillStates = (originalVersion != QLatin1String("0.5") && originalVersion != QLatin1String("0.6"))
+        || !db.tables().contains(QStringLiteral("message_state_refs"))
+        || !db.tables().contains(QStringLiteral("message_stanza_ids"));
     if (!columns.exec("PRAGMA table_info(events)")) {
         db.rollback();
         return false;
@@ -205,6 +208,15 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
         "contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,"
         "kind INTEGER NOT NULL,target TEXT NOT NULL,PRIMARY KEY(event_id,kind,target))",
         "CREATE INDEX IF NOT EXISTS message_state_target ON message_state_refs(contact_id,target,kind)",
+        "CREATE TABLE IF NOT EXISTS message_stanza_ids ("
+        "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,"
+        "contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,"
+        "authority TEXT NOT NULL,value TEXT NOT NULL,PRIMARY KEY(event_id,authority,value))",
+        "CREATE INDEX IF NOT EXISTS message_stanza_identity ON message_stanza_ids(contact_id,authority,value)",
+        "CREATE TABLE IF NOT EXISTS message_suppressions ("
+        "account TEXT NOT NULL,peer TEXT NOT NULL,direction INTEGER NOT NULL,kind INTEGER NOT NULL,"
+        "authority TEXT NOT NULL,value TEXT NOT NULL,"
+        "PRIMARY KEY(account,peer,direction,kind,authority,value))",
         "CREATE INDEX IF NOT EXISTS message_displayed_position ON events(contact_id,direction,history_date_ms,id) "
         "WHERE (message_flags & 1)<>0"
     };
@@ -226,10 +238,10 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     // Authentication/old client system records are provably local events.
     if (ok && !hasState)
         ok = exec(db, "UPDATE events SET history_state=2 WHERE history_state=0 AND type IN (2,3,6,7,8)");
-    if (ok && originalVersion != QLatin1String("0.5")) {
+    if (ok && originalVersion != QLatin1String("0.6")) {
         QSqlQuery version(db);
         ok = version.exec("DELETE FROM system WHERE key='version'")
-            && version.exec("INSERT INTO system(key,value) VALUES('version','0.5')");
+            && version.exec("INSERT INTO system(key,value) VALUES('version','0.6')");
     }
     // Index old EDB identity metadata and previously cached MAM correction
     // XML once. Never rewrite the user's original event payloads.
@@ -283,6 +295,8 @@ bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress)
     }
     if (ok && backfillStates)
         ok = backfillMessageStates(db, progress);
+    if (ok)
+        ok = backfillLocalSuppressions(db, progress);
     if (ok && db.commit())
         return true;
     db.rollback();
@@ -389,7 +403,9 @@ QSqlRecord resolvedRecord(QSqlDatabase db, qint64 eventId, QSqlError *error)
     q.bindValue(":id", root);
     if (!readExec(q, error) || !readNext(q, error))
         return {};
-    QSqlRecord record   = q.record();
+    QSqlRecord record = q.record();
+    if (record.value("message_flags").toInt() & MessageState::LocalDeleted)
+        return {};
     const auto original = QJsonDocument::fromJson(record.value("extra_data").toString().toUtf8()).object();
     QString    target   = original.value("psi:origin").toString();
     if (record.value("type").toInt() == 9) {
@@ -470,7 +486,8 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     QString   sql = "SELECT e.id FROM events e JOIN contacts c ON c.id=e.contact_id "
                     "LEFT JOIN message_revisions r ON r.event_id=e.id "
                     "WHERE c.acc_id=:account AND c.jid=:peer "
-                    "AND (r.event_id IS NULL OR r.root_id=e.id)";
+                    "AND (r.event_id IS NULL OR r.root_id=e.id) "
+                    "AND (e.message_flags & :deleted)=0";
     if (before > 0)
         sql += " AND (e.history_date_ms,e.id) < (SELECT history_date_ms,id FROM events WHERE id=:before AND "
                "contact_id=c.id)";
@@ -478,6 +495,7 @@ QList<QSqlRecord> localRecords(QSqlDatabase db, const QString &account, const QS
     q.prepare(sql);
     q.bindValue(":account", account);
     q.bindValue(":peer", peer);
+    q.bindValue(":deleted", int(MessageState::LocalDeleted));
     q.bindValue(":limit", limit);
     if (before > 0)
         q.bindValue(":before", before);
@@ -679,8 +697,9 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit,
             if (seen.contains(previous))
                 return {};
             seen.insert(previous);
-            q.prepare("SELECT uid,xml,event_id FROM archive_items i JOIN events e ON e.id=i.event_id WHERE " + scope
-                      + " AND uid=:uid AND next_uid=:next AND stable=1 AND (e.history_state & 3)=1");
+            q.prepare("SELECT uid,xml,event_id,e.message_flags,e.date,e.type,e.direction FROM archive_items i JOIN "
+                      "events e ON e.id=i.event_id WHERE "
+                      + scope + " AND uid=:uid AND next_uid=:next AND stable=1 AND (e.history_state & 3)=1");
             bindKey(q, key);
             q.bindValue(":uid", previous);
             q.bindValue(":next", cursor);
@@ -690,6 +709,10 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit,
             entry.uid     = q.value(0).toString();
             entry.xml     = q.value(1).toString();
             entry.eventId = q.value(2).toLongLong();
+            entry.suppressed = q.value(3).toInt() & MessageState::LocalDeleted;
+            entry.timestamp  = q.value(4).toDateTime();
+            entry.type       = q.value(5).toInt();
+            entry.direction  = q.value(6).toInt();
             page.entries.prepend(entry);
             if (page.firstIndex >= 0)
                 --page.firstIndex;
@@ -715,7 +738,8 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit,
     page.resultCount = q.value(4).isNull() ? -1 : q.value(4).toInt();
     page.firstIndex  = q.value(5).isNull() ? -1 : q.value(5).toInt();
     q.finish();
-    q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_page_items p JOIN archive_items i "
+    q.prepare("SELECT i.uid,i.xml,i.event_id,e.message_flags,e.date,e.type,e.direction FROM archive_page_items p JOIN "
+              "archive_items i "
               "ON i.event_id=p.event_id AND i.uid=p.uid JOIN events e ON e.id=i.event_id "
               "WHERE p.page_id=:id AND i.stable=1 AND (e.history_state & 3)=1 AND "
               + scope + " ORDER BY p.position");
@@ -728,6 +752,10 @@ Page readPage(QSqlDatabase db, const Key &key, const QString &before, int limit,
         entry.uid     = q.value(0).toString();
         entry.xml     = q.value(1).toString();
         entry.eventId = q.value(2).toLongLong();
+        entry.suppressed = q.value(3).toInt() & MessageState::LocalDeleted;
+        entry.timestamp  = q.value(4).toDateTime();
+        entry.type       = q.value(5).toInt();
+        entry.direction  = q.value(6).toInt();
         page.entries.append(entry);
     }
     // Detect damaged or explicitly deleted cache entries. A short page is only
@@ -757,8 +785,9 @@ Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit,
         if (next.isEmpty() || seen.contains(next))
             return {};
         seen.insert(next);
-        q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_items i JOIN events e ON e.id=i.event_id WHERE " + scope
-                  + " AND i.uid=:uid AND i.previous_uid=:previous AND i.stable=1 AND (e.history_state & 3)=1");
+        q.prepare("SELECT i.uid,i.xml,i.event_id,e.message_flags,e.date,e.type,e.direction FROM archive_items i JOIN "
+                  "events e ON e.id=i.event_id WHERE "
+                  + scope + " AND i.uid=:uid AND i.previous_uid=:previous AND i.stable=1 AND (e.history_state & 3)=1");
         bindKey(q, key);
         q.bindValue(":uid", next);
         q.bindValue(":previous", cursor);
@@ -768,6 +797,10 @@ Page readAfter(QSqlDatabase db, const Key &key, const QString &after, int limit,
         entry.uid     = q.value(0).toString();
         entry.xml     = q.value(1).toString();
         entry.eventId = q.value(2).toLongLong();
+        entry.suppressed = q.value(3).toInt() & MessageState::LocalDeleted;
+        entry.timestamp  = q.value(4).toDateTime();
+        entry.type       = q.value(5).toInt();
+        entry.direction  = q.value(6).toInt();
         page.entries.append(entry);
         cursor = next;
         q.finish();
@@ -799,7 +832,8 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
     const int  first    = q.value(2).toInt();
     const bool complete = q.value(3).toBool();
     q.finish();
-    q.prepare("SELECT i.uid,i.xml,i.event_id FROM archive_index_page_items p JOIN archive_items i"
+    q.prepare("SELECT i.uid,i.xml,i.event_id,e.message_flags,e.date,e.type,e.direction FROM archive_index_page_items p "
+              "JOIN archive_items i"
               " ON i.event_id=p.event_id AND i.uid=p.uid JOIN events e ON e.id=i.event_id"
               " WHERE p.page_id=:id AND i.stable=1 AND (e.history_state & 3)=1 AND "
               + scope + " ORDER BY p.position");
@@ -812,6 +846,10 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
         entry.uid     = q.value(0).toString();
         entry.xml     = q.value(1).toString();
         entry.eventId = q.value(2).toLongLong();
+        entry.suppressed = q.value(3).toInt() & MessageState::LocalDeleted;
+        entry.timestamp  = q.value(4).toDateTime();
+        entry.type       = q.value(5).toInt();
+        entry.direction  = q.value(6).toInt();
         page.entries.append(entry);
     }
     if (page.entries.size() != count)
@@ -906,7 +944,24 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             }
         }
         const bool existingEvent = eventId > 0;
-        bool       preserveProjection = existingEvent && !page.stable;
+        const auto suppressed    = applyLocalSuppression(db, key, entry, &page.localChanges);
+        if (!suppressed)
+            return fail();
+        if (!entry.storable) {
+            reusable = false;
+            continue;
+        }
+        bool locallyDeleted = *suppressed;
+        if (existingEvent) {
+            q.prepare("SELECT (message_flags & :deleted)<>0 FROM events WHERE id=:id");
+            q.bindValue(":deleted", int(MessageState::LocalDeleted));
+            q.bindValue(":id", eventId);
+            if (!q.exec() || !q.next())
+                return fail();
+            locallyDeleted = locallyDeleted || q.value(0).toBool();
+            q.finish();
+        }
+        bool preserveProjection = locallyDeleted || (existingEvent && !page.stable);
         if (!eventId) {
             q.prepare("INSERT INTO "
                       "events(contact_id,resource,date,history_date_ms,type,direction,subject,m_text,lang,extra_data,"
@@ -927,7 +982,25 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
             eventId = q.lastInsertId().toLongLong();
         }
         entry.eventId = eventId;
-        if (existingEvent && page.stable) {
+        if (locallyDeleted) {
+            entry.suppressed = true;
+            if (!existingEvent) {
+                q.prepare("INSERT OR IGNORE INTO message_state_refs(event_id,contact_id,kind,target) "
+                          "VALUES(:id,:contact,0,'')");
+                q.bindValue(":id", eventId);
+                q.bindValue(":contact", contact);
+                if (!q.exec())
+                    return fail();
+            }
+            entry.body = entry.subject = entry.language = entry.extra = entry.xml = QStringLiteral("");
+            q.prepare("UPDATE events SET m_text='',subject='',lang='',extra_data='',resource='',"
+                      "message_flags=message_flags | :deleted WHERE id=:id");
+            q.bindValue(":id", eventId);
+            q.bindValue(":deleted", int(MessageState::LocalDeleted));
+            if (!q.exec())
+                return fail();
+        }
+        if (existingEvent && page.stable && !locallyDeleted) {
             q.prepare("SELECT extra_data,m_text FROM events WHERE id=:id");
             q.bindValue(":id", eventId);
             if (!q.exec() || !q.next())
@@ -1001,7 +1074,9 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
         bindKey(q, key);
         q.bindValue(":uid", entry.uid);
         q.bindValue(":event", eventId);
-        q.bindValue(":xml", entry.xml);
+        // A MAM replay may confirm archive connectivity, but may never
+        // repopulate plaintext or raw XML for a locally deleted event.
+        q.bindValue(":xml", locallyDeleted ? QStringLiteral("") : entry.xml);
         q.bindValue(":stable", page.stable);
         if (!q.exec())
             return fail();

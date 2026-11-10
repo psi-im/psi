@@ -3,7 +3,7 @@
 
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_reference.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 
 #include <QByteArray>
 #include <QHash>
@@ -38,13 +38,13 @@ public:
         PublicationId                  id;
         QString                        account;
         XMPP::Jid                      announcer;
-        MessageAttachments::Attachment attachment;
+        MessageFileShares::FileShare   file;
     };
 
     // The publications of stored messages. FileSharingPublicationSync keeps them in line
     // with history, so that a message that is not stored leaves nothing here.
     bool                 add(const PublicationId &id, const QString &account, const XMPP::Jid &announcer,
-                             const MessageAttachments::Attachment &attachment);
+                             const MessageFileShares::FileShare &attachment);
     bool                 addBatch(const QList<Announcement> &announcements);
     bool                 remove(const QList<PublicationId> &ids);
     QList<PublicationId> missing(const QList<PublicationId> &ids, QSqlError *error = nullptr) const;

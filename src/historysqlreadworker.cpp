@@ -221,14 +221,13 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
     const bool backwards = request.direction == 1; // EDB::Backward
     const bool dateQuery = !request.date.isNull();
 
-    QString sql =
-        "SELECT contacts.acc_id, events.id, contacts.jid, events.date, events.type, direction, "
-        "subject, m_text, lang, extra_data, history_state, "
-        "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root "
-        "ON root.id=r.root_id WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
-        "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
-        "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml "
-        "FROM events, contacts WHERE contacts.id=events.contact_id";
+    QString sql = "SELECT contacts.acc_id, events.id, contacts.jid, events.date, events.type, direction, "
+                  "subject, m_text, lang, extra_data, history_state, "
+                  "COALESCE((SELECT root.message_flags FROM message_revisions r JOIN events root "
+                  "ON root.id=r.root_id WHERE r.event_id=events.id),events.message_flags) AS message_flags, "
+                  "(SELECT uid FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_uid, "
+                  "(SELECT xml FROM archive_items WHERE event_id=events.id LIMIT 1) AS archive_xml "
+                  "FROM events, contacts WHERE contacts.id=events.contact_id AND (events.message_flags & 16)=0";
     if (!allContacts)
         sql += QStringLiteral(" AND contacts.jid=:jid");
     if (!allAccounts)
@@ -282,7 +281,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
             result.beginRow = request.start;
         } else {
             QString countSql = QStringLiteral("SELECT count(*) FROM events, contacts "
-                                               "WHERE contacts.id=events.contact_id");
+                                              "WHERE contacts.id=events.contact_id AND (events.message_flags & 16)=0");
             if (!allContacts)
                 countSql += QStringLiteral(" AND contacts.jid=:jid");
             if (!allAccounts)
@@ -322,10 +321,32 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
         emit writeCompleted(result);
         return;
     }
+    // An ordinary ingress check reads identity only. A miss cannot mutate
+    // state and need not flush the append batch. A match crosses the commit
+    // barrier before learning aliases or hiding anything in the GUI.
+    if (request.type == HistoryWriteRequest::CheckSuppression) {
+        const auto matched = HistoryArchive::matchesLocalSuppression(db_, request.archiveKey, request.identity);
+        if (!matched || !*matched) {
+            result.success = result.localDeletion.success = matched.has_value();
+            emit writeCompleted(result);
+            return;
+        }
+    }
     // Erase and atomic MAM stores are barriers: they must neither overtake
     // queued appends nor be accidentally included in an append batch.
     if (request.type != HistoryWriteRequest::Append)
         flushPendingAppends();
+    result.changedKey = request.archiveKey;
+    if (request.type == HistoryWriteRequest::DeleteLocal || request.type == HistoryWriteRequest::CheckSuppression) {
+        result.localDeletion     = request.type == HistoryWriteRequest::DeleteLocal
+                ? HistoryArchive::deleteLocalMessage(db_, request.archiveKey, request.eventId, request.identity.messageId,
+                                                     request.identity.direction)
+                : HistoryArchive::checkLocalSuppression(db_, request.archiveKey, request.identity);
+        result.success           = result.localDeletion.success;
+        result.mediaLinksRemoved = result.success && !result.localDeletion.hiddenEvents.isEmpty();
+        emit writeCompleted(result);
+        return;
+    }
     if (request.type == HistoryWriteRequest::StorePage) {
         // storePage owns its transaction: message rows, identity, revisions,
         // adjacency and persistent cursor either all commit or roll back.
@@ -334,6 +355,8 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
             db_, request.archiveKey, request.before, request.limit, result.archivePage, [this, &result](qint64 id) {
                 return !eventStoredHook_ || eventStoredHook_(db_, id, &result.mediaLinksRemoved);
             });
+        result.localDeletion = result.archivePage.localChanges;
+        result.mediaLinksRemoved |= result.success && !result.localDeletion.hiddenEvents.isEmpty();
         emit writeCompleted(result);
         return;
     }
@@ -390,14 +413,20 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
                 delivery.direction = event.direction;
                 delivery.body = event.matchBody;
                 delivery.subject = event.matchSubject;
+                delivery.replaceId = event.replaceId;
+                delivery.extra     = event.extras;
+                result.changedKey  = { request.account, {}, jid, request.jidType != 1 };
+                const auto suppressed
+                    = HistoryArchive::applyLocalSuppression(db_, result.changedKey, delivery, &result.localDeletion);
+                result.localDeletion.suppressed = suppressed && *suppressed;
                 // Only a confirmed existing archived delivery can suppress
                 // a duplicate. Old servers may have no stable server IDs.
                 QSqlError  error;
-                const bool existing
-                    = event.isMessage && HistoryArchive::matchingDelivery(db_, contactId, delivery, true, &error);
-                if (error.isValid()) {
+                const bool existing = suppressed && !*suppressed && event.isMessage
+                    && HistoryArchive::matchingDelivery(db_, contactId, delivery, true, &error);
+                if (!suppressed || error.isValid()) {
                     qWarning() << "[history-db] Could not match live delivery:" << error.text();
-                } else if (existing) {
+                } else if (existing || *suppressed) {
                     ok = true;
                 } else {
                     QSqlQuery q(db_);

@@ -67,6 +67,9 @@ public:
         std::function<void(const HistoryArchive::Key &, const QString &, const QString &, const QDateTime &, QObject *,
                            std::function<void(CachedMessage, bool)>)>
             ownPlaintextAsync;
+        std::function<void(const HistoryArchive::Key &, HistoryArchive::Entry, QObject *,
+                           std::function<void(bool, bool)>)>
+            suppressionAsync;
     };
     static constexpr int PageSize = 40;
     HistorySync(PsiAccount *, const QString &peer, bool room, const QString &before, QObject *parent, int pageSize = PageSize);
@@ -82,6 +85,7 @@ public:
     bool               fromCache() const { return cached_; }
     QString            statusString() const { return error_; }
     QList<QDomElement> archive() const;
+    const QList<HistoryArchive::Entry> &entries() const { return page_.entries; }
     qint64             eventId(const QString &uid) const;
     ResolvedMessage    resolvedMessage(const QString &uid) const;
     XMPP::Message      message(const QString &uid) const;
@@ -112,6 +116,8 @@ private:
     HistoryArchive::Snapshot      snapshot_;
     void                          decodeNext();
     void                          acceptPage();
+    void                           checkAcceptedPage(HistoryArchive::Page, int index = 0);
+    void                           acceptDecodedPage(HistoryArchive::Page);
     void                          finishAcceptedPage();
     void                          finishResolvedPage();
     void                          processSavedPage(HistoryArchive::Page);
@@ -128,6 +134,7 @@ private:
     QList<QDomElement>            results_;
     QHash<QString, XMPP::Message> decoded_;
     QSet<QString>                 protocolOnly_;
+    QHash<QString, bool>           suppressionChecks_;
     QSet<QString>                 decryptionFailures_;
     QSet<QString>                 bodyElements_;
     int                           pageSize_        = PageSize;

@@ -173,7 +173,7 @@ add_test(NAME mam_history_sqlite_policy COMMAND mam_history_sqlite_policy_test)
 # worker thread and return only value records to GUI-side event reconstruction.
 add_executable(mam_history_sql_read_test HistorySqlReadWorkerTest.cpp
     ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h ../../src/historymediaqueries.cpp
-    ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
+    ../../src/historyarchive.cpp ../../src/historylocaldeletion.cpp ../../src/historymessagestate.cpp)
 target_include_directories(mam_history_sql_read_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
 target_link_libraries(mam_history_sql_read_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Test)

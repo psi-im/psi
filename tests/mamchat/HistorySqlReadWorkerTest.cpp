@@ -195,6 +195,72 @@ private slots:
         QCOMPARE(result.rows.size(), 3); // An undecoded hit still permits live-plaintext fallback.
     }
 
+    void localDeletionIsACommitBarrierAndQueuedAppendsCannotResurrect()
+    {
+        HistoryDatabase     fixture;
+        QSignalSpy          wrote(&fixture.worker, &HistorySqlReadWorker::writeCompleted);
+        HistoryWriteRequest append;
+        append.id            = 1;
+        append.account       = fixture.key.account;
+        append.contactPeer   = fixture.key.peer;
+        append.jidType       = 1;
+        append.encoded.valid = append.encoded.isMessage = true;
+        append.encoded.type                             = 1;
+        append.encoded.direction                        = 2;
+        append.encoded.timestamp                        = QDateTime::fromMSecsSinceEpoch(1000);
+        append.encoded.messageId                        = "private-id";
+        append.encoded.body = append.encoded.matchBody = "private text";
+        append.encoded.extras = "{\"psi:decoded\":true,\"psi:message\":{\"id\":\"private-id\"}}";
+        fixture.worker.write(append);
+        QCOMPARE(wrote.size(), 0);
+        HistoryWriteRequest probe;
+        probe.id                 = 2;
+        probe.type               = HistoryWriteRequest::CheckSuppression;
+        probe.archiveKey         = fixture.key;
+        probe.identity.messageId = "ordinary-unrelated-message";
+        probe.identity.direction = 2;
+        fixture.worker.write(probe);
+        QCOMPARE(wrote.size(), 1); // An identity miss must not force an append fsync.
+        QCOMPARE(qvariant_cast<HistoryWriteResult>(wrote[0][0]).id, 2);
+        HistoryWriteRequest remove;
+        remove.id                 = 3;
+        remove.type               = HistoryWriteRequest::DeleteLocal;
+        remove.archiveKey         = fixture.key;
+        remove.identity.messageId = "private-id";
+        remove.identity.direction = 2;
+        fixture.worker.write(remove);
+        QCOMPARE(wrote.size(), 3);
+        QCOMPARE(qvariant_cast<HistoryWriteResult>(wrote[1][0]).id, 1);
+        const auto deleted = qvariant_cast<HistoryWriteResult>(wrote[2][0]);
+        QVERIFY(deleted.success && deleted.localDeletion.suppressed);
+        QVERIFY(!deleted.localDeletion.hiddenEvents.isEmpty());
+        append.id = 4;
+        fixture.worker.write(append); // Captured before the deletion committed.
+        append.id                = 5;
+        append.encoded.messageId = "future-correction";
+        append.encoded.replaceId = "private-id";
+        fixture.worker.write(append);
+        QSignalSpy         read(&fixture.worker, &HistorySqlReadWorker::completed);
+        HistoryReadRequest query;
+        query.type    = HistoryReadRequest::Find;
+        query.account = fixture.key.account;
+        query.peer    = fixture.key.peer;
+        query.text    = "private";
+        fixture.worker.read(query);
+        QCOMPARE(read.size(), 1);
+        const auto found = qvariant_cast<HistoryReadResult>(read[0][0]);
+        QVERIFY(found.success && found.rows.isEmpty());
+        QCOMPARE(wrote.size(), 5);
+        for (int i = 3; i < wrote.size(); ++i) {
+            const auto result = qvariant_cast<HistoryWriteResult>(wrote[i][0]);
+            QVERIFY(result.success && !result.inserted && result.localDeletion.suppressed);
+        }
+        QSqlQuery stored(fixture.db);
+        QVERIFY(stored.exec("SELECT count(*) FROM events WHERE (message_flags & 16)<>0 AND extra_data=''"));
+        QVERIFY(stored.next());
+        QCOMPARE(stored.value(0).toInt(), 1);
+    }
+
     void failedIdentityLookupRollsBackAppendBatch()
     {
         HistoryDatabase fixture;

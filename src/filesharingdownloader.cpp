@@ -18,9 +18,9 @@
  */
 
 #include "filesharingdownloader.h"
-#include "filesharingitem.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmanager.h"
+#include "filesourceselector.h"
 #include "fileutil.h"
 #include "httputil.h"
 #include "iris/jingle-session.h"
@@ -509,7 +509,6 @@ public:
     bool                                      failureSignalled = false;
     bool                                      selfDelete       = false;
     bool                                      integrityFailure = false;
-    FileSharingItem::SourceType               currentType      = FileSharingItem::SourceType::None;
 
     void finishWithError(const QString &errStr)
     {
@@ -573,16 +572,16 @@ public:
             return;
         }
         QString uri  = uris.takeLast();
-        auto    type = FileSharingItem::sourceType(uri);
+        auto    type = FileSourceSelector::type(uri);
         switch (type) {
-        case FileSharingItem::SourceType::HTTP:
-        case FileSharingItem::SourceType::FTP:
+        case FileSourceSelector::Type::HTTP:
+        case FileSourceSelector::Type::FTP:
             downloader = new NAMFileShareDownloader(acc, uri, q);
             break;
-        case FileSharingItem::SourceType::BOB:
+        case FileSourceSelector::Type::BOB:
             downloader = new BOBFileShareDownloader(acc, uri, jids, q);
             break;
-        case FileSharingItem::SourceType::Jingle:
+        case FileSourceSelector::Type::Jingle:
             downloader = new JingleFileShareDownloader(acc, uri, file, jids, pool, q);
             break;
         default:
@@ -686,7 +685,7 @@ FileShareDownloader::FileShareDownloader(PsiAccount *acc, const QList<XMPP::Hash
     d->sums = sums;
     d->file = file;
     d->jids = jids;
-    d->uris = FileSharingItem::sortSourcesByPriority(uris);
+    d->uris = FileSourceSelector::prioritized(uris);
 }
 
 FileShareDownloader::~FileShareDownloader()

@@ -290,9 +290,9 @@ FileSharingCatalog::FileSharingCatalog()
 }
 
 bool FileSharingCatalog::add(const PublicationId &id, const QString &account, const XMPP::Jid &announcer,
-                             const MessageAttachments::Attachment &attachment)
+                             const MessageFileShares::FileShare &file)
 {
-    return addBatch({ { id, account, announcer, attachment } });
+    return addBatch({ { id, account, announcer, file } });
 }
 
 bool FileSharingCatalog::addBatch(const QList<Announcement> &announcements)
@@ -304,18 +304,18 @@ bool FileSharingCatalog::addBatch(const QList<Announcement> &announcements)
         return false;
     bool ok = true;
     for (const auto &announcement : announcements) {
-        const auto &attachment = announcement.attachment;
+        const auto &file = announcement.file;
         if (announcement.id.isEmpty() || announcement.account.isEmpty()) {
             ok = false;
-        } else if (attachment.isFile()) {
+        } else if (file.hasContentHashes()) {
             ok = insert(db, announcement.id, announcement.account, announcement.announcer, false, {},
-                        attachment.reference.mediaSharing(), {});
-        } else if (const auto url = attachment.url(); url.isValid()) {
+                        file.reference.mediaSharing(), {});
+        } else if (const auto url = file.url(); url.isValid()) {
             XMPP::MediaSharing media;
-            media.file.setDescription(attachment.description);
-            media.sources.append(attachment.reference.uri());
+            media.file.setDescription(file.description);
+            media.sources.append(file.reference.uri());
             ok = insert(db, announcement.id, announcement.account, announcement.announcer, false,
-                        MessageAttachments::urlIdentity(url).toString(), media, {});
+                        MessageFileShares::urlIdentity(url).toString(), media, {});
         } else {
             ok = false;
         }

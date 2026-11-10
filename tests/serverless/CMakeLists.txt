@@ -10,3 +10,7 @@ target_link_libraries(serverless_ui_peer PRIVATE ${iris_LIB})
 add_test(NAME serverless_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/smoke.py
     $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_FILE:serverless_ui_peer>)
 set_tests_properties(serverless_ui PROPERTIES TIMEOUT 100)
+
+add_test(NAME serverless_ui_local_deletion COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/smoke.py
+    $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_BINARY_DIR} $<TARGET_FILE:serverless_ui_peer>)
+set_tests_properties(serverless_ui_local_deletion PROPERTIES TIMEOUT 140 ENVIRONMENT "PSI_UI_DELETE_TEST=1")

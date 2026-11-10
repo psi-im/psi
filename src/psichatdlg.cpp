@@ -525,6 +525,9 @@ void PsiChatDlg::setJid(const Jid &newJid)
     // Detect MUC PMs on resource changes, never on individual messages.
     roomOccupantChat_ = isRoomOccupantChat();
     if (nativeTimeline_)
+        nativeTimeline_->setLocalDeletionEnabled(!roomOccupantChat_
+                                                 && (account()->edb()->features() & EDB::LocalDeletion));
+    if (nativeTimeline_)
         nativeTimeline_->refreshAvatars();
 
     // An encryption session can be resource-specific even when the
@@ -579,12 +582,40 @@ void PsiChatDlg::initUi()
     delete ui_.log; // The .ui placeholder is not part of the native timeline.
     configureNativeChat(nativeTimeline_, account(), false);
     roomOccupantChat_ = isRoomOccupantChat();
+    if (nativeTimeline_)
+        nativeTimeline_->setLocalDeletionEnabled(!roomOccupantChat_
+                                                 && (account()->edb()->features() & EDB::LocalDeletion));
     nativeTimeline_->setAvatarResolver([this](const MessageView &message) {
         auto *avatars = account()->avatarFactory();
         if (message.isLocal())
             return avatars->getAvatar(account()->jid().withResource({}));
         return roomOccupantChat_ ? avatars->getMucAvatar(jid()) : avatars->getAvatar(jid());
     });
+    connect(nativeTimeline_, &MamChatWidget::deleteMessageLocallyRequested, this,
+            [this](qint64 eventId, const QString &clientId, bool local) {
+                const auto                peer = jid().bare();
+                const HistoryArchive::Key key { account()->id(), account()->jid().bare(), peer, false };
+                account()->edb()->requestDeleteLocalMessage(
+                    key, eventId, clientId, local ? 1 : 2, this, [this, peer](bool ok) {
+                        if (!ok && jid().bare() == peer)
+                            QMessageBox::warning(
+                                this, tr("Delete locally"),
+                                tr("Could not delete this message locally. Refresh history and try again."));
+                    });
+            });
+    connect(account()->edb(), &EDB::localMessagesDeleted, this,
+            [this](const QString &owner, const QString &peer, const HistoryArchive::LocalDeletionResult &changes) {
+                if (owner != account()->id() || peer != jid().bare() || roomOccupantChat_)
+                    return;
+                if (mamTask_) {
+                    mamTask_->safeDelete();
+                    mamTask_.clear();
+                }
+                ++localHistoryGeneration_;
+                localHistoryLoading_ = false;
+                nativeTimeline_->removeLocallyDeleted(changes.hiddenEvents, changes.incomingIds, changes.outgoingIds);
+                nativeTimeline_->setHistoryLoading(false);
+            });
     connect(nativeTimeline_, &MamChatWidget::outgoingReactions, this, &PsiChatDlg::sendOutgoingReactions);
     connect(nativeTimeline_, &MamChatWidget::outgoingMessageRetraction, this, &PsiChatDlg::sendMessageRetraction);
     connect(nativeTimeline_, &MamChatWidget::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);

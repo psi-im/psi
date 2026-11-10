@@ -111,6 +111,9 @@ public:
     // owns keyboard focus but has no selection of its own.
     bool copyCurrentTextSelection();
     void cancelMessageSelection();
+    void setLocalDeletionEnabled(bool enabled) { localDeletionEnabled_ = enabled; }
+    void removeLocallyDeleted(const QList<qint64> &events, const QStringList &incomingIds,
+                              const QStringList &outgoingIds);
     // Place the unread boundary after the last currently displayed row.
     void markUnreadBoundary();
     int  unreadIncomingCount() const { return unreadIncomingCount_; }
@@ -124,6 +127,7 @@ signals:
     void replyRequested(const ChatReply &reply);
     void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
     void editMessageRequested(const QString &messageId, const QString &text);
+    void deleteMessageLocallyRequested(qint64 historyId, const QString &clientId, bool local);
     void olderMessagesRequested();
     void archiveRangeRequested(const MamHistorySource::Request &request);
     void archiveRangeCancelled();
@@ -167,6 +171,7 @@ protected:
     QColor   hoverHighlightColor() const override;
 
 private:
+    bool localDeletionEnabled_ = false;
     // Theme values, unless a style sheet overrides them.
     void                      applyLogLook();
     QPalette                  logPalette() const;

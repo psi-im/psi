@@ -63,6 +63,7 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                        QT_PLUGIN_PATH=sys.argv[2], LANG="C.UTF-8",
                        PSI_UI_SCREENSHOT=str(base / "settings.png"))
     persistent_id = None
+    deleting = bool(environment.get("PSI_UI_DELETE_TEST"))
     for run in range(2):
         environment["PSI_UI_EXPECTED_NAME"] = environment.get("USER", environment.get("USERNAME", "Psi")) if run == 0 else "UI Alice"
         peer = None
@@ -83,7 +84,7 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                                               env=environment, stdout=output, stderr=subprocess.STDOUT,
                                               start_new_session=True)
                     try:
-                        result.wait(timeout=45)
+                        result.wait(timeout=60 if deleting else 45)
                     except subprocess.TimeoutExpired:
                         os.killpg(result.pid, signal.SIGTERM)
                         try:
@@ -96,6 +97,8 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                 assert result.returncode == 0 and "UI-PROBE PASS" in app_log, f"Psi exit={result.returncode}:\n{app_log}"
                 if run == 0:
                     assert "UI-PROBE MESSAGES" in app_log, app_log
+                    if deleting:
+                        assert "UI-PROBE LOCAL-DELETION" in app_log, app_log
                     assert "PEER-MESSAGE-OK" in (base / "peer.log").read_text()
             finally:
                 if peer is not None:
@@ -123,20 +126,28 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
             count = database.execute("SELECT count(*) FROM events e JOIN contacts c ON c.id=e.contact_id "
                                      "WHERE c.acc_id=? AND e.m_text=?",
                                      (persistent_id, "serverless-ui-test")).fetchone()[0]
-            assert count == 2, f"Expected incoming/outgoing EDB records, got {count}"
+            assert count == (1 if deleting else 2), f"Expected incoming/outgoing EDB records, got {count}"
             # Of those two, the reply attaches two files, and history links only those to publications.
             links = database.execute("SELECT r.publication_id FROM message_media_refs r "
                                      "JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
                                      "WHERE c.acc_id=? ORDER BY r.ordinal", (persistent_id,)).fetchall()
-            assert len(links) == 2, f"Expected the attachments of the reply to be linked, got {links}"
+            assert len(links) == (0 if deleting else 2), f"Expected the attachments of the reply to be linked, got {links}"
         database.close()
         with sqlite3.connect(profile / "files.sqlite") as database:
             publications = database.execute("SELECT id,serving,announcer FROM publications WHERE account=?",
                                             (persistent_id,)).fetchall()
             assert sorted(row[:2] for row in publications) == sorted((link[0], 0) for link in links), publications
+            if deleting:
+                with sqlite3.connect(history) as stored:
+                    assert stored.execute("SELECT count(*) FROM events e JOIN contacts c ON c.id=e.contact_id "
+                                          "WHERE c.acc_id=? AND (e.message_flags & 16)<>0 AND e.extra_data=''",
+                                          (persistent_id,)).fetchone()[0] == 1
+                    assert stored.execute("SELECT count(*) FROM message_suppressions WHERE account=?",
+                                          (persistent_id,)).fetchone()[0] >= 1
+                stored.close()
             assert all(row[2].startswith("test@p-") for row in publications), publications
-            for link, url, content in ((links[0], "https://example.invalid/peer-file.bin", b"serverless-ui-file"),
-                                       (links[1], "https://example.invalid/shared-file.bin", b"serverless-ui-sharing")):
+            for link, url, content in (() if deleting else ((links[0], "https://example.invalid/peer-file.bin", b"serverless-ui-file"),
+                                       (links[1], "https://example.invalid/shared-file.bin", b"serverless-ui-sharing"))):
                 sources = database.execute("SELECT uri FROM publication_sources WHERE publication_id=?",
                                            link).fetchall()
                 assert sources == [(url,)], sources

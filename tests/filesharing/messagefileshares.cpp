@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "messageattachments.h"
+#include "messagefileshares.h"
 
 #include "iris/jingle-pub.h"
 #include "iris/xmpp_hash.h"
@@ -12,7 +12,7 @@
 
 using namespace XMPP;
 
-class MessageAttachmentsTest : public QObject {
+class MessageFileSharesTest : public QObject {
     Q_OBJECT
 
     Reference share(const QString &source)
@@ -55,10 +55,10 @@ private slots:
         incoming.urlAdd(Url("https://EXAMPLE.org/picture.png?a=1#ignored", "duplicate"));
         incoming.urlAdd(Url("xmpp:bob@example.org", "unrelated"));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 1);
-        QVERIFY(result.attachments.first().reference.mediaSharing().isValid());
-        QCOMPARE(result.attachments.first().description, QString("duplicate"));
+        const auto result = MessageFileShares::collect(incoming);
+        QCOMPARE(result.files.size(), 1);
+        QVERIFY(result.files.first().reference.mediaSharing().isValid());
+        QCOMPARE(result.files.first().description, QString("duplicate"));
         QCOMPARE(result.links.size(), 1);
         QCOMPARE(result.links.first().url(), QString("xmpp:bob@example.org"));
         QCOMPARE(incoming.urlList().size(), 2); // the message itself is not changed
@@ -72,9 +72,9 @@ private slots:
         incoming.setBody(url);
         incoming.urlAdd(Url(url, "photo"));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 1);
-        const auto &attachment = result.attachments.first();
+        const auto result = MessageFileShares::forDisplay(incoming);
+        QCOMPARE(result.files.size(), 1);
+        const auto &attachment = result.files.first();
         QCOMPARE(attachment.reference.uri(), url); // the full URL, fragment included, to open
         QCOMPARE(attachment.reference.begin(), 0);
         QCOMPARE(attachment.reference.end(), url.size() - 1);
@@ -91,8 +91,8 @@ private slots:
         incoming.setBody(QString("Look: %1 !").arg(url));
         incoming.urlAdd(Url(url, "article"));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QVERIFY(result.attachments.isEmpty());
+        const auto result = MessageFileShares::forDisplay(incoming);
+        QVERIFY(result.files.isEmpty());
         QVERIFY(result.links.isEmpty());
     }
 
@@ -102,14 +102,14 @@ private slots:
         Message       incoming;
         incoming.setBody("View: " + url);
         incoming.urlAdd(Url(url + "#frag", "photo"));
-        QVERIFY(MessageAttachments::collect(incoming).attachments.isEmpty()); // still the link in the text
+        QVERIFY(MessageFileShares::forDisplay(incoming).files.isEmpty()); // still the link in the text
 
         incoming.setBody(url);
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 1);
-        QCOMPARE(result.attachments.first().reference.uri(), url + "#frag");
-        QCOMPARE(result.attachments.first().reference.begin(), 0);
-        QCOMPARE(result.attachments.first().reference.end(), url.size() - 1);
+        const auto result = MessageFileShares::forDisplay(incoming);
+        QCOMPARE(result.files.size(), 1);
+        QCOMPARE(result.files.first().reference.uri(), url + "#frag");
+        QCOMPARE(result.files.first().reference.begin(), 0);
+        QCOMPARE(result.files.first().reference.end(), url.size() - 1);
     }
 
     void attachmentOnlyAndRepeatedOobGiveOneAttachment()
@@ -118,10 +118,10 @@ private slots:
         incoming.urlAdd(Url("https://example.org/photo.png#one"));
         incoming.urlAdd(Url("https://example.org/photo.png#two"));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 1);
-        QCOMPARE(result.attachments.first().reference.uri(), QString("https://example.org/photo.png#one"));
-        QVERIFY(result.attachments.first().reference.begin() < 0);
+        const auto result = MessageFileShares::collect(incoming);
+        QCOMPARE(result.files.size(), 1);
+        QCOMPARE(result.files.first().reference.uri(), QString("https://example.org/photo.png#one"));
+        QVERIFY(result.files.first().reference.begin() < 0);
     }
 
     void existingSimsBodyRangeIsKept()
@@ -134,10 +134,61 @@ private slots:
         incoming.setReferences({ ref });
         incoming.urlAdd(Url(url));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 2);
-        QCOMPARE(result.attachments.at(0).reference.begin(), 0);
-        QVERIFY(result.attachments.at(1).reference.begin() < 0); // shown after the body instead
+        const auto result = MessageFileShares::forDisplay(incoming);
+        QCOMPARE(result.files.size(), 2);
+        QCOMPARE(result.files.at(0).reference.begin(), 0);
+        QVERIFY(result.files.at(1).reference.begin() < 0); // shown after the body instead
+    }
+
+    void fileAnnouncementsDoNotDependOnBodyPlacement()
+    {
+        const QString url = "https://example.org/photo.png#fragment";
+        Message       incoming;
+        incoming.urlAdd(Url(url, "photo"));
+        for (const auto &body : { QString(), url, QString("Caption: ") + url }) {
+            incoming.setBody(body);
+            const auto files = MessageFileShares::collect(incoming).files;
+            QCOMPARE(files.size(), 1);
+            QCOMPARE(files.first().reference.uri(), url);
+            QCOMPARE(files.first().description, QString("photo"));
+            QVERIFY(files.first().reference.begin() < 0);
+            QVERIFY(files.first().fromOob);
+        }
+    }
+
+    void mentionsAreNotFileSharesAndKeepTheirBodyRange()
+    {
+        const QString url = "https://example.org/photo.png";
+        Reference     mention(Reference::Mention, "xmpp:alice@example.org");
+        mention.setRange(0, url.size() - 1);
+        Message incoming;
+        incoming.setBody(url);
+        incoming.setReferences({ mention });
+        incoming.urlAdd(Url(url));
+        const auto files = MessageFileShares::collect(incoming).files;
+        QCOMPARE(files.size(), 1);
+        QVERIFY(files.first().fromOob);
+        QVERIFY(MessageFileShares::forDisplay(incoming).files.first().reference.begin() < 0);
+        QCOMPARE(incoming.references().first().end(), url.size() - 1);
+    }
+
+    void fallbackRangesBelongOnlyToPresentation()
+    {
+        Message       incoming;
+        const QString body = QString::fromUtf8("😀 https://example.org/photo.png");
+        incoming.setBody(body);
+        auto file = share("https://example.org/photo.png");
+        incoming.setReferences({ file });
+        // XEP-0428 positions count Unicode code points, not UTF-16 units.
+        incoming.setFallbacks({ { "urn:xmpp:sims:1", { { 2, body.size() - 1 } }, {} } });
+        const auto normalized = MessageFileShares::collect(incoming).files;
+        QCOMPARE(normalized.size(), 1);
+        QVERIFY(normalized.first().reference.begin() < 0);
+        const auto displayed = MessageFileShares::forDisplay(incoming).files;
+        QCOMPARE(displayed.size(), 1);
+        QCOMPARE(displayed.first().reference.begin(), 3);
+        QCOMPARE(displayed.first().reference.end(), body.size() - 1);
+        QVERIFY(incoming.references().first().begin() < 0);
     }
 
     void urlOnlyDataReferenceCoversItsOob()
@@ -147,19 +198,19 @@ private slots:
         incoming.setReferences({ Reference(Reference::Data, "https://example.org/movie") });
         incoming.urlAdd(Url("https://example.org/movie", "movie"));
 
-        const auto result = MessageAttachments::collect(incoming);
-        QCOMPARE(result.attachments.size(), 1);
-        QCOMPARE(result.attachments.first().description, QString("movie"));
+        const auto result = MessageFileShares::collect(incoming);
+        QCOMPARE(result.files.size(), 1);
+        QCOMPARE(result.files.first().description, QString("movie"));
     }
 
     void fileSharingIsAFile()
     {
         Message incoming;
         incoming.addFileSharing(sharing({ "https://example.org/photo.png", "http://mirror.example.org/photo.png" }));
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
         const auto &attachment = attachments.first();
-        QVERIFY(attachment.isFile());
+        QVERIFY(attachment.hasContentHashes());
         QVERIFY(!attachment.manualFetch);
         const auto media = attachment.reference.mediaSharing();
         QCOMPARE(media.file.name(), QString("photo.png"));
@@ -175,7 +226,7 @@ private slots:
         incoming.addFileSharing(sharing({ "https://example.org/photo.png" }));
         incoming.setReferences({ share("https://example.org/other.png") });
         incoming.urlAdd(Url("https://example.org/oob.png"));
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 3);
         QCOMPARE(attachments.at(0).reference.uri(), QString("https://example.org/other.png"));
         QCOMPARE(attachments.at(1).reference.uri(), QString("https://example.org/photo.png"));
@@ -188,9 +239,9 @@ private slots:
         incoming.setBody("https://example.org/photo.png");
         incoming.addFileSharing(sharing({ "https://example.org/photo.png" }));
         incoming.urlAdd(Url("https://example.org/photo.png", "Named by OOB"));
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
-        QVERIFY(attachments.first().isFile());
+        QVERIFY(attachments.first().hasContentHashes());
         QCOMPARE(attachments.first().description, QString("Named by OOB"));
     }
 
@@ -204,7 +255,7 @@ private slots:
         Message incoming;
         incoming.setReferences({ reference });
         incoming.addFileSharing(duplicate);
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
         QCOMPARE(attachments.first().reference.uri(), QString("https://example.org/picture.png"));
     }
@@ -219,7 +270,7 @@ private slots:
         Message incoming;
         incoming.setReferences({ reference });
         incoming.addFileSharing(sfs);
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
         QVERIFY(attachments.first().manualFetch);
         const auto sources = attachments.first().reference.mediaSharing().sources;
@@ -242,22 +293,22 @@ private slots:
         Message incoming;
         incoming.setReferences({ reference });
         incoming.addFileSharing(sfs);
-        QCOMPARE(MessageAttachments::collect(incoming).attachments.size(), 2);
+        QCOMPARE(MessageFileShares::collect(incoming).files.size(), 2);
     }
 
     void fileSharingWithoutHashesKeepsOnlySecureSources()
     {
         Message both;
         both.addFileSharing(sharing({ "http://example.org/photo.png", "https://example.org/photo.png" }, false));
-        const auto attachments = MessageAttachments::collect(both).attachments;
+        const auto attachments = MessageFileShares::collect(both).files;
         QCOMPARE(attachments.size(), 1);
-        QVERIFY(!attachments.first().isFile());
+        QVERIFY(!attachments.first().hasContentHashes());
         QCOMPARE(attachments.first().url(), QUrl("https://example.org/photo.png"));
         QCOMPARE(attachments.first().description, QString("A photo"));
 
         Message insecure;
         insecure.addFileSharing(sharing({ "http://example.org/photo.png" }, false));
-        QVERIFY(MessageAttachments::collect(insecure).attachments.isEmpty());
+        QVERIFY(MessageFileShares::collect(insecure).files.isEmpty());
     }
 
     void insecureCompatibilityOobDoesNotBypassHashlessSfs()
@@ -267,7 +318,7 @@ private slots:
         incoming.setBody(url);
         incoming.addFileSharing(sharing({ url }, false));
         incoming.urlAdd(Url(url));
-        QVERIFY(MessageAttachments::collect(incoming).attachments.isEmpty());
+        QVERIFY(MessageFileShares::collect(incoming).files.isEmpty());
         QCOMPARE(incoming.body(), url);
     }
 
@@ -283,7 +334,7 @@ private slots:
         Message incoming;
         incoming.setReferences({ reference });
         incoming.addFileSharing(manual);
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 2); // No proven strong identity edge.
         for (const auto &attachment : attachments)
             QVERIFY(attachment.manualFetch);
@@ -296,7 +347,7 @@ private slots:
         Message incoming;
         incoming.addFileSharing(sharing({ "https://example.org/one.png" }));
         incoming.addFileSharing(manual);
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
         QCOMPARE(attachments.first().reference.mediaSharing().sources.size(), 2);
         QVERIFY(attachments.first().manualFetch);
@@ -309,7 +360,7 @@ private slots:
             manual.setDisposition(StatelessFileSharing::Disposition::Attachment);
             Message incoming;
             incoming.addFileSharing(manual);
-            const auto attachments = MessageAttachments::collect(incoming).attachments;
+            const auto attachments = MessageFileShares::collect(incoming).files;
             QCOMPARE(attachments.size(), 1);
             QVERIFY(attachments.first().manualFetch);
         }
@@ -317,35 +368,35 @@ private slots:
         shown.setDisposition(StatelessFileSharing::Disposition::Inline);
         Message incoming;
         incoming.addFileSharing(shown);
-        QVERIFY(!MessageAttachments::collect(incoming).attachments.first().manualFetch);
+        QVERIFY(!MessageFileShares::collect(incoming).files.first().manualFetch);
     }
 
     void fileSharingWithoutSourcesIsPending()
     {
         Message hashed;
         hashed.addFileSharing(sharing({}));
-        const auto attachments = MessageAttachments::collect(hashed).attachments;
+        const auto attachments = MessageFileShares::collect(hashed).files;
         QCOMPARE(attachments.size(), 1);
-        QVERIFY(attachments.first().isFile());
+        QVERIFY(attachments.first().hasContentHashes());
         QVERIFY(attachments.first().reference.mediaSharing().sources.isEmpty());
 
         Message unhashed;
         unhashed.addFileSharing(sharing({}, false));
-        QVERIFY(MessageAttachments::collect(unhashed).attachments.isEmpty());
+        QVERIFY(MessageFileShares::collect(unhashed).files.isEmpty());
     }
 
     void fileSharingWithOnlyUnknownSourcesLeavesTheBody()
     {
-        QDomDocument doc;
-        auto         other = sharing({});
+        QDomDocument                  doc;
+        auto                          other = sharing({});
         StatelessFileSharing::Sources sources;
         sources.add(StatelessFileSharing::Source::fromElement(doc.createElementNS("urn:example:source", "somewhere")));
         other.setSources(sources);
         Message incoming;
         incoming.setBody("A fallback for those who cannot fetch it");
         incoming.addFileSharing(other);
-        QVERIFY(MessageAttachments::hasAttachments(incoming));
-        QVERIFY(MessageAttachments::collect(incoming).attachments.isEmpty());
+        QVERIFY(MessageFileShares::hasFileShares(incoming));
+        QVERIFY(MessageFileShares::collect(incoming).files.isEmpty());
     }
 
     void jingleSourceIsAskedByHash()
@@ -354,13 +405,13 @@ private slots:
         publication.setFrom(Jid("alice@example.org/desktop"));
         publication.setId("published");
         publication.addDescription(Jingle::FileTransfer::NS);
-        auto hashed = sharing({});
+        auto                          hashed = sharing({});
         StatelessFileSharing::Sources sources;
         sources.add(StatelessFileSharing::Source::fromJinglePub(publication));
         hashed.setSources(sources);
         Message incoming;
         incoming.addFileSharing(hashed);
-        const auto attachments = MessageAttachments::collect(incoming).attachments;
+        const auto attachments = MessageFileShares::collect(incoming).files;
         QCOMPARE(attachments.size(), 1);
         QCOMPARE(attachments.first().reference.mediaSharing().sources,
                  QStringList { "xmpp:alice@example.org/desktop?jingle-ft" });
@@ -369,53 +420,53 @@ private slots:
         unhashed.setSources(sources);
         Message nothing;
         nothing.addFileSharing(unhashed);
-        QVERIFY2(MessageAttachments::collect(nothing).attachments.isEmpty(), "nothing could verify it");
+        QVERIFY2(MessageFileShares::collect(nothing).files.isEmpty(), "nothing could verify it");
     }
 
     void anyAttachmentCounts()
     {
         Message empty;
         empty.setBody("just text");
-        QVERIFY(!MessageAttachments::hasAttachments(empty));
+        QVERIFY(!MessageFileShares::hasFileShares(empty));
         Message reference;
         reference.setReferences({ share("https://example.org/a.png") });
-        QVERIFY(MessageAttachments::hasAttachments(reference));
+        QVERIFY(MessageFileShares::hasFileShares(reference));
         Message oob;
         oob.urlAdd(Url("https://example.org/a.png"));
-        QVERIFY(MessageAttachments::hasAttachments(oob));
+        QVERIFY(MessageFileShares::hasFileShares(oob));
         Message fileSharing;
         fileSharing.addFileSharing(sharing({ "https://example.org/a.png" }));
-        QVERIFY(MessageAttachments::hasAttachments(fileSharing));
+        QVERIFY(MessageFileShares::hasFileShares(fileSharing));
     }
 
     void attachmentsTellFilesFromUrls()
     {
-        const MessageAttachments::Attachment file { share("https://example.org/photo.png"), {} };
-        QVERIFY(file.isFile());
+        const MessageFileShares::FileShare file { share("https://example.org/photo.png"), {} };
+        QVERIFY(file.hasContentHashes());
         QVERIFY(!file.url().isValid());
 
-        const MessageAttachments::Attachment url { Reference(Reference::Data, "https://example.org/a.png#frag"), {} };
-        QVERIFY(!url.isFile());
+        const MessageFileShares::FileShare url { Reference(Reference::Data, "https://example.org/a.png#frag"), {} };
+        QVERIFY(!url.hasContentHashes());
         QCOMPARE(url.url(), QUrl("https://example.org/a.png"));
 
         MediaSharing unhashed;
         unhashed.file.setName("photo.png");
         Reference reference(Reference::Data, "https://example.org/b.png");
         reference.setMediaSharing(unhashed);
-        const MessageAttachments::Attachment hashless { reference, {} };
-        QVERIFY(!hashless.isFile());
+        const MessageFileShares::FileShare hashless { reference, {} };
+        QVERIFY(!hashless.hasContentHashes());
         QVERIFY(!hashless.url().isValid());
 
-        const MessageAttachments::Attachment mention { Reference(Reference::Mention, "https://example.org/c"), {} };
-        QVERIFY(!mention.isFile());
+        const MessageFileShares::FileShare mention { Reference(Reference::Mention, "https://example.org/c"), {} };
+        QVERIFY(!mention.hasContentHashes());
         QVERIFY(!mention.url().isValid());
 
-        const MessageAttachments::Attachment link { Reference(Reference::Data, "xmpp:room@example.org?join"), {} };
-        QVERIFY(!link.isFile());
+        const MessageFileShares::FileShare link { Reference(Reference::Data, "xmpp:room@example.org?join"), {} };
+        QVERIFY(!link.hasContentHashes());
         QVERIFY(!link.url().isValid());
 
-        const MessageAttachments::Attachment nothing;
-        QVERIFY(!nothing.isFile());
+        const MessageFileShares::FileShare nothing;
+        QVERIFY(!nothing.hasContentHashes());
         QVERIFY(!nothing.url().isValid());
     }
 
@@ -423,7 +474,7 @@ private slots:
     {
         // Persisted with the URL-to-content mappings and publications.
         const QByteArray key("psi-oob-url-v1:https://example.org/a.png");
-        QCOMPARE(MessageAttachments::urlIdentity(QUrl("https://example.org/a.png")).toString(),
+        QCOMPARE(MessageFileShares::urlIdentity(QUrl("https://example.org/a.png")).toString(),
                  Hash(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256)).toString());
     }
 
@@ -434,14 +485,14 @@ private slots:
         incoming.urlAdd(Url("javascript:alert(1)", "unsafe"));
         incoming.urlAdd(Url("https://example.org/photo.png", "attachment"));
 
-        const auto result = MessageAttachments::collect(incoming);
+        const auto result = MessageFileShares::collect(incoming);
         QCOMPARE(result.links.size(), 2);
         QCOMPARE(result.links.first().desc(), QString("FTP"));
         QCOMPARE(result.links.last().url(), QString("javascript:alert(1)"));
-        QCOMPARE(result.attachments.size(), 1);
-        QCOMPARE(result.attachments.first().description, QString("attachment"));
+        QCOMPARE(result.files.size(), 1);
+        QCOMPARE(result.files.first().description, QString("attachment"));
     }
 };
 
-QTEST_GUILESS_MAIN(MessageAttachmentsTest)
-#include "messageattachments.moc"
+QTEST_GUILESS_MAIN(MessageFileSharesTest)
+#include "messagefileshares.moc"

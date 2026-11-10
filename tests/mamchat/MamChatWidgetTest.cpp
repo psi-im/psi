@@ -826,6 +826,44 @@ private slots:
         QCOMPARE(chat.frameWidth(), 0);
     }
 
+    void localDeletionWaitsForCommitAndDoesNotRequestRetraction()
+    {
+        MamChatWidget chat;
+        chat.resize(550, 350);
+        chat.setHistoryLoading(true);
+        chat.setLocalDeletionEnabled(true);
+        auto incoming = message("same-id", "incoming secret");
+        incoming.setHistoryId(101);
+        auto outgoing = message("same-id", "outgoing message", 1);
+        outgoing.setLocal(true);
+        outgoing.setHistoryId(102);
+        chat.appendMessage(incoming);
+        chat.appendMessage(outgoing);
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto             *row = chat.itemWidget(0);
+        QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3), row->mapToGlobal(QPoint(3, 3)));
+        QApplication::sendEvent(row, &event);
+        auto *menu = chat.findChild<QMenu *>("mamMessageContextMenu");
+        QVERIFY(menu);
+        auto *action = menu->findChild<QAction *>("mamDeleteLocally");
+        QVERIFY(action);
+        QSignalSpy requested(&chat, &MamChatWidget::deleteMessageLocallyRequested);
+        QSignalSpy retracted(&chat, &MamChatWidget::outgoingMessageRetraction);
+        action->trigger();
+        QCOMPARE(requested.size(), 1);
+        QCOMPARE(requested[0][0].toLongLong(), qint64(101));
+        QCOMPARE(chat.itemCount(), 2); // A failed/pending storage operation removes nothing.
+        QCOMPARE(retracted.size(), 0);
+        delete menu;
+        chat.removeLocallyDeleted({ 101 }, { "same-id" }, {});
+        QCOMPARE(chat.itemCount(), 1);
+        QVERIFY(chat.itemWidget(0));
+        QVERIFY(
+            chat.itemWidget(0)->findChild<ChatMessageText *>()->document()->toPlainText().contains("outgoing message"));
+        QCOMPARE(retracted.size(), 0);
+    }
+
     void nativeMessageMenuCopiesQuotesSelectsAndForwards()
     {
         MamChatWidget chat;

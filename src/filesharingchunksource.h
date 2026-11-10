@@ -1,6 +1,10 @@
 #pragma once
 
+#include "filesourceselector.h"
 #include "mediachunktypes.h"
+
+#include <QObject>
+#include <QPointer>
 
 class FileSharingItem;
 class MediaChunkCache;
@@ -8,11 +12,25 @@ namespace XMPP::Jingle::FileTransfer {
 class File;
 }
 
-namespace FileSharingChunkSource {
-QString          identity(FileSharingItem *item);
-MediaChunkCache *configure(FileSharingItem *item);
-void             addChecksums(FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
-QString          localFile(FileSharingItem *item);
-QString          error(FileSharingItem *item);
-MediaChunkAbort fetch(FileSharingItem *item, quint64 offset, quint64 length, MediaChunkCompletion done, QObject *owner);
-}
+// One explicitly owned source-selection/fallback state per runtime item.
+// Storage queries remain stateless and do not instantiate that state.
+class FileSharingChunkSource : public QObject {
+public:
+    ~FileSharingChunkSource() override;
+    static QString          identity(const FileSharingItem *item);
+    static MediaChunkCache *configure(const FileSharingItem *item);
+    static void             addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
+    static QString          localFile(const FileSharingItem *item);
+    static QString          error(const FileSharingItem *item);
+    static MediaChunkAbort  fetch(FileSharingItem *item, quint64 offset, quint64 length, MediaChunkCompletion done,
+                                  QObject *owner);
+
+private:
+    explicit FileSharingChunkSource(FileSharingItem *item);
+    static FileSharingChunkSource *state(FileSharingItem *item);
+    static MediaChunkAbort sequential(FileSharingItem *item, const QString &source, quint64 offset, quint64 length,
+                                      MediaChunkCompletion done);
+    class SequentialDownload;
+    FileSourceSelector           selector_;
+    QPointer<SequentialDownload> sequential_;
+};

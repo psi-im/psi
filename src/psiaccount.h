@@ -137,6 +137,8 @@ public:
     PsiEncryptionController *encryptionController() const;
     virtual ContactProfile  *contactProfile() const;
     EventQueue              *eventQueue() const;
+    void                     forgetLocallyDeletedEvents(const QString &peer, const QStringList &incomingIds,
+                                                        const QStringList &outgoingIds);
     EDB                     *edb() const;
     PsiCon                  *psi() const;
     AvatarFactory           *avatarFactory() const;
@@ -557,7 +559,8 @@ private:
     void          updateReadNext(const Jid &);
     ChatDlg      *ensureChatDlg(const Jid &);
     void          lastStepLogin();
-    void          processIncomingMessage(const AccountIncomingMessage &);
+    void          processIncomingMessage(const AccountIncomingMessage &, bool suppressionChecked = false);
+    void          checkLocalMessage(const AccountIncomingMessage &, std::function<void(bool)>);
     void          processMessageQueue();
     void          processPgpEncryptedMessage(const Message &);
     void          processPgpEncryptedMessageNext();
