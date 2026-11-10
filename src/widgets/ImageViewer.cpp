@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "MamImageViewer.h"
+#include "ImageViewer.h"
 
 #include <QCursor>
 #include <QGuiApplication>
@@ -16,10 +16,10 @@ namespace {
 constexpr int Margin = 16;
 }
 
-MamImageViewer::MamImageViewer(const QImage &image, QWidget *parent)
+ImageViewer::ImageViewer(const QImage &image, QWidget *parent)
     : QWidget(parent, Qt::Window), image_(image)
 {
-    setObjectName(QStringLiteral("mamImageViewer"));
+    setObjectName(QStringLiteral("imageViewer"));
     setWindowTitle(tr("Image"));
     setAttribute(Qt::WA_DeleteOnClose);
     setAutoFillBackground(true);
@@ -35,7 +35,7 @@ MamImageViewer::MamImageViewer(const QImage &image, QWidget *parent)
            qBound(minimumHeight(), image_.height() + 2 * Margin, cap.height()));
 }
 
-qreal MamImageViewer::autoFitScale() const
+qreal ImageViewer::autoFitScale() const
 {
     if (image_.isNull())
         return 1.0;
@@ -44,19 +44,19 @@ qreal MamImageViewer::autoFitScale() const
     return qMin(qreal(1.0), qMin(x, y)); // Never enlarge a small image automatically.
 }
 
-qreal MamImageViewer::currentScale() const
+qreal ImageViewer::currentScale() const
 {
     return temporaryZoom_ ? temporaryScale_ : autoFitScale();
 }
 
-bool MamImageViewer::canPan() const
+bool ImageViewer::canPan() const
 {
     if (image_.isNull())
         return false;
     return image_.width() * currentScale() > width() || image_.height() * currentScale() > height();
 }
 
-QPointF MamImageViewer::constrainedPanOffset(const QPointF &offset) const
+QPointF ImageViewer::constrainedPanOffset(const QPointF &offset) const
 {
     // Never expose empty space beyond an oversized image. On a fitting axis,
     // keep the image centred even if the other axis is scrollable.
@@ -65,7 +65,7 @@ QPointF MamImageViewer::constrainedPanOffset(const QPointF &offset) const
     return QPointF(qBound(-maxX, offset.x(), maxX), qBound(-maxY, offset.y(), maxY));
 }
 
-void MamImageViewer::updatePanCursor()
+void ImageViewer::updatePanCursor()
 {
     if (!canPan()) {
         dragging_ = false;
@@ -75,7 +75,7 @@ void MamImageViewer::updatePanCursor()
     }
 }
 
-QRectF MamImageViewer::displayedImageRect() const
+QRectF ImageViewer::displayedImageRect() const
 {
     if (image_.isNull())
         return {};
@@ -83,7 +83,7 @@ QRectF MamImageViewer::displayedImageRect() const
     return QRectF(QPointF((width() - size.width()) / 2, (height() - size.height()) / 2) + panOffset_, size);
 }
 
-void MamImageViewer::paintEvent(QPaintEvent *)
+void ImageViewer::paintEvent(QPaintEvent *)
 {
     if (image_.isNull())
         return;
@@ -92,7 +92,7 @@ void MamImageViewer::paintEvent(QPaintEvent *)
     painter.drawImage(displayedImageRect(), image_);
 }
 
-void MamImageViewer::mousePressEvent(QMouseEvent *event)
+void ImageViewer::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && canPan() && displayedImageRect().contains(event->pos())) {
         dragging_ = true;
@@ -104,7 +104,7 @@ void MamImageViewer::mousePressEvent(QMouseEvent *event)
     QWidget::mousePressEvent(event);
 }
 
-void MamImageViewer::mouseMoveEvent(QMouseEvent *event)
+void ImageViewer::mouseMoveEvent(QMouseEvent *event)
 {
     if (dragging_) {
         const QPoint position = event->pos();
@@ -120,7 +120,7 @@ void MamImageViewer::mouseMoveEvent(QMouseEvent *event)
     QWidget::mouseMoveEvent(event);
 }
 
-void MamImageViewer::mouseReleaseEvent(QMouseEvent *event)
+void ImageViewer::mouseReleaseEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && dragging_) {
         dragging_ = false;
@@ -131,7 +131,7 @@ void MamImageViewer::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
-void MamImageViewer::wheelEvent(QWheelEvent *event)
+void ImageViewer::wheelEvent(QWheelEvent *event)
 {
     const int delta = event->angleDelta().y();
     const int pixels = event->pixelDelta().y();
@@ -150,7 +150,7 @@ void MamImageViewer::wheelEvent(QWheelEvent *event)
     event->accept();
 }
 
-void MamImageViewer::resetTemporaryZoom()
+void ImageViewer::resetTemporaryZoom()
 {
     if (!temporaryZoom_ && panOffset_.isNull() && !dragging_)
         return;
@@ -162,19 +162,19 @@ void MamImageViewer::resetTemporaryZoom()
     update();
 }
 
-void MamImageViewer::resizeEvent(QResizeEvent *event)
+void ImageViewer::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     resetTemporaryZoom();
 }
 
-void MamImageViewer::moveEvent(QMoveEvent *event)
+void ImageViewer::moveEvent(QMoveEvent *event)
 {
     QWidget::moveEvent(event);
     resetTemporaryZoom();
 }
 
-void MamImageViewer::changeEvent(QEvent *event)
+void ImageViewer::changeEvent(QEvent *event)
 {
     QWidget::changeEvent(event);
     if (event->type() == QEvent::WindowStateChange)

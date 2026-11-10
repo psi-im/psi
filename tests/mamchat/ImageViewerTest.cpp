@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "widgets/MamImageViewer.h"
+#include "widgets/ImageViewer.h"
 
 #include <QApplication>
 #include <QMouseEvent>
@@ -10,7 +10,7 @@
 #include <cmath>
 
 namespace {
-void zoom(MamImageViewer &viewer, int notches)
+void zoom(ImageViewer &viewer, int notches)
 {
     const QPoint centre = viewer.rect().center();
     QWheelEvent wheel(QPointF(centre), QPointF(viewer.mapToGlobal(centre)),
@@ -20,7 +20,7 @@ void zoom(MamImageViewer &viewer, int notches)
     QVERIFY(wheel.isAccepted());
 }
 
-void drag(MamImageViewer &viewer, const QPoint &from, const QPoint &to)
+void drag(ImageViewer &viewer, const QPoint &from, const QPoint &to)
 {
     QTest::mousePress(&viewer, Qt::LeftButton, Qt::NoModifier, from);
     QMouseEvent moved(QEvent::MouseMove, QPointF(to), QPointF(viewer.mapToGlobal(to)),
@@ -30,7 +30,7 @@ void drag(MamImageViewer &viewer, const QPoint &from, const QPoint &to)
 }
 }
 
-class MamImageViewerTest final : public QObject {
+class ImageViewerTest final : public QObject {
     Q_OBJECT
 
 private slots:
@@ -38,7 +38,7 @@ private slots:
     {
         QImage image(80, 60, QImage::Format_RGB32);
         image.fill(Qt::red);
-        MamImageViewer viewer(image);
+        ImageViewer viewer(image);
         viewer.show();
         QCoreApplication::processEvents();
 
@@ -53,7 +53,7 @@ private slots:
     {
         QImage image(2000, 800, QImage::Format_RGB32);
         image.fill(Qt::blue);
-        MamImageViewer viewer(image);
+        ImageViewer viewer(image);
         viewer.show();
         QCoreApplication::processEvents();
 
@@ -70,7 +70,7 @@ private slots:
     {
         QImage image(1000, 800, QImage::Format_RGB32);
         image.fill(Qt::green);
-        MamImageViewer viewer(image);
+        ImageViewer viewer(image);
         viewer.resize(350, 270);
         viewer.show();
         QCoreApplication::processEvents();
@@ -116,7 +116,7 @@ private slots:
     {
         QImage image(2500, 100, QImage::Format_RGB32);
         image.fill(Qt::blue);
-        MamImageViewer viewer(image);
+        ImageViewer viewer(image);
         viewer.resize(400, 300);
         viewer.show();
         QCoreApplication::processEvents();
@@ -146,7 +146,7 @@ private slots:
     {
         QImage image(1000, 800, QImage::Format_RGB32);
         image.fill(Qt::green);
-        MamImageViewer viewer(image);
+        ImageViewer viewer(image);
         viewer.resize(350, 270);
         viewer.show();
         QCoreApplication::processEvents();
@@ -181,5 +181,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(MamImageViewerTest)
-#include "MamImageViewerTest.moc"
+QTEST_MAIN(ImageViewerTest)
+#include "ImageViewerTest.moc"

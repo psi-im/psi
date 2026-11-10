@@ -15,10 +15,10 @@ class QWheelEvent;
 // A lightweight, independent window. Window geometry determines fit-to-image
 // zoom, capped at 100% of the original. Wheel zoom is temporary and deliberately
 // decoupled from both the original size and the window fit factor.
-class MamImageViewer final : public QWidget {
+class ImageViewer final : public QWidget {
     Q_OBJECT
 public:
-    explicit MamImageViewer(const QImage &image, QWidget *parent = nullptr);
+    explicit ImageViewer(const QImage &image, QWidget *parent = nullptr);
 
     QRectF displayedImageRect() const;
     qreal  currentScale() const;
