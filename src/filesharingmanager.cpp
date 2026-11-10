@@ -20,20 +20,22 @@
 #include "filesharingmanager.h"
 
 #include "applicationinfo.h"
+#include "edbsqlite.h"
 #include "filecache.h"
+#include "filedatabase.h"
+#include "filesharingcatalog.h"
 #include "filesharingchunksource.h"
 #include "filesharingdownloader.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmediasave.h"
+#include "filesharingpublicationsync.h"
 #include "filesharingresponder.h"
-#include "filesharingstore.h"
 #include "filesharingurl.h"
 #include "fileutil.h"
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "mediadownloadpolicy.h"
 #include "messageattachments.h"
-#include "oobmediapolicy.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
@@ -56,9 +58,13 @@
 #include "textutil.h"
 
 #include <QDir>
-#include <QCryptographicHash>
 #include <QUrl>
 #include <QMimeData>
+
+static QString legacyDir()
+{
+    return ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + QStringLiteral("/shares");
+}
 
 // ======================================================================
 // FileSharingManager
@@ -70,7 +76,7 @@ public:
     QHash<PsiAccount *, FileSharingJingleSession *> mediaSessions;
     QHash<XMPP::Hash, FileSharingItem *>            items;
     QHash<QString, QHash<XMPP::Hash, FileSharingItem *>> accountItems;
-    std::unique_ptr<FileSharingStore>                    store;
+    std::unique_ptr<FileSharingCatalog>                  catalog;
 
     void rememberItem(FileSharingItem *item)
     {
@@ -86,19 +92,16 @@ public:
 FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new Private)
 {
     // Everything used to live above the profile, where two running profiles broke
-    // each other's cache. Each profile copies the catalog and the complete files.
-    // The media cache can be fetched again, so the first profile simply takes it.
-    const auto legacy  = ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + QStringLiteral("/shares");
-    const auto catalog = cacheDir() + QStringLiteral("/shared-files.sqlite");
-    const auto media   = QStringLiteral("/media-files-v2");
-    if (!QFile::exists(catalog))
-        QFile::copy(legacy + QStringLiteral("/shared-files.sqlite"), catalog);
+    // each other's cache. Each profile copies the complete files. The media cache
+    // can be fetched again, so the first profile simply takes it.
+    const auto legacy = legacyDir();
+    const auto media  = QStringLiteral("/media-files-v2");
     if (!QDir(cacheDir() + media).exists())
         QDir().rename(legacy + media, cacheDir() + media);
 
     d->cache = new FileCache(QStringLiteral("shares"), cacheDir(), this);
     d->cache->importLegacy(legacy);
-    d->store.reset(new FileSharingStore(catalog));
+    d->catalog.reset(new FileSharingCatalog);
 }
 
 FileSharingManager::~FileSharingManager() { delete d->chunkCache; }
@@ -186,18 +189,18 @@ FileCacheItem *FileSharingManager::moveToCache(const QList<XMPP::Hash> &sums, co
 
 std::optional<Hash> FileSharingManager::contentForUrl(const QString &account, const Hash &urlIdentity) const
 {
-    return d->store->contentForUrl(account, urlIdentity);
+    return d->catalog->contentForUrl(account, urlIdentity);
 }
 
 bool FileSharingManager::rememberUrlContent(const QString &account, const Hash &urlIdentity,
                                             const Hash &contentHash)
 {
-    return d->store->rememberUrlContent(account, urlIdentity, contentHash);
+    return d->catalog->rememberUrlContent(account, urlIdentity, contentHash);
 }
 
 void FileSharingManager::forgetUrlContent(const QString &account, const Hash &urlIdentity)
 {
-    d->store->forgetUrlContent(account, urlIdentity);
+    d->catalog->forgetUrlContent(account, urlIdentity);
 }
 
 FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
@@ -207,15 +210,20 @@ FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
     if (auto existing = d->accountItems.value(account->id()).value(id))
         if (existing->account() == account)
             return existing;
-    const auto stored = d->store->find(account->id(), id);
+    const auto stored = d->catalog->find(account->id(), id);
     if (!stored)
         return nullptr;
-    const auto media = stored->reference.mediaSharing();
-    const auto path  = stored->readableLocalPath();
+    const auto media = stored->media;
+    if (stored->urlOnly) {
+        auto restored = new FileSharingItem(QUrl::fromEncoded(media.sources.value(0).toUtf8()), id, account, this,
+                                            media.file.description());
+        d->rememberItem(restored);
+        return restored;
+    }
+    const auto path = stored->readableLocalPath();
     if (!path.isEmpty() && !cacheItem(media.file.computedHashes())) {
         QVariantMap metadata { { "type", media.file.mediaType() },
                                { "link", path },
-                               { "uris", media.sources },
                                { "amplitudes", media.file.amplitudes() } };
         saveToCache(media.file.computedHashes(), {}, metadata, FileCache::Forever);
     }
@@ -224,32 +232,6 @@ FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
         restored->mergeSources(media, Jid(peer));
     d->rememberItem(restored);
     return restored;
-}
-
-void FileSharingManager::rememberMessage(const Message &message, PsiAccount *account)
-{
-    if (!account)
-        return;
-    for (const auto &reference : message.references()) {
-        if (!reference.isValid() || !reference.mediaSharing().isValid())
-            continue;
-        const auto hashes = reference.mediaSharing().file.computedHashes();
-        if (hashes.isEmpty())
-            continue;
-        if (message.spooled() && d->store->find(account->id(), hashes.first()))
-            continue;
-        QString localPath;
-        for (const auto &hash : hashes) {
-            auto known = d->accountItems.value(account->id()).value(hash);
-            if (known && known->account() == account && !known->localFilePath().isEmpty()) {
-                localPath = known->localFilePath();
-                break;
-            }
-        }
-        const auto peer = message.from().isEmpty() ? account->jid() : message.from();
-        if (!d->store->remember(account->id(), reference, peer, localPath))
-            qWarning("Could not persist a shared file descriptor");
-    }
 }
 
 QList<FileSharingItem *> FileSharingManager::createFromMimeData(const QMimeData *data, PsiAccount *acc)
@@ -339,7 +321,6 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 {
     if (!acc)
         return;
-    rememberMessage(m, acc);
     // Everything a message attaches is shown in its one view: SIMS and HTTP(S)
     // OOB as share objects, other OOB URLs as links. The message is not changed.
     const auto collected   = MessageAttachments::collect(m);
@@ -360,14 +341,15 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     // fallbacks instead of reference begin/end. Assign those ranges, in
     // body order, to the media shares that have no range of their own.
     QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
-    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), QStringLiteral("jabber:x:oob") }) {
+    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), XMPP::StatelessFileSharing::NS,
+                            QStringLiteral("jabber:x:oob") }) {
         for (const auto &range : m.bodyFallbacks(ns)) {
             int from = -1, to = -1;
             if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
                 fallbackRanges.append({ from, to });
         }
         if (!fallbackRanges.isEmpty())
-            break; // SIMS ranges take precedence; OOB ranges are a fallback for them.
+            break; // Ranges for the shares take precedence; OOB ranges are a fallback for them.
     }
     std::sort(fallbackRanges.begin(), fallbackRanges.end());
     for (auto &attachment : attachments) {
@@ -391,23 +373,18 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
         // Every SIMS attachment needs a share object, not only inline media.
         // Non-media files can have an unknown size (streaming sources).
         FileSharingItem *item = nullptr;
-        if (ms.isValid() && ms.file.hasComputedHashes()) {
+        if (attachment.isFile()) {
             item = this->item(ms.file.computedHashes().first(), acc);
             if (!item)
                 item = new FileSharingItem(ms, m.from(), acc, this);
             else
                 item->mergeSources(ms, m.from());
             d->rememberItem(item);
-        } else if (!ms.isValid() && r.type() == Reference::Data) {
+        } else if (const QUrl source = attachment.url(); source.isValid()) {
             // An HTTP(S) URL without SIMS metadata, usually from OOB. Shares of
             // the same URL are one item; the item keeps the full URL to open.
-            const QUrl source = OobMediaPolicy::normalizedHttpSource(r.uri());
-            if (!source.isValid())
-                continue;
-            const QString    canonical = source.toString(QUrl::FullyEncoded);
-            const QByteArray key       = QByteArrayLiteral("psi-oob-url-v1:") + canonical.toUtf8();
-            const Hash       identity(Hash::Sha256, QCryptographicHash::hash(key, QCryptographicHash::Sha256));
-            item = d->accountItems.value(acc->id()).value(identity, nullptr);
+            const Hash identity = MessageAttachments::urlIdentity(source);
+            item                = d->accountItems.value(acc->id()).value(identity, nullptr);
             if (!item || item->account() != acc || !item->isUrlOnly()) {
                 item = new FileSharingItem(QUrl::fromEncoded(r.uri().toUtf8()), identity, acc, this,
                                            attachment.description);
@@ -417,6 +394,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             continue;
         }
         mv.addReference(item);
+        const QString itemAuto = attachment.manualFetch ? QString() : autoAttr;
 
         if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
             auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);
@@ -427,7 +405,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
             QString shareStr(
                 QString::fromLatin1("<share id=\"%1\" account=\"%2\" text=\"%3\"%4/>")
-                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), autoAttr));
+                    .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), TextUtil::escape(refText), itemAuto));
 
             // add text before reference
             htmlDesc += TextUtil::linkify(TextUtil::plain2rich(desc.mid(lastEnd, r.begin() - lastEnd)));
@@ -435,7 +413,7 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
             lastEnd = r.end() + 1;
         } else {
             tailReferences += QString::fromLatin1("<share id=\"%1\" account=\"%2\"%3/>")
-                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), autoAttr);
+                                  .arg(item->sums()[0].toString(), TextUtil::escape(acc->id()), itemAuto);
         }
     }
     if (lastEnd < desc.size()) {
@@ -480,34 +458,85 @@ bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount 
     const QPointer<PsiAccount> guard(account);
     return FileSharingResponder::answer(
         session, [this, guard](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
-            if (!guard || !d->store->isServed(guard->id(), hashes))
+            if (!guard)
                 return {};
+            const auto publication = d->catalog->servedRecord(guard->id(), hashes);
+            if (!publication)
+                return {};
+            const auto authorized = publication->media.file.computedHashes();
             QString path;
-            if (auto cached = cacheItem(hashes, true, &path))
+            if (auto cached = cacheItem(authorized, true, &path))
                 return FileSharingResponder::ServedFile { path, cached->sums() };
-            for (const auto &hash : hashes) {
-                auto known = item(hash, guard);
-                if (!known)
-                    continue;
-                path = known->localFilePath();
-                if (!path.isEmpty())
-                    return FileSharingResponder::ServedFile { path, known->sums() };
+            // Runtime items and received source unions are not authorization
+            // records. Only the unchanged local copy of this own publication
+            // can supply a fallback path.
+            path = publication->readableLocalPath();
+            if (!path.isEmpty()) {
+                if (path.startsWith(cacheDir() + QStringLiteral("/media-files-v2/"))
+                    && !mediaChunkCache()->isCompleteFile(path))
+                    return {};
+                return FileSharingResponder::ServedFile { path, authorized };
             }
             return {};
         });
 }
 
-void FileSharingManager::setServed(PsiAccount *account, const QList<Hash> &hashes, bool served)
+bool FileSharingManager::serve(PsiAccount *account, const MediaSharing &media, const QString &localPath)
 {
-    if (!served)
-        d->store->unmarkServed(account->id(), hashes);
-    else if (!d->store->markServed(account->id(), hashes))
+    const bool stored = d->catalog->serve(account->id(), account->jid(), media, localPath);
+    if (!stored)
         qWarning("Could not persist a served file");
+    return stored;
 }
 
-void FileSharingManager::importOwnPublications(const QString &accountId, const Jid &self)
+void FileSharingManager::stopServing(PsiAccount *account, const QList<Hash> &hashes)
 {
-    d->store->importOwnPublications(accountId, self);
+    d->catalog->stopServing(account->id(), hashes);
+}
+
+QStringList FileSharingManager::knownSources(PsiAccount *account, const QList<Hash> &hashes) const
+{
+    QStringList sources;
+    for (const auto &hash : hashes)
+        if (const auto stored = d->catalog->find(account->id(), hash))
+            sources += stored->media.sources;
+    sources.removeDuplicates();
+    return sources;
+}
+
+void FileSharingManager::importLegacyCatalog(const QList<PsiAccount *> &accounts)
+{
+    QHash<QString, Jid> own;
+    for (const auto *account : accounts)
+        own.insert(account->id(), account->jid());
+    // A profile has had its own copy since caches moved under the profile.
+    const auto copy = cacheDir() + QStringLiteral("/shared-files.sqlite");
+    if (d->catalog->importLegacy(QFile::exists(copy) ? copy : legacyDir() + QStringLiteral("/shared-files.sqlite"),
+                                 own)) {
+        if (QDir(legacyDir()).exists())
+            FileDatabase::markLegacyDirectoryImported(legacyDir(), QStringLiteral("publications"));
+        QFile::remove(copy);
+    }
+}
+
+void FileSharingManager::followHistory(EDBSqLite *history)
+{
+    const QPointer<EDBSqLite>                 database(history);
+    FileSharingPublicationSync::HistoryAccess access;
+    access.readLinks = [database](qint64 position, int limit, QObject *receiver,
+                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished) {
+        if (database)
+            database->requestMediaLinks(position, limit, receiver, std::move(finished));
+    };
+    access.readLinked = [database](const QList<QByteArray> &ids, QObject *receiver,
+                                   std::function<void(QSet<QByteArray>, bool)> finished) {
+        if (database)
+            database->requestLinkedMedia(ids, receiver, std::move(finished));
+    };
+    auto *sync = new FileSharingPublicationSync(std::move(access), d->catalog.get(), this);
+    connect(history, &EDBSqLite::mediaLinksAdded, sync, &FileSharingPublicationSync::linksAdded);
+    connect(history, &EDBSqLite::mediaLinksRemoved, sync, &FileSharingPublicationSync::reconcile);
+    sync->reconcile();
 }
 
 XMPP::Hash FileSharingDeviceOpener::urlToSourceId(const QUrl &url)

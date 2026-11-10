@@ -91,7 +91,8 @@ Page              readAfter(QSqlDatabase db, const Key &, const QString &after, 
 Page readIndex(QSqlDatabase db, const Key &, int index, int limit, int snapshotCount, QSqlError *error = nullptr);
 // Caller has flushed pending EDB writes. This transaction includes events,
 // identities, adjacency and the page checkpoint, or rolls all of them back.
-bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &);
+bool storePage(QSqlDatabase db, const Key &, const QString &before, int limit, Page &,
+               const std::function<bool(qint64)> &eventStored = {});
 // Erasure must invalidate coverage, including empty boundary pages.
 bool invalidate(QSqlDatabase db, const QString &account, const QString &peer);
 }

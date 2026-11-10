@@ -19,6 +19,7 @@
 
 #include "historyupgrade.h"
 #include "historyarchive.h"
+#include "historymediarefs.h"
 
 #include <QCloseEvent>
 #include <QCoreApplication>
@@ -51,6 +52,19 @@ bool HistoryUpgrade::upgradeDatabase(const QString &path)
     progress.setWindowModality(Qt::ApplicationModal);
     progress.setMinimumDuration(0);
     progress.setCancelButton(nullptr);
+    // Only older development profiles can have SFS without its value index.
+    // Prepare those records on the GUI before starting the SQL migration;
+    // parsing a Jingle publication here must not race Iris's JID cache.
+    {
+        auto db = QSqlDatabase::addDatabase("QSQLITE", "history-upgrade-sfs-index");
+        db.setDatabaseName(path);
+        const bool prepared = db.open() && HistoryMediaRefs::prepareLegacySfs(db);
+        db.close();
+        db = {};
+        QSqlDatabase::removeDatabase("history-upgrade-sfs-index");
+        if (!prepared)
+            return false;
+    }
     bool  success = false;
     auto *worker  = QThread::create([path, &success, &progress] {
         const QString connection = QStringLiteral("history-upgrade-worker");
@@ -60,12 +74,13 @@ bool HistoryUpgrade::upgradeDatabase(const QString &path)
             if (db.open()) {
                 QSqlQuery foreignKeys(db);
                 foreignKeys.exec("PRAGMA foreign_keys=ON");
-                success = HistoryArchive::migrate(db, [&progress](qint64 id) {
+                const auto report = [&progress](qint64 id) {
                     QMetaObject::invokeMethod(
                         &progress,
                         [&progress, id] { progress.setLabelText(QCoreApplication::translate("HistoryImport", "Upgrading history (record %1)…").arg(id)); },
                         Qt::QueuedConnection);
-                });
+                };
+                success = HistoryArchive::migrate(db, report) && HistoryMediaRefs::migrate(db, report);
                 db.close();
             }
         }

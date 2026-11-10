@@ -37,6 +37,9 @@ struct HistoryDatabase {
         }
         if (!HistoryArchive::migrate(db))
             qFatal("Cannot migrate history fixture");
+        if (!q.exec(QStringLiteral("CREATE TABLE message_media_refs(position INTEGER PRIMARY KEY, "
+                                   "event_id INTEGER,ordinal INTEGER,publication_id BLOB,fingerprint BLOB)")))
+            qFatal("Cannot initialize media-link fixture");
         worker.open();
     }
     ~HistoryDatabase()
@@ -86,6 +89,8 @@ private slots:
         QTest::newRow("resolved-revision") << int(HistoryReadRequest::ResolveBatch) << "archive_items";
         QTest::newRow("archive-lookup") << int(HistoryReadRequest::ArchiveLookup) << "archive_items";
         QTest::newRow("own-plaintext") << int(HistoryReadRequest::OwnPlaintext) << "events";
+        QTest::newRow("media-links") << int(HistoryReadRequest::MediaLinks) << "message_media_refs";
+        QTest::newRow("media-linked") << int(HistoryReadRequest::MediaLinked) << "message_media_refs";
     }
 
     void readErrorsAreNotCacheMisses()
@@ -113,6 +118,7 @@ private slots:
         request.snapshotCount = 2;
         request.limit         = 1;
         request.eventIds      = { 1 };
+        request.publicationIds = { QByteArrayLiteral("publication") };
         request.messageId     = QStringLiteral("client-id");
         request.sender        = fixture.key.archive + QStringLiteral("/desktop");
         request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);
@@ -149,6 +155,7 @@ private slots:
         request.archiveIndex  = 0;
         request.snapshotCount = 2;
         request.eventIds      = { 1 };
+        request.publicationIds = { QByteArrayLiteral("publication") };
         request.messageId     = QStringLiteral("missing-client-id");
         request.sender        = fixture.key.archive + QStringLiteral("/desktop");
         request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);

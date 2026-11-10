@@ -77,6 +77,7 @@
 #include "jinglevoicecaller.h"
 #endif
 #include "iris/jingle-session.h"
+#include "messageattachments.h"
 #include "mood.h"
 #include "mooddlg.h"
 #include "networkaccessmanager.h"
@@ -1305,7 +1306,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     setKnownPgpKeys(acc.pgpKnownKeys);
 
     setUserAccount(acc);
-    psi()->fileSharingManager()->importOwnPublications(acc.id, Jid(acc.jid));
     connect(ProxyManager::instance(), &ProxyManager::proxyRemoved, d, &Private::pm_proxyRemoved);
 
     connect(d->psi, &PsiCon::emitOptionsUpdate, this, &PsiAccount::optionsUpdate);
@@ -3138,8 +3138,8 @@ void PsiAccount::processIncomingMessage(const AccountIncomingMessage &incoming)
     bool           selfMessage = _m.forwarded().type() == Forwarding::ForwardedCarbonsSent;
     Message        dm          = _m.displayMessage();
     // skip empty messages, but not if the message contains a data form
-    if (dm.type() != Message::Type::Error && dm.body().isEmpty() && dm.urlList().isEmpty()
-        && dm.references().isEmpty() && dm.invite().isEmpty()
+    if (dm.type() != Message::Type::Error && dm.body().isEmpty() && !MessageAttachments::hasAttachments(dm)
+        && dm.invite().isEmpty()
         && !dm.containsEvents() && dm.chatState() == StateNone && dm.subject().isNull()
         && dm.rosterExchangeItems().isEmpty() && dm.mucInvites().isEmpty() && dm.getForm().fields().empty()
         && dm.messageReceipt() == ReceiptNone && dm.displayedMarkerId().isEmpty() && dm.getMUCStatuses().isEmpty()
@@ -5586,8 +5586,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
     if (activationType != FromXml) {
         if (e->type() == PsiEvent::Message || e->type() == PsiEvent::Auth) {
             if (!me || !me->message().displayMessage().body().isEmpty()
-                || !me->message().displayMessage().references().isEmpty()
-                || !me->message().displayMessage().urlList().isEmpty()
+                || MessageAttachments::hasAttachments(me->message().displayMessage())
                 || me->message().displayMessage().messageReceipt() == ReceiptReceived
                 || !me->message().displayMessage().displayedMarkerId().isEmpty()
                 || !me->message().displayMessage().reactions().targetId.isEmpty()

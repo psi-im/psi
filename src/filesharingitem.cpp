@@ -25,7 +25,6 @@
 #include "filesharingpublication.h"
 #include "fileutil.h"
 #include "iris/xmpp_client.h"
-#include "iris/xmpp_message.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_thumbs.h"
 #include "mediachunkcache.h"
@@ -68,18 +67,10 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
 {
     _sums = ms.file.computedHashes();
     _receivedMetadata = ms.file;
-    if (initFromCache()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        auto tmp  = ms.sources + uris();
-        auto tmp2 = QSet<QString>(tmp.begin(), tmp.end());
-        _uris     = QStringList(tmp2.begin(), tmp2.end());
-#else
-        _uris = (ms.sources + uris()).toSet().toList();
-#endif
-    } else {
+    _uris = ms.sources;
+    if (!initFromCache()) {
         _fileName = ms.file.name();
         _mimeType = ms.file.mediaType();
-        _uris     = ms.sources;
     }
 
     _fileSize = ms.file.size();
@@ -231,14 +222,7 @@ bool FileSharingItem::initFromCache(FileCacheItem *cache)
         _fileSize = QFileInfo(_fileName).size();
     }
 
-    _sums       = cache->sums();
-    auto urisvl = md.value(QString::fromLatin1("uris"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if (urisvl.type() == QVariant::StringList)
-#else
-    if (urisvl.typeId() == QMetaType::QStringList)
-#endif
-        _uris = urisvl.toStringList();
+    _sums = cache->sums();
 
     return true;
 }
@@ -389,7 +373,6 @@ bool FileSharingItem::savePublishedFile()
 {
     QVariantMap meta = _metaData;
     meta["type"]     = _mimeType;
-    meta["uris"]     = _uris;
     if (auto existing = cache()) {
         auto metadata = existing->metadata();
         for (auto it = meta.cbegin(); it != meta.cend(); ++it)
@@ -422,15 +405,19 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
 
     _published = false;
     // Cache temporary files before registering a factory that will serve them.
-    const bool serveLocally = savePublishedFile();
+    bool serveLocally = savePublishedFile();
+    // Capture the old upload URLs before replacing the serving publication.
+    // They are no longer stored in account-independent cache metadata.
+    const auto knownSources = _uris + _manager->knownSources(_acc, _sums);
+    const auto file         = fileMetadata();
     if (serveLocally)
-        _manager->setServed(_acc, _sums, true);
+        serveLocally = _manager->serve(_acc, { file, {} }, localFilePath());
     if (serveLocally && _fileSize) {
         auto cache = _manager->mediaChunkCache();
         if (cache->isCompleteFile(localFilePath()))
             cache->configure(FileSharingChunkSource::identity(this), *_fileSize, { }, { { "published", true } });
     }
-    auto *publication = new FileSharingPublication(_acc->client(), fileMetadata(), localFilePath(), myJid, this);
+    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid, this);
     _publication = publication;
     connect(publication, &FileSharingPublication::progress, this,
             [this](qint64 bytes) { emit publishProgress(size_t(bytes)); });
@@ -438,24 +425,19 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
         _log.append(message);
         emit logChanged();
     });
-    connect(publication, &FileSharingPublication::finished, this, [this, publication]() {
+    connect(publication, &FileSharingPublication::finished, this, [this, publication, file, serveLocally]() {
         _uris = publication->sources();
         _published = !_uris.isEmpty();
         _publication = nullptr;
         publication->deleteLater();
-        if (!_published && _acc)
-            _manager->setServed(_acc, _sums, false);
-        // Also remove expired URLs from the cache when every method failed.
-        savePublishedFile();
-        if (_published && _acc) {
-            Message snapshot;
-            snapshot.setFrom(_acc->client()->jid());
-            snapshot.setReferences({ toReference() });
-            _manager->rememberMessage(snapshot, _acc);
-        }
+        if (_acc && !_published)
+            _manager->stopServing(_acc, _sums);
+        else if (_acc)
+            _manager->serve(_acc, { file, _uris }, serveLocally ? localFilePath() : QString());
         emit publishFinished();
     });
-    publication->start(_uris, serveLocally);
+    // An earlier upload of this file may still be there to reuse.
+    publication->start(knownSources, serveLocally);
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }
@@ -513,7 +495,6 @@ FileShareDownloader *FileSharingItem::download(std::optional<Range> range, const
 
         QVariantMap vm;
         vm.insert(QString::fromLatin1("type"), _mimeType);
-        vm.insert(QString::fromLatin1("uris"), _uris);
         if (thumbUri.size()) { // then thumbMetaType is not empty too
             vm.insert(QString::fromLatin1("thumb-mt"), thumbMetaType);
             vm.insert(QString::fromLatin1("thumb-uri"), thumbUri);

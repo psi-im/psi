@@ -28,6 +28,7 @@ on:
       - 'src/historysqlitepolicy.h'
       - 'src/historysqlreadworker.h'
       - 'src/historysqlreadworker.*'
+      - 'src/historymediaqueries.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   pull_request:
@@ -55,6 +56,7 @@ on:
       - 'src/historyarchive.*'
       - 'src/edbsqlite.*'
       - 'src/historysqlreadworker.*'
+      - 'src/historymediaqueries.*'
       - 'src/widgets/MamHistorySourcePolicy.h'
       - '.github/workflows/mam-native-widgets.yml'
   workflow_dispatch:

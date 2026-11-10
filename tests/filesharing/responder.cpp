@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 // Remote file requests over real Jingle sessions, against two accounts of one
 // profile that hold the same bytes on disk.
+#include "applicationinfo.h"
+#include "filesharingcatalog.h"
 #include "filesharingjinglesession.h"
 #include "filesharingresponder.h"
-#include "filesharingstore.h"
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFile>
@@ -29,6 +30,10 @@
 using namespace XMPP;
 namespace J  = XMPP::Jingle;
 namespace FT = J::FileTransfer;
+
+// The file database needs only this much of a class that brings in the whole application.
+static QString profileDirectory;
+QString        ApplicationInfo::currentProfileDir(HomedirType) { return profileDirectory; }
 
 namespace {
 void check(bool ok, const char *message)
@@ -125,11 +130,11 @@ struct Answer {
 };
 
 // As in FileSharingManager: one copy for every account, and only the decision differs.
-FileSharingResponder::Lookup lookupFor(const FileSharingStore &store, const QString &account, const QString &path,
+FileSharingResponder::Lookup lookupFor(const FileSharingCatalog &catalog, const QString &account, const QString &path,
                                        const Hash &hash)
 {
-    return [&store, account, path, hash](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
-        if (!store.isServed(account, hashes))
+    return [&catalog, account, path, hash](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
+        if (!catalog.isServed(account, hashes))
             return {};
         return FileSharingResponder::ServedFile { path, { hash } };
     };
@@ -243,10 +248,11 @@ int main(int argc, char **argv)
     unknown.setSize(quint64(payload.size()));
     unknown.addHash(Hash::from(Hash::Sha256, QByteArray("some other file")));
 
-    FileSharingStore store(dir.filePath(QStringLiteral("shares.sqlite")));
-    check(store.markServed(QStringLiteral("corporate"), { hash }), "cannot publish the file");
-    const auto corporateLookup = lookupFor(store, QStringLiteral("corporate"), path, hash);
-    const auto personalLookup  = lookupFor(store, QStringLiteral("personal"), path, hash);
+    profileDirectory = dir.path();
+    FileSharingCatalog catalog;
+    check(catalog.serve(QStringLiteral("corporate"), Jid(), { file, {} }, path), "cannot publish the file");
+    const auto corporateLookup = lookupFor(catalog, QStringLiteral("corporate"), path, hash);
+    const auto personalLookup  = lookupFor(catalog, QStringLiteral("personal"), path, hash);
 
     const auto published = request(peer, corporate, corporateLookup, file, payload.size());
     check(published.refusal.isEmpty() && published.received == payload, "a published file was not served intact");
@@ -258,10 +264,16 @@ int main(int argc, char **argv)
     check(missing.received.isEmpty() && !missing.refusal.isEmpty(), "an unknown file was not refused");
     check(cached.refusal == missing.refusal, "a requester can tell a file not shared here from an unknown one");
 
+    auto mixed = file;
+    mixed.addHash(Hash::from(Hash::Sha1, QByteArray("a different private file")));
+    const auto mixedRequest = request(peer, corporate, corporateLookup, mixed, payload.size());
+    check(mixedRequest.received.isEmpty() && mixedRequest.refusal == missing.refusal,
+          "a served hash authorized an unrelated hash in the same request");
+
     offerIsLeftToTheUser(peer, personal, personalLookup, file);
 
     // Joining the publication of a file already held is this account's own decision.
-    check(store.markServed(QStringLiteral("personal"), { hash }), "cannot join the publication");
+    check(catalog.serve(QStringLiteral("personal"), Jid(), { file, {} }, path), "cannot join the publication");
     const auto joined = request(peer, personal, personalLookup, file, payload.size());
     check(joined.refusal.isEmpty() && joined.received == payload, "a joined file was not served intact");
 

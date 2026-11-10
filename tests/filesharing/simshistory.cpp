@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "filesharingstore.h"
 #include "historyarchive.h"
 #include "historymessageextras.h"
+#include "iris/jingle-pub.h"
 #include "messageattachments.h"
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -261,6 +261,55 @@ private slots:
         QCOMPARE(message.from().full(), QStringLiteral("old@example/phone"));
         QCOMPARE(message.to().full(), QStringLiteral("new@example/desktop"));
     }
+    void fileSharingSurvivesHistory()
+    {
+        Jingle::FileTransfer::File file;
+        file.setName(QString::fromUtf8("Фильм.webm"));
+        file.setMediaType("video/webm");
+        file.setSize(9007199254740993ULL);
+        file.setDescription("A film");
+        file.setWidth(1920);
+        file.addHash(Hash(Hash::Sha256, QCryptographicHash::hash("payload", QCryptographicHash::Sha256)));
+        Jingle::JinglePub publication;
+        publication.setFrom(Jid("alice@example.org/desktop"));
+        publication.setId("published");
+        publication.addDescription(Jingle::FileTransfer::NS);
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromUrl(QUrl("https://example.org/film.webm")));
+        sources.add(StatelessFileSharing::Source::fromJinglePub(publication));
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        sharing.setId("first");
+        sharing.setFile(file);
+        sharing.setSources(sources);
+        Message original;
+        original.addFileSharing(sharing);
+
+        const auto encoded = HistoryMessageExtras::encode(original);
+        const auto check   = [&](const Message &restored) {
+            QCOMPARE(restored.fileSharings().size(), 1);
+            const auto copy = restored.fileSharings().first();
+            QCOMPARE(copy.disposition(), StatelessFileSharing::Disposition::Attachment);
+            QCOMPARE(copy.id(), QString("first"));
+            QCOMPARE(copy.file().name(), file.name());
+            QCOMPARE(copy.file().size().value(), 9007199254740993ULL);
+            QCOMPARE(copy.file().description(), QString("A film"));
+            QCOMPARE(copy.file().width().value(), quint32(1920));
+            QVERIFY(copy.file().computedHashes() == file.computedHashes());
+            QCOMPARE(copy.sources().items().size(), 2);
+            QCOMPARE(copy.sources().items().first().url(), QUrl("https://example.org/film.webm"));
+            QCOMPARE(copy.sources().items().last().jinglePub().from().full(), QString("alice@example.org/desktop"));
+        };
+        Message full, attachmentsOnly;
+        HistoryMessageExtras::restore(encoded, full);
+        HistoryMessageExtras::restoreAttachments(encoded, attachmentsOnly);
+        check(full);
+        check(attachmentsOnly);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(MessageAttachments::collect(full).attachments.size(), 1);
+        QVERIFY(MessageAttachments::collect(full).attachments.first().manualFetch);
+    }
     void uriLessShareAndFallbackSurviveHistory()
     {
         // XEP-0385 form: no outer reference URI; the body URL is located by
@@ -286,193 +335,6 @@ private slots:
         const auto reply = restored.bodyFallbacks("urn:xmpp:reply:0");
         QCOMPARE(reply.size(), 1);
         QVERIFY(reply.first().isWhole());
-
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        FileSharingStore store(dir.filePath("shares.sqlite"));
-        QVERIFY(store.remember("alice-account", share, Jid("alice@example.org/desktop")));
-        const auto record = store.find("alice-account", media.file.computedHashes().first());
-        QVERIFY(record);
-        QCOMPARE(record->reference.uri(), media.sources.first());
-    }
-    void urlContentMappingSurvivesRestartWithoutBecomingContentChecksum()
-    {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("shared-files.sqlite"));
-        const Hash address(Hash::Sha256,
-                           QCryptographicHash::hash("psi-oob-url-v1:https://example.org/file",
-                                                    QCryptographicHash::Sha256));
-        const Hash actual(Hash::Sha256, QCryptographicHash::hash("bytes", QCryptographicHash::Sha256));
-        QVERIFY(!(address == actual));
-        {
-            FileSharingStore store(path);
-            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address).has_value());
-            QVERIFY(store.rememberUrlContent(QStringLiteral("account-a"), address, actual));
-            QVERIFY(store.contentForUrl(QStringLiteral("account-a"), address).has_value());
-            QVERIFY(store.contentForUrl(QStringLiteral("account-a"), address).value() == actual);
-            QVERIFY(!store.contentForUrl(QStringLiteral("account-b"), address));
-            QVERIFY(!store.find(QStringLiteral("account-a"), address));
-        }
-        {
-            FileSharingStore reopened(path);
-            QVERIFY(reopened.contentForUrl(QStringLiteral("account-a"), address).has_value());
-            QVERIFY(reopened.contentForUrl(QStringLiteral("account-a"), address).value() == actual);
-            QVERIFY(!reopened.contentForUrl(QStringLiteral("account-b"), address));
-            QVERIFY(!reopened.find(QStringLiteral("account-a"), address));
-        }
-    }
-
-    void urlContentMappingsExpire()
-    {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const QString path = dir.filePath(QStringLiteral("shared-files.sqlite"));
-        const Hash    address(Hash::Sha256, QCryptographicHash::hash("url", QCryptographicHash::Sha256));
-        const Hash    actual(Hash::Sha256, QCryptographicHash::hash("bytes", QCryptographicHash::Sha256));
-        const QString name = QStringLiteral("url-content-expiry");
-        {
-            // A catalog from before mappings had timestamps.
-            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
-            db.setDatabaseName(path);
-            QVERIFY(db.open());
-            QSqlQuery query(db);
-            QVERIFY(query.exec("CREATE TABLE url_content(account_id TEXT NOT NULL, url_key TEXT NOT NULL, "
-                               "content_hash TEXT NOT NULL, PRIMARY KEY(account_id, url_key))"));
-            query.prepare("INSERT INTO url_content VALUES('account-a', :key, :hash)");
-            query.bindValue(":key", address.toString());
-            query.bindValue(":hash", actual.toString());
-            QVERIFY(query.exec());
-        }
-        QSqlDatabase::removeDatabase(name);
-        {
-            FileSharingStore store(path);
-            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address));
-            QVERIFY(store.rememberUrlContent(QStringLiteral("account-a"), address, actual));
-        }
-        {
-            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
-            db.setDatabaseName(path);
-            QVERIFY(db.open());
-            QSqlQuery query(db);
-            query.prepare("UPDATE url_content SET updated = :old");
-            query.bindValue(":old", QDateTime::currentSecsSinceEpoch() - FileSharingStore::UrlContentTtl - 1);
-            QVERIFY(query.exec());
-        }
-        QSqlDatabase::removeDatabase(name);
-        {
-            FileSharingStore store(path);
-            QVERIFY(!store.contentForUrl(QStringLiteral("account-a"), address));
-        }
-    }
-
-    void catalogReopen()
-    {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const auto ref     = sample(7);
-        const auto hashes  = ref.mediaSharing().file.computedHashes();
-        const auto path    = dir.filePath("shares.sqlite");
-        const auto payload = dir.filePath("movie");
-        QFile      file(payload);
-        QVERIFY(file.open(QIODevice::WriteOnly));
-        QCOMPARE(file.write("payload"), qint64(7));
-        file.close();
-        {
-            FileSharingStore store(path);
-            QVERIFY(store.remember("alice-account", ref, Jid("alice@example.org/desktop"), payload));
-            auto second   = ref;
-            auto media    = second.mediaSharing();
-            media.sources = QStringList { "https://example.org/movie" };
-            second.setMediaSharing(media);
-            QVERIFY(store.remember("alice-account", second, Jid("alice@example.org/mobile")));
-        }
-        {
-            FileSharingStore store(path);
-            for (const auto &hash : hashes) {
-                const auto record = store.find("alice-account", hash);
-                QVERIFY(record);
-                QCOMPARE(record->reference.mediaSharing().sources.size(), 2);
-                QCOMPARE(record->peers.size(), 2);
-                QCOMPARE(record->readableLocalPath(), payload);
-                QVERIFY(!store.find("other-account", hash));
-            }
-            auto conflict = sample(8);
-            QVERIFY(!store.remember("alice-account", conflict, Jid()));
-            QVERIFY(QFile::remove(payload));
-            auto record = store.find("alice-account", hashes.first());
-            QVERIFY(record);
-            QVERIFY(record->readableLocalPath().isEmpty());
-            QCOMPARE(record->reference.mediaSharing().file.size().value(), quint64(7));
-        }
-    }
-    void fileIsServedOnlyByTheAccountThatSharedIt()
-    {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const auto        path   = dir.filePath("shares.sqlite");
-        const auto        hashes = sample().mediaSharing().file.computedHashes();
-        const QList<Hash> unknown { Hash(Hash::Sha256, QCryptographicHash::hash("other", QCryptographicHash::Sha256)) };
-        {
-            FileSharingStore store(path);
-            QVERIFY(store.remember("corporate", sample(), Jid("alice@example.org/desktop")));
-            QVERIFY2(!store.isServed("corporate", hashes), "a remembered descriptor must not be served");
-
-            QVERIFY(store.markServed("corporate", hashes));
-            QVERIFY(store.isServed("corporate", hashes));
-            QVERIFY(store.isServed("corporate", { hashes.last() }));
-            QVERIFY2(!store.isServed("personal", hashes), "serving must not cross accounts");
-            QVERIFY(!store.isServed("corporate", unknown));
-            QVERIFY(!store.isServed("corporate", {}));
-        }
-        FileSharingStore reopened(path);
-        QVERIFY(reopened.isServed("corporate", hashes));
-        QVERIFY(reopened.markServed("personal", hashes));
-        reopened.unmarkServed("corporate", hashes);
-        QVERIFY(!reopened.isServed("corporate", hashes));
-        QVERIFY(reopened.isServed("personal", hashes));
-    }
-    void ownPublicationsAreImportedOnce()
-    {
-        QTemporaryDir dir;
-        QVERIFY(dir.isValid());
-        const auto reference = [&dir](const QByteArray &content) {
-            MediaSharing media;
-            media.file.setName(QString::fromLatin1(content));
-            media.file.setMediaType("application/octet-stream");
-            media.file.setSize(quint64(content.size()));
-            media.file.addHash(Hash(Hash::Sha256, QCryptographicHash::hash(content, QCryptographicHash::Sha256)));
-            media.sources << "xmpp:alice@example.org/desktop?jingle-ft";
-            Reference ref(Reference::Data, media.sources.first());
-            ref.setMediaSharing(media);
-            QFile file(dir.filePath(QString::fromLatin1(content)));
-            if (file.open(QIODevice::WriteOnly))
-                file.write(content);
-            return ref;
-        };
-        const auto served = [](FileSharingStore &store, const QString &account, const Reference &ref) {
-            return store.isServed(account, ref.mediaSharing().file.computedHashes());
-        };
-        const Jid  self("me@example.org/desktop");
-        const auto own = reference("own"), noCopy = reference("no-copy"), received = reference("received"),
-                   later = reference("later");
-
-        FileSharingStore store(dir.filePath("shares.sqlite"));
-        const auto       copy = [&dir](const Reference &ref) { return dir.filePath(ref.mediaSharing().file.name()); };
-        QVERIFY(store.remember("mine", own, Jid("me@example.org/phone"), copy(own)));
-        QVERIFY(store.remember("mine", noCopy, self));
-        QVERIFY(store.remember("mine", received, Jid("alice@example.org/desktop"), copy(received)));
-        QVERIFY(store.remember("other", own, self, copy(own)));
-
-        store.importOwnPublications("mine", self);
-        QVERIFY(served(store, "mine", own));
-        QVERIFY2(!served(store, "mine", noCopy), "nothing to serve without a local copy");
-        QVERIFY2(!served(store, "mine", received), "a received file is merely cached");
-        QVERIFY2(!served(store, "other", own), "the import must not reach another account");
-
-        QVERIFY(store.remember("mine", later, self, copy(later)));
-        store.importOwnPublications("mine", self);
-        QVERIFY2(!served(store, "mine", later), "only publications older than the list are imported");
     }
 };
 int main(int argc, char **argv)

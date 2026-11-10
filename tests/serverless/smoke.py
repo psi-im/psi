@@ -4,6 +4,9 @@
 The test-only QStyle plugin sends ordinary UI actions; no product test hooks,
 private account methods or fake network backend are used. Multicast stays on lo.
 """
+import base64
+import hashlib
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -27,6 +30,31 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
 <enabled type="bool">false</enabled><auto type="bool">false</auto>
 </a0></accounts></accounts>''')
     (base / "psirc").write_text("[General]\nlast_profile=default\nauto_open=true\nlast_lang=en\n")
+
+    # The catalog of an older Psi. The fixture account shared one file, and merely received another.
+    legacy_catalog = profile / "shares/shared-files.sqlite"
+    legacy_catalog.parent.mkdir()
+    def legacy_descriptor(name, peer):
+        path = base / name
+        path.write_bytes(name.encode())
+        digest = hashlib.sha256(name.encode()).hexdigest()
+        reference = ("<reference xmlns='urn:xmpp:reference:0' type='data' uri='https://example.invalid/{0}'>"
+                     "<media-sharing xmlns='urn:xmpp:sims:1'><file xmlns='urn:xmpp:jingle:apps:file-transfer:5'>"
+                     "<hash xmlns='urn:xmpp:hashes:2' algo='sha-256'>{1}</hash><size>{2}</size><name>{0}</name></file>"
+                     "<sources><reference xmlns='urn:xmpp:reference:0' type='data' "
+                     "uri='https://example.invalid/{0}'/></sources></media-sharing></reference>").format(
+                         name, base64.b64encode(bytes.fromhex(digest)).decode(), len(name))
+        return ("sha-256+" + digest, json.dumps({
+            "version": 1, "reference": reference, "peers": [peer],
+            "local": {"path": str(path), "size": str(len(name)),
+                      "modified": str(int(path.stat().st_mtime * 1000))}}))
+    with sqlite3.connect(legacy_catalog) as database:
+        database.execute("CREATE TABLE shared_files(account_id TEXT, hash TEXT, descriptor TEXT)")
+        for name, peer in (("shared", "fixture@example.invalid/desktop"), ("received", "other@example.invalid/phone")):
+            database.execute("INSERT INTO shared_files VALUES('existing-xmpp-fixture',?,?)",
+                             legacy_descriptor(name, peer))
+    database.close()
+
     environment = dict(os.environ, PSIDATADIR=str(base),
                        XDG_CONFIG_HOME=str(base / "xdg/config"),
                        XDG_DATA_HOME=str(base / "xdg/data"),
@@ -96,4 +124,29 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                                      "WHERE c.acc_id=? AND e.m_text=?",
                                      (persistent_id, "serverless-ui-test")).fetchone()[0]
             assert count == 2, f"Expected incoming/outgoing EDB records, got {count}"
-    print("PASS: settings, discovered peer, two-process chat, roster, disable and profile restart")
+            # Of those two, the reply attaches two files, and history links only those to publications.
+            links = database.execute("SELECT r.publication_id FROM message_media_refs r "
+                                     "JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
+                                     "WHERE c.acc_id=? ORDER BY r.ordinal", (persistent_id,)).fetchall()
+            assert len(links) == 2, f"Expected the attachments of the reply to be linked, got {links}"
+        database.close()
+        with sqlite3.connect(profile / "files.sqlite") as database:
+            publications = database.execute("SELECT id,serving,announcer FROM publications WHERE account=?",
+                                            (persistent_id,)).fetchall()
+            assert sorted(row[:2] for row in publications) == sorted((link[0], 0) for link in links), publications
+            assert all(row[2].startswith("test@p-") for row in publications), publications
+            for link, url, content in ((links[0], "https://example.invalid/peer-file.bin", b"serverless-ui-file"),
+                                       (links[1], "https://example.invalid/shared-file.bin", b"serverless-ui-sharing")):
+                sources = database.execute("SELECT uri FROM publication_sources WHERE publication_id=?",
+                                           link).fetchall()
+                assert sources == [(url,)], sources
+                digests = database.execute("SELECT algorithm,digest FROM publication_hashes WHERE publication_id=?",
+                                           link).fetchall()
+                assert digests == [("sha-256", hashlib.sha256(content).digest())], digests
+            # Only what the account shared survives from the old catalog, and it serves that.
+            imported = database.execute("SELECT serving,announcer FROM publications WHERE account=?",
+                                        ("existing-xmpp-fixture",)).fetchall()
+            assert imported == [(1, "fixture@example.invalid")], imported
+        database.close()
+        assert not legacy_catalog.exists(), "The old catalog was left behind"
+    print("PASS: settings, discovered peer, two-process chat, file publications, roster, disable and profile restart")

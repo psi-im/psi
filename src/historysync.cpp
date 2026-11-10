@@ -8,6 +8,7 @@
 #include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_stream.h"
 #include "iris/xmpp_xmlcommon.h"
+#include "messageattachments.h"
 #include "widgets/MamArchivePeerPolicy.h"
 #include "widgets/MamHistorySourcePolicy.h"
 #include <QJsonDocument>
@@ -138,8 +139,8 @@ bool HistorySync::parseResults(const QList<QDomElement> &results, HistoryArchive
         if (decryptionFailures_.contains(entry.uid))
             extra.insert("psi:decryption-error", true);
         const bool textless = !stanza.isNull() && !hasBody && stanza.firstChildElement("subject").isNull()
-            && stanza.firstChildElement("html").isNull() && message.references().isEmpty()
-            && message.urlList().isEmpty() && message.body().isEmpty();
+            && stanza.firstChildElement("html").isNull() && !MessageAttachments::hasAttachments(message)
+            && message.body().isEmpty();
         if (protocolOnly_.contains(entry.uid) || textless)
             extra.insert("psi:protocol-only", true);
         entry.extra     = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));

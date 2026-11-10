@@ -104,7 +104,7 @@ if(TARGET iris)
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Sql)
     add_executable(filesharing_sims_history_test simshistory.cpp
         ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
-        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp ../../src/filesharingstore.cpp)
+        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
     set_target_properties(filesharing_sims_history_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_sims_history_test PRIVATE ../../src)
     target_link_libraries(filesharing_sims_history_test PRIVATE iris
@@ -112,8 +112,21 @@ if(TARGET iris)
     add_test(NAME filesharing_sims_history COMMAND filesharing_sims_history_test)
     set_tests_properties(filesharing_sims_history PROPERTIES TIMEOUT 30)
 
+    add_executable(filesharing_publications_test publications.cpp ../../src/filesharingcatalog.cpp
+        ../../src/filesharingpublicationsync.cpp ../../src/filedatabase.cpp ../../src/historymediarefs.cpp
+        ../../src/historymediaqueries.cpp ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
+        ../../src/historymessageextras.cpp ../../src/messageattachments.cpp
+        ../../src/historyarchive.cpp ../../src/historymessagestate.cpp)
+    set_target_properties(filesharing_publications_test PROPERTIES AUTOMOC ON)
+    target_include_directories(filesharing_publications_test PRIVATE ../../src)
+    target_link_libraries(filesharing_publications_test PRIVATE iris
+        Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
+    add_test(NAME filesharing_publications COMMAND filesharing_publications_test)
+    set_tests_properties(filesharing_publications PROPERTIES TIMEOUT 30)
+
     add_executable(filesharing_responder_test responder.cpp ../../src/filesharingresponder.cpp
-        ../../src/filesharingjinglesession.cpp ../../src/filesharingstore.cpp)
+        ../../src/filesharingjinglesession.cpp ../../src/filesharingcatalog.cpp ../../src/filedatabase.cpp
+        ../../src/messageattachments.cpp)
     set_target_properties(filesharing_responder_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_responder_test PRIVATE ../../src)
     target_link_libraries(filesharing_responder_test PRIVATE iris

@@ -45,7 +45,11 @@ class EDBSqLite : public EDB {
 public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
-    bool init();
+    bool    init();
+    void       requestMediaLinks(qint64 position, int limit, QObject *receiver,
+                                 std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished);
+    void       requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiver,
+                                  std::function<void(QSet<QByteArray>, bool)> finished);
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
                               std::function<void(EDBItemPtr, bool)>) override;
@@ -97,19 +101,33 @@ private:
         qint64        localBefore = 0;
         QDateTime     date;
         QString       findStr;
-        PsiEvent::Ptr event; // GUI-side media registration on write completion.
+        PsiEvent::Ptr                event; // GUI-side notification after a committed message append.
         HistoryEventFactory::Encoded encoded;
         HistoryArchive::Key archiveKey;
         HistoryArchive::Page archivePage;
         QList<qint64> eventIds;
+        QList<QByteArray>            publicationIds;
         QString archiveCursor;
         QString ownSender, ownMessageId;
         QDateTime ownTime;
         ArchiveReadMode archiveMode = ArchiveReadMode::Before;
         int archiveIndex = -1, snapshotCount = -1;
 
-        enum Type { Type_get, Type_append, Type_find, Type_erase, Type_local, Type_displayed,
-                    Type_archiveRead, Type_archiveWrite, Type_resolved, Type_lookup, Type_plaintext };
+        enum Type {
+            Type_get,
+            Type_append,
+            Type_find,
+            Type_erase,
+            Type_local,
+            Type_displayed,
+            Type_archiveRead,
+            Type_archiveWrite,
+            Type_resolved,
+            Type_lookup,
+            Type_plaintext,
+            Type_mediaLinks,
+            Type_mediaLinked
+        };
     };
     bool                    active_ = false;
     QList<item_query_req *> rlist;
@@ -117,6 +135,16 @@ private:
     HistorySqlReadWorker    *historyReader_ = nullptr;
     QHash<int, item_query_req *> pendingReads_;
     QHash<int, item_query_req *> pendingWrites_;
+    struct PendingMediaLinks {
+        QPointer<QObject>                                        receiver;
+        std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished;
+    };
+    struct PendingMediaLinked {
+        QPointer<QObject>                           receiver;
+        std::function<void(QSet<QByteArray>, bool)> finished;
+    };
+    QHash<int, PendingMediaLinks>  pendingMediaLinks_;
+    QHash<int, PendingMediaLinked> pendingMediaLinked_;
     struct PendingLocalPage {
         QPointer<QObject> receiver;
         std::function<void(EDBResult, bool)> finished;
@@ -155,6 +183,9 @@ private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
 
 signals:
+    // Emitted in the GUI after the worker has successfully committed.
+    void mediaLinksAdded();
+    void mediaLinksRemoved();
     void historyReadRequested(HistoryReadRequest request);
     void historyWriteRequested(HistoryWriteRequest request);
     void historyReadStopRequested();

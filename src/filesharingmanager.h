@@ -28,6 +28,7 @@
 #include <functional>
 #include <optional>
 
+class EDBSqLite;
 class FileCache;
 class FileCacheItem;
 class FileSharingDownloader;
@@ -88,7 +89,6 @@ public:
     void forgetUrlContent(const QString &account, const XMPP::Hash &urlIdentity);
 
     FileSharingItem *item(const XMPP::Hash &id, PsiAccount *account = nullptr);
-    void             rememberMessage(const XMPP::Message &message, PsiAccount *account);
     // FileSharingItem* fromReference(const XMPP::Reference &ref, PsiAccount *acc);
     QList<FileSharingItem *> createFromMimeData(const QMimeData *data, PsiAccount *acc);
     QList<FileSharingItem *> fromFilesList(const QStringList &fileList, PsiAccount *acc);
@@ -103,9 +103,16 @@ public:
     // Answers a remote request for a file on behalf of the account. Returns false when
     // the session is not a request, such as a file offer for the user to accept.
     bool answerFileRequest(XMPP::Jingle::Session *session, PsiAccount *account);
-    // Whether the account answers remote requests for the file.
-    void setServed(PsiAccount *account, const QList<XMPP::Hash> &hashes, bool served);
-    void importOwnPublications(const QString &accountId, const XMPP::Jid &self);
+    // The account answers remote requests for the file from now on, or no longer does.
+    bool serve(PsiAccount *account, const XMPP::MediaSharing &media, const QString &localPath);
+    void stopServing(PsiAccount *account, const QList<XMPP::Hash> &hashes);
+    // Every source the account was told of for the file.
+    QStringList knownSources(PsiAccount *account, const QList<XMPP::Hash> &hashes) const;
+
+    // What the catalog from before publications alone knows, once all accounts are loaded.
+    void importLegacyCatalog(const QList<PsiAccount *> &accounts);
+    // Publications of stored messages follow the history from now on.
+    void followHistory(EDBSqLite *history);
 
 signals:
 

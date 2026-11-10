@@ -100,6 +100,18 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         }
         emit completed(result);
     };
+    if (request.type == HistoryReadRequest::MediaLinks) {
+        result.mediaLinks = HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error);
+        finish();
+        return;
+    }
+    if (request.type == HistoryReadRequest::MediaLinked) {
+        const auto linked = HistoryMediaRefs::linked(db_, request.publicationIds, &error);
+        if (linked)
+            result.linkedPublications = *linked;
+        finish();
+        return;
+    }
     if (request.type == HistoryReadRequest::ArchiveLookup) {
         QSqlQuery q(db_);
         q.prepare(QStringLiteral(
@@ -318,8 +330,10 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
         // storePage owns its transaction: message rows, identity, revisions,
         // adjacency and persistent cursor either all commit or roll back.
         result.archivePage = request.archivePage;
-        result.success = HistoryArchive::storePage(db_, request.archiveKey, request.before,
-                                                   request.limit, result.archivePage);
+        result.success     = HistoryArchive::storePage(
+            db_, request.archiveKey, request.before, request.limit, result.archivePage, [this, &result](qint64 id) {
+                return !eventStoredHook_ || eventStoredHook_(db_, id, &result.mediaLinksRemoved);
+            });
         emit writeCompleted(result);
         return;
     }
@@ -412,7 +426,8 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
                         if (event.isMessage)
                             ok = HistoryArchive::recordRevision(db_, eventId, contactId, event.type, event.direction,
                                                                 event.sender, event.messageId, event.replaceId)
-                                 && HistoryArchive::recordMessageStates(db_, { eventId });
+                                && HistoryArchive::recordMessageStates(db_, { eventId })
+                                && (!eventStoredHook_ || eventStoredHook_(db_, eventId, &result.mediaLinksRemoved));
                     }
                 }
             }
@@ -454,10 +469,12 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
             for (auto &pending : pendingAppends_) {
                 pending.success = false;
                 pending.inserted = false;
+                pending.mediaLinksRemoved = false;
                 emit writeCompleted(pending);
             }
             pendingAppends_.clear();
             result.inserted = false;
+            result.mediaLinksRemoved = false;
             emit writeCompleted(result);
             return;
         }
@@ -498,8 +515,10 @@ void HistorySqlReadWorker::flushPendingAppends()
     appendTransactionOpen_ = false;
     for (auto &result : pendingAppends_) {
         result.success = committed;
-        if (!committed)
+        if (!committed) {
             result.inserted = false;
+            result.mediaLinksRemoved = false;
+        }
         emit writeCompleted(result);
     }
     pendingAppends_.clear();

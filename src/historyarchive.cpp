@@ -830,7 +830,8 @@ Page readIndex(QSqlDatabase db, const Key &key, int index, int limit, int snapsh
     return page;
 }
 
-bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page)
+bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit, Page &page,
+               const std::function<bool(qint64)> &eventStored)
 {
     QElapsedTimer elapsed;
     elapsed.start();
@@ -949,10 +950,10 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
                 if (merged.isEmpty() && !originalExtra.isEmpty() && originalExtra != "{}")
                     merged.insert("psi:legacy-extra", originalExtra);
                 // Replace known protocol fields, retaining extension/plugin data.
-                for (const auto &name :
-                     { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin", "psi:encrypted",
-                       "psi:encryption-protocol", "psi:decoded", "psi:has-body", "psi:decryption-error",
-                       "psi:protocol-only", "urn:xmpp:reference:0", "jabber:x:oob" })
+                for (const auto &name : { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin",
+                                          "psi:encrypted", "psi:encryption-protocol", "psi:decoded", "psi:has-body",
+                                          "psi:decryption-error", "psi:protocol-only", "psi:media-refs",
+                                          "urn:xmpp:reference:0", "urn:xmpp:sfs:0", "jabber:x:oob" })
                     merged.remove(QLatin1String(name));
                 for (auto it = incoming.begin(); it != incoming.end(); ++it)
                     merged.insert(it.key(), it.value());
@@ -1008,6 +1009,10 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
     }
     if (!recordMessageStates(db, stateEvents))
         return fail();
+    if (eventStored)
+        for (const auto eventId : std::as_const(stateEvents))
+            if (!eventStored(eventId))
+                return fail();
     if (page.checkpoint) {
         // Failed/unstable queries cannot leave an older reusable checkpoint behind.
         q.prepare("DELETE FROM archive_pages WHERE " + scope + " AND before_uid=:before AND page_size=:limit");

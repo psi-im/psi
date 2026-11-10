@@ -40,7 +40,7 @@ HistoryEventFactory::Encoded HistoryEventFactory::encode(const PsiEvent::Ptr &ev
         out.language = message.lang();
         out.subject = message.subject(out.language);
         out.body = message.body(out.language);
-        out.extras = HistoryMessageExtras::encode(message);
+        out.extras   = HistoryMessageExtras::encode(message, out.body);
         // The live/MAM match uses the default-language payload, not the
         // localized fields chosen for the EDB text columns.
         out.matchBody = message.body();

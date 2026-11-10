@@ -7,6 +7,7 @@
 #include <iris/xmpp_client.h>
 #include <iris/xmpp_linklocalservice.h>
 #include <iris/xmpp_message.h>
+#include <iris/xmpp_reference.h>
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
@@ -32,6 +33,25 @@ int main(int argc, char **argv)
         reply.setTo(message.from());
         reply.setType(XMPP::Message::Type::Chat);
         reply.setBody(message.body());
+        // Too large to be fetched by itself, and nothing listens at the source.
+        XMPP::MediaSharing media;
+        media.file.setName(QStringLiteral("peer-file.bin"));
+        media.file.setMediaType(QStringLiteral("application/octet-stream"));
+        media.file.setSize(quint64(1) << 40);
+        media.file.addHash(XMPP::Hash::from(XMPP::Hash::Sha256, QByteArrayLiteral("serverless-ui-file")));
+        media.sources.append(QStringLiteral("https://example.invalid/peer-file.bin"));
+        XMPP::Reference reference(XMPP::Reference::Data, media.sources.first());
+        reference.setMediaSharing(media);
+        reply.setReferences({ reference });
+        XMPP::StatelessFileSharing::Sources sources;
+        sources.add(XMPP::StatelessFileSharing::Source::fromUrl(QUrl("https://example.invalid/shared-file.bin")));
+        media.file.setName(QStringLiteral("shared-file.bin"));
+        media.file.setHashes({ XMPP::Hash::from(XMPP::Hash::Sha256, QByteArrayLiteral("serverless-ui-sharing")) });
+        XMPP::StatelessFileSharing::FileSharing sharing;
+        sharing.setDisposition(XMPP::StatelessFileSharing::Disposition::Attachment);
+        sharing.setFile(media.file);
+        sharing.setSources(sources);
+        reply.addFileSharing(sharing);
         client.sendMessage(reply);
         qInfo("PEER-MESSAGE-OK");
     });
