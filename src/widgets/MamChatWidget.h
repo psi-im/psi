@@ -118,6 +118,8 @@ public:
     void markUnreadBoundary();
     int  unreadIncomingCount() const { return unreadIncomingCount_; }
     bool hasUnreadTail() const { return unreadTailPending_; }
+    // Recheck the displayed tail when the containing chat window becomes active.
+    void refreshVisibleUnreadState();
     void toggleReaction(const QString &messageId, const QString &emoji);
 
 signals:

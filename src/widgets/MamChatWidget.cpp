@@ -3430,6 +3430,11 @@ void MamChatWidget::cancelMessageSelection()
     refreshSelection();
 }
 
+void MamChatWidget::refreshVisibleUnreadState()
+{
+    refreshUnreadEdgeBadge();
+}
+
 void MamChatWidget::refreshUnreadEdgeBadge()
 {
     // This is a presentation count based on Psi's existing unread boundary,
