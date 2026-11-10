@@ -45,7 +45,8 @@ class EDBSqLite : public EDB {
 public:
     EDBSqLite(PsiCon *psi);
     ~EDBSqLite();
-    bool init();
+    bool    init();
+    QString connectionName() const;
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
     void requestArchivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime &, QObject *,
                               std::function<void(EDBItemPtr, bool)>) override;
@@ -155,6 +156,9 @@ private:
     EDBResult     decodeLocalRecords(const QList<QSqlRecord> &rows);
 
 signals:
+    // Emitted in the GUI after the worker has successfully committed.
+    void mediaLinksAdded();
+    void mediaLinksRemoved();
     void historyReadRequested(HistoryReadRequest request);
     void historyWriteRequested(HistoryWriteRequest request);
     void historyReadStopRequested();

@@ -19,6 +19,7 @@
 
 #include "historyupgrade.h"
 #include "historyarchive.h"
+#include "historymediarefs.h"
 
 #include <QCloseEvent>
 #include <QCoreApplication>
@@ -60,12 +61,13 @@ bool HistoryUpgrade::upgradeDatabase(const QString &path)
             if (db.open()) {
                 QSqlQuery foreignKeys(db);
                 foreignKeys.exec("PRAGMA foreign_keys=ON");
-                success = HistoryArchive::migrate(db, [&progress](qint64 id) {
+                const auto report = [&progress](qint64 id) {
                     QMetaObject::invokeMethod(
                         &progress,
                         [&progress, id] { progress.setLabelText(QCoreApplication::translate("HistoryImport", "Upgrading history (record %1)…").arg(id)); },
                         Qt::QueuedConnection);
-                });
+                };
+                success = HistoryArchive::migrate(db, report) && HistoryMediaRefs::migrate(db, report);
                 db.close();
             }
         }

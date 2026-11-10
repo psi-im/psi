@@ -6,6 +6,7 @@
 
 #include <QList>
 #include <QString>
+#include <QUrl>
 
 namespace XMPP {
 class Message;
@@ -18,6 +19,11 @@ namespace MessageAttachments {
 struct Attachment {
     XMPP::Reference reference;   // the message's own, or a URL-only data reference for an OOB URL
     QString         description; // the OOB description of that URL, if any
+
+    // A file known by its hashes.
+    bool isFile() const;
+    // The HTTP(S) URL of a file known by nothing else, invalid for any other attachment.
+    QUrl url() const;
 };
 
 struct Result {
@@ -26,4 +32,7 @@ struct Result {
 };
 
 Result collect(const XMPP::Message &message);
+
+// Identifies a URL-only file by its address. This is never a checksum of the content.
+XMPP::Hash urlIdentity(const QUrl &url);
 }

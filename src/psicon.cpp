@@ -713,6 +713,8 @@ bool PsiCon::init()
 
     checkAccountsEmpty();
 
+    d->fileSharingManager->importLegacyCatalog(d->contactList->accounts());
+
     // These lived above the profile. Bits of Binary are only a cache of what peers can send again.
     const auto profiles = getProfilesList();
     FileDatabase::retireLegacyDirectory(ApplicationInfo::homeDir(ApplicationInfo::DataLocation)
@@ -730,6 +732,7 @@ bool PsiCon::init()
         d->edb         = edb;
         if (!edb->init())
             return false;
+        d->fileSharingManager->followHistory(edb);
     }
 
     if (d->contactList->defaultAccount())

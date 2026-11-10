@@ -5,7 +5,8 @@
 #include <QString>
 #include <QStringList>
 
-// The current profile's database of file records, shared by its FileCache instances.
+// The current profile's database of file records and publications, shared by its
+// FileCache instances and FileSharingCatalog.
 // Two profiles may run at once, so nothing in it is shared between them.
 namespace FileDatabase {
 // Not open if the database cannot be used. A cache then works for this session only.

@@ -20,7 +20,7 @@
 #include "applicationinfo.h"
 // #include "common.h"
 #include "edbsqlite.h"
-#include "filesharingmanager.h"
+#include "historymediarefs.h"
 #include "historyupgrade.h"
 #include "historyeventfactory.h"
 #include "historysqlitepolicy.h"
@@ -419,7 +419,11 @@ bool EDBSqLite::mergeArchivePage(const HistoryArchive::Key &key, const QString &
                                  HistoryArchive::Page &page)
 {
 
-    const bool ok = HistoryArchive::storePage(QSqlDatabase::database("history"), key, before, limit, page);
+    const auto db = QSqlDatabase::database("history");
+    const bool ok = HistoryArchive::storePage(db, key, before, limit, page,
+                                             [db](qint64 id) { return HistoryMediaRefs::link(db, id); });
+    if (ok)
+        emit mediaLinksAdded();
     // All contact inserts are now owned by the worker and are transactional.
     return ok;
 }
@@ -478,11 +482,12 @@ bool EDBSqLite::init()
     if (!active_)
         return false;
     auto db = QSqlDatabase::database("history");
-    if (HistoryArchive::needsMigration(db)) {
+    if (HistoryArchive::needsMigration(db) || HistoryMediaRefs::needsMigration(db)) {
         QSqlQuery  count(db);
         const bool empty = count.exec("SELECT 1 FROM events LIMIT 1") && !count.next();
         count.finish();
-        const bool migrated = empty ? HistoryArchive::migrate(db) : HistoryUpgrade::upgradeDatabase(db.databaseName());
+        const bool migrated = empty ? HistoryArchive::migrate(db) && HistoryMediaRefs::migrate(db)
+                                    : HistoryUpgrade::upgradeDatabase(db.databaseName());
         if (!migrated) {
             active_ = false;
             return false;
@@ -498,6 +503,10 @@ bool EDBSqLite::init()
         qRegisterMetaType<HistoryWriteResult>("HistoryWriteResult");
         historyReadThread_ = new QThread(this);
         historyReader_ = new HistorySqlReadWorker(db.databaseName());
+        // The callback carries no GUI objects and executes on the worker's SQLite connection.
+        historyReader_->setEventStoredHook([](QSqlDatabase db, qint64 id) {
+            return HistoryMediaRefs::link(db, id);
+        });
         historyReader_->moveToThread(historyReadThread_);
         connect(historyReadThread_, &QThread::started, historyReader_, &HistorySqlReadWorker::open);
         connect(this, &EDBSqLite::historyReadRequested, historyReader_,
@@ -517,6 +526,8 @@ bool EDBSqLite::init()
     }
     return true;
 }
+
+QString EDBSqLite::connectionName() const { return QStringLiteral("history"); }
 
 int EDBSqLite::features() const { return SeparateAccounts | PrivateContacts | AllContacts | AllAccounts | ArchiveCache; }
 
@@ -680,6 +691,8 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
 {
     if (pendingArchiveWrites_.contains(written.id)) {
         auto pending = pendingArchiveWrites_.take(written.id);
+        if (written.success)
+            emit mediaLinksAdded();
         if (pending.receiver)
             pending.finished(std::move(written.archivePage), written.success);
         return;
@@ -688,11 +701,10 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
     if (!r)
         return;
     if (written.success && written.inserted && r->type == item_query_req::Type_append
-        && r->event && r->event->type() == PsiEvent::Message) {
-        if (auto *account = psi()->contactList()->getAccount(r->accId))
-            psi()->fileSharingManager()->rememberMessage(
-                r->event.staticCast<MessageEvent>()->message().displayMessage(), account);
-    }
+        && r->event && r->event->type() == PsiEvent::Message)
+        emit mediaLinksAdded();
+    if (written.success && r->type == item_query_req::Type_erase)
+        emit mediaLinksRemoved();
     writeFinished(r->id, written.success);
     delete r;
 }

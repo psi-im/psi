@@ -13,6 +13,7 @@
 #include <QString>
 #include <QTimer>
 #include <utility>
+#include <functional>
 
 // Only immutable value objects cross the EDB reader's queued connections.
 // No PsiEvent, PsiAccount or SQLite connection ever crosses into the worker.
@@ -73,6 +74,12 @@ class HistorySqlReadWorker final : public QObject {
 public:
     explicit HistorySqlReadWorker(QString path) : path_(std::move(path)) { }
 
+    // Called before moveToThread; no GUI-owned data is captured.
+    void setEventStoredHook(std::function<bool(QSqlDatabase, qint64)> hook)
+    {
+        eventStoredHook_ = std::move(hook);
+    }
+
 public slots:
     void open();
     void read(HistoryReadRequest request);
@@ -90,6 +97,7 @@ private:
     void flushPendingAppends();
     QString path_, connectionName_;
     QSqlDatabase db_;
+    std::function<bool(QSqlDatabase, qint64)> eventStoredHook_;
     QTimer *appendCommitTimer_ = nullptr;
     QList<HistoryWriteResult> pendingAppends_;
     bool appendTransactionOpen_ = false;

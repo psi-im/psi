@@ -319,7 +319,10 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
         // adjacency and persistent cursor either all commit or roll back.
         result.archivePage = request.archivePage;
         result.success = HistoryArchive::storePage(db_, request.archiveKey, request.before,
-                                                   request.limit, result.archivePage);
+                                                   request.limit, result.archivePage,
+                                                   [this](qint64 id) {
+                                                       return !eventStoredHook_ || eventStoredHook_(db_, id);
+                                                   });
         emit writeCompleted(result);
         return;
     }
@@ -412,7 +415,8 @@ void HistorySqlReadWorker::write(HistoryWriteRequest request)
                         if (event.isMessage)
                             ok = HistoryArchive::recordRevision(db_, eventId, contactId, event.type, event.direction,
                                                                 event.sender, event.messageId, event.replaceId)
-                                 && HistoryArchive::recordMessageStates(db_, { eventId });
+                                 && HistoryArchive::recordMessageStates(db_, { eventId })
+                                 && (!eventStoredHook_ || eventStoredHook_(db_, eventId));
                     }
                 }
             }
