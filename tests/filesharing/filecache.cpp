@@ -4,6 +4,7 @@
 #include "applicationinfo.h"
 #include "filedatabase.h"
 #include "fileutil.h"
+#include "mediachunkstore.h"
 #include "optionstree.h"
 #include <QDataStream>
 #include <QDateTime>
@@ -107,6 +108,43 @@ private slots:
         QCOMPARE(item->data(), bytes);
         QCOMPARE(cache->getData(hash), bytes);
         QCOMPARE(item->metadata().value(QStringLiteral("type")).toString(), QStringLiteral("image/png"));
+    }
+
+    void rangesShareTheCompleteCacheBudgetWithoutCountingAliasesTwice()
+    {
+        auto cache = open();
+        cache->setFileCacheSize(24);
+        const auto oldHash = hashOf("old-complete-1234");
+        QVERIFY(cache->append(oldHash, "old-complete-1234"));
+        cache->sync();
+        QVERIFY(cache->get(oldHash));
+        auto             ranges = cache->rangeStore();
+        const QString    key(64, QLatin1Char('a'));
+        const QByteArray bytes("range-payload-16");
+        QCOMPARE(bytes.size(), 16);
+        int completed = 0;
+        ranges->write(key, bytes.size(), 0, bytes, [&](QByteArray data, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(data, bytes);
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 1);
+        QTRY_VERIFY(!cache->get(oldHash)); // Combined 32 bytes exceed the one 24-byte budget.
+        QCOMPARE(ranges->diskBytes(), quint64(16));
+        const auto recentHash = hashOf("recent-8");
+        QVERIFY(cache->append(recentHash, "recent-8"));
+        const auto rangeHash = hashOf(bytes);
+        auto       alias     = cache->trackExternal({ rangeHash }, QFileInfo(ranges->state(key).path));
+        QVERIFY(alias);
+        QVERIFY(alias->isExternal()); // A non-owning complete-item view of the managed range payload.
+        cache->sync();
+        QVERIFY(cache->get(recentHash));
+        QVERIFY(cache->get(rangeHash));
+        QCOMPARE(ranges->diskBytes(), quint64(16));
+        QSqlQuery query(FileDatabase::connection());
+        QVERIFY(query.exec("SELECT count(*) FROM files WHERE resource_key IS NOT NULL AND partition='test:ranges'"));
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 1);
     }
 
     void emptyItemHasARealPayload()

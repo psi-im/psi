@@ -18,12 +18,17 @@ QByteArray digest(const QByteArray &bytes) { return QCryptographicHash::hash(byt
 
 MediaChunkCache::MediaChunkCache(QString directory, QObject *parent, quint64 chunkSize, quint64 diskLimit,
                                  MediaChunkStore::Hasher hasher) :
+    MediaChunkCache(new MediaChunkStore(std::move(directory), diskLimit, nullptr, std::move(hasher)), parent, chunkSize)
+{
+    store_->setParent(this);
+}
+MediaChunkCache::MediaChunkCache(MediaChunkStore *store, QObject *parent, quint64 chunkSize) :
     QObject(parent), chunkSize_(std::clamp<quint64>(chunkSize, 1, MaxChunkSize)), memory_(16 * 1024 * 1024),
-    store_(new MediaChunkStore(std::move(directory), diskLimit, nullptr, std::move(hasher)))
+    store_(store)
 {
     scheduler_.setMaxActive(MaxActiveFetches);
-    connect(store_.get(), &MediaChunkStore::availabilityChanged, this, &MediaChunkCache::refreshAvailability);
-    connect(store_.get(), &MediaChunkStore::fileChanged, this, [this](const QString &key) {
+    connect(store_, &MediaChunkStore::availabilityChanged, this, &MediaChunkCache::refreshAvailability);
+    connect(store_, &MediaChunkStore::fileChanged, this, [this](const QString &key) {
         const auto file = files_.value(key);
         if (file.first.isEmpty())
             return;
@@ -60,11 +65,7 @@ MediaFileState MediaChunkCache::fileState(const QString &source, quint64 size) c
 {
     return store_->state(fileKey(source, size));
 }
-bool MediaChunkCache::isCompleteFile(const QString &path) const
-{
-    const auto state = store_->state(QFileInfo(path).completeBaseName());
-    return state.complete && state.error.isEmpty() && state.path == path;
-}
+bool MediaChunkCache::isCompleteFile(const QString &path) const { return store_->isCompleteFile(path); }
 void MediaChunkCache::resume(const QString &source, quint64 size)
 {
     const auto key = fileKey(source, size);
@@ -399,6 +400,7 @@ void MediaChunkCache::shutdown()
     if (stopped_)
         return;
     stopped_     = true;
+    store_->checkpoint();
     auto pending = std::exchange(requests_, { });
     scheduler_.shutdown();
     for (const auto &request : pending)

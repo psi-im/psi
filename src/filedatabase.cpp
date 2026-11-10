@@ -4,15 +4,17 @@
 #include "applicationinfo.h"
 
 #include <QCoreApplication>
+#include <QDataStream>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QThread>
 
 namespace {
-const int SchemaVersion = 3;
+const int SchemaVersion = 4;
 
 // What each schema version adds to the one before it.
 const QList<QStringList> &schemaUpgrades()
@@ -42,10 +44,22 @@ const QList<QStringList> &schemaUpgrades()
           "account TEXT NOT NULL, url_key TEXT NOT NULL, content_hash TEXT NOT NULL, updated INTEGER NOT NULL, "
           "PRIMARY KEY(account, url_key))" },
         { "ALTER TABLE files ADD COLUMN path TEXT", "ALTER TABLE files ADD COLUMN placement INTEGER NOT NULL DEFAULT 0",
-          "ALTER TABLE files ADD COLUMN external_mtime INTEGER",
-          "DROP INDEX IF EXISTS files_partition", "CREATE INDEX files_partition_path ON files(partition,path)",
+          "ALTER TABLE files ADD COLUMN external_mtime INTEGER", "DROP INDEX IF EXISTS files_partition",
+          "CREATE INDEX files_partition_path ON files(partition,path)",
           "CREATE TABLE file_trash (partition TEXT NOT NULL, path TEXT NOT NULL, "
-          "PRIMARY KEY(partition,path))" }
+          "PRIMARY KEY(partition,path))" },
+        { "ALTER TABLE files ADD COLUMN resource_key TEXT",
+          "ALTER TABLE files ADD COLUMN complete INTEGER NOT NULL DEFAULT 1",
+          "ALTER TABLE files ADD COLUMN payload_modified INTEGER",
+          "ALTER TABLE files ADD COLUMN error TEXT NOT NULL DEFAULT ''",
+          "CREATE UNIQUE INDEX files_resource_key ON files(partition,resource_key) WHERE resource_key IS NOT NULL",
+          "CREATE TABLE file_ranges (file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE, "
+          "offset INTEGER NOT NULL CHECK(offset>=0), length INTEGER NOT NULL CHECK(length>0), "
+          "PRIMARY KEY(file_id,offset))",
+          "CREATE TABLE file_checksums (file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE, "
+          "offset INTEGER NOT NULL CHECK(offset>=0), length INTEGER NOT NULL CHECK(length>=0), "
+          "algorithm TEXT NOT NULL, digest BLOB NOT NULL, verified INTEGER NOT NULL DEFAULT 0, "
+          "PRIMARY KEY(file_id,offset,length,algorithm,digest))" }
     };
     return upgrades;
 }
@@ -86,18 +100,30 @@ bool prepare(QSqlDatabase &db)
     }
     return true;
 }
+
+QString connectionName(const QString &path)
+{
+    return QStringLiteral("psi-files:%1:%2")
+        .arg(path, QString::number(reinterpret_cast<quintptr>(QThread::currentThread()), 16));
+}
 }
 
-QSqlDatabase FileDatabase::connection()
+QString FileDatabase::path()
+{
+    return ApplicationInfo::currentProfileDir(ApplicationInfo::DataLocation) + QStringLiteral("/files.sqlite");
+}
+
+QSqlDatabase FileDatabase::connection() { return connection(path()); }
+
+QSqlDatabase FileDatabase::connection(const QString &databasePath)
 {
     if (!QCoreApplication::instance())
         return {};
-    const QString directory = ApplicationInfo::currentProfileDir(ApplicationInfo::DataLocation);
-    const QString path      = directory + QStringLiteral("/files.sqlite");
-    const QString name      = QStringLiteral("psi-files:") + path;
+    const QString path = QFileInfo(databasePath).absoluteFilePath();
+    const QString name = connectionName(path);
     if (QSqlDatabase::contains(name))
         return QSqlDatabase::database(name, false);
-    QDir().mkpath(directory);
+    QDir().mkpath(QFileInfo(path).absolutePath());
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), name);
     db.setDatabaseName(path);
     if (!db.open() || !prepare(db)) {
@@ -105,6 +131,106 @@ QSqlDatabase FileDatabase::connection()
         db.close();
     }
     return db;
+}
+
+void FileDatabase::closeConnection(const QString &path)
+{
+    const auto name = connectionName(QFileInfo(path).absoluteFilePath());
+    if (!QSqlDatabase::contains(name))
+        return;
+    {
+        auto db = QSqlDatabase::database(name, false);
+        db.close();
+    }
+    QSqlDatabase::removeDatabase(name);
+}
+
+QByteArray FileDatabase::encodeMetadata(const QVariantMap &metadata)
+{
+    QByteArray  bytes;
+    QDataStream stream(&bytes, QIODevice::WriteOnly);
+    stream.setVersion(QDataStream::Qt_5_15);
+    stream << metadata;
+    return bytes;
+}
+
+QVariantMap FileDatabase::decodeMetadata(const QByteArray &bytes)
+{
+    QVariantMap metadata;
+    QDataStream stream(bytes);
+    stream.setVersion(QDataStream::Qt_5_15);
+    stream >> metadata;
+    return metadata;
+}
+
+bool FileDatabase::safePayloadName(const QString &name)
+{
+    return !name.isEmpty() && name != QLatin1String(".") && name != QLatin1String("..")
+        && !name.contains(QLatin1Char('/')) && !name.contains(QLatin1Char('\\')) && !name.contains(QLatin1Char(':'))
+        && !name.contains(QChar(0));
+}
+
+bool FileDatabase::retireFile(QSqlDatabase &db, const QByteArray &id, const QString &partition, const QString &payload,
+                              bool inTransaction)
+{
+    if (!inTransaction && !db.transaction())
+        return false;
+    QSqlQuery query(db);
+    bool      ok = true;
+    if (!payload.isEmpty()) {
+        query.prepare(QStringLiteral("INSERT OR IGNORE INTO file_trash(partition,path) VALUES(:partition,:path)"));
+        query.bindValue(QStringLiteral(":partition"), partition);
+        query.bindValue(QStringLiteral(":path"), payload);
+        ok = query.exec();
+    }
+    query.prepare(QStringLiteral("DELETE FROM files WHERE id=:id AND partition=:partition"));
+    query.bindValue(QStringLiteral(":id"), id);
+    query.bindValue(QStringLiteral(":partition"), partition);
+    ok = ok && query.exec();
+    if (!inTransaction && (!ok || !db.commit())) {
+        db.rollback();
+        return false;
+    }
+    return ok;
+}
+
+void FileDatabase::drainTrash(QSqlDatabase &db, const QString &partition, const QString &directory)
+{
+    if (!db.isOpen())
+        return;
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("SELECT path FROM file_trash WHERE partition=:partition"));
+    query.bindValue(QStringLiteral(":partition"), partition);
+    if (!query.exec())
+        return;
+    QStringList paths;
+    while (query.next())
+        paths.append(query.value(0).toString());
+    query.finish();
+    if (paths.isEmpty())
+        return;
+    query.prepare(QStringLiteral("SELECT 1 FROM files WHERE partition=:partition AND path IS NULL LIMIT 1"));
+    query.bindValue(QStringLiteral(":partition"), partition);
+    if (!query.exec() || query.next())
+        return;
+    query.finish();
+    for (const auto &path : paths) {
+        if (!safePayloadName(path))
+            continue;
+        query.prepare(QStringLiteral("SELECT 1 FROM files WHERE partition=:partition AND path=:path LIMIT 1"));
+        query.bindValue(QStringLiteral(":partition"), partition);
+        query.bindValue(QStringLiteral(":path"), path);
+        if (!query.exec() || query.next())
+            continue;
+        query.finish();
+        const auto absolute = directory + QLatin1Char('/') + path;
+        if (QFileInfo::exists(absolute) && !QFile::remove(absolute))
+            continue;
+        query.prepare(QStringLiteral("DELETE FROM file_trash WHERE partition=:partition AND path=:path"));
+        query.bindValue(QStringLiteral(":partition"), partition);
+        query.bindValue(QStringLiteral(":path"), path);
+        query.exec();
+    }
 }
 
 void FileDatabase::markLegacyDirectoryImported(const QString &directory, const QString &component)

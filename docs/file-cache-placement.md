@@ -2,9 +2,9 @@
 
 This is the placement and retirement part of stage 4 of the
 [shared-file design](local-message-deletion-design.md). It extends `FileCache`
-and its existing complete-file API. Range storage still uses `MediaChunkStore`;
-moving that worker and its ranges into the common registry is the next part of
-stage 4.
+and its existing complete-file API. The subsequent
+[SQL range checkpoints](file-cache-ranges.md) extend the same registry and
+retirement protocol to range payloads.
 
 ## Ownership
 
@@ -15,8 +15,8 @@ address only the retired generation. Existing managed payloads keep their paths
 when their old SQLite rows are upgraded.
 
 An external file is recorded with `trackExternal`, an absolute path, its actual
-size and modification time. Its bytes remain owned by the user or by the separate
-range store. External files are excluded from the complete cache's disk quota,
+size and modification time. Its bytes remain owned by the user or, for a legacy
+complete-item view, by the range backend. External views are excluded from the complete cache's disk quota,
 and deleting their records never unlinks their paths. A changed size, modification
 time, missing file or replaced symlink invalidates the record. Tracking a file
 already managed by this cache retains that ownership instead of deleting the
@@ -83,8 +83,9 @@ later request can obtain the file from its announced sources.
 
 ## Remaining stage 4 work
 
-The range worker, JSON-sidecar adoption, common disk/RAM accounting, range
-completion evidence and large-file placement remain the next part of stage 4.
+The range worker now uses the common SQL registry, retirement journal and disk
+budget. Unreleased JSON sidecars are ignored rather than imported. A common RAM
+tier, transport-completion evidence and large-file placement remain access-layer work.
 The current complete-file operations still run through the legacy synchronous
 API. Leases, bounded runtime items and a single reader/download path belong to
 stage 5; optional message-triggered byte reclamation belongs to stage 6.
