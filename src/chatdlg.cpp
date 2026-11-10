@@ -21,7 +21,6 @@
 #include "chateditproxy.h"
 
 #include "avatars.h"
-#include "widgets/MamChatWidget.h"
 #include "eventdb.h"
 #include "filesharedlg.h"
 #include "filesharingmanager.h"
@@ -29,8 +28,9 @@
 #include "iconaction.h"
 #include "iconselect.h"
 #include "jidutil.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "pgputil.h"
+#include "widgets/MamChatWidget.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -820,7 +820,7 @@ void ChatDlg::incomingMessage(const Message &m)
 {
     Message dm   = m.displayMessage();
     historyState = false;
-    if (dm.body().isEmpty() && dm.subject().isEmpty() && !MessageAttachments::hasAttachments(dm)) {
+    if (dm.body().isEmpty() && dm.subject().isEmpty() && !MessageFileShares::hasFileShares(dm)) {
         // Event message
         if (dm.containsEvent(CancelEvent)) {
             setContactChatState(XMPP::StatePaused);

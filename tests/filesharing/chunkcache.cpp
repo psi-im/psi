@@ -27,6 +27,21 @@ struct Pending {
 class ChunkCacheTest : public QObject {
     Q_OBJECT
 private slots:
+    void sourcePriorityUsesUriSchemesAndPreservesSenderOrder()
+    {
+        const QStringList sources {
+            "cid:sha1+hash@example.org", "httpx://invalid.example.org/file", "xmpp:alice@example.org/desktop?jingle-ft",
+            "ftp://example.org/file",    "HTTPS://example.org/first",        "https://example.org/second",
+            "https-impostor:file"
+        };
+        auto        ordered = FileSourceSelector::prioritized(sources);
+        QStringList consumed;
+        while (!ordered.isEmpty())
+            consumed.append(ordered.takeLast());
+        QCOMPARE(consumed, QStringList({ sources.at(4), sources.at(5), sources.at(2), sources.at(3), sources.at(0) }));
+        QVERIFY(FileSourceSelector::prioritized({ "https-impostor:file" }).isEmpty());
+    }
+
     void threeSourcesWriteOneSharedPayload()
     {
         QTemporaryDir      directory;

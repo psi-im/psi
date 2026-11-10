@@ -2,7 +2,7 @@
 #include "historyarchive.h"
 #include "historymessageextras.h"
 #include "iris/jingle-pub.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QFile>
@@ -189,8 +189,9 @@ private slots:
         QCOMPARE(restored.urlList().at(2).desc(), QStringLiteral("FTP description"));
 
         // Shown from history as when it arrived: the URL in the text stays a link.
-        const auto shown = MessageAttachments::collect(restored);
-        QVERIFY(shown.attachments.isEmpty());
+        QCOMPARE(MessageFileShares::collect(restored).files.size(), 1);
+        const auto shown = MessageFileShares::forDisplay(restored);
+        QVERIFY(shown.files.isEmpty());
         QCOMPARE(shown.links.size(), 1);
         QCOMPARE(shown.links.first().url(), QStringLiteral("ftp://example.org/archive"));
     }
@@ -212,9 +213,9 @@ private slots:
         QCOMPARE(restored.references().size(), 1);
         QCOMPARE(restored.urlList().size(), 1);
         QVERIFY(restored.references().first().anchor().isEmpty());
-        const auto shown = MessageAttachments::collect(restored);
-        QCOMPARE(shown.attachments.size(), 1);
-        QCOMPARE(shown.attachments.first().description, QStringLiteral("A useful description"));
+        const auto shown = MessageFileShares::collect(restored);
+        QCOMPARE(shown.files.size(), 1);
+        QCOMPARE(shown.files.first().description, QStringLiteral("A useful description"));
     }
 
     void plainMessageIdentity()
@@ -302,13 +303,13 @@ private slots:
         };
         Message full, attachmentsOnly;
         HistoryMessageExtras::restore(encoded, full);
-        HistoryMessageExtras::restoreAttachments(encoded, attachmentsOnly);
+        HistoryMessageExtras::restoreFileSharing(encoded, attachmentsOnly);
         check(full);
         check(attachmentsOnly);
         if (QTest::currentTestFailed())
             return;
-        QCOMPARE(MessageAttachments::collect(full).attachments.size(), 1);
-        QVERIFY(MessageAttachments::collect(full).attachments.first().manualFetch);
+        QCOMPARE(MessageFileShares::collect(full).files.size(), 1);
+        QVERIFY(MessageFileShares::collect(full).files.first().manualFetch);
     }
     void uriLessShareAndFallbackSurviveHistory()
     {

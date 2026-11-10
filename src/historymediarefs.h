@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
-#include "iris/xmpp_jid.h"
-#include "messageattachments.h"
 #include "historymediaqueries.h"
+#include "iris/xmpp_jid.h"
+#include "messagefileshares.h"
 
 #include <QByteArray>
 #include <QList>
@@ -21,7 +21,7 @@ namespace HistoryMediaRefs {
 struct Announcement {
     QString                        account;
     XMPP::Jid                      announcer; // empty for a message this account sent itself
-    MessageAttachments::Attachment attachment;
+    MessageFileShares::FileShare   file;
 };
 
 // Adds the links, for every message stored so far, in one transaction.

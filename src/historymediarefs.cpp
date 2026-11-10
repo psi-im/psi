@@ -28,7 +28,9 @@ std::optional<QJsonArray> indexOf(const QString &body, const QString &json)
     const auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
     if (extra.contains(QStringLiteral("psi:media-refs"))) {
         const auto index = extra.value(QStringLiteral("psi:media-refs")).toObject();
-        if (index.value(QStringLiteral("version")).toInt() != 1 || !index.value(QStringLiteral("items")).isArray())
+        const int  version = index.value(QStringLiteral("version")).toInt();
+        if ((version != 1 && version != HistoryMessageExtras::mediaRefsVersion)
+            || !index.value(QStringLiteral("items")).isArray())
             return {};
         return index.value(QStringLiteral("items")).toArray();
     }
@@ -43,8 +45,8 @@ std::optional<QJsonArray> indexOf(const QString &body, const QString &json)
     }
     XMPP::Message message;
     message.setBody(body);
-    HistoryMessageExtras::restoreAttachments(json, message);
-    return HistoryMessageExtras::mediaRefs(message);
+    HistoryMessageExtras::restoreFileSharing(json, message);
+    return HistoryMessageExtras::mediaRefs(message, 1);
 }
 }
 
@@ -201,13 +203,16 @@ std::optional<HistoryMediaRefs::Announcement> HistoryMediaRefs::announcement(con
     XMPP::Message message;
     message.setBody(link.body);
     HistoryMessageExtras::restore(link.extra, message);
-    const auto found = MessageAttachments::collect(message).attachments;
+    const auto extra   = QJsonDocument::fromJson(link.extra.toUtf8()).object();
+    const auto index   = extra.value(QStringLiteral("psi:media-refs")).toObject();
+    const int  version = index.value(QStringLiteral("version")).toInt(1);
+    const auto found   = HistoryMessageExtras::indexedFiles(message, version);
     if (link.ordinal < 0 || link.ordinal >= found.size())
         return {};
-    const auto &attachment = found.at(link.ordinal);
-    if (!attachment.isFile() && !attachment.url().isValid())
+    const auto &file = found.at(link.ordinal);
+    if (!file.hasContentHashes() && !file.url().isValid())
         return {};
     const bool incoming = link.direction != 1;
     return Announcement { link.account, !message.from().isEmpty() || !incoming ? message.from() : XMPP::Jid(link.peer),
-                          attachment };
+                          file };
 }

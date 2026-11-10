@@ -48,8 +48,10 @@ page writes introduced additional large transactions.
   also validates the peer and view generation. Closing, clearing or
   repointing a view invalidates old results without reversing durable
   worker writes.
-- Attachment ordinals/fingerprints are serialized with the GUI-owned message
-  snapshot. History links are updated in the event transaction without parsing
+- File-share ordinals/fingerprints are serialized with the GUI-owned message
+  snapshot. Version 2 indexes normalized announcements independently of body
+  presentation; a separate compatibility projection reads version 1. History
+  links are updated in the event transaction without parsing
   SFS/Jingle JIDs on the SQL worker. Changed links trigger catalog reconciliation
   only after commit. The synchronizer consumes bounded worker snapshots and
   advances its cursors only after successful catalog batches.

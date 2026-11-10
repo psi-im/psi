@@ -24,7 +24,7 @@
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "jidutil.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "messageview.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -578,8 +578,8 @@ void DisplayProxy::displayResult(const EDBResult &r, int dir)
                 msg = TextUtil::legacyFormat(msg);
 
             const auto displayMessage = me->message().displayMessage();
-            const auto attached       = MessageAttachments::collect(displayMessage);
-            if (pa && (!attached.attachments.isEmpty() || !attached.links.isEmpty())) {
+            const auto attached       = MessageFileShares::forDisplay(displayMessage);
+            if (pa && (!attached.files.isEmpty() || !attached.links.isEmpty())) {
                 auto view = MessageView::fromPlainText(displayMessage.body(), MessageView::Message);
                 pa->psi()->fileSharingManager()->fillMessageView(view, displayMessage, pa);
                 msg = view.text();

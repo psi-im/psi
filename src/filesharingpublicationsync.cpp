@@ -92,7 +92,7 @@ void FileSharingPublicationSync::step()
                     finish(false);
                     return;
                 }
-                announcements.append({ link.publicationId, told->account, told->announcer, told->attachment });
+                announcements.append({ link.publicationId, told->account, told->announcer, told->file });
             }
             if (!_catalog->addBatch(announcements)) {
                 _scanLinks = true;

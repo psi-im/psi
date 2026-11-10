@@ -25,36 +25,36 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
-#include "coloropt.h"
 #include "chatviewcommon.h"
+#include "coloropt.h"
 #include "eventdb.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "gcuserview.h"
 #include "groupchattopicdlg.h"
+#include "historysync.h"
 #include "iconaction.h"
 #include "iconselect.h"
 #include "iconwidget.h"
 #include "infodlg.h"
+#include "iris/xmpp_forwarding.h"
+#include "iris/xmpp_mammanager.h"
+#include "iris/xmpp_xmlcommon.h"
 #include "languagemanager.h"
 #include "lastactivitytask.h"
 #include "mcmdmanager.h"
 #include "mcmdsimplesite.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "messageview.h"
-#include "mucalertpolicy.h"
-#include "historysync.h"
-#include "nativechathistory.h"
-#include "nativechattheme.h"
-#include "widgets/MamChatWidget.h"
-#include "iris/xmpp_mammanager.h"
-#include "iris/xmpp_forwarding.h"
-#include "iris/xmpp_xmlcommon.h"
 #include "msgmle.h"
+#include "mucalertpolicy.h"
 #include "mucconfigdlg.h"
 #include "mucmanager.h"
 #include "mucreasonseditor.h"
+#include "nativechathistory.h"
+#include "nativechattheme.h"
 #include "pixmapratiolabel.h"
+#include "widgets/MamChatWidget.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -2408,7 +2408,7 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     }
 
     // An attachment-only stanza is visible even with no ordinary <body>.
-    if (dm.body().isEmpty() && !MessageAttachments::hasAttachments(dm))
+    if (dm.body().isEmpty() && !MessageFileShares::hasFileShares(dm))
         return;
 
     // Do not mistake a nickname mentioned inside somebody else's quote for

@@ -66,9 +66,9 @@ Reference referenceOf(const MediaSharing &media)
     return reference;
 }
 
-MessageAttachments::Attachment attachmentOf(const MediaSharing &media) { return { referenceOf(media), {} }; }
+MessageFileShares::FileShare attachmentOf(const MediaSharing &media) { return { referenceOf(media), {} }; }
 
-MessageAttachments::Attachment urlAttachment(const QString &url, const QString &description = {})
+MessageFileShares::FileShare urlAttachment(const QString &url, const QString &description = {})
 {
     return { Reference(Reference::Data, url), description };
 }
@@ -264,6 +264,126 @@ private slots:
 
     // ------------------------------------------------------------------ the catalog
 
+    void versionOneHistoryIndexKeepsOrdinalsAndFingerprints()
+    {
+        auto      media = mediaOf("payload", { "https://example.org/file" });
+        Reference mention(Reference::Mention, "xmpp:alice@example.org");
+        mention.setRange(0, 4);
+        auto message = messageWith(alice, { mention, referenceOf(media) });
+        message.setBody("Read https://example.org/article please");
+        StatelessFileSharing::FileSharing sharing;
+        sharing.setFile(media.file);
+        sharing.setDisposition(StatelessFileSharing::Disposition::Attachment);
+        StatelessFileSharing::Sources sources;
+        sources.add(StatelessFileSharing::Source::fromUrl(QUrl("https://example.org/mirror")));
+        sharing.setSources(sources);
+        message.addFileSharing(sharing);
+        message.urlAdd(Url("https://example.org/file", "caption"));
+        message.urlAdd(Url("https://example.org/article"));
+        message.urlAdd(Url("https://example.org/tail#fragment", "tail"));
+
+        // Captured from the version-1 implementation before this refactor.
+        const auto oldIndex = QJsonDocument::fromJson(R"([
+            {"fingerprint":"14ec5a5e48ddc7352bb61716d6f01b9dfaee7c8057aae25e04bc215ea42cdb38","ordinal":1},
+            {"fingerprint":"16bb6010ac0594d41bc0676572e1c58efd11bbe1fecc7566ab2d39107900e92d","ordinal":2}
+        ])")
+                                  .array();
+        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        auto extra = QJsonDocument::fromJson(HistoryMessageExtras::encode(message).toUtf8()).object();
+        extra.insert("psi:media-refs", QJsonObject { { "version", 1 }, { "items", oldIndex } });
+        const auto json  = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
+        const auto event = insertEvent(message.body(), json);
+        QVERIFY(event);
+        migrateHistory();
+        QCOMPARE(linkCount(), 2);
+        const auto ids = links(event);
+        QVERIFY(HistoryMediaRefs::link(history, event));
+        QCOMPARE(links(event), ids); // No ownership churn on a replay of the same stored projection.
+        syncEverything();
+        const auto record = catalog->find(corporate, media.file.computedHashes().first());
+        QVERIFY(record);
+        QCOMPARE(record->media.sources.size(), 2);
+        QVERIFY(catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/tail"))));
+        QVERIFY(!catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/article"))));
+    }
+
+    void versionOneStandaloneOobKeepsInferredRangeFingerprint()
+    {
+        Message message;
+        message.setBody("https://example.org/photo.png");
+        message.urlAdd(Url("https://example.org/photo.png#fragment", "photo"));
+        const auto oldIndex = QJsonDocument::fromJson(R"([
+            {"fingerprint":"cd2e96d8b1fcf8102675e6531122ee0fad5cf2917f670a1736b59b323282bac2","ordinal":0}
+        ])")
+                                  .array();
+        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        const auto files = HistoryMessageExtras::indexedFiles(message, 1);
+        QCOMPARE(files.size(), 1);
+        QCOMPARE(files.first().reference.begin(), 0);
+        QCOMPARE(files.first().reference.end(), message.body().size() - 1);
+    }
+
+    void versionOneUnsupportedSimsKeepsDescriptionDistribution()
+    {
+        const QString url = "https://example.org/file";
+        MediaSharing  media;
+        media.file.setName("file");
+        media.file.setSize(7);
+        media.file.addHash(sha256("payload"));
+        media.sources = QStringList { url };
+        MediaSharing unsupported;
+        unsupported.file.setName("legacy");
+        unsupported.sources = QStringList { url };
+        auto message        = messageWith(alice, { referenceOf(unsupported), referenceOf(media) });
+        message.urlAdd(Url(url, "caption"));
+        message.urlAdd(Url("https://example.org/tail#fragment", "tail"));
+        message.urlAdd(Url("https://example.org/tail#copy", "duplicate"));
+        const auto oldIndex = QJsonDocument::fromJson(R"([
+            {"fingerprint":"1088da59be3df4b5c615e752c85971b39bb3c59a655fae17458f8cf80e5c3d73","ordinal":1},
+            {"fingerprint":"16bb6010ac0594d41bc0676572e1c58efd11bbe1fecc7566ab2d39107900e92d","ordinal":2}
+        ])")
+                                  .array();
+        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        QCOMPARE(message.urlList().size(), 3);
+        const auto normalized = MessageFileShares::collect(message).files;
+        QCOMPARE(normalized.size(), 2);
+        QCOMPARE(normalized.first().description, QString("caption"));
+    }
+
+    void fileOwnershipDoesNotDependOnOobPresentation()
+    {
+        migrateHistory();
+        auto          message = messageWith(alice, {});
+        const QString url     = "https://example.org/photo.png";
+        message.setBody("Caption: " + url);
+        message.urlAdd(Url(url, "photo"));
+        const auto extra = QJsonDocument::fromJson(HistoryMessageExtras::encode(message).toUtf8()).object();
+        QCOMPARE(extra.value("psi:media-refs").toObject().value("version").toInt(), 2);
+        const auto before = HistoryMessageExtras::mediaRefs(message);
+        QVERIFY(!before.isEmpty());
+        QVERIFY(MessageFileShares::forDisplay(message).files.isEmpty());
+        const auto event = store(message);
+        QVERIFY(event);
+        const auto ids = links(event);
+        QCOMPARE(ids.size(), 1);
+        syncEverything();
+        QVERIFY(catalog->find(corporate, MessageFileShares::urlIdentity(QUrl(url))));
+
+        message.setBody(url);
+        QCOMPARE(HistoryMessageExtras::mediaRefs(message), before);
+        const auto display = MessageFileShares::forDisplay(message).files;
+        QCOMPARE(display.size(), 1);
+        QCOMPARE(display.first().reference.begin(), 0);
+        QSqlQuery update(history);
+        update.prepare("UPDATE events SET m_text=:body,extra_data=:extra WHERE id=:event");
+        update.bindValue(":body", message.body());
+        update.bindValue(":extra", HistoryMessageExtras::encode(message));
+        update.bindValue(":event", event);
+        QVERIFY(update.exec());
+        QVERIFY(HistoryMediaRefs::link(history, event));
+        QCOMPARE(links(event), ids);
+    }
+
     void announcementsOfOneFileAreTakenTogether()
     {
         const auto first   = mediaOf("payload", { QStringLiteral("https://one.example/file") });
@@ -319,7 +439,7 @@ private slots:
     {
         const QString url = QStringLiteral("https://example.org/file.pdf#page=2");
         QVERIFY(catalog->add(newId(), corporate, alice, urlAttachment(url, QStringLiteral("A report"))));
-        const auto identity = MessageAttachments::urlIdentity(urlAttachment(url).url());
+        const auto identity = MessageFileShares::urlIdentity(urlAttachment(url).url());
         const auto record   = catalog->find(corporate, identity);
         QVERIFY(record);
         QVERIFY(record->urlOnly);
@@ -521,7 +641,7 @@ private slots:
         text.setBody(QStringLiteral("see https://three.example/h there"));
         text.urlAdd(Url(QStringLiteral("https://three.example/h")));
         QVERIFY(store(text));
-        QCOMPARE(linkCount(), 2); // As shown: a URL within other text stays an ordinary link.
+        QCOMPARE(linkCount(), 3); // Ownership includes OOB files that the view leaves as links in prose.
 
         auto bare = messageWith(alice, {});
         bare.setBody(QStringLiteral("https://four.example/i"));
@@ -678,7 +798,7 @@ private slots:
         message.urlAdd(Url(url, QStringLiteral("A report")));
         QVERIFY(store(message));
         syncEverything();
-        const auto record = catalog->find(corporate, MessageAttachments::urlIdentity(urlAttachment(url).url()));
+        const auto record = catalog->find(corporate, MessageFileShares::urlIdentity(urlAttachment(url).url()));
         QVERIFY(record);
         QVERIFY(record->urlOnly);
         QCOMPARE(record->media.sources, QStringList { url });
@@ -859,10 +979,10 @@ private slots:
 
         syncEverything();
         QCOMPARE(catalog->find(corporate, media.file.computedHashes().first())->peers, QStringList { alice.full() });
-        const auto old = catalog->find(corporate, MessageAttachments::urlIdentity(QUrl("https://example.org/old")));
+        const auto old = catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/old")));
         QVERIFY(old);
         QCOMPARE(old->peers, QStringList { QStringLiteral("alice@example.org") });
-        const auto sent = catalog->find(corporate, MessageAttachments::urlIdentity(QUrl("https://example.org/sent")));
+        const auto sent = catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/sent")));
         QVERIFY(sent);
         QVERIFY(sent->peers.isEmpty());
     }
@@ -1007,18 +1127,18 @@ private slots:
         QVERIFY(links(event).isEmpty());
     }
 
-    void localizedBodyUsesTheStoredAttachmentProjection()
+    void localizedBodyDoesNotChangeFileProjection()
     {
         migrateHistory();
         Message       message;
         const QString url = "https://example.org/report";
         message.setBody("See " + url + " in this text");
         message.urlAdd(Url(url));
-        const auto id = insertEvent(url, HistoryMessageExtras::encode(message, url));
+        const auto id = insertEvent(url, HistoryMessageExtras::encode(message));
         QVERIFY(HistoryMediaRefs::link(history, id));
         QCOMPARE(links(id).size(), 1);
         syncEverything();
-        QVERIFY(catalog->find(corporate, MessageAttachments::urlIdentity(QUrl(url))));
+        QVERIFY(catalog->find(corporate, MessageFileShares::urlIdentity(QUrl(url))));
     }
 
     void pendingSfsFilesHaveDistinctStableFingerprints()
@@ -1213,7 +1333,7 @@ private slots:
         QCOMPARE(result.mediaLinks.size(), 1);
         const auto told = HistoryMediaRefs::announcement(result.mediaLinks.first());
         QVERIFY(told);
-        QCOMPARE(told->attachment.reference.mediaSharing().sources,
+        QCOMPARE(told->file.reference.mediaSharing().sources,
                  QStringList { "xmpp:alice@example.org/desktop?jingle-ft" });
         request.type           = HistoryReadRequest::MediaLinked;
         request.publicationIds = { result.mediaLinks.first().publicationId };

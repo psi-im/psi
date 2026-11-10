@@ -55,7 +55,7 @@ and stage 2 replaced `FileSharingStore`. The remaining file-access changes belon
 | `FileSharingManager` | Owns all stores, follows `link` across them, builds message HTML, serves peers and creates outgoing items. Its own comment calls it a "magic class". | No answer to "who is responsible for what". |
 | `FileSharingItem` | Creates transfers, promotes files, hashes, publishes, sends HEAD, decides automatic downloads. Parented to the manager and never destroyed. | Unbounded growth, and a UI object that owns shared operations. |
 | `FileShareDownloader` | Contains a good private strategy hierarchy, `AbstractFileShareDownloader`, wrapped by a class that adds source fallback, temporary disk writes and promotion. | Transport is coupled to storage. |
-| `FileSharingChunkSource` | A namespace hiding per-item `Sources` and `SequentialDownload` QObjects behind object names. | Session state with no visible owner. |
+| `FileSharingChunkSource` | Originally hid per-item `Sources` and `SequentialDownload` QObjects behind object names. The follow-up refactor replaces those lookups with explicitly owned, typed state. | Source selection and sequential fallback now have a visible owner; storage and transfer consolidation still belong to stages 4–5. |
 | `FileSourceSelector`, `MediaChunkStore::configure` | Chunks come from several sources, which is intended, to get past a slow sender. But nothing records which source sent what. A whole-file mismatch discards everything, and a second source's different range hash sets a file-level "Conflicting checksums" error. | A bad source cannot be identified, retries can fail the same way, and one peer can block a file. |
 | `FileSharingStore`, `fillMessageView`, `appendEvent` | Merge descriptors per hash and write them on display and on log, regardless of `opt_log`. | A deleted URL or peer stays forever, and history-disabled accounts still get a message log. |
 | `FileSharingDeviceOpener`, `FileSharingProxy`, `saveTo` | Independently pick cached paths, chunk readers or raw downloaders. | Three read paths and no shared session. |
@@ -88,7 +88,7 @@ and stage 2 replaced `FileSharingStore`. The remaining file-access changes belon
 | What was announced, by whom, from which sources? Does this account serve it? | `FileSharingCatalog` | Bytes, attempts |
 | Which message refers to which publication? Which messages are hidden? | History: `EDBSqLite`, `HistoryArchive`, `HistoryMediaRefs` | Paths, file state, sources beyond its own message snapshot |
 | Do history and the catalog agree? | `FileSharingPublicationSync`, the one place that talks to both | Bytes, transfers, protocols |
-| What does this stanza attach? | `MessageAttachments`, pure functions over SIMS, SFS and OOB | Storage, policy |
+| Which files does this stanza announce? | `MessageFileShares::collect`, pure normalization of SIMS, SFS and OOB | Storage, presentation |
 | How do bytes arrive from one source? | `FileShareTransport`: HTTP, Jingle or BoB | Disk, other sources, whole-file completion |
 | Who is filling this file right now? | `FileDownload` with the shared scheduler | Messages, players, cache internals |
 | Where is this client in the file? | `FileReader` | Other clients, persistence |
@@ -98,7 +98,34 @@ and stage 2 replaced `FileSharingStore`. The remaining file-access changes belon
 | Should this run automatically, and where should it go? | Caller policy: `MediaDownloadPolicy`, dialogs | Everything below |
 | Who wires it together? | `FileSharingManager`: owns the services and the runtime maps of downloads and items | SQL, protocols, range arithmetic |
 
-File sharing talks XMPP in four places: `MessageAttachments` parses, `FileSharingPublication`
+The current message/file boundary is explicit:
+
+- `MessageFileShares::FileShare` is a value belonging to one message. It carries
+  that announcement's metadata, sources, description and manual-fetch requirement.
+  `collect` normalizes protocol data without inspecting body placement; mentions
+  and other non-file references are excluded. This is unrelated to
+  [XEP-0367 Message Attaching](https://xmpp.org/extensions/xep-0367.html), which
+  associates a separate message with an earlier message.
+- `MessageFileShares::forDisplay` derives a disposable presentation projection.
+  It leaves an OOB URL embedded in prose as a link and locates a standalone URL
+  for replacement by a file view. This does not decide file ownership in history.
+- `FileSharingItem` is shared runtime state for an account/file identity. It is
+  still responsible for cache promotion and initiating jobs; making it only an
+  observer remains stage 5. Per-message download permission stays in the view,
+  rather than becoming a persistent property of the shared item.
+- `FileSourceSelector` owns transport classification/priority and measured source
+  selection. `FileShareDownloader` no longer depends on `FileSharingItem`.
+  `FileSharingChunkSource` owns its selector and sequential fallback explicitly,
+  through the item's typed owner, without object-name lookups or unchecked casts.
+
+History writes media-ref index version 2 from the normalized file announcements.
+The compatibility projection in `HistoryMessageExtras` reads version 1 (including
+its non-file reference slots and inferred OOB ranges) without calling current
+presentation code. Existing ordinals and fingerprints remain readable; no schema
+migration or rewrite of old messages is needed for this refactor.
+
+In the target architecture, file sharing talks XMPP in four places:
+`MessageFileShares` normalizes, `FileSharingPublication`
 announces, `FileSharingResponder` serves and `FileShareTransport` fetches. Storage is
 handled in one place. Each consumer is a thin adapter over one `FileReader`.
 
@@ -151,7 +178,7 @@ flowchart TB
     catalog -- "file_id" --> cache
 
     history[("history.db: events, message media refs, suppression, cleanup outbox")]
-    attachments["MessageAttachments: SIMS, SFS, OOB"]
+    attachments["MessageFileShares: SIMS, SFS, OOB"]
     sync["FileSharingPublicationSync"]
     attachments -- "what a stored message attaches" --> history
     history -- "links and stored messages" --> sync
@@ -360,9 +387,9 @@ Moving them to `PublicationId` would touch every view and pre-assign IDs to mess
 never be stored, for little in return: a caption stays first-come per item, as it always was,
 and a file stops resolving once its last publication is gone and no message shows it.
 
-`MessageAttachments::collect` stays pure and grows SFS support (iris already parses it).
-Its display policy needs one audit: an OOB URL inside other text is an ordinary link, not
-an attachment, and stays that way for refs too.
+`MessageFileShares::collect` normalizes SIMS, SFS and OOB for history independently
+of display policy. An OOB URL inside prose remains an ordinary link in the view;
+it still has a message media ref because its announcement belongs to the message.
 
 ## Reading a file
 
@@ -992,7 +1019,7 @@ flowchart LR
       between the two, retiring `shared_files`, no descriptors in sidecars and `cache.xml`. *Test:* a message
       not stored leaves nothing, MAM duplicate, restart, lost `files.sqlite` heals, sibling source
       union, deleted source gone, nothing served without an explicit decision.
-   2. *Delivered in #1100, incorporating #1101.* SFS descriptors in `MessageAttachments` and `HistoryMessageExtras`. *Test:* SFS
+   2. *Delivered in #1100, incorporating #1101.* SFS descriptors in `MessageFileShares` and `HistoryMessageExtras`. *Test:* SFS
       through history and catalog, and the no-hash and `disposition='attachment'` rules.
 3. **Local deletion.** *Delivered by this branch.* Suppression, ingress checks, explicit hidden
    `HistorySync` positions, the delete transaction, publication reconciliation, and the

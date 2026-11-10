@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "filesharingdownloader.h"
 #include "iris/jingle-ft.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_reference.h"
@@ -28,7 +29,7 @@
 #include <QPointer>
 
 class FileCacheItem;
-class FileShareDownloader;
+class FileSharingChunkSource;
 class FileSharingManager;
 class FileSharingPublication;
 class PsiAccount;
@@ -45,14 +46,6 @@ class FileSharingItem : public QObject {
     Q_OBJECT
 
 public:
-    enum class SourceType { // from lowest priority to highest
-        None,
-        BOB,
-        FTP,
-        Jingle,
-        HTTP
-    };
-
     enum class FileType : char {
         RemoteFile, // not yet downloaded
         LocalLink,  // an unmanager by cache local file
@@ -61,11 +54,6 @@ public:
     };
 
     using HashSums = QList<XMPP::Hash>;
-
-    struct Range {
-        quint64 start;
-        quint64 size;
-    };
 
     FileSharingItem(FileCacheItem *cache, PsiAccount *acc, FileSharingManager *manager);
     FileSharingItem(const XMPP::MediaSharing &ms, const XMPP::Jid &from, PsiAccount *acc, FileSharingManager *manager);
@@ -100,19 +88,13 @@ public:
     inline bool     isPublished() const { return _published; }
 
     /**
-     * @brief FileSharingItem::download starts downloading SIMS
-     * @param isRanged - where it's a ranged request
-     * @param start    - range start
-     * @param size     - range end
-     * @return downloader object
-     *
-     * It's responsibility of the caller to delete downloader when it's done, or one can call setSelfDelete(true)
+     * Creates a download job from the current file metadata and sources.
+     * Whole-file requests promote validated bytes into the cache. Ranged requests
+     * leave storage to the caller. Delete the returned downloader when done, or
+     * call setSelfDelete(true).
      */
-    FileShareDownloader *download(std::optional<Range> range = { }, const QString &preferredSource = { });
-
-    // accept public internet uri and returns it's type
-    static SourceType  sourceType(const QString &uri);
-    static QStringList sortSourcesByPriority(const QStringList &uris);
+    FileShareDownloader *download(std::optional<FileShareDownloader::Range> range           = {},
+                                  const QString                            &preferredSource = {});
 
     QUrl simpleSource() const;
 
@@ -130,6 +112,7 @@ public:
 
 private:
     friend class FileSharingManager;
+    friend class FileSharingChunkSource;
     FileSharingItem(const QUrl &url, const XMPP::Hash &identity, PsiAccount *acc, FileSharingManager *manager,
                     const QString &description);
     void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
@@ -155,7 +138,6 @@ signals:
 private:
     QPointer<PsiAccount> _acc;
     FileSharingManager  *_manager = nullptr;
-    // FileShareDownloader         *_downloader = nullptr;
     FileType                     _fileType;
     std::optional<std::uint64_t> _fileSize;
     QDateTime                    _modifyTime; // utc
@@ -169,6 +151,5 @@ private:
     QStringList                  _log;
     QList<XMPP::Jid>             _jids;
     XMPP::Jingle::FileTransfer::File _receivedMetadata;
+    QPointer<FileSharingChunkSource> _chunkSource; // owned QObject child
 };
-
-// Q_DECLARE_METATYPE(FileSharingItem::Ptr)

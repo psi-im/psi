@@ -35,7 +35,7 @@
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "mediadownloadpolicy.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontact.h"
@@ -321,13 +321,13 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 {
     if (!acc)
         return;
-    // Everything a message attaches is shown in its one view: SIMS and HTTP(S)
-    // OOB as share objects, other OOB URLs as links. The message is not changed.
-    const auto collected   = MessageAttachments::collect(m);
-    auto       attachments = collected.attachments;
-    if (attachments.isEmpty() && collected.links.isEmpty())
+    // Render the presentation projection; the normalized announcements used
+    // by history do not depend on these body replacements.
+    const auto collected = MessageFileShares::forDisplay(m);
+    auto       files     = collected.files;
+    if (files.isEmpty() && collected.links.isEmpty())
         return;
-    // Views may download attachments by themselves only up to this size.
+    // Views may download files by themselves only up to this size.
     const quint64 autoLimit = autoDownloadLimit(m, acc);
     const QString autoAttr  = autoLimit ? QString::fromLatin1(" auto=\"%1\"").arg(autoLimit) : QString();
 
@@ -335,66 +335,40 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
     QString desc = m.body();
     // qDebug() << "INIT TEXT:" << desc;
     QString htmlDesc;
-    htmlDesc.reserve(desc.size() + attachments.count() * 64);
+    htmlDesc.reserve(desc.size() + files.count() * 64);
 
-    // XEP-0385 senders may locate a share's body text with XEP-0428
-    // fallbacks instead of reference begin/end. Assign those ranges, in
-    // body order, to the media shares that have no range of their own.
-    QList<QPair<int, int>> fallbackRanges; // UTF-16 [from, to)
-    for (const auto &ns : { QStringLiteral("urn:xmpp:sims:1"), XMPP::StatelessFileSharing::NS,
-                            QStringLiteral("jabber:x:oob") }) {
-        for (const auto &range : m.bodyFallbacks(ns)) {
-            int from = -1, to = -1;
-            if (range.toUtf16(desc, from, to) && to > from && !fallbackRanges.contains({ from, to }))
-                fallbackRanges.append({ from, to });
-        }
-        if (!fallbackRanges.isEmpty())
-            break; // Ranges for the shares take precedence; OOB ranges are a fallback for them.
-    }
-    std::sort(fallbackRanges.begin(), fallbackRanges.end());
-    for (auto &attachment : attachments) {
-        if (fallbackRanges.isEmpty())
-            break;
-        auto &r = attachment.reference;
-        if (r.begin() < 0 && r.mediaSharing().isValid()) {
-            const auto range = fallbackRanges.takeFirst();
-            r.setRange(range.first, range.second - 1); // Psi treats 'end' as inclusive
-        }
-    }
-
-    std::sort(attachments.begin(), attachments.end(),
+    std::sort(files.begin(), files.end(),
               [](const auto &a, const auto &b) { return a.reference.begin() < b.reference.begin(); });
 
     int lastEnd = 0;
-    for (const auto &attachment : attachments) {
-        const auto  &r  = attachment.reference;
+    for (const auto &file : files) {
+        const auto  &r  = file.reference;
         MediaSharing ms = r.mediaSharing();
         // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
-        // Every SIMS attachment needs a share object, not only inline media.
+        // Every SIMS file needs a share object, not only inline media.
         // Non-media files can have an unknown size (streaming sources).
         FileSharingItem *item = nullptr;
-        if (attachment.isFile()) {
+        if (file.hasContentHashes()) {
             item = this->item(ms.file.computedHashes().first(), acc);
             if (!item)
                 item = new FileSharingItem(ms, m.from(), acc, this);
             else
                 item->mergeSources(ms, m.from());
             d->rememberItem(item);
-        } else if (const QUrl source = attachment.url(); source.isValid()) {
+        } else if (const QUrl source = file.url(); source.isValid()) {
             // An HTTP(S) URL without SIMS metadata, usually from OOB. Shares of
             // the same URL are one item; the item keeps the full URL to open.
-            const Hash identity = MessageAttachments::urlIdentity(source);
+            const Hash identity = MessageFileShares::urlIdentity(source);
             item                = d->accountItems.value(acc->id()).value(identity, nullptr);
             if (!item || item->account() != acc || !item->isUrlOnly()) {
-                item = new FileSharingItem(QUrl::fromEncoded(r.uri().toUtf8()), identity, acc, this,
-                                           attachment.description);
+                item = new FileSharingItem(QUrl::fromEncoded(r.uri().toUtf8()), identity, acc, this, file.description);
                 d->rememberItem(item);
             }
         } else {
             continue;
         }
         mv.addReference(item);
-        const QString itemAuto = attachment.manualFetch ? QString() : autoAttr;
+        const QString itemAuto = file.manualFetch ? QString() : autoAttr;
 
         if (r.begin() >= lastEnd && r.end() >= r.begin() && r.end() < desc.size()) {
             auto refText = desc.mid(r.begin(), r.end() - r.begin() + 1);

@@ -20,18 +20,18 @@
 #include "applicationinfo.h"
 // #include "common.h"
 #include "edbsqlite.h"
-#include "historymediarefs.h"
-#include "historyupgrade.h"
 #include "historyeventfactory.h"
+#include "historymediarefs.h"
+#include "historymessageextras.h"
 #include "historysqlitepolicy.h"
 #include "historysqlreadworker.h"
-#include <QThread>
-#include "historymessageextras.h"
+#include "historyupgrade.h"
 #include "iris/xmpp_forwarding.h"
 #include "jidutil.h"
-#include "messageattachments.h"
+#include "messagefileshares.h"
 #include "psiaccount.h"
 #include "psicontactlist.h"
+#include <QThread>
 
 #include <QElapsedTimer>
 #include <QJsonArray>
@@ -779,9 +779,9 @@ void EDBSqLite::onHistoryWriteCompleted(HistoryWriteResult written)
     auto *r = pendingWrites_.take(written.id);
     if (!r)
         return;
-    if (written.success && written.inserted && r->type == item_query_req::Type_append
-        && r->event && r->event->type() == PsiEvent::Message
-        && MessageAttachments::hasAttachments(r->event.staticCast<MessageEvent>()->message().displayMessage()))
+    if (written.success && written.inserted && r->type == item_query_req::Type_append && r->event
+        && r->event->type() == PsiEvent::Message
+        && MessageFileShares::hasFileShares(r->event.staticCast<MessageEvent>()->message().displayMessage()))
         emit mediaLinksAdded();
     if (written.success && r->type == item_query_req::Type_erase)
         emit mediaLinksRemoved();
