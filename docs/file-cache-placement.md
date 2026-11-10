@@ -42,7 +42,8 @@ Retirement inside a cache sync or legacy import waits for that outer transaction
 to commit before processing trash. A new generation never reuses a retired path.
 
 Payload writes use `QSaveFile`. A failed write does not mark the item on disk or
-registered, and unloading keeps the only in-memory copy. Registration is marked
+registered, and the item keeps its uncommitted staging bytes. Successfully stored
+bytes move to the [shared RAM tier](file-cache-memory.md). Registration is marked
 successful only after the SQL transaction succeeds; a failed batch retries after
 a delay, preserving dirty metadata until it commits.
 Empty managed files now have a real zero-byte payload instead of using the same
@@ -84,8 +85,8 @@ later request can obtain the file from its announced sources.
 ## Remaining stage 4 work
 
 The range worker now uses the common SQL registry, retirement journal and disk
-budget. Unreleased JSON sidecars are ignored rather than imported. A common RAM
-tier, transport-completion evidence and large-file placement remain access-layer work.
+budget and RAM tier. Unreleased JSON sidecars are ignored rather than imported.
+Transport-completion evidence and large-file placement remain access-layer work.
 The current complete-file operations still run through the legacy synchronous
 API. Leases, bounded runtime items and a single reader/download path belong to
 stage 5; optional message-triggered byte reclamation belongs to stage 6.

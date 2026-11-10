@@ -43,5 +43,6 @@ struct MediaFileState {
     QVariantMap              metadata;
     QString                  path, error;
     bool                     complete = false;
+    QByteArray               generation;
 };
 Q_DECLARE_METATYPE(MediaFileState)

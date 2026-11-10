@@ -20,6 +20,7 @@
 #ifndef FILECACHE_H
 #define FILECACHE_H
 
+#include "filecachememory.h"
 #include "iris/xmpp_hash.h"
 
 #include <QDateTime>
@@ -45,7 +46,7 @@ public:
         // Unloadable  = 0x8 // another good idea
     };
 
-    inline bool       inMemory() const { return _data.size() > 0; }
+    bool                            inMemory() const;
     inline bool                     isOnDisk() const { return bool(_flags & OnDisk); }
     inline bool                     isRegistered() const { return bool(_flags & Registered); }
     bool              isExpired(bool finishSession = false) const;
@@ -84,14 +85,14 @@ private:
     FileCache *parentCache() const;
     void       flushToDisk();
     bool       remove() const;
-    void       unload();
+    QByteArray memoryKey() const;
 
     QList<XMPP::Hash> _sums;
     QVariantMap       _metadata;
     QDateTime         _ctime;
     unsigned int      _maxAge;
     quint64           _size;
-    QByteArray        _data;
+    QByteArray        _pendingData; // Uncommitted bytes cannot be evicted.
 
     quint16    _flags;
     QString    _fileName;
@@ -127,8 +128,13 @@ public:
 
     inline QString cacheDir() const { return _cacheDir; }
 
-    inline void         setMemoryCacheSize(unsigned int size) { _memoryCacheSize = size; }
-    inline unsigned int memoryCacheSize() const { return _memoryCacheSize; }
+    inline void setMemoryCacheSize(unsigned int size)
+    {
+        _memory.setLimit(size);
+        lazySync();
+    }
+    inline unsigned int memoryCacheSize() const { return unsigned(_memory.limit()); }
+    quint64             memoryUsed() const { return _memory.bytes(); }
 
     inline void setFileCacheSize(unsigned int size)
     {
@@ -203,6 +209,7 @@ public slots:
     void lazySync();
 
 private:
+    friend class FileCacheItem;
     bool toRegistry(FileCacheItem *);
     void load();
     bool replaceRecord(const QList<XMPP::Hash> &sums);
@@ -214,7 +221,7 @@ protected:
 private:
     QString                            _partition;
     QString                            _cacheDir;
-    unsigned int                       _memoryCacheSize;
+    FileCacheMemory                    _memory;
     unsigned int                       _fileCacheSize;
     unsigned int                       _defaultMaxAge;
     SyncPolicy                         _syncPolicy;

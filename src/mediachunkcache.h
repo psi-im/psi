@@ -3,7 +3,6 @@
 #include "mediachunkscheduler.h"
 #include "mediachunkstore.h"
 
-#include <QCache>
 #include <QHash>
 #include <QIODevice>
 #include <QPointer>
@@ -57,23 +56,20 @@ signals:
 
 private:
     struct Request {
-        quint64    schedulerTicket;
+        quint64    schedulerTicket = 0;
         Completion done;
-        QByteArray cachedSlice;
+        QString    key, file, source, lane;
+        quint64    size = 0, start = 0, expected = 0, inside = 0, count = 0;
+        Fetch      fetch;
+        bool       urgent = true;
     };
     QString recordKey(const QString &source, quint64 size, quint64 index) const;
     QString fileKey(const QString &source, quint64 size) const;
-    Abort   fetchChunk(const QString &key, const QString &file, quint64 size, quint64 start, quint64 expected,
+    Abort   fetchChunk(const QString &file, quint64 size, quint64 start, quint64 expected,
                        Fetch fetch, Completion complete);
     void    deliver(quint64 ticket, QByteArray bytes, MediaChunkError error);
-    void    remember(const QString &key, const QString &source, quint64 size, quint64 index);
-    void    refreshAvailability();
+    void    schedule(quint64 ticket);
     void    notifyRanges(const QString &source, quint64 size);
-    struct Record {
-        QString source;
-        quint64 size, index;
-    };
-    QHash<QString, Record>                  records_;
     QHash<QString, QPair<QString, quint64>> files_;
     QSet<QString>                           resuming_;
     QSet<QPair<QString, quint64>>           pendingRanges_;
@@ -82,7 +78,6 @@ private:
     quint64                          chunkSize_, nextTicket_ = 0;
     bool                             stopped_ = false;
     MediaChunkScheduler              scheduler_;
-    QCache<QString, QByteArray>      memory_;
     QHash<quint64, Request>          requests_;
     MediaChunkStore                 *store_;
 };

@@ -3,7 +3,6 @@
 #include "mediachunkstore.h"
 #include <QCryptographicHash>
 #include <QDataStream>
-#include <QFileInfo>
 #include <QLoggingCategory>
 #include <QTimer>
 #include <algorithm>
@@ -23,23 +22,18 @@ MediaChunkCache::MediaChunkCache(QString directory, QObject *parent, quint64 chu
     store_->setParent(this);
 }
 MediaChunkCache::MediaChunkCache(MediaChunkStore *store, QObject *parent, quint64 chunkSize) :
-    QObject(parent), chunkSize_(std::clamp<quint64>(chunkSize, 1, MaxChunkSize)), memory_(16 * 1024 * 1024),
-    store_(store)
+    QObject(parent), chunkSize_(std::clamp<quint64>(chunkSize, 1, MaxChunkSize)), store_(store)
 {
     scheduler_.setMaxActive(MaxActiveFetches);
-    connect(store_, &MediaChunkStore::availabilityChanged, this, &MediaChunkCache::refreshAvailability);
     connect(store_, &MediaChunkStore::fileChanged, this, [this](const QString &key) {
         const auto file = files_.value(key);
         if (file.first.isEmpty())
             return;
         const auto state = store_->state(key);
-        if (!state.error.isEmpty() || state.path.isEmpty()) {
-            for (auto it = records_.begin(); it != records_.end(); ++it)
-                if (it->source == file.first && it->size == file.second)
-                    memory_.remove(it.key());
-            if (!state.error.isEmpty())
-                emit integrityError(file.first, file.second, state.error);
-        }
+        if (!state.error.isEmpty())
+            emit integrityError(file.first, file.second, state.error);
+        if (state.path.isEmpty())
+            files_.remove(key);
         notifyRanges(file.first, file.second);
     });
 }
@@ -112,7 +106,7 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
     if (!done || requests_.size() >= MaxRequests)
         return 0;
     const auto ticket = ++nextTicket_;
-    requests_.insert(ticket, { 0, std::move(done), { } });
+    requests_.insert(ticket, { 0, std::move(done) });
     auto fail = [this, ticket](MediaChunkError error) {
         QTimer::singleShot(0, this, [this, ticket, error] { deliver(ticket, { }, error); });
     };
@@ -134,41 +128,60 @@ quint64 MediaChunkCache::read(QString source, quint64 fileSize, quint64 offset, 
         fail({ MediaChunkError::IntegrityError, fileError });
         return ticket;
     }
-    // Store only identities of verified, available chunks; do not accumulate a
-    // history of every seek or retain payloads for the progress UI.
-    auto &request  = requests_[ticket];
-    auto  original = std::move(request.done);
-    request.done   = [this, key, source, fileSize, index, original = std::move(original)](QByteArray      bytes,
-                                                                                          MediaChunkError error) {
-        if (error.isEmpty() && !bytes.isEmpty())
-            remember(key, source, fileSize, index);
-        original(std::move(bytes), std::move(error));
-    };
-    if (const auto bytes = memory_.object(key)) {
-        store_->touch(file);
-        requests_[ticket].cachedSlice = bytes->mid(int(inside), int(count));
-        QTimer::singleShot(0, this, [this, ticket] {
-            auto it = requests_.find(ticket);
-            if (it != requests_.end())
-                deliver(ticket, std::move(it->cachedSlice), { });
+    auto &request    = requests_[ticket];
+    request.key      = key;
+    request.file     = file;
+    request.source   = source;
+    request.lane     = std::move(lane);
+    request.size     = fileSize;
+    request.start    = start;
+    request.expected = expected;
+    request.inside   = inside;
+    request.count    = count;
+    request.fetch    = std::move(fetch);
+    request.urgent   = urgent;
+    if (store_->containsCached(file, fileSize, start, expected)) {
+        const QPointer<MediaChunkCache> guard(this);
+        store_->read(file, fileSize, start, expected, [guard, ticket](QByteArray bytes, MediaChunkError error) {
+            if (!guard)
+                return;
+            auto it = guard->requests_.find(ticket);
+            if (it == guard->requests_.end())
+                return;
+            if (error.isEmpty() && bytes.isEmpty()) {
+                guard->schedule(ticket); // RAM was evicted and the disk span disappeared before delivery.
+                return;
+            }
+            const auto inside = it->inside, count = it->count;
+            guard->deliver(ticket, error.isEmpty() ? bytes.mid(int(inside), int(count)) : QByteArray(), error);
         });
-        return ticket;
+    } else {
+        schedule(ticket);
     }
-    scheduler_.setLaneMaxActive(lane, MaxActiveFetches);
+    return ticket;
+}
+
+void MediaChunkCache::schedule(quint64 ticket)
+{
+    const auto request = requests_.value(ticket);
+    if (!requests_.contains(ticket))
+        return;
+    files_.insert(request.file, { request.source, request.size });
+    scheduler_.setLaneMaxActive(request.lane, MaxActiveFetches);
     const QPointer<MediaChunkCache> guard(this);
     const auto                      scheduled = scheduler_.requestCancelable(
-        key, 0, lane, urgent ? 100 : 50,
-        [guard, key, file, fileSize, expected, start, fetch](Completion complete) {
-            return guard->fetchChunk(key, file, fileSize, start, expected, fetch, std::move(complete));
+        request.key, 0, request.lane, request.urgent ? 100 : 50,
+        [guard, file = request.file, size = request.size, start = request.start,
+         expected = request.expected, fetch = request.fetch](Completion complete) {
+            return guard->fetchChunk(file, size, start, expected, fetch, std::move(complete));
         },
-        [guard, ticket, inside, count](QByteArray bytes, MediaChunkError error) {
+        [guard, ticket, inside = request.inside, count = request.count](QByteArray bytes, MediaChunkError error) {
             if (guard)
                 guard->deliver(ticket, error.isEmpty() ? bytes.mid(int(inside), int(count)) : QByteArray(), error);
         });
     auto it = requests_.find(ticket);
     if (it != requests_.end())
         it->schedulerTicket = scheduled;
-    return ticket;
 }
 
 void MediaChunkCache::notifyRanges(const QString &source, quint64 size)
@@ -189,53 +202,13 @@ void MediaChunkCache::notifyRanges(const QString &source, quint64 size)
     });
 }
 
-void MediaChunkCache::remember(const QString &key, const QString &source, quint64 size, quint64 index)
-{
-    const bool added = !records_.contains(key);
-    records_.insert(key, { source, size, index });
-    refreshAvailability();
-    if (added)
-        notifyRanges(source, size);
-}
-
-void MediaChunkCache::refreshAvailability()
-{
-    for (auto it = records_.begin(); it != records_.end();) {
-        const auto offset = it->index * chunkSize_;
-        if (!memory_.contains(it.key())
-            && !store_->contains(fileKey(it->source, it->size), offset, std::min(chunkSize_, it->size - offset))) {
-            notifyRanges(it->source, it->size);
-            it = records_.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
-
 MediaChunkCache::Ranges MediaChunkCache::cachedRanges(const QString &source, quint64 size) const
 {
-    if (!store_->state(fileKey(source, size)).error.isEmpty())
-        return { };
-    Ranges ranges = store_->state(fileKey(source, size)).ranges;
-    for (const auto &record : records_) {
-        if (record.source == source && record.size == size) {
-            const auto offset = record.index * chunkSize_;
-            ranges.append({ offset, std::min(chunkSize_, size - offset) });
-        }
-    }
-    std::sort(ranges.begin(), ranges.end());
-    Ranges merged;
-    for (const auto &range : ranges) {
-        if (!merged.isEmpty() && merged.last().first + merged.last().second >= range.first)
-            merged.last().second = std::max(merged.last().first + merged.last().second, range.first + range.second)
-                - merged.last().first;
-        else
-            merged.append(range);
-    }
-    return merged;
+    const auto state = store_->state(fileKey(source, size));
+    return state.error.isEmpty() ? state.ranges : Ranges();
 }
 
-MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, const QString &file, quint64 size, quint64 start,
+MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &file, quint64 size, quint64 start,
                                                    quint64 expected, Fetch fetch, Completion complete)
 {
     struct State {
@@ -270,7 +243,7 @@ MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, const QSt
               complete(std::move(bytes), error);
           };
     const std::weak_ptr<State> weak(state);
-    state->next = [weak, guard, key, file, size, start, expected, fetch] {
+    state->next = [weak, guard, file, size, start, expected, fetch] {
         auto state = weak.lock();
         if (!state || !guard || guard->stopped_ || state->completed)
             return;
@@ -286,13 +259,11 @@ MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, const QSt
         }
         if (state->nextRange == state->missing.size()) {
             guard->store_->read(file, size, start, expected,
-                                [guard, key, state, expected](QByteArray bytes, MediaChunkError error) {
+                                [guard, state, expected](QByteArray bytes, MediaChunkError error) {
                                     if (!guard || guard->stopped_)
                                         return;
                                     if (error.isEmpty() && quint64(bytes.size()) != expected)
                                         error = QStringLiteral("Shared file range no longer available");
-                                    if (error.isEmpty())
-                                        guard->memory_.insert(key, new QByteArray(bytes), bytes.size());
                                     state->finish(std::move(bytes), error);
                                 });
             return;
@@ -335,7 +306,7 @@ MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, const QSt
                 }));
     };
     store_->read(file, size, start, expected,
-                 [guard, key, file, start, expected, state](QByteArray cached, MediaChunkError error) {
+                 [guard, file, start, expected, state](QByteArray cached, MediaChunkError error) {
                      if (!guard || guard->stopped_ || state->completed)
                          return;
                      if (!error.isEmpty()) {
@@ -343,7 +314,6 @@ MediaChunkCache::Abort MediaChunkCache::fetchChunk(const QString &key, const QSt
                          return;
                      }
                      if (!cached.isEmpty()) {
-                         guard->memory_.insert(key, new QByteArray(cached), cached.size());
                          state->finish(std::move(cached), { });
                          return;
                      }

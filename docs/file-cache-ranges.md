@@ -65,12 +65,13 @@ The shared-file disk budget is 256 MiB for complete and range data together.
 the worker the remaining allowance. External originals and non-owning aliases
 are excluded. Existing pin, publication and retained-partial protections remain;
 as before, the most recent sole range resource can exceed the allowance. This is
-a soft cache budget, not a limit on transfer size. The RAM tiers are still separate.
+a soft cache budget, not a limit on transfer size. The subsequent
+[shared RAM tier](file-cache-memory.md) accounts for both read interfaces.
 
 The worker bounds resident resources, fragmented coverage and checksum rows.
 The storage-completion flag retains the existing adapter's meaning: full coverage
 and required checksums. Transport-success evidence, source attribution, leases,
-one RAM tier and the common reader/download API remain access-layer work.
+and the common reader/download API remain access-layer work.
 
 ## Compatibility
 

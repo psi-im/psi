@@ -146,6 +146,98 @@ private slots:
         QVERIFY(query.next());
         QCOMPARE(query.value(0).toInt(), 1);
     }
+    void completeAndRangeReadsShareOneMemoryBudget()
+    {
+        auto cache = open();
+        cache->setMemoryCacheSize(8);
+        const auto hash = hashOf("complete");
+        auto       item = cache->append(hash, "complete");
+        QVERIFY(item);
+        cache->sync();
+        QVERIFY(item->inMemory());
+        QCOMPARE(cache->memoryUsed(), quint64(8));
+        auto          ranges = cache->rangeStore();
+        const QString key(64, QLatin1Char('a'));
+        int           completed = 0;
+        ranges->write(key, 8, 0, "ranged-8", [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 1);
+        ranges->read(key, 8, 0, 8, [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, QByteArray("ranged-8"));
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 2);
+        QVERIFY(ranges->containsCached(key, 8, 0, 8));
+        QVERIFY(!item->inMemory());
+        QCOMPARE(cache->memoryUsed(), quint64(8));
+        QCOMPARE(cache->getData(hash), QByteArray("complete"));
+        QVERIFY(item->inMemory());
+        QVERIFY(!ranges->containsCached(key, 8, 0, 8));
+        QCOMPARE(cache->memoryUsed(), quint64(8));
+    }
+    void completeViewsReuseRangeBytesAndLimitChangesApplyToBoth()
+    {
+        auto cache = open();
+        cache->setMemoryCacheSize(32);
+        auto             ranges = cache->rangeStore();
+        const QString    key(64, QLatin1Char('a'));
+        const QByteArray data("range-payload-16");
+        int              completed = 0;
+        auto             done      = [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, data);
+            ++completed;
+        };
+        ranges->write(key, data.size(), 0, data, done);
+        QTRY_COMPARE(completed, 1);
+        ranges->read(key, data.size(), 0, data.size(), done);
+        QTRY_COMPARE(completed, 2);
+        QCOMPARE(cache->memoryUsed(), quint64(data.size()));
+        const auto hash  = hashOf(data);
+        auto       alias = cache->trackExternal({ hash }, QFileInfo(ranges->state(key).path));
+        QVERIFY(alias);
+        QVERIFY(alias->inMemory());
+        QCOMPARE(alias->data(), data);
+        QCOMPARE(cache->memoryUsed(), quint64(data.size()));
+        ranges->read(key, data.size(), 0, data.size(), done); // A queued RAM hit.
+        cache->setMemoryCacheSize(0);
+        QCOMPARE(completed, 2);
+        QCOMPARE(cache->memoryUsed(), quint64(0));
+        QVERIFY(!alias->inMemory());
+        QTRY_COMPARE(completed, 3); // Falls back to disk without losing the accepted read.
+        QCOMPARE(alias->data(), data);
+        QCOMPARE(cache->memoryUsed(), quint64(0));
+    }
+    void aLargeCompleteViewCannotBypassTheBoundedRangeRead()
+    {
+        auto cache = open();
+        cache->setMemoryCacheSize(8 * 1024 * 1024);
+        auto             ranges = cache->rangeStore();
+        const QString    key(64, QLatin1Char('a'));
+        const QByteArray data(int(MediaChunkMaxSize) + 1, 'x');
+        int              completed = 0;
+        auto             done      = [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++completed;
+        };
+        ranges->write(key, data.size(), 0, data.left(int(MediaChunkMaxSize)), done);
+        ranges->write(key, data.size(), MediaChunkMaxSize, data.right(1), done);
+        QTRY_COMPARE(completed, 2);
+        auto alias = cache->trackExternal({ hashOf(data) }, QFileInfo(ranges->state(key).path));
+        QVERIFY(alias);
+        QCOMPARE(alias->data(), data);
+        QCOMPARE(cache->memoryUsed(), quint64(data.size()));
+        QVERIFY(!ranges->containsCached(key, data.size(), 0, data.size()));
+        ranges->read(key, data.size(), 0, data.size(), [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(bytes.isEmpty());
+            QVERIFY(!error.isEmpty());
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 3);
+    }
 
     void emptyItemHasARealPayload()
     {

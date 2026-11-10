@@ -27,6 +27,43 @@ struct Pending {
 class ChunkCacheTest : public QObject {
     Q_OBJECT
 private slots:
+    void memoryHitsDoNotWaitForNetworkCapacity()
+    {
+        QTemporaryDir     directory;
+        MediaChunkCache   cache(directory.path(), nullptr, 8);
+        int               delivered = 0, hotFetches = 0, cancelled = 0;
+        QList<Completion> held;
+        auto              hotFetch = [&](quint64 offset, quint64 length, Completion done) -> MediaChunkCache::Abort {
+            ++hotFetches;
+            done(pattern(offset, length), {});
+            return {};
+        };
+        auto hotDone = [&](QByteArray bytes, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(bytes, pattern(0, 8));
+            ++delivered;
+        };
+        QVERIFY(cache.read("hot", 8, 0, 8, "lane", hotFetch, hotDone));
+        QTRY_COMPARE(delivered, 1);
+        for (int i = 0; i < MediaChunkCache::MaxActiveFetches; ++i) {
+            QVERIFY(cache.read(
+                QStringLiteral("slow-%1").arg(i), 8, 0, 8, "lane",
+                [&](quint64, quint64, Completion done) -> MediaChunkCache::Abort {
+                    held.append(std::move(done));
+                    return {};
+                },
+                [&](QByteArray, MediaChunkError) { ++cancelled; }));
+        }
+        QTRY_COMPARE(held.size(), MediaChunkCache::MaxActiveFetches);
+        QVERIFY(cache.read("hot", 8, 0, 8, "lane", hotFetch, hotDone));
+        QCOMPARE(delivered, 1);
+        QTRY_COMPARE(delivered, 2);
+        QCOMPARE(hotFetches, 1);
+        QCOMPARE(cancelled, 0);
+        cache.shutdown();
+        QCOMPARE(cancelled, MediaChunkCache::MaxActiveFetches);
+        held.clear();
+    }
     void sourcePriorityUsesUriSchemesAndPreservesSenderOrder()
     {
         const QStringList sources {

@@ -765,9 +765,11 @@ the same pass; only paths the cache generated in its own root are ever touched.
 
 ### RAM tier
 
-Bounded memory for the hottest content lives in the cache: recently read chunks and small
-complete files, replacing `MediaChunkCache::memory_` and `FileCacheItem::_data`. This is what
-makes scrolling history fast after `FileSharingItem` objects are gone.
+Bounded memory for recently read chunks and small complete files lives in one LRU tier per
+partition. It replaces `MediaChunkCache::memory_` and the retained read bytes in
+`FileCacheItem`; only uncommitted writes remain staged in the item until a successful flush.
+[Implementation and compatibility](file-cache-memory.md). This keeps payload bytes independent
+of the lifetime of the `FileSharingItem` observing them.
 
 ### FileSharingItem lifetime
 
@@ -1035,11 +1037,14 @@ flowchart LR
    2. **Range storage and disk accounting.** SQL range/checksum checkpoints, a worker owned by
       `FileCache`, shared disk budget and retirement helpers. Old `media-files-v2` is ignored.
       `MediaChunkCache` temporarily keeps its reader/scheduler interface, so consumers do not change.
-      [Implementation and compatibility](file-cache-ranges.md). A single RAM tier, unknown-size
-      resources and transport-finalization evidence remain access-layer work.
+      [Implementation and compatibility](file-cache-ranges.md).
       *Test:* empty files, restart at each commit
       boundary, damaged payloads, withdraw before overwrite, quotas, in-place files outside the quota,
       no rehash at start, trash retry, memory and I/O bounds.
+   3. **Shared RAM tier.** Generation/span keys, one byte-bounded LRU for complete and range
+      reads, and removal of the chunk adapter's separate payload and coverage maps.
+      [Implementation and compatibility](file-cache-memory.md). Unknown-size resources and
+      transport-finalization evidence remain access-layer work.
 5. **Access layer and player.** `FileDownload`, `FileShareTransport`, `FileReader`; proxies, save
    and responder as clients; several-source rules; deduplication at finalize; large-file
    destinations; qite contract; playback source choice; external player tracking. Remove
