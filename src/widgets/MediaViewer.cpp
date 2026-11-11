@@ -49,7 +49,7 @@ namespace {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 QPoint globalMousePoint(const QMouseEvent *event) { return event->globalPosition().toPoint(); }
 #else
-QPoint globalMousePoint(const QMouseEvent *event) { return globalMousePoint(event); }
+QPoint globalMousePoint(const QMouseEvent *event) { return event->globalPos(); }
 #endif
 
 constexpr int   Margin   = 16;
