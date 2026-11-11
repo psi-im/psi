@@ -4,14 +4,17 @@
 
 #include <QFrame>
 #include <QClipboard>
+#include <QChildEvent>
 #include <QCloseEvent>
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QCursor>
 #include <QDir>
+#include <QEvent>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QApplication>
 #include <QHBoxLayout>
 #include <QImageWriter>
 #include <QKeyEvent>
@@ -169,6 +172,11 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     currentRevision_ = 0;
     if (video_)
         delete video_.data();
+    videoControls_ = nullptr;
+    videoControlsHidden_ = false;
+    if (videoIdleTimer_)
+        videoIdleTimer_->stop();
+    unsetCursor();
     controls_->setVisible(source != nullptr);
     if (source) {
         source->setParent(this);
@@ -188,6 +196,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
         applyFilter();
         source->start();
     }
+    updateFullscreenUi();
 }
 
 QRect MediaViewer::contentRect() const
@@ -296,6 +305,12 @@ void MediaViewer::setupControls()
     actionButton("mediaFullscreen", tr("Full screen"), { "view-fullscreen" },
                  QStyle::SP_TitleBarMaxButton, [this] { toggleFullscreen(); });
     controls_->hide();
+    trackVideoWidget(controls_);
+    videoIdleTimer_ = new QTimer(this);
+    videoIdleTimer_->setObjectName(QStringLiteral("mediaVideoIdleTimer"));
+    videoIdleTimer_->setSingleShot(true);
+    videoIdleTimer_->setInterval(2000);
+    connect(videoIdleTimer_, &QTimer::timeout, this, &MediaViewer::hideIdleVideoControls);
     auto *fullscreen = new QShortcut(QKeySequence(Qt::Key_F11), this);
     connect(fullscreen, &QShortcut::activated, this, [this] { toggleFullscreen(); });
     auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
@@ -313,6 +328,113 @@ void MediaViewer::toggleFullscreen()
         showNormal();
     else
         showFullScreen();
+    updateFullscreenUi();
+}
+
+void MediaViewer::trackVideoWidget(QWidget *widget)
+{
+    if (!widget)
+        return;
+    widget->setMouseTracking(true);
+    widget->installEventFilter(this);
+    for (auto *child : widget->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly))
+        trackVideoWidget(child);
+}
+
+void MediaViewer::noteFullscreenActivity(bool force)
+{
+    if (!isFullScreen() || !video_ || !videoIdleTimer_)
+        return;
+    const auto position = QCursor::pos();
+    if (!force && position == lastVideoCursorPos_)
+        return;
+    lastVideoCursorPos_ = position;
+    if (videoControlsHidden_) {
+        videoControlsHidden_ = false;
+        controls_->show();
+        if (videoControls_)
+            videoControls_->show();
+        video_->setGeometry(contentRect());
+        controls_->raise();
+    }
+    unsetCursor();
+    videoIdleTimer_->start();
+}
+
+void MediaViewer::hideIdleVideoControls()
+{
+    if (!isFullScreen() || !video_ || videoControlsHidden_)
+        return;
+    // Do not hide a timeline or a button in the middle of a mouse gesture.
+    const bool sliderInUse = videoControls_ && videoControls_->findChild<QSlider *>()
+        && videoControls_->findChild<QSlider *>()->isSliderDown();
+    if (QApplication::mouseButtons() != Qt::NoButton || sliderInUse) {
+        videoIdleTimer_->start();
+        return;
+    }
+    videoControlsHidden_ = true;
+    controls_->hide();
+    if (videoControls_)
+        videoControls_->hide();
+    video_->setGeometry(contentRect());
+    setCursor(Qt::BlankCursor);
+}
+
+void MediaViewer::updateFullscreenUi()
+{
+    if (!controls_ || !videoIdleTimer_)
+        return;
+    auto *button = controls_->findChild<QToolButton *>(QStringLiteral("mediaFullscreen"));
+    if (button) {
+        const bool full = isFullScreen();
+        const QString label = full ? tr("Exit full screen") : tr("Full screen");
+        button->setToolTip(label);
+        button->setAccessibleName(label);
+        button->setIcon(themedIcon(full ? std::initializer_list<const char *> { "view-restore", "view-fullscreen" }
+                                      : std::initializer_list<const char *> { "view-fullscreen" },
+                                   style(), full ? QStyle::SP_TitleBarNormalButton : QStyle::SP_TitleBarMaxButton));
+    }
+    if (isFullScreen() && video_) {
+        noteFullscreenActivity(true);
+        return;
+    }
+    videoIdleTimer_->stop();
+    videoControlsHidden_ = false;
+    unsetCursor();
+    controls_->setVisible(navigationSource_ != nullptr);
+    if (videoControls_)
+        videoControls_->show();
+    if (video_)
+        video_->setGeometry(contentRect());
+}
+
+bool MediaViewer::eventFilter(QObject *object, QEvent *event)
+{
+    if (isFullScreen() && video_) {
+        if (event->type() == QEvent::MouseMove) {
+            auto *move = static_cast<QMouseEvent *>(event);
+            if (move->globalPos() != lastVideoCursorPos_) {
+                noteFullscreenActivity(true);
+                lastVideoCursorPos_ = move->globalPos();
+            }
+        } else if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::KeyPress
+                   || event->type() == QEvent::Wheel) {
+            noteFullscreenActivity(true);
+        }
+    }
+    // Child video surfaces can be created lazily by the multimedia backend.
+    if (event->type() == QEvent::ChildAdded) {
+        auto *added = static_cast<QChildEvent *>(event)->child();
+        if (auto *widget = qobject_cast<QWidget *>(added)) {
+            const QPointer<QWidget> guard(widget);
+            QTimer::singleShot(0, this, [this, guard] {
+                if (guard && (guard == controls_ || controls_->isAncestorOf(guard)
+                              || (video_ && (guard == video_ || video_->isAncestorOf(guard)))))
+                    trackVideoWidget(guard);
+            });
+        }
+    }
+    return QWidget::eventFilter(object, event);
 }
 void MediaViewer::applyFilter()
 {
@@ -333,8 +455,15 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
 {
     navigationPending_ = view.navigating;
     if (currentKey_ != view.key) {
-        if (video_)
+        if (video_) {
             delete video_.data();
+            videoControls_ = nullptr;
+            if (videoIdleTimer_)
+                videoIdleTimer_->stop();
+            videoControlsHidden_ = false;
+            unsetCursor();
+            controls_->show();
+        }
         image_           = {};
         currentKey_      = view.key;
         currentRevision_ = 0;
@@ -369,8 +498,11 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
                 guard->toggleFullscreen();
         });
         if (video_) {
+            videoControls_ = video_->findChild<QWidget *>(QStringLiteral("qite-video-controls"));
+            trackVideoWidget(video_);
             video_->setGeometry(contentRect());
             video_->show();
+            updateFullscreenUi();
         }
     }
     controls_->raise();
@@ -552,6 +684,10 @@ void MediaViewer::mousePressEvent(QMouseEvent *event)
 
 void MediaViewer::mouseMoveEvent(QMouseEvent *event)
 {
+    if (isFullScreen() && video_ && event->globalPos() != lastVideoCursorPos_) {
+        noteFullscreenActivity(true);
+        lastVideoCursorPos_ = event->globalPos();
+    }
     if (dragging_) {
         const QPoint  position = event->pos();
         const QPointF offset   = constrainedPanOffset(panOffset_ + position - lastDragPosition_);
@@ -676,6 +812,8 @@ void MediaViewer::moveEvent(QMoveEvent *event)
 void MediaViewer::changeEvent(QEvent *event)
 {
     QWidget::changeEvent(event);
-    if (event->type() == QEvent::WindowStateChange)
+    if (event->type() == QEvent::WindowStateChange) {
         resetTemporaryZoom();
+        updateFullscreenUi();
+    }
 }
