@@ -21,6 +21,7 @@ class QResizeEvent;
 class QWheelEvent;
 class QLabel;
 class QProgressBar;
+class QTimer;
 
 // A lightweight, independent window. Window geometry determines fit-to-image
 // zoom, capped at 100% of the original. Ctrl+wheel and keyboard shortcuts zoom
@@ -87,12 +88,17 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
     void moveEvent(QMoveEvent *event) override;
     void changeEvent(QEvent *event) override;
+    bool eventFilter(QObject *object, QEvent *event) override;
 
 private:
     void    applyView(const MediaNavigationSource::View &);
     void    setupControls();
     void    applyFilter();
     void    toggleFullscreen();
+    void    updateFullscreenUi();
+    void    noteFullscreenActivity(bool force = false);
+    void    hideIdleVideoControls();
+    void    trackVideoWidget(QWidget *widget);
     QRect   contentRect() const;
     qreal   autoFitScale() const;
     bool    canPan() const;
@@ -119,6 +125,10 @@ private:
     QLabel                         *position_ = nullptr, *status_ = nullptr;
     QProgressBar                   *loading_ = nullptr;
     QPointer<QWidget>               video_;
+    QPointer<QWidget>               videoControls_;
+    QTimer                         *videoIdleTimer_ = nullptr;
+    QPoint                          lastVideoCursorPos_;
+    bool                            videoControlsHidden_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;
