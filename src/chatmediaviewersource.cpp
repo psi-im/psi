@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
+#include <utility>
 
 namespace {
 constexpr quint64 MaxImageBytes  = 128 * 1024 * 1024;
@@ -234,26 +235,38 @@ void ChatMediaViewerSource::adjacent(int direction)
     view_.navigating = true;
     publish();
 
-    if (entry_) {
-        requestNavigationPage(direction, *entry_, epoch);
-        return;
-    }
-
-    // On first open, resolve the clicked resource, even when it is filtered
-    // out, rather than jumping to the first/last item in the whole chat.
-    browser_->requestAdjacent(source_, direction < 0, [guard, epoch, direction](ChatMedia::Page page, bool ok) {
+    // A detented wheel emits separate events even for one quick gesture.
+    // Collect the first burst before submitting SQL, so rapid browsing does
+    // not spawn many short-lived decoders and canceled network readers.
+    QTimer::singleShot(40, this, [guard, epoch, direction] {
         if (!guard || guard->queryEpoch_ != epoch || !guard->navigationActive_)
             return;
-        if (!ok || page.entries.isEmpty()) {
-            guard->completeNavigation({}, epoch, ok);
+        const int steps = qBound(-400, direction + std::exchange(guard->queuedSteps_, 0), 400);
+        if (!steps) {
+            guard->completeNavigation(guard->entry_, epoch, true);
             return;
         }
-        const ChatMedia::Entry anchor = page.entries.first();
-        const int remaining = direction - (direction < 0 ? -1 : 1);
-        if (remaining)
-            guard->requestNavigationPage(remaining, anchor, epoch);
-        else
-            guard->completeNavigation(anchor, epoch, true);
+        if (guard->entry_) {
+            guard->requestNavigationPage(steps, *guard->entry_, epoch);
+            return;
+        }
+        // On first open, resolve the clicked resource even if it is excluded
+        // by the filter, instead of starting at an unrelated end of the chat.
+        guard->browser_->requestAdjacent(guard->source_, steps < 0,
+            [guard, epoch, steps](ChatMedia::Page page, bool ok) {
+                if (!guard || guard->queryEpoch_ != epoch || !guard->navigationActive_)
+                    return;
+                if (!ok || page.entries.isEmpty()) {
+                    guard->completeNavigation({}, epoch, ok);
+                    return;
+                }
+                const ChatMedia::Entry anchor = page.entries.first();
+                const int remaining = steps - (steps < 0 ? -1 : 1);
+                if (remaining)
+                    guard->requestNavigationPage(remaining, anchor, epoch);
+                else
+                    guard->completeNavigation(anchor, epoch, true);
+            });
     });
 }
 
@@ -304,7 +317,8 @@ void ChatMediaViewerSource::completeNavigation(std::optional<ChatMedia::Entry> c
     navigationActive_ = false;
     view_.navigating  = false;
     if (candidate) {
-        direction_ = entry_ && candidate->cursor.assetId < entry_->cursor.assetId ? -1 : 1;
+        if (entry_ && candidate->cursor.assetId != entry_->cursor.assetId)
+            direction_ = candidate->cursor.assetId < entry_->cursor.assetId ? -1 : 1;
         if (!entry_ || entry_->cursor.assetId != candidate->cursor.assetId) {
             select(*candidate);
             return;

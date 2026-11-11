@@ -35,10 +35,16 @@ class TestNavigationSource final : public MediaNavigationSource {
 public:
     int                                        requests  = 0;
     int                                        direction = 0;
+    int                                        queued = 0;
     std::function<void(QImage, QString, bool)> pending;
     MediaFilter                                filter;
     void                                       setFilter(MediaFilter value) override { filter = value; }
 
+    bool enqueueAdjacent(int step) override
+    {
+        queued += step;
+        return true;
+    }
     void adjacent(int step) override
     {
         ++requests;
@@ -103,6 +109,37 @@ private slots:
         QTRY_VERIFY(!viewer.isFullScreen());
         QVERIFY(viewer.isVisible());
     }
+    void rapidWheelBurstIsCoalescedAndMultiNotchInputIsPreserved()
+    {
+        QImage image(80, 60, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        MediaViewer viewer(image);
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        const QPoint center = viewer.rect().center();
+        const auto wheel = [&](int notches) {
+            QWheelEvent event(QPointF(center), QPointF(viewer.mapToGlobal(center)),
+                              {}, QPoint(0, notches * 120), Qt::NoButton,
+                              Qt::NoModifier, Qt::NoScrollPhase, false);
+            QApplication::sendEvent(&viewer, &event);
+            QVERIFY(event.isAccepted());
+        };
+        wheel(5);
+        QCOMPARE(source->requests, 1);
+        QCOMPARE(source->direction, -5);
+        wheel(3);
+        wheel(-1);
+        QCOMPARE(source->requests, 1);
+        QCOMPARE(source->queued, -2);
+        source->pending(image, QStringLiteral("next.png"), true);
+        QCOMPARE(viewer.windowTitle(), QStringLiteral("next.png"));
+        wheel(-4);
+        QCOMPARE(source->requests, 2);
+        QCOMPARE(source->direction, 4);
+    }
+
     void navigationUsesInjectedSourceAndCancelsStaleResults()
     {
         QImage original(80, 60, QImage::Format_RGB32);
