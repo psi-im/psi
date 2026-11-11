@@ -120,6 +120,12 @@ void MediaChunkScheduler::setMaxActive(int count)
     schedule();
 }
 
+void MediaChunkScheduler::setBackgroundLimit(int count)
+{
+    backgroundLimit_ = std::max(1, count);
+    schedule();
+}
+
 void MediaChunkScheduler::setLaneMaxActive(const QString &lane, int count)
 {
     if (!lane.isEmpty()) {
@@ -154,6 +160,16 @@ void MediaChunkScheduler::pump()
     if (stopped_)
         return;
     while (active_ < maxActive_) {
+        int  background  = 0;
+        bool interactive = false;
+        for (const auto &job : jobs_) {
+            int priority = 0;
+            for (const auto &waiter : job->waiters)
+                priority = std::max(priority, waiter.priority);
+            interactive |= priority > BackgroundPriority;
+            if (job->active && priority <= BackgroundPriority)
+                ++background;
+        }
         std::shared_ptr<Job> candidate;
         int                  bestPriority = std::numeric_limits<int>::min();
         for (const auto &job : jobs_) {
@@ -163,6 +179,10 @@ void MediaChunkScheduler::pump()
             int priority = std::numeric_limits<int>::min();
             for (const auto &waiter : job->waiters)
                 priority = std::max(priority, waiter.priority);
+            if (priority <= BackgroundPriority
+                && ((interactive && backgroundLimit_ < std::numeric_limits<int>::max())
+                    || background >= backgroundLimit_))
+                continue;
             if (!candidate || priority > bestPriority
                 || (priority == bestPriority && job->sequence < candidate->sequence)) {
                 candidate    = job;

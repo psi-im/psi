@@ -18,6 +18,7 @@
  */
 
 #include "filesharingproxy.h"
+#include "filereader.h"
 
 #define QHTTP_MEMORY_LOG 1
 
@@ -62,16 +63,16 @@ public:
         ServiceUnavailable, // 503
     };
 
-    QPointer<PsiAccount>                  acc;
-    QPointer<FileSharingItem>             item;
-    QPointer<FileShareDownloader>         downloader;
-    QPointer<MediaChunkReader>            chunkReader;
+    QPointer<PsiAccount>                      acc;
+    QPointer<FileSharingItem>                 item;
+    QPointer<FileShareDownloader>             downloader;
+    QPointer<FileReader>                      chunkReader;
     std::optional<FileShareDownloader::Range> requestedRange;
-    std::optional<quint64>                bytesLeft; // if not set - unknown
-    qint64                                totalTranferred = 0;
-    bool                                  headersSent     = false;
-    bool                                  dataHungry      = true;
-    bool                                  finished        = false;
+    std::optional<quint64>                    bytesLeft; // if not set - unknown
+    qint64                                    totalTranferred = 0;
+    bool                                      headersSent     = false;
+    bool                                      dataHungry      = true;
+    bool                                      finished        = false;
 
     ControlBase(PsiAccount *acc, const QString &sourceIdHex, QObject *parent) :
         QObject(parent), acc(acc), item(acc->psi()->fileSharingManager()->item(XMPP::Hash::from(sourceIdHex), acc))
@@ -153,33 +154,18 @@ public:
         auto owner = item->account();
         if (!owner)
             return false;
-        auto          cache  = FileSharingChunkSource::configure(item);
-        const auto    source = FileSharingChunkSource::identity(item);
         const quint64 offset = requestedRange ? requestedRange->start : 0;
         const quint64 length = requestedRange && requestedRange->size ? requestedRange->size : *size - offset;
-        const QPointer<FileSharingItem> resource(item);
-        const QPointer<MediaChunkCache> cacheGuard(cache);
-        auto fetch = [resource, cacheGuard](quint64 offset, quint64 length, MediaChunkCache::Completion done) {
-            return FileSharingChunkSource::fetch(resource, offset, length, std::move(done), cacheGuard);
-        };
-        chunkReader = new MediaChunkReader(cache, source, *size, offset, length, owner->id(), std::move(fetch), this);
-        connect(chunkReader, &QIODevice::readyRead, this, [this, size, length, mime = item->mimeType()] {
-            if (!headersSent) {
-                bytesLeft = length;
-                setupHeaders(size, mime, {}, requestedRange);
-                headersSent = true;
-            }
+        chunkReader          = owner->psi()->fileSharingManager()->reader(item, this, offset, length);
+        if (!chunkReader)
+            return false;
+        connect(chunkReader, &QIODevice::readyRead, this, [this] {
             if (dataHungry)
                 transfer();
         });
-        connect(chunkReader, &MediaChunkReader::disconnected, this, [this] { transfer(); });
-        connect(chunkReader, &MediaChunkReader::failed, this, [this] {
-            const bool unsupported = chunkReader->errorCode() == MediaChunkError::RangeUnsupported;
-            if (!headersSent && unsupported) {
-                ensureUpstreamStopped();
-                chunkReader = nullptr;
-                startRawDownload(); // Keep servers without bounded ranges working.
-            } else if (!headersSent) {
+        connect(chunkReader, &QIODevice::readChannelFinished, this, [this] { transfer(); });
+        connect(chunkReader, &FileReader::failed, this, [this] {
+            if (!headersSent) {
                 _finishWithMetadataError(StatusCode::BadGateway);
             } else {
                 finished = true;
@@ -191,7 +177,10 @@ public:
             dataHungry = true;
             transfer();
         });
-        chunkReader->open();
+        if (!chunkReader->open())
+            _finishWithMetadataError(StatusCode::BadGateway);
+        else
+            transfer(); // The first read expresses demand; opening does not prefetch.
         return true;
     }
 
@@ -228,9 +217,13 @@ public:
         //      emit request->end();
         //      return; // handled with error
         //  }
-        auto      self = static_cast<Impl *>(this);
-        QFile    *file = new QFile(item->fileName(), this);
-        QFileInfo fi(*file);
+        auto            self = static_cast<Impl *>(this);
+        auto            file = acc->psi()->fileSharingManager()->reader(item, this);
+        const QFileInfo fi(item->fileName());
+        if (!file) {
+            _finishWithMetadataError(StatusCode::NotFound);
+            return;
+        }
         if (!file->open(QIODevice::ReadOnly)) {
             qWarning("FSP failed to open cached file: %s", qPrintable(file->errorString()));
             _finishWithMetadataError(StatusCode::NotFound);
@@ -253,27 +246,28 @@ public:
         }
         // TODO If-Modified-Since
         setupHeaders(fi.size(), item->mimeType(), fi.lastModified(), actualRange);
-        const auto end = actualRange ? actualRange->start + actualRange->size : size;
-        self->connectReadyWrite(file, [this, file, end]() {
+        headersSent          = true;
+        const auto end       = actualRange ? actualRange->start + actualRange->size : size;
+        const auto writeNext = [this, file, end] {
             if (finished)
                 return;
-            qint64 toWrite = qint64(end) - file->pos();
-            if (!toWrite) {
+            const auto count = std::min<qint64>(HTTP_CHUNK, qint64(end) - file->pos());
+            if (!count) {
+                _finish();
                 return;
             }
-            if (toWrite > HTTP_CHUNK)
-                _write(file->read(HTTP_CHUNK));
-            else {
-                _write(file->read(toWrite));
-                _finish();
+            const auto bytes = file->read(count);
+            if (bytes.size() != count) {
+                failUpstream();
+                return;
             }
-        });
-
-        const auto length = actualRange ? actualRange->size : size;
-        if (length <= HTTP_CHUNK) {
-            _write(file->read(qint64(length)));
-            _finish();
-        }
+            const QPointer<ControlBase> guard(this);
+            _write(bytes);
+            if (guard && file->pos() == qint64(end))
+                _finish();
+        };
+        self->connectReadyWrite(file, std::function<void()>(writeNext));
+        writeNext(); // The first body write must not wait for an earlier write to drain.
     }
 
     void onMetadataChanged()
@@ -380,11 +374,11 @@ public:
         if (finished || !dataHungry)
             return;
         QIODevice *input     = chunkReader ? static_cast<QIODevice *>(chunkReader.data()) : downloader.data();
-        const bool connected = chunkReader ? chunkReader->isConnected() : downloader && downloader->isConnected();
+        const bool connected = chunkReader ? !chunkReader->atEnd() : downloader && downloader->isConnected();
         const auto available = input ? input->bytesAvailable() : 0;
         const QPointer<ControlBase> guard(this);
-        if (available > 0) {
-            auto count = std::min<quint64>(quint64(available), HTTP_CHUNK);
+        if (available > 0 || (chunkReader && connected)) {
+            auto count = available > 0 ? std::min<quint64>(quint64(available), HTTP_CHUNK) : HTTP_CHUNK;
             if (bytesLeft)
                 count = std::min(count, *bytesLeft);
             const auto data = input->read(qint64(count));
@@ -392,6 +386,15 @@ public:
             if (!guard || finished)
                 return;
             if (!data.isEmpty()) {
+                if (chunkReader && !headersSent) {
+                    if (!item) {
+                        _finishWithMetadataError(StatusCode::ServiceUnavailable);
+                        return;
+                    }
+                    bytesLeft = quint64(chunkReader->size());
+                    setupHeaders(item->fileSize(), item->mimeType(), {}, requestedRange);
+                    headersSent = true;
+                }
                 if (bytesLeft)
                     *bytesLeft -= quint64(data.size());
                 _write(data);

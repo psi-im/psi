@@ -155,7 +155,8 @@ flowchart TB
     reader["FileReader per client: cursor, buffer, lease"]
     opener -- "file object or loopback URL" --> reader
     proxy --> reader
-    mediasave --> reader
+    mediasave -- "export completed file" --> reader
+    mediasave -- "explicit full-download goal" --> download
     responder -- "authorized publications only" --> reader
 
     subgraph transfer["Shared transfer, one per file"]
@@ -395,13 +396,13 @@ it still has a message media ref because its announcement belongs to the message
 
 ### FileReader
 
-Every client uses one public type:
+Every byte consumer uses one public type. An explicit full download is a separate goal on
+`FileDownload`, not a reader that silently demands the whole file:
 
 ```cpp
 // Proposed contract.
 class FileReader : public QIODevice {
 public:
-    enum class Policy { Stream, WholeFile }; // Stream may read before whole-file integrity is known.
     bool   isSequential() const override;    // False whenever the size is known.
     qint64 size() const override;
     bool   seek(qint64 pos) override;        // Moves demand. Never waits.
@@ -409,7 +410,8 @@ public:
 signals:
     void failed();
 };
-FileReader *FileSharingManager::openReader(PsiAccount *, const XMPP::Hash &, FileReader::Policy, QObject *parent);
+FileReader *FileSharingManager::reader(FileSharingItem *, QObject *parent, quint64 offset = 0,
+                                      std::optional<quint64> length = {});
 ```
 
 Spans, gaps and tickets stay private between reader, download and cache. A consumer never
@@ -426,6 +428,13 @@ Rules for `readData()`, derived from the measurements below:
 - **The foreign-thread path touches only state behind the reader's mutex,** and the owner
   does not call cursor methods meanwhile.
 - **`abort()` comes before tearing down the player.** Always.
+- **Opening and seeking do not fetch.** Only an actual read expresses demand. There is no
+  autonomous lookahead window; bounded alignment for transport/hash chunks is permitted.
+- **Full download is independent of reading and playback backpressure.** It fills missing
+  ranges from the latest playhead to EOF, then wraps to the beginning. Interactive requests
+  take priority, and observed throughput determines bounded transfer chunk sizes.
+- **Stopping playback does not create a full-download goal.** Cancelling a full download
+  removes only that goal. Range-less fallback is allowed only while a full goal exists.
 
 ### Measured backend behaviour
 
@@ -445,45 +454,41 @@ non-blocking and blocking cases need no backend detection: the thread check cove
 
 qite already hands a device to the player, through `setMedia(url, stream)` on Qt 5 and
 `setSourceDevice` on Qt 6. Today only builds without the web server use that path, and their
-`FileShareDownloader` returns 0 on a gap, which the table shows is unusable on Qt 6.
+`FileShareDownloader` returned 0 on a gap, which the table shows is unusable on Qt 6.
+The first access-layer change replaces that device with `FileReader`; see
+[the delivered contract and tests](file-reader-download.md).
 
-Not yet measured: the Qt 6.4 baseline, Windows and macOS. The device path stays off on a
-platform until the probe passes there.
+The first implementation has a native delayed-device playback/seek/abort regression.
+Local measurements cover Qt 6.10 on Linux; the Qt 6.4 baseline and other operating systems
+require their CI/backend checks. The thread-based read contract remains independent of Qt version; the application chooses
+a loopback adapter for backends that cannot accept asynchronous seekable reads.
 
 ### Choosing the playback source
 
 ```mermaid
 flowchart TD
     start["Play attachment"] --> complete{"Complete file?"}
-    complete -- yes --> path["Local path, lease held by the media source"]
+    complete -- yes --> path["FileReader over the local payload"]
     complete -- no --> who{"Who plays?"}
-    who -- "Psi player" --> device{"Device path enabled on this platform?"}
-    device -- yes --> reader["FileReader as file object"]
-    device -- no --> server{"Loopback server allowed?"}
+    who -- "Psi player, FFmpeg and known immutable size" --> reader["FileReader as file object"]
+    who -- "Qt 5 or GStreamer" --> server
+    who -- "Unknown identity or size" --> server{"Loopback server allowed?"}
     who -- "External player" --> server
     server -- yes --> http["Loopback HTTP URL served by a FileReader"]
     server -- no --> first["Offer to download first"]
 ```
 
-Both `reader` and `http` start the same scheduling, because both are one `FileReader`.
-The choice is one function in `FileSharingDeviceOpener`, with one option to force it. The
-device path starts disabled on every platform, so the default remains the loopback HTTP path
-that works on master.
+Both `reader` and `http` express demand through the same `FileDownload` and scheduler.
+Known-size immutable resources use a direct `FileReader` with FFmpeg. Qt 5/GStreamer
+retain the loopback adapter over that reader, because seekable GUI-thread gaps are treated
+as EOF by their appsrc implementation. Without the loopback server those backends offer
+to download first. Address-only and unknown-size resources retain their
+existing Psi network path until their identity and size can support this contract.
 
-The qite contract changes in `3rdparty/qite`, so that a path, a URL and a device have the
-same lifetime:
-
-```cpp
-// Proposed. The player owner keeps this for the whole playback.
-class ITEMediaSource {
-public:
-    virtual ~ITEMediaSource();       // Releases the lease.
-    virtual QUrl       url() const = 0;
-    virtual QIODevice *device() const = 0; // nullptr for a path or URL.
-    virtual void       abort() = 0;  // Called before the player is destroyed or reset.
-};
-virtual std::unique_ptr<ITEMediaSource> ITEMediaOpener::open(const QUrl &url) = 0;
-```
+The qite contract adds `ITEMediaOpener::abort(QIODevice *)`. Its player wrapper calls it
+before the decoder is destroyed; `close()` follows after decoder teardown. The opener
+wakes its devices before its own destruction tears down detached players. No additional
+media-source hierarchy is needed for this change.
 
 An external player that Psi starts is tracked as a child process instead of
 `QProcess::startDetached`, and the lease ends when it exits. Over HTTP the proxy's reader
@@ -501,7 +506,6 @@ sequenceDiagram
     participant P as Media player
     participant RP as FileReader, player
     participant S as Save to disk
-    participant RS as FileReader, save
     participant D as FileDownload
     participant Q as Scheduler
     participant T1 as Transport, window attempt
@@ -521,15 +525,14 @@ sequenceDiagram
     RP-->>P: readyRead, or a waiting read returns
 
     U->>S: Save as, destination chosen
-    S->>RS: Open with WholeFile policy
-    RS->>D: demand(whole file, bulk)
-    D->>Q: Admit one bulk attempt from the first missing offset
-    Q->>T2: Start long sequential attempt
+    S->>D: Add explicit full-download goal
+    D->>Q: Admit bounded missing chunks from playhead toward EOF
+    Q->>T2: Start ranged attempts, or one authorized sequential fallback
     loop While the file is incomplete
         T2-->>D: Bytes at full speed
         D->>F: write, skipping spans already present
         F-->>RP: Ranges changed
-        F-->>RS: Ranges changed
+        D-->>S: Download progress
     end
 
     U->>P: Seek ahead of the bulk attempt
@@ -542,8 +545,9 @@ sequenceDiagram
     T2-->>D: Protocol success
     D->>F: finalize with transport evidence
     F->>F: Hash, verify, commit complete
-    F-->>RS: Complete
-    RS-->>S: Commit the destination
+    F-->>D: Complete and checkpointed
+    D-->>S: Validated local file
+    S->>S: Copy through a local FileReader and commit destination
     U->>P: Stop
     P->>RP: abort, then player teardown
     RP->>D: Drop demand, the bulk attempt is unaffected
@@ -552,13 +556,15 @@ sequenceDiagram
 
 Whole-file demand runs as **bulk attempts** and interactive readers as a bounded number of
 **window attempts**. `FileSourceSelector` spreads both across sources by estimated completion,
-so one slow sender does not limit the transfer. Single flight works on the existing chunk
-grid, so a span is fetched once. Cancelling removes one reader's demand; it does not stop
+so one slow sender does not limit the transfer. Single flight joins overlapping demand
+using the admitted chunk geometry, even when the adaptive chunk size changes. Cancelling removes one reader's demand; it does not stop
 work another reader needs. An aborted attempt keeps its scheduler slot until completion
 acknowledges it. Disk hits consume no network slots.
 
-If the only source ignores Range, one sequential attempt is all there is, and a seek past it
-waits for it. If the file is below the destination threshold, the save job waits for the
+If the only source ignores Range, an explicit full-download goal permits one sequential
+attempt; readers may consume its available prefix while it runs. Playback alone reports
+that the source requires a full download. Removing the last full goal revokes that
+fallback permission, including while range negotiation is still pending. If the file is below the destination threshold, the save job waits for the
 completion barrier and then copies; above it, the file is written directly to the
 destination (see [large files](#large-files)).
 
@@ -623,8 +629,8 @@ assembled nothing ties a range to the announced digest. The design does not pret
    at a time, which finds a correct copy if any source has one.
 5. **`Stream` readers accept this risk explicitly.** Their bytes are unproven, and a wrong span
    can reach the decoder, as with any single bad source. On a mismatch they fail, and ranges of
-   an excluded origin are withdrawn at once so that later readers do not get them. `WholeFile`
-   readers, Save As, serving and joining see only verified files.
+   an excluded origin are withdrawn at once so that later readers do not get them. Full-download
+   completion, Save As, serving and joining require the completion barrier.
 6. **Without a usable digest nothing is mixed.** Hashless OOB and unsupported algorithms use one
    source, and a switch restarts the file.
 7. **Conflicting claims are different files.** Publications declaring different digests in one
@@ -637,8 +643,8 @@ assembled nothing ties a range to the announced digest. The design does not pret
 | --- | --- |
 | Complete cached file, offline | Reader and cache only. No download, no network. |
 | Two players and a save | Independent cursors and cancellation, one download, fair admission. |
-| HTTP ignores Range | One session-wide sequential attempt, not a full GET per chunk. A malformed partial response is a failure, not a Range refusal. |
-| Sequential transfer reaches a requested span early | Readers wake on availability. `WholeFile` still waits for completion. |
+| HTTP ignores Range | With an explicit full-download goal, one session-wide sequential attempt. Playback alone never silently downloads the whole file. Malformed partial responses remain failures. |
+| Sequential transfer reaches a requested span early | Readers wake on availability. Full-download goals still wait for transport completion. |
 | Empty file | Explicit zero size and successful protocol and hash checks. |
 | Source failure | Retry unsatisfied work only with compatible identity; on integrity failure withdraw the span. |
 | Two sources disagree | Attributed coverage, then refetching from other senders at completion (see above). |
@@ -746,6 +752,17 @@ An unknown size counts as small until it crosses the limit. The transfer then fa
 offer to save to a destination; a partial file does not migrate in the first version.
 
 ### Retention, removal and trash
+
+Inactive incomplete files expire after 10 days by default. A setting changes the delay;
+"Delete now" removes inactive partial payloads and reports their allocated disk bytes,
+not their sparse logical sizes. Open readers and active goals pin their files. The worker
+stores the last access time with range metadata and performs cleanup outside the GUI thread.
+
+Payloads are written as sparse ranges without reserving their logical size. Before writing
+past EOF, the backend must establish sparse support. An unsupported filesystem or a storage
+write failure may fall back to the shared bounded RAM LRU for playback. Volatile bytes do
+not enter durable coverage, cannot complete a full-download goal and disappear on eviction
+or restart. Announced hashes whose complete span fits in RAM are still checked off-thread.
 
 Each partition has one quota, so `shares` replaces the separate 50-MiB and 256-MiB limits
 with one setting (default 256 MiB). Partial ranges and complete sizes count together. Eviction
@@ -946,7 +963,7 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `FileCache`, `FileCacheItem` | `FileCache` as above, on SQLite. `cache.xml` goes away. |
 | `MediaChunkStore`, its `DiskWorker` | Algorithms move to the private worker. Class, directory and sidecars go away. |
 | `MediaChunkCache` | Removed. Memory goes to the RAM tier, demand and single flight to `FileDownload`. |
-| `MediaChunkReader` | Becomes `FileReader`, keeping its bounded buffer and lookahead. |
+| `MediaChunkReader` | Replaced by `FileReader`: bounded consumer buffer, seek, explicit demand and no autonomous lookahead. |
 | `MediaChunkScheduler` | Stays, one instance owned by the manager and used by downloads. Renamed only when it moves, since it is no longer media-specific. |
 | `MediaChunkTransfer` | Its checks become transport base logic. |
 | `AbstractFileShareDownloader` and its three subclasses | Become `FileShareTransport`. This hierarchy is the correct boundary: one interface, one client. |
@@ -962,7 +979,7 @@ default. BoB thumbnails expire by their own TTL; the first version does not chas
 | `FileSharingPublication` | Stays, recording own publications through the catalog. |
 | `FileSharingDeviceOpener` | qite adapter and playback source choice. |
 | `FileSharingProxy` | Thin adapter over `FileReader`. Raw download paths go away. |
-| `FileSharingMediaSave` | Save job on a `WholeFile` reader. |
+| `FileSharingMediaSave` | Explicit full-download goal followed by bounded export from the completed local file. |
 | `BoBFileCache` | One view per account over one shared cache. |
 
 ## Migration
@@ -1048,9 +1065,10 @@ flowchart LR
 5. **Access layer and player.** `FileDownload`, `FileShareTransport`, `FileReader`; proxies, save
    and responder as clients; several-source rules; deduplication at finalize; large-file
    destinations; qite contract; playback source choice; external player tracking. Remove
-   `FileSharingChunkSource`, `MediaChunkCache` and `FileShareDownloader`. Playback on master is the
-   regression baseline: the proxies move onto `FileReader` first, with loopback HTTP still the
-   default, and the device path comes last. Items become observers with a bounded lifetime.
+   `FileSharingChunkSource`, `MediaChunkCache` and `FileShareDownloader`. The delivered access-layer slice is described in [FileReader and download goals](file-reader-download.md).
+   The proxies use `FileReader`; loopback HTTP remains a
+   fallback for unresolved identities and GUI-thread GStreamer reads. Known-size FFmpeg playback
+   uses the device path with an abort-before-teardown contract. Items become observers with a bounded lifetime.
    *Test:* an item goes with the last message showing it and comes back for a later read; audio and
    video with seek and stop during a
    stall, before and after; player plus save on one file; independent cancellation; early delivery

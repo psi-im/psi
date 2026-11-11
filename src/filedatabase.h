@@ -22,9 +22,10 @@ QByteArray  encodeMetadata(const QVariantMap &metadata);
 QVariantMap decodeMetadata(const QByteArray &bytes);
 bool        safePayloadName(const QString &name);
 // Retire ownership and queue managed bytes together. An empty path is external.
-bool retireFile(QSqlDatabase &db, const QByteArray &id, const QString &partition, const QString &payload,
-                bool inTransaction = false);
-void drainTrash(QSqlDatabase &db, const QString &partition, const QString &directory);
+bool    retireFile(QSqlDatabase &db, const QByteArray &id, const QString &partition, const QString &payload,
+                   bool inTransaction = false);
+quint64 allocatedBytes(const QString &path);
+quint64 drainTrash(QSqlDatabase &db, const QString &partition, const QString &directory);
 
 // Directories from before caches moved under the profile. A profile records that it
 // has taken what it needs, and the last one to do so removes the directory.

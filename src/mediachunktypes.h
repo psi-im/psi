@@ -12,7 +12,7 @@
 // Control flow uses the code; message is diagnostic text only.
 class MediaChunkError {
 public:
-    enum Code { None, Failed, Cancelled, RangeUnsupported, IntegrityError };
+    enum Code { None, Failed, Cancelled, RangeUnsupported, IntegrityError, StorageUnavailable };
     MediaChunkError() = default;
     MediaChunkError(QString message) : code_(message.isEmpty() ? None : Failed), message_(std::move(message)) { }
     MediaChunkError(Code code, QString message) : code_(code), message_(std::move(message)) { }
@@ -42,6 +42,7 @@ struct MediaFileState {
     QList<MediaFileChecksum> checksums;
     QVariantMap              metadata;
     QString                  path, error;
+    QString                  completionError; // Transient checkpoint failure; cached reads remain usable.
     bool                     complete = false;
     QByteArray               generation;
 };

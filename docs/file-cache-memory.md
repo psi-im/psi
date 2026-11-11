@@ -53,10 +53,10 @@ as `FileSharingManager` already ensures.
 ## Remaining access-layer work
 
 This completes the RAM ownership part of stage 4. It does not introduce a parallel
-reader or transport stack. `MediaChunkReader` and the current download adapters
-remain the consumers until the common `FileReader`/`FileDownload` contract replaces
-them. Transport-finalization evidence, unknown-size resources, leases and bounded
-`FileSharingItem` lifetimes remain stage 5 work.
+reader or transport stack. The next access-layer change replaces `MediaChunkReader`
+with `FileReader` and adds independent `FileDownload` goals; see
+[FileReader and download goals](file-reader-download.md). Unknown-size resources, broader
+transport consolidation, leases and bounded `FileSharingItem` lifetimes remain stage 5 work.
 
 Regression coverage checks cross-interface pressure, alias reuse, immediate
 shrinking, safe retry after an evicted queued hit, generation isolation, byte/LRU

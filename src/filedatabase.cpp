@@ -12,6 +12,11 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QThread>
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#else
+#include <sys/stat.h>
+#endif
 
 namespace {
 const int SchemaVersion = 4;
@@ -194,26 +199,44 @@ bool FileDatabase::retireFile(QSqlDatabase &db, const QByteArray &id, const QStr
     return ok;
 }
 
-void FileDatabase::drainTrash(QSqlDatabase &db, const QString &partition, const QString &directory)
+quint64 FileDatabase::allocatedBytes(const QString &path)
+{
+    if (QFileInfo(path).isSymLink())
+        return 0;
+#ifdef Q_OS_WIN
+    const auto native = QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
+    DWORD      high   = 0;
+    SetLastError(NO_ERROR);
+    const auto low = GetCompressedFileSizeW(reinterpret_cast<LPCWSTR>(native.utf16()), &high);
+    return low == INVALID_FILE_SIZE && GetLastError() != NO_ERROR ? 0 : (quint64(high) << 32) | low;
+#else
+    struct stat info;
+    return ::stat(QFile::encodeName(path).constData(), &info) == 0 && info.st_blocks > 0 ? quint64(info.st_blocks) * 512
+                                                                                         : 0;
+#endif
+}
+
+quint64 FileDatabase::drainTrash(QSqlDatabase &db, const QString &partition, const QString &directory)
 {
     if (!db.isOpen())
-        return;
+        return 0;
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT path FROM file_trash WHERE partition=:partition"));
     query.bindValue(QStringLiteral(":partition"), partition);
     if (!query.exec())
-        return;
+        return 0;
     QStringList paths;
     while (query.next())
         paths.append(query.value(0).toString());
     query.finish();
     if (paths.isEmpty())
-        return;
+        return 0;
     query.prepare(QStringLiteral("SELECT 1 FROM files WHERE partition=:partition AND path IS NULL LIMIT 1"));
     query.bindValue(QStringLiteral(":partition"), partition);
     if (!query.exec() || query.next())
-        return;
+        return 0;
     query.finish();
+    quint64 freed = 0;
     for (const auto &path : paths) {
         if (!safePayloadName(path))
             continue;
@@ -223,14 +246,19 @@ void FileDatabase::drainTrash(QSqlDatabase &db, const QString &partition, const 
         if (!query.exec() || query.next())
             continue;
         query.finish();
-        const auto absolute = directory + QLatin1Char('/') + path;
-        if (QFileInfo::exists(absolute) && !QFile::remove(absolute))
-            continue;
+        const auto absolute  = directory + QLatin1Char('/') + path;
+        const auto allocated = allocatedBytes(absolute);
+        if (QFileInfo::exists(absolute)) {
+            if (!QFile::remove(absolute))
+                continue;
+            freed += allocated;
+        }
         query.prepare(QStringLiteral("DELETE FROM file_trash WHERE partition=:partition AND path=:path"));
         query.bindValue(QStringLiteral(":partition"), partition);
         query.bindValue(QStringLiteral(":path"), path);
         query.exec();
     }
+    return freed;
 }
 
 void FileDatabase::markLegacyDirectoryImported(const QString &directory, const QString &component)

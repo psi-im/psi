@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "filedownload.h"
+#include "filereader.h"
 #include "filesharingmediasave.h"
+#include "mediachunkcache.h"
 #include "qitemedia.h"
 #include <QBuffer>
 #include <QDir>
@@ -34,6 +37,85 @@ class MediaSaveTest : public QObject {
         return file.readAll();
     }
 private slots:
+    void explicitGoalExportsAfterCompletion()
+    {
+        QTemporaryDir                  directory;
+        MediaChunkCache                cache(directory.path() + "/cache");
+        const QByteArray               bytes(128 * 1024, 'v');
+        FileDownload                   download(&cache, "movie", quint64(bytes.size()), "account",
+                                                [bytes](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
+                                      MediaChunkCompletion done) -> MediaChunkAbort {
+                                  if (!whole())
+                                      done({}, QStringLiteral("Missing full goal"));
+                                  else
+                                      done(bytes.mid(int(offset), int(length)), {});
+                                  return {};
+                              });
+        ITEMediaState                  state;
+        int                            finished     = 0;
+        qreal                          lastProgress = 0;
+        const auto                     path         = directory.filePath("saved");
+        QPointer<FileSharingMediaSave> job          = new FileSharingMediaSave(
+            &download, path, &state, this,
+            [&](const QString &result, const QString &error) {
+                QVERIFY(error.isEmpty());
+                QCOMPARE(result, path);
+                ++finished;
+            },
+            [&](qreal progress) {
+                QVERIFY(progress >= lastProgress);
+                lastProgress = progress;
+            });
+        QTRY_COMPARE(finished, 1);
+        QTRY_VERIFY(job.isNull());
+        QCOMPARE(read(path), bytes);
+        QVERIFY(download.state().complete);
+        QVERIFY(!state.downloading());
+    }
+    void cancellingGoalKeepsPlayerDemandAndExistingDestination()
+    {
+        QTemporaryDir        directory;
+        MediaChunkCache      cache(directory.path() + "/cache");
+        MediaChunkCompletion complete;
+        quint64              requested = 0;
+        int                  starts = 0, aborts = 0;
+        FileDownload         download(&cache, "movie", 128 * 1024, "account",
+                                      [&](quint64, quint64 length, FileDownload::FullDownloadAllowed,
+                                  MediaChunkCompletion done) -> MediaChunkAbort {
+                                  ++starts;
+                                  requested = length;
+                                  complete  = std::move(done);
+                                  return [&] { ++aborts; };
+                              });
+        FileReader           reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_COMPARE(starts, 1);
+        const auto path = directory.filePath("existing");
+        {
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("keep");
+        }
+        ITEMediaState                  state;
+        int                            finished = 0;
+        QPointer<FileSharingMediaSave> job
+            = new FileSharingMediaSave(&download, path, &state, this, [&](const QString &result, const QString &error) {
+                  QVERIFY(result.isEmpty());
+                  QVERIFY(!error.isEmpty());
+                  ++finished;
+              });
+        QTest::qWait(20);
+        job->cancel();
+        QCOMPARE(finished, 1);
+        QCOMPARE(aborts, 0);
+        complete(QByteArray(int(requested), 'x'), {});
+        QTRY_COMPARE(reader.bytesAvailable(), qint64(1));
+        QCOMPARE(reader.read(1), QByteArray("x"));
+        QCOMPARE(read(path), QByteArray("keep"));
+        QVERIFY(!state.downloading());
+        QTRY_VERIFY(job.isNull());
+    }
     void waitsForValidationAndCopiesInBoundedTurns()
     {
         QTemporaryDir dir(QDir::currentPath() + "/media-save-XXXXXX");

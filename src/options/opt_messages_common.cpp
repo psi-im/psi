@@ -1,5 +1,6 @@
 #include "opt_messages_common.h"
 
+#include "filesharingmanager.h"
 #include "mediadownloadpolicy.h"
 
 #include "psioptions.h"
@@ -48,9 +49,25 @@ QWidget *OptionsTabMsgCommon::widget()
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_showTabButtons, &QCheckBox::setEnabled);
     connect(d->ck_tabChats, &QCheckBox::toggled, d->ck_tabShortcuts, &QCheckBox::setEnabled);
 
+    connect(d->pb_clearPartial, &QPushButton::clicked, this, [this, d] {
+        if (!psi_)
+            return;
+        d->pb_clearPartial->setEnabled(false);
+        d->lb_partialResult->setText(tr("Deleting incomplete files…"));
+        const QPointer<OptMsgCommonUI> guard(d);
+        psi_->fileSharingManager()->removeIncomplete([guard](quint64 freed, const QString &error) {
+            if (!guard)
+                return;
+            guard->pb_clearPartial->setEnabled(true);
+            guard->lb_partialResult->setText(error.isEmpty()
+                                                 ? OptionsTabMsgCommon::tr("Freed %1. Files in use were kept.")
+                                                       .arg(QLocale().formattedDataSize(qint64(freed)))
+                                                 : error);
+        });
+    });
     d->ck_tabChats->setToolTip(tr("Makes Psi open chats in a tabbed window."));
-    d->ck_showPreviews->setToolTip(tr("Show under links to some media content preview of the content."
-                                      " It's also possible to play audio and video right in chat."));
+    d->ck_showPreviews->setToolTip(tr("Show previews below links to media content."
+                                      " Audio and video can also be played directly in the chat."));
     for (auto *combo : { d->cb_autoDownloadChats, d->cb_autoDownloadGroupchats }) {
         for (const quint64 size : MediaDownloadPolicy::choices())
             combo->addItem(autoDownloadText(size), qulonglong(size));
@@ -59,19 +76,20 @@ QWidget *OptionsTabMsgCommon::widget()
     connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadChats, &QLabel::setEnabled);
     connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadGroupchats, &QLabel::setEnabled);
     d->cb_autoDownloadChats->setToolTip(
-        tr("Pictures, voice messages and other media from contacts in your roster, and from your own other"
+        tr("Pictures, voice messages and other media from contacts in your roster, and from your other"
            " devices, are downloaded and shown right away up to this size. Larger files and files from"
            " anyone else are downloaded only when you ask."));
     d->cb_autoDownloadGroupchats->setToolTip(
         tr("Media in group chats is downloaded and shown right away up to this size, whoever sent it."
            " Larger files are downloaded only when you ask."));
-    d->ck_showCounter->setToolTip(tr("Makes Psi show message length counter."
-                                     " Check this if you want to know how long is your message."
-                                     " Can be useful when you're using SMS transport."));
+    d->ck_showCounter->setToolTip(tr("Show the number of characters in your message."
+                                     " This can be useful when using an SMS transport."));
     d->ck_contactsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using the deprecated XHTML-IM (XEP-0071)"));
+        tr("If enabled, Psi will display incoming messages using the contact's formatting, provided through "
+           "the deprecated XHTML-IM extension (XEP-0071)."));
     d->ck_sendHtmlsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will send outcoming formatted messages with additional XHTML-IM (XEP-0071). Note: it's deprecated badly supported."));
+        tr("If enabled, Psi will include formatting in outgoing messages using XHTML-IM (XEP-0071). "
+           "This extension is deprecated and poorly supported."));
 
     d->cb_tabMdlClick->addItems(clickActList);
     d->cb_tabDblClick->addItems(clickActList);
@@ -126,6 +144,7 @@ void OptionsTabMsgCommon::applyOptions()
 
     if (d->ck_tabShortcuts->isEnabled())
         o->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
+    o->setOption("options.media.incomplete-max-age-days", d->sb_partialDays->value());
     o->setOption("options.ui.chat.show-previews", d->ck_showPreviews->isChecked());
     // The options tree stores these as int, as declared in default.xml
     o->setOption("options.ui.chat.auto-download-size", d->cb_autoDownloadChats->currentData().toInt());
@@ -144,6 +163,7 @@ void OptionsTabMsgCommon::restoreOptions()
 
     OptMsgCommonUI *d = static_cast<OptMsgCommonUI *>(w_);
     PsiOptions     *o = PsiOptions::instance();
+    d->sb_partialDays->setValue(o->getOption("options.media.incomplete-max-age-days").toInt());
     d->ck_showCounter->setChecked(o->getOption("options.ui.message.show-character-count").toBool());
     d->ck_contactsMessageFormatting->setChecked(o->getOption("options.html.chat.render", true).toBool());
     d->ck_sendHtmlsMessageFormatting->setChecked(o->getOption("options.html.chat.send", true).toBool());

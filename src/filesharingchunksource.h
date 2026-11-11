@@ -21,9 +21,10 @@ public:
     static MediaChunkCache *configure(const FileSharingItem *item);
     static void             addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
     static QString          localFile(const FileSharingItem *item);
+    static void             cancelFullDownloadFallback(FileSharingItem *item);
     static QString          error(const FileSharingItem *item);
     static MediaChunkAbort  fetch(FileSharingItem *item, quint64 offset, quint64 length, MediaChunkCompletion done,
-                                  QObject *owner);
+                                  QObject *owner, std::function<bool()> allowWhole = {});
 
 private:
     explicit FileSharingChunkSource(FileSharingItem *item);
