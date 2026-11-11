@@ -2,7 +2,7 @@
 #include "MediaViewer.h"
 #include "fileutil.h"
 
-#include <QCheckBox>
+#include <QFrame>
 #include <QClipboard>
 #include <QCloseEvent>
 #include <QContextMenuEvent>
@@ -22,6 +22,8 @@
 #include <QMoveEvent>
 #include <QPainter>
 #include <QPointer>
+#include <QSlider>
+#include <QTimer>
 #include <QProgressBar>
 #include <QResizeEvent>
 #include <QScreen>
@@ -50,6 +52,19 @@ QPointer<MediaViewer> &currentMediaViewer()
     static QPointer<MediaViewer> viewer;
     return viewer;
 }
+
+// Prefer the user's icon theme. Qt's built-in icon is a fallback for themes
+// that do not implement one of the FreeDesktop/KDE icon names.
+QIcon themedIcon(std::initializer_list<const char *> names, QStyle *style, QStyle::StandardPixmap fallback)
+{
+    for (const char *name : names) {
+        const QIcon icon = QIcon::fromTheme(QLatin1String(name));
+        if (!icon.isNull())
+            return icon;
+    }
+    return style->standardIcon(fallback);
+}
+
 }
 
 void MediaViewer::setSizePersistence(SizeLoader loader, SizeSaver saver)
@@ -158,10 +173,12 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     if (source) {
         source->setParent(this);
         // An explicit open starts a fresh selection containing that resource.
-        // Subsequent checkbox changes apply to both navigation and counts.
-        for (auto check : controls_->findChildren<QCheckBox *>()) {
-            const QSignalBlocker blocker(check);
-            check->setChecked(true);
+        // Subsequent filter changes apply to both navigation and counts.
+        for (auto *filter : controls_->findChildren<QToolButton *>()) {
+            if (!filter->property("typeBit").isValid() && !filter->property("availabilityBit").isValid())
+                continue;
+            const QSignalBlocker blocker(filter);
+            filter->setChecked(true);
         }
         connect(source, &MediaNavigationSource::changed, this, &MediaViewer::applyView);
         connect(source, &QObject::destroyed, this, [this] { navigationPending_ = false; });
@@ -185,78 +202,106 @@ void MediaViewer::setupControls()
 {
     controls_ = new QWidget(this);
     controls_->setObjectName(QStringLiteral("mediaViewerControls"));
-    auto rows = new QVBoxLayout(controls_);
-    rows->setContentsMargins(8, 4, 8, 4);
-    auto                             filters = new QHBoxLayout;
-    const QList<QPair<QString, int>> types { { tr("Images"), 1 }, { tr("Videos"), 2 }, { tr("Other files"), 4 } };
-    const QList<QPair<QString, int>> states { { tr("Downloaded"), 4 }, { tr("Partial"), 2 }, { tr("Remote"), 1 } };
-    for (int group = 0; group < 2; ++group) {
-        if (group)
-            filters->addSpacing(12);
-        for (const auto &value : group ? states : types) {
-            auto check = new QCheckBox(value.first, controls_);
-            check->setProperty(group ? "availabilityBit" : "typeBit", value.second);
-            check->setObjectName(QStringLiteral("mediaFilter%1_%2").arg(group).arg(value.second));
-            check->setChecked(true);
-            filters->addWidget(check);
-            connect(check, &QCheckBox::toggled, this, [this] { applyFilter(); });
-        }
-    }
-    filters->addStretch();
-    rows->addLayout(filters);
-    auto       buttons = new QHBoxLayout;
-    const auto button
-        = [&](const QString &name, const QString &text, QStyle::StandardPixmap icon, std::function<void()> action) {
-              auto result = new QToolButton(controls_);
-              result->setObjectName(name);
-              result->setToolTip(text);
-              result->setAccessibleName(text);
-              result->setIcon(style()->standardIcon(icon));
-              connect(result, &QToolButton::clicked, this, std::move(action));
-              buttons->addWidget(result);
-              return result;
-          };
-    button("mediaPrevious", tr("Previous"), QStyle::SP_ArrowBack, [this] { showAdjacentImage(-1); });
-    button("mediaNext", tr("Next"), QStyle::SP_ArrowForward, [this] { showAdjacentImage(1); });
-    position_ = new QLabel("0 / 0", controls_);
-    position_->setObjectName("mediaPosition");
-    buttons->addWidget(position_);
+    auto *row = new QHBoxLayout(controls_);
+    row->setContentsMargins(8, 4, 8, 4);
+    row->setSpacing(4);
+
+    const auto separator = [this, row] {
+        auto *line = new QFrame(controls_);
+        line->setFrameShape(QFrame::VLine);
+        line->setFrameShadow(QFrame::Sunken);
+        row->addSpacing(3);
+        row->addWidget(line);
+        row->addSpacing(3);
+    };
+    const auto filterButton = [this, row](int group, int bit, const QString &label,
+                                          std::initializer_list<const char *> icons,
+                                          QStyle::StandardPixmap fallback) {
+        auto *button = new QToolButton(controls_);
+        button->setObjectName(QStringLiteral("mediaFilter%1_%2").arg(group).arg(bit));
+        button->setProperty(group ? "availabilityBit" : "typeBit", bit);
+        button->setCheckable(true);
+        button->setChecked(true);
+        button->setAutoRaise(false); // Checked = sunken, not a separate checkbox.
+        button->setIcon(themedIcon(icons, style(), fallback));
+        button->setIconSize(QSize(18, 18));
+        button->setToolTip(label);
+        button->setAccessibleName(label);
+        row->addWidget(button);
+        connect(button, &QToolButton::toggled, this, [this] { applyFilter(); });
+        return button;
+    };
+    filterButton(0, 1, tr("Images"), { "image-x-generic" }, QStyle::SP_FileIcon);
+    filterButton(0, 2, tr("Videos"), { "video-x-generic" }, QStyle::SP_MediaPlay);
+    filterButton(0, 4, tr("Other files"), { "application-x-generic" }, QStyle::SP_FileIcon);
+    separator();
+    filterButton(1, 4, tr("Downloaded"), { "folder-download", "emblem-downloads" },
+                 QStyle::SP_DialogSaveButton);
+    filterButton(1, 2, tr("Partially downloaded"), { "media-playback-pause", "view-statistics" },
+                 QStyle::SP_MediaPause);
+    filterButton(1, 1, tr("Remote"), { "network-server", "network-workgroup" }, QStyle::SP_DriveNetIcon);
+    separator();
+
+    const auto actionButton = [this, row](const QString &name, const QString &label,
+                                           std::initializer_list<const char *> icons,
+                                           QStyle::StandardPixmap fallback,
+                                           std::function<void()> action) {
+        auto *button = new QToolButton(controls_);
+        button->setObjectName(name);
+        button->setToolTip(label);
+        button->setAccessibleName(label);
+        button->setIcon(themedIcon(icons, style(), fallback));
+        button->setIconSize(QSize(18, 18));
+        connect(button, &QToolButton::clicked, this, std::move(action));
+        row->addWidget(button);
+        return button;
+    };
+    actionButton("mediaPrevious", tr("Previous"), { "go-previous" }, QStyle::SP_ArrowBack,
+                 [this] { showAdjacentImage(-1); });
+    actionButton("mediaNext", tr("Next"), { "go-next" }, QStyle::SP_ArrowForward,
+                 [this] { showAdjacentImage(1); });
+    position_ = new QLabel(QStringLiteral("0 / 0"), controls_);
+    position_->setObjectName(QStringLiteral("mediaPosition"));
+    row->addWidget(position_);
     loading_ = new QProgressBar(controls_);
-    loading_->setObjectName("mediaLoading");
+    loading_->setObjectName(QStringLiteral("mediaLoading"));
     loading_->setRange(0, 0);
     loading_->setFixedSize(48, 12);
     loading_->setTextVisible(false);
     loading_->hide();
-    buttons->addWidget(loading_);
+    row->addWidget(loading_);
     status_ = new QLabel(controls_);
-    status_->setObjectName("mediaStatus");
+    status_->setObjectName(QStringLiteral("mediaStatus"));
     status_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    buttons->addWidget(status_, 1);
-    button("mediaRetry", tr("Retry"), QStyle::SP_BrowserReload, [this] {
+    row->addWidget(status_, 1);
+    actionButton("mediaRetry", tr("Retry loading this item (including download if needed)"),
+                 { "view-refresh" }, QStyle::SP_BrowserReload, [this] {
         if (navigationSource_)
             navigationSource_->retry();
     });
-    button("mediaRotate", tr("Rotate clockwise"), QStyle::SP_BrowserReload, [this] {
+    actionButton("mediaRotate", tr("Rotate clockwise"), { "object-rotate-right" },
+                 QStyle::SP_ArrowForward, [this] {
         if (image_.isNull())
             return;
         image_ = image_.transformed(QTransform().rotate(90));
         resetTemporaryZoom();
         update();
     });
-    button("mediaCopy", tr("Copy image"), QStyle::SP_FileIcon, [this] {
+    actionButton("mediaCopy", tr("Copy image"), { "edit-copy" }, QStyle::SP_FileIcon, [this] {
         if (!image_.isNull())
             QGuiApplication::clipboard()->setImage(image_);
     });
-    button("mediaSave", tr("Save as…"), QStyle::SP_DialogSaveButton, [this] { saveImageAs(); });
-    button("mediaFullscreen", tr("Full screen"), QStyle::SP_TitleBarMaxButton, [this] { toggleFullscreen(); });
-    rows->addLayout(buttons);
+    actionButton("mediaSave", tr("Save as…"), { "document-save-as", "document-save" },
+                 QStyle::SP_DialogSaveButton, [this] { saveImageAs(); });
+    actionButton("mediaFullscreen", tr("Full screen"), { "view-fullscreen" },
+                 QStyle::SP_TitleBarMaxButton, [this] { toggleFullscreen(); });
     controls_->hide();
-    auto fullscreen = new QShortcut(QKeySequence(Qt::Key_F11), this);
+    auto *fullscreen = new QShortcut(QKeySequence(Qt::Key_F11), this);
     connect(fullscreen, &QShortcut::activated, this, [this] { toggleFullscreen(); });
-    auto escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
+    auto *escape = new QShortcut(QKeySequence(Qt::Key_Escape), this);
     connect(escape, &QShortcut::activated, this, [this] {
         if (isFullScreen())
-            showNormal();
+            toggleFullscreen();
         else
             close();
     });
@@ -276,11 +321,11 @@ void MediaViewer::applyFilter()
     MediaFilter filter;
     filter.types        = 0;
     filter.availability = 0;
-    for (const auto check : controls_->findChildren<QCheckBox *>()) {
-        if (!check->isChecked())
+    for (const auto *button : controls_->findChildren<QToolButton *>()) {
+        if (!button->isCheckable() || !button->isChecked())
             continue;
-        filter.types |= check->property("typeBit").toInt();
-        filter.availability |= check->property("availabilityBit").toInt();
+        filter.types |= button->property("typeBit").toInt();
+        filter.availability |= button->property("availabilityBit").toInt();
     }
     navigationSource_->setFilter(filter);
 }
