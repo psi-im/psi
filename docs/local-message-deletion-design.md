@@ -460,7 +460,8 @@ The first access-layer change replaces that device with `FileReader`; see
 
 The first implementation has a native delayed-device playback/seek/abort regression.
 Local measurements cover Qt 6.10 on Linux; the Qt 6.4 baseline and other operating systems
-require their CI/backend checks. The thread-based contract avoids selecting behavior by Qt version.
+require their CI/backend checks. The thread-based read contract remains independent of Qt version; the application chooses
+a loopback adapter for backends that cannot accept asynchronous seekable reads.
 
 ### Choosing the playback source
 
@@ -469,7 +470,8 @@ flowchart TD
     start["Play attachment"] --> complete{"Complete file?"}
     complete -- yes --> path["FileReader over the local payload"]
     complete -- no --> who{"Who plays?"}
-    who -- "Psi player, known immutable size" --> reader["FileReader as file object"]
+    who -- "Psi player, FFmpeg and known immutable size" --> reader["FileReader as file object"]
+    who -- "Qt 5 or GStreamer" --> server
     who -- "Unknown identity or size" --> server{"Loopback server allowed?"}
     who -- "External player" --> server
     server -- yes --> http["Loopback HTTP URL served by a FileReader"]
@@ -477,8 +479,10 @@ flowchart TD
 ```
 
 Both `reader` and `http` express demand through the same `FileDownload` and scheduler.
-Known-size immutable resources use a direct `FileReader` in the Psi player. The HTTP proxy
-is another consumer of that reader. Address-only and unknown-size resources retain their
+Known-size immutable resources use a direct `FileReader` with FFmpeg. Qt 5/GStreamer
+retain the loopback adapter over that reader, because seekable GUI-thread gaps are treated
+as EOF by their appsrc implementation. Without the loopback server those backends offer
+to download first. Address-only and unknown-size resources retain their
 existing Psi network path until their identity and size can support this contract.
 
 The qite contract adds `ITEMediaOpener::abort(QIODevice *)`. Its player wrapper calls it
@@ -1063,8 +1067,8 @@ flowchart LR
    destinations; qite contract; playback source choice; external player tracking. Remove
    `FileSharingChunkSource`, `MediaChunkCache` and `FileShareDownloader`. The delivered access-layer slice is described in [FileReader and download goals](file-reader-download.md).
    The proxies use `FileReader`; loopback HTTP remains a
-   fallback for unresolved resource identities. Known-size playback now uses the device path
-   with an abort-before-teardown contract. Items become observers with a bounded lifetime.
+   fallback for unresolved identities and GUI-thread GStreamer reads. Known-size FFmpeg playback
+   uses the device path with an abort-before-teardown contract. Items become observers with a bounded lifetime.
    *Test:* an item goes with the last message showing it and comes back for a later read; audio and
    video with seek and stop during a
    stall, before and after; player plus save on one file; independent cancellation; early delivery

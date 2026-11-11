@@ -56,8 +56,8 @@ add_test(NAME filesharing_file_reader COMMAND filesharing_file_reader_test)
 set_tests_properties(filesharing_file_reader PROPERTIES TIMEOUT 45)
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Widgets)
 if(QT_DEFAULT_MAJOR_VERSION EQUAL 6)
-    find_package(Qt6 REQUIRED COMPONENTS Multimedia)
-    add_executable(filesharing_media_device_test mediadevice.cpp rangedatabase.cpp
+    find_package(Qt6 REQUIRED COMPONENTS Multimedia Network)
+    add_executable(filesharing_media_device_test mediadevice.cpp rangedatabase.cpp ../../src/httputil.cpp
         ../../src/filereader.cpp ../../src/filedownload.cpp ../../src/filedatabase.cpp
         ../../src/mediachunkcallback.cpp ../../src/mediachunkcache.cpp ../../src/mediachunkstore.cpp
         ../../src/mediachunkscheduler.cpp)
@@ -65,7 +65,7 @@ if(QT_DEFAULT_MAJOR_VERSION EQUAL 6)
     target_include_directories(filesharing_media_device_test PRIVATE ../../src)
     target_compile_definitions(filesharing_media_device_test PRIVATE
         PSI_MEDIA_DEVICE_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/../../3rdparty/qite/tests/data/test.webm")
-    target_link_libraries(filesharing_media_device_test PRIVATE Qt6::Test Qt6::Sql Qt6::Widgets Qt6::Multimedia)
+    target_link_libraries(filesharing_media_device_test PRIVATE Qt6::Test Qt6::Sql Qt6::Widgets Qt6::Multimedia Qt6::Network)
     add_test(NAME filesharing_media_device COMMAND filesharing_media_device_test)
     set_tests_properties(filesharing_media_device PROPERTIES TIMEOUT 30
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

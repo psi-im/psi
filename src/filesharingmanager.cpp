@@ -37,6 +37,7 @@
 #include "httputil.h"
 #include "mediachunkcache.h"
 #include "mediadownloadpolicy.h"
+#include "mediaplaybackpolicy.h"
 #include "messagefileshares.h"
 #include "psiaccount.h"
 #include "psicon.h"
@@ -198,7 +199,12 @@ FileReader *FileSharingManager::reader(FileSharingItem *item, QObject *parent, q
 {
     if (!item)
         return nullptr;
-    const auto local = item->isCached() ? item->fileName() : FileSharingChunkSource::localFile(item);
+    if (item->isCached()) {
+        const auto path = item->localFilePath();
+        return path.isEmpty() ? nullptr : new FileReader(path, offset, length, parent);
+    }
+    FileSharingChunkSource::configure(item);
+    const auto local = FileSharingChunkSource::localFile(item);
     if (!local.isEmpty()) {
         auto reader = new FileReader(local, offset, length, parent);
         if (auto source = download(item)) {
@@ -624,14 +630,21 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     auto item    = manager->item(sourceId, acc);
     if (!item)
         return nullptr;
-    if (auto reader = manager->reader(item, this)) {
-        if (reader->open())
-            return reader;
-        reader->deleteLater();
-        return nullptr;
+    const bool cached = item->isCached();
+    if (!cached)
+        FileSharingChunkSource::configure(item);
+    const bool complete = cached || !FileSharingChunkSource::localFile(item).isEmpty();
+    if (complete || MediaPlaybackPolicy::deviceStreaming()) {
+        if (auto reader = manager->reader(item, this)) {
+            if (reader->open())
+                return reader;
+            reader->deleteLater();
+            return nullptr;
+        }
     }
-    // Address-only shares lack an immutable size/content identity. Keep them
-    // on Psi's network path until their response metadata is known.
+    // GStreamer cannot suspend a seekable GUI-thread read. The loopback proxy
+    // remains a thin adapter over the same FileReader and download controller.
+    // Address-only shares also stay on Psi's network path until identity/size is known.
 #ifdef HAVE_WEBSERVER
     auto local = acc->psi()->webServer()->serverUrl();
     auto path  = local.path();
@@ -642,6 +655,11 @@ QIODevice *FileSharingDeviceOpener::open(QUrl &url)
     url = FileSharingUrl::withMode(local, FileSharingUrl::Mode::Stream);
     return nullptr;
 #else
+    if (!item->isUrlOnly() && item->fileSize() && *item->fileSize()) {
+        if (auto state = mediaState(url))
+            state->setSourceError(tr("Download the complete file before playing it."));
+        return nullptr;
+    }
     auto downloader = item->download();
     if (downloader) {
         downloader->setParent(this);

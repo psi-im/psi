@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "mediadownloadpolicy.h"
+#include "mediaplaybackpolicy.h"
 
 #include <QtTest>
 
@@ -15,6 +16,16 @@ class MediaDownloadPolicyTest final : public QObject {
     }
 
 private slots:
+    void playbackBackendsKeepTheSupportedBaselinesUsable()
+    {
+        QVERIFY(!MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(5, 15, 0), {}));
+        QVERIFY(!MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(6, 4, 0), {}));
+        QVERIFY(MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(6, 4, 0), "ffmpeg"));
+        QVERIFY(MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(6, 10, 0), {}));
+        QVERIFY(!MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(6, 10, 0), "gstreamer"));
+        QVERIFY(!MediaPlaybackPolicy::deviceStreaming(QT_VERSION_CHECK(6, 10, 0), "darwin"));
+    }
+
     void chatsDownloadOnlyFromTrustedSenders()
     {
         QCOMPARE(MediaDownloadPolicy::limit(settings(), false, true), quint64(5 * 1024 * 1024));

@@ -18,9 +18,12 @@ a foreign thread waits on a condition variable. The device has one cursor caller
 at a time: the owner must not operate that cursor concurrently with the decoder.
 `abort()` is safe from either thread and wakes pending reads. Consumers must stop
 before closing or destroying the device. qite interrupts the device before
-tearing down its decoder, then closes it afterward. Known-size playback uses the
-device directly on both supported Qt API families; HTTP playback uses the same
-reader as an adapter.
+tearing down its decoder, then closes it afterward. Known-size playback uses the device directly with FFmpeg (Qt's desktop default
+since 6.5, or an explicit `QT_MEDIA_BACKEND=ffmpeg`). Qt 5 and GStreamer retain the
+loopback HTTP adapter over the same reader: their seekable appsrc path reads on
+the GUI thread and interprets a temporary zero read as EOF. Without a loopback
+server those backends require a complete download before playback. Completed
+local files can use a device with every backend, because their reads have no gaps.
 
 `FileDownload::downloadAll` adds a separately cancellable full-download goal. It
 uses stored range metadata, without reading cached payloads or depending on
@@ -85,6 +88,16 @@ stale completions, blocking decoder reads and abort, download order and paused
 playback, independent waiter cancellation, foreground admission, early sequential
 availability without premature download completion, RAM-only reads with hash
 checks, and expiry with pins and allocated-byte accounting. Native Qt 6 tests
-decode and seek a WebM through delayed device data and tear down a decoder during
-a network stall. Existing qite playback and detached-window lifetime tests cover
+decode and seek a WebM through delayed device data or the loopback reader adapter,
+according to backend policy, and tear down a decoder during a network stall.
+Ubuntu 24.04/Qt 6.4 exercises the GStreamer adapter; newer FFmpeg exercises direct devices. Existing qite playback and detached-window lifetime tests cover
 the opener's abort/close order.
+
+The compatibility choice follows the public default-backend policy in
+[Qt 6.5 Multimedia](https://doc.qt.io/qt-6.5/qtmultimedia-index.html#ffmpeg-as-the-default-backend).
+The limitation is observable in Qt 6.4's
+[`QGstAppSrc::pushData` and `eosOrIdle`](https://github.com/qt/qtmultimedia/blob/v6.4.2/src/plugins/multimedia/gstreamer/common/qgstappsrc.cpp):
+a random-access zero read sends EOS. qite's stream cleanup is a child resource
+whose destructor runs after the player base destructor, because Qt 5
+[`QMediaPlayer::~QMediaPlayer`](https://github.com/qt/qtmultimedia/blob/5.15/src/multimedia/playback/qmediaplayer.cpp)
+disconnects the player's signals before QObject emits `destroyed`.
