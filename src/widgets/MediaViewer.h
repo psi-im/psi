@@ -61,12 +61,15 @@ public:
     using SizeSaver  = std::function<void(const QSize &)>;
     using PathLoader = std::function<QString()>;
     using PathSaver  = std::function<void(const QString &)>;
+    using FilterLoader = std::function<MediaFilter()>;
+    using FilterSaver  = std::function<void(MediaFilter)>;
 
     explicit MediaViewer(const QImage &image, QWidget *parent = nullptr);
     MediaViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
     static void setSavePathPersistence(PathLoader loader, PathSaver saver);
+    static void setFilterPersistence(FilterLoader loader, FilterSaver saver);
     static void showImage(const QImage &image, const QString &fileName, MediaNavigationSource *source = nullptr,
                           bool fullscreen = false);
     // The viewer takes ownership. Replacing the source cancels pending navigation.
@@ -93,7 +96,7 @@ protected:
 private:
     void    applyView(const MediaNavigationSource::View &);
     void    setupControls();
-    void    applyFilter();
+    void    applyFilter(bool persist = false);
     void    toggleFullscreen();
     void    updateFullscreenUi();
     void    noteFullscreenActivity(bool force = false);
