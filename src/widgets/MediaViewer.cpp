@@ -11,9 +11,11 @@
 #include <QCursor>
 #include <QDir>
 #include <QEvent>
+#include <QEasingCurve>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QGraphicsOpacityEffect>
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QImageWriter>
@@ -26,6 +28,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPointer>
+#include <QPropertyAnimation>
 #include <QSlider>
 #include <QTimer>
 #include <QProgressBar>
@@ -328,7 +331,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     if (videoIdleTimer_)
         videoIdleTimer_->stop();
     unsetCursor();
-    controls_->setVisible(source != nullptr);
+    setVideoControlsShown(controls_, source != nullptr, false);
     if (source) {
         source->setParent(this);
         // An explicit open starts a fresh selection containing that resource.
@@ -353,7 +356,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
 QRect MediaViewer::contentRect() const
 {
     auto area = rect();
-    if (controls_ && !controls_->isHidden())
+    if (controls_ && !controls_->isHidden() && !(isFullScreen() && video_))
         area.setTop(controls_->height());
     return area;
 }
@@ -494,6 +497,43 @@ void MediaViewer::trackVideoWidget(QWidget *widget)
         trackVideoWidget(child);
 }
 
+void MediaViewer::setVideoControlsShown(QWidget *widget, bool visible, bool animated)
+{
+    if (!widget)
+        return;
+    // Animate only the overlay bars; never apply opacity to the video
+    // surface itself (it may be backed by a native/GPU window).
+    auto *effect = qobject_cast<QGraphicsOpacityEffect *>(widget->graphicsEffect());
+    if (!effect) {
+        effect = new QGraphicsOpacityEffect(widget);
+        effect->setOpacity(widget->isHidden() ? 0.0 : 1.0);
+        widget->setGraphicsEffect(effect);
+    }
+    auto *transition = widget->findChild<QPropertyAnimation *>(
+        QStringLiteral("mediaControlFade"), Qt::FindDirectChildrenOnly);
+    if (!transition) {
+        transition = new QPropertyAnimation(effect, "opacity", widget);
+        transition->setObjectName(QStringLiteral("mediaControlFade"));
+        transition->setDuration(200);
+        transition->setEasingCurve(QEasingCurve::InOutQuad);
+        connect(transition, &QPropertyAnimation::finished, widget, [widget, effect] {
+            if (effect->opacity() < 0.01)
+                widget->hide();
+        });
+    }
+    transition->stop();
+    if (!animated) {
+        effect->setOpacity(visible ? 1.0 : 0.0);
+        widget->setVisible(visible);
+        return;
+    }
+    if (visible)
+        widget->show();
+    transition->setStartValue(effect->opacity());
+    transition->setEndValue(visible ? 1.0 : 0.0);
+    transition->start();
+}
+
 void MediaViewer::noteFullscreenActivity(bool force)
 {
     if (!isFullScreen() || !video_ || !videoIdleTimer_)
@@ -504,9 +544,8 @@ void MediaViewer::noteFullscreenActivity(bool force)
     lastVideoCursorPos_ = position;
     if (videoControlsHidden_) {
         videoControlsHidden_ = false;
-        controls_->show();
-        if (videoControls_)
-            videoControls_->show();
+        setVideoControlsShown(controls_, true, true);
+        setVideoControlsShown(videoControls_, true, true);
         video_->setGeometry(contentRect());
         controls_->raise();
     }
@@ -526,10 +565,10 @@ void MediaViewer::hideIdleVideoControls()
         return;
     }
     videoControlsHidden_ = true;
-    controls_->hide();
-    if (videoControls_)
-        videoControls_->hide();
-    video_->setGeometry(contentRect());
+    setVideoControlsShown(controls_, false, true);
+    setVideoControlsShown(videoControls_, false, true);
+    // In full-screen video the top bar is an overlay, so its fade does not
+    // resize or jump the picture underneath it.
     setCursor(Qt::BlankCursor);
 }
 
@@ -561,9 +600,8 @@ void MediaViewer::updateFullscreenUi()
     videoIdleTimer_->stop();
     videoControlsHidden_ = false;
     unsetCursor();
-    controls_->setVisible(navigationSource_ != nullptr);
-    if (videoControls_)
-        videoControls_->show();
+    setVideoControlsShown(controls_, navigationSource_ != nullptr, false);
+    setVideoControlsShown(videoControls_, true, false);
     if (video_)
         video_->setGeometry(contentRect());
 }
@@ -622,7 +660,7 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
                 videoIdleTimer_->stop();
             videoControlsHidden_ = false;
             unsetCursor();
-            controls_->show();
+            setVideoControlsShown(controls_, true, false);
         }
         image_           = {};
         currentKey_      = view.key;
