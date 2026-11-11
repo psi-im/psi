@@ -2,6 +2,7 @@
 #include "widgets/MediaViewer.h"
 
 #include <QApplication>
+#include <QGraphicsOpacityEffect>
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QTimer>
@@ -82,12 +83,17 @@ private slots:
         QCoreApplication::processEvents();
         auto *videos  = viewer.findChild<QToolButton *>("mediaFilter0_2");
         auto *partial = viewer.findChild<QToolButton *>("mediaFilter1_2");
+        auto *remote = viewer.findChild<QToolButton *>("mediaFilter1_1");
+        auto *other = viewer.findChild<QToolButton *>("mediaFilter0_4");
         auto *previous = viewer.findChild<QToolButton *>("mediaPrevious");
         auto *rotate = viewer.findChild<QToolButton *>("mediaRotate");
         auto *retry = viewer.findChild<QToolButton *>("mediaRetry");
-        QVERIFY(videos && partial && previous && rotate && retry);
+        QVERIFY(videos && partial && remote && other && previous && rotate && retry);
         QVERIFY(videos->isCheckable() && partial->isCheckable());
         QVERIFY(videos->isChecked() && partial->isChecked());
+        QVERIFY(!remote->isChecked() && !other->isChecked());
+        QCOMPARE(source->filter.types, int(MediaFilter::Images | MediaFilter::Videos));
+        QCOMPARE(source->filter.availability, int(MediaFilter::Complete | MediaFilter::Partial));
         QVERIFY(!videos->icon().isNull());
         QVERIFY(!rotate->icon().isNull());
         QCOMPARE(videos->parentWidget(), previous->parentWidget());
@@ -96,8 +102,12 @@ private slots:
         QVERIFY(retry->toolTip().contains("download"));
         videos->setChecked(false);
         partial->setChecked(false);
+        QCOMPARE(source->filter.types, int(MediaFilter::Images));
+        QCOMPARE(source->filter.availability, int(MediaFilter::Complete));
+        remote->setChecked(true);
+        other->setChecked(true);
         QCOMPARE(source->filter.types, int(MediaFilter::Images | MediaFilter::Files));
-        QCOMPARE(source->filter.availability, int(MediaFilter::Remote | MediaFilter::Complete));
+        QCOMPARE(source->filter.availability, int(MediaFilter::Complete | MediaFilter::Remote));
         MediaNavigationSource::View view;
         view.key      = "resource";
         view.name     = "photo.png";
@@ -175,8 +185,13 @@ private slots:
         QVERIFY(idle->isActive());
         // Exercise the timeout deterministically; no dependence on real sleep.
         QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
-        QVERIFY(!top->isVisible());
-        QVERIFY(!bottom->isVisible());
+        auto *topEffect = qobject_cast<QGraphicsOpacityEffect *>(top->graphicsEffect());
+        auto *bottomEffect = qobject_cast<QGraphicsOpacityEffect *>(bottom->graphicsEffect());
+        QVERIFY(topEffect && bottomEffect);
+        QTRY_VERIFY(!top->isVisible());
+        QTRY_VERIFY(!bottom->isVisible());
+        QCOMPARE(topEffect->opacity(), qreal(0));
+        QCOMPARE(bottomEffect->opacity(), qreal(0));
         const QPoint local(25, 25);
         QMouseEvent movement(QEvent::MouseMove, QPointF(local), QPointF(player->mapToGlobal(local)),
                              Qt::NoButton, Qt::NoButton, Qt::NoModifier);
@@ -185,7 +200,7 @@ private slots:
         QVERIFY(bottom->isVisible());
         QVERIFY(idle->isActive());
         QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
-        QVERIFY(!top->isVisible());
+        QTRY_VERIFY(!top->isVisible());
         QTest::keyClick(player, Qt::Key_Space);
         QVERIFY(top->isVisible());
         QVERIFY(bottom->isVisible());
@@ -194,6 +209,8 @@ private slots:
         QTRY_VERIFY(!viewer.isFullScreen());
         QVERIFY(top->isVisible());
         QVERIFY(bottom->isVisible());
+        QCOMPARE(topEffect->opacity(), qreal(1));
+        QCOMPARE(bottomEffect->opacity(), qreal(1));
         QVERIFY(!idle->isActive());
     }
 
