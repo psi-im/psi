@@ -813,7 +813,7 @@ void MediaViewer::contextMenuEvent(QContextMenuEvent *event)
     saveAs->setObjectName(QStringLiteral("imageViewerSaveAs"));
     connect(saveAs, &QAction::triggered, this, &MediaViewer::saveImageAs);
 
-    menu.exec(globalMousePoint(event));
+    menu.exec(event->globalPos());
     event->accept();
 }
 
