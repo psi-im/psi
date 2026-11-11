@@ -24,6 +24,7 @@
 #include "filecache.h"
 #include "filedatabase.h"
 #include "filedownload.h"
+#include "fileidentity.h"
 #include "filereader.h"
 #include "filesharingcatalog.h"
 #include "filesharingchunksource.h"
@@ -87,6 +88,7 @@ public:
     FileCache                                           *cache;
     MediaChunkCache                                     *chunkCache = nullptr;
     QHash<FileSharingItem *, FileDownload *>             downloads;
+    QHash<QString, FileSharingItem *>                    rangeItems;
     QHash<PsiAccount *, FileSharingJingleSession *>      mediaSessions;
     QHash<XMPP::Hash, FileSharingItem *>                 items;
     QHash<QString, QHash<XMPP::Hash, FileSharingItem *>> accountItems;
@@ -95,6 +97,8 @@ public:
     void rememberItem(FileSharingItem *item)
     {
         Q_ASSERT(item->sums().size());
+        if (!item->isUrlOnly() && item->account() && item->fileSize())
+            rangeItems.insert(FileIdentity::rangeKey(FileSharingChunkSource::identity(item), *item->fileSize()), item);
         for (auto const &v : item->sums()) {
             items.insert(v, item); // TODO ensure we don't overwrite
             if (item->account())
@@ -178,6 +182,7 @@ FileDownload *FileSharingManager::download(FileSharingItem *item)
     if (auto existing = d->downloads.value(item))
         return existing;
     auto                            cache = FileSharingChunkSource::configure(item);
+    d->rememberItem(item);
     const QPointer<FileSharingItem> resource(item);
     const QPointer<MediaChunkCache> storage(cache);
     auto                            download = new FileDownload(
@@ -305,6 +310,14 @@ FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
         d->rememberItem(restored);
         return restored;
     }
+    if (auto existing = rangeItem(media, account)) {
+        if (stored->peers.isEmpty())
+            existing->mergeSources(media, Jid());
+        for (const auto &peer : stored->peers)
+            existing->mergeSources(media, Jid(peer));
+        d->rememberItem(existing);
+        return existing;
+    }
     const auto path = stored->readableLocalPath();
     if (!path.isEmpty() && !cacheItem(media.file.computedHashes())) {
         QVariantMap metadata { { "type", media.file.mediaType() },
@@ -402,6 +415,18 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
     return ret;
 }
 
+FileSharingItem *FileSharingManager::rangeItem(const MediaSharing &media, PsiAccount *account)
+{
+    if (!account || !media.file.size() || media.file.computedHashes().isEmpty())
+        return nullptr;
+    const auto source   = FileSharingChunkSource::sourceFor(account, media.file);
+    const auto resource = d->rangeItems.value(FileIdentity::rangeKey(source, *media.file.size()));
+    return resource && resource->account() == account && resource->fileSize() == media.file.size()
+            && FileSharingChunkSource::identity(resource) == source
+        ? resource
+        : nullptr;
+}
+
 FileSharingItem *FileSharingManager::fromShare(const MessageFileShares::FileShare &file, const Jid &from,
                                                PsiAccount *acc)
 {
@@ -410,7 +435,9 @@ FileSharingItem *FileSharingManager::fromShare(const MessageFileShares::FileShar
     const auto       ms       = file.reference.mediaSharing();
     FileSharingItem *resource = nullptr;
     if (file.hasContentHashes()) {
-        resource = item(ms.file.computedHashes().first(), acc);
+        resource = rangeItem(ms, acc);
+        if (!resource)
+            resource = item(ms.file.computedHashes().first(), acc);
         if (!resource)
             resource = new FileSharingItem(ms, from, acc, this);
         else

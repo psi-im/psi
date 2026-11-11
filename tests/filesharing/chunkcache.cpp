@@ -1,3 +1,4 @@
+#include "fileidentity.h"
 #include "filesourceselector.h"
 #include "mediachunkcache.h"
 
@@ -27,6 +28,122 @@ struct Pending {
 class ChunkCacheTest : public QObject {
     Q_OBJECT
 private slots:
+    void persistedChecksumAliasesUseOnePayload_data()
+    {
+        QTest::addColumn<bool>("complete");
+        QTest::addColumn<bool>("legacyScope");
+        QTest::newRow("complete") << true << false;
+        QTest::newRow("partial") << false << false;
+        QTest::newRow("legacy-complete") << true << true;
+        QTest::newRow("legacy-partial") << false << true;
+    }
+    void persistedChecksumAliasesUseOnePayload()
+    {
+        QFETCH(bool, complete);
+        QFETCH(bool, legacyScope);
+        QTemporaryDir           directory;
+        const auto              bytes = pattern(0, 64);
+        const MediaFileChecksum primary { 0, 64, "sha-256",
+                                          QCryptographicHash::hash(bytes, QCryptographicHash::Sha256) };
+        const MediaFileChecksum alias { 0, 64, "sha-512", QCryptographicHash::hash(bytes, QCryptographicHash::Sha512) };
+        const auto              primarySource
+            = FileIdentity::source("account", "sha-256+" + QString::fromLatin1(primary.digest.toHex()));
+        const auto aliasSource
+            = FileIdentity::source("account", "sha-512+" + QString::fromLatin1(alias.digest.toHex()));
+        const auto metadata = legacyScope ? QVariantMap() : QVariantMap { { "account", "account" } };
+        {
+            MediaChunkCache original(directory.path(), nullptr, 16);
+            original.configure(primarySource, 64, { primary, alias }, metadata);
+            int finished = 0;
+            original.storeBytes(primarySource, 64, 0, complete ? bytes : bytes.left(16),
+                                [&](QByteArray, MediaChunkError error) {
+                                    QVERIFY(error.isEmpty());
+                                    ++finished;
+                                });
+            QTRY_COMPARE(finished, 1);
+            original.checkpoint([&](QByteArray, MediaChunkError error) {
+                QVERIFY(error.isEmpty());
+                ++finished;
+            });
+            QTRY_COMPARE(finished, 2);
+        }
+        MediaChunkCache restored(directory.path(), nullptr, 16);
+        const auto      source = restored.resolveSource(aliasSource, "account", 64, { alias });
+        QCOMPARE(source, primarySource);
+        const auto other
+            = FileIdentity::source("other-account", "sha-512+" + QString::fromLatin1(alias.digest.toHex()));
+        QCOMPARE(restored.resolveSource(other, "other-account", 64, { alias }), other);
+        QCOMPARE(restored.resolveSource(aliasSource, "account", 63, { alias }), aliasSource);
+        auto unknown      = primary;
+        unknown.algorithm = "other";
+        QCOMPARE(restored.resolveSource(aliasSource, "account", 64, { alias, unknown }), aliasSource);
+        // Complete images can be opened immediately, before the worker's
+        // restored snapshots arrive on the GUI thread.
+        const auto local = restored.localFile(source, 64);
+        QCOMPARE(!local.isEmpty(), complete);
+        if (complete) {
+            QFile file(local);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            QCOMPARE(file.readAll(), bytes);
+        }
+        restored.configure(source, 64, { alias }, { { "account", "account" } });
+        QTRY_VERIFY(!restored.fileState(source, 64).path.isEmpty());
+        int             fetched = 0, finished = 0;
+        QByteArray      read;
+        MediaChunkError failure;
+        QVERIFY(restored.read(
+            source, 64, 8, 8, "account",
+            [&](quint64, quint64, Completion done) -> MediaChunkCache::Abort {
+                ++fetched;
+                done({}, QStringLiteral("Network must not be used"));
+                return {};
+            },
+            [&](QByteArray data, MediaChunkError error) {
+                read    = data;
+                failure = error;
+                ++finished;
+            }));
+        QTRY_COMPARE(finished, 1);
+        QVERIFY2(failure.isEmpty(), qPrintable(failure.message()));
+        QCOMPARE(read, bytes.mid(8, 8));
+        QCOMPARE(fetched, 0);
+        QCOMPARE(QDir(directory.path()).entryList({ "*.data" }, QDir::Files).size(), 1);
+        if (complete) {
+            QFile file(local);
+            QVERIFY(file.open(QIODevice::Append));
+            QCOMPARE(file.write("changed"), qint64(7));
+            file.close();
+            QVERIFY(restored.localFile(source, 64).isEmpty());
+        }
+    }
+
+    void completePathRejectsNewUnverifiedClaimImmediately()
+    {
+        QTemporaryDir           directory;
+        const auto              bytes = pattern(0, 64);
+        const MediaFileChecksum primary { 0, 64, "sha-256",
+                                          QCryptographicHash::hash(bytes, QCryptographicHash::Sha256) };
+        const auto source = FileIdentity::source("account", "sha-256+" + QString::fromLatin1(primary.digest.toHex()));
+        {
+            MediaChunkCache original(directory.path(), nullptr, 16);
+            original.configure(source, 64, { primary }, { { "account", "account" } });
+            int finished = 0;
+            original.storeBytes(source, 64, 0, bytes, [&](QByteArray, MediaChunkError error) {
+                QVERIFY(error.isEmpty());
+                ++finished;
+            });
+            QTRY_COMPARE(finished, 1);
+        }
+        MediaChunkCache restored(directory.path(), nullptr, 16);
+        QVERIFY(!restored.localFile(source, 64).isEmpty());
+        const MediaFileChecksum unverified { 0, 64, "sha-512",
+                                             QCryptographicHash::hash("different", QCryptographicHash::Sha512) };
+        restored.configure(source, 64, { primary, unverified }, { { "account", "account" } });
+        // This must fail synchronously, before either the restored snapshot or
+        // the worker's verification result has reached the GUI thread.
+        QVERIFY(restored.localFile(source, 64).isEmpty());
+    }
+
     void memoryHitsDoNotWaitForNetworkCapacity()
     {
         QTemporaryDir     directory;

@@ -90,6 +90,16 @@ shares. The result is borrowed and managed by the existing file-sharing layer.
 Use the existing `reader(item, owner)` for a `FileReader`, `download(item)` for a
 shared full-download goal, or the chat's `FileSharingDeviceOpener` for player and
 Save As integration. No gallery-specific transport or download policy is added.
+Selecting an entry resolves persisted whole-file checksum aliases in the same
+account to the existing range resource. Chat and gallery share that runtime item
+and download controller even when their announcements use different hashes.
+Only compatible, already declared hashes can select a stored copy. Conflicting
+sizes or checksums cannot mutate a shared runtime item. Resolving the range
+identity reads metadata without allocating a payload or extending retention;
+range storage is configured when content is accessed. A complete payload can be
+opened before the worker's initial snapshots arrive, using its durable checksum
+proofs and validating its size and modification time. An unrelated damaged range
+copy does not hide a valid complete cache copy.
 Opening a reader alone does not download; reads express demand. Player backend
 compatibility and abort/close ordering follow [the existing contract](file-reader-download.md).
 

@@ -128,6 +128,7 @@ signals:
 public slots:
 
 private:
+    FileSharingItem *rangeItem(const XMPP::MediaSharing &, PsiAccount *);
     FileSharingItem *fromShare(const MessageFileShares::FileShare &, const XMPP::Jid &, PsiAccount *);
     class Private;
     std::unique_ptr<Private> d;

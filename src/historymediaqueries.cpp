@@ -64,8 +64,9 @@ QString storageCte(const QString &scope)
                "availability AS (SELECT x.publication_id,MAX(CASE "
                "WHEN x.complete=1 AND x.error='' THEN 2 "
                "WHEN EXISTS(SELECT 1 FROM media_files.file_ranges fr WHERE fr.file_id=x.id) THEN 1 ELSE 0 END) status,"
-               "MAX(CASE WHEN x.complete=1 AND x.error='' THEN x.size ELSE "
-               "COALESCE((SELECT SUM(fr.length) FROM media_files.file_ranges fr WHERE fr.file_id=x.id),0) END) bytes "
+               "COALESCE(MAX(CASE WHEN x.complete=1 AND x.error='' THEN x.size END), "
+               "MAX(COALESCE((SELECT SUM(fr.length) FROM media_files.file_ranges fr WHERE fr.file_id=x.id),0)),0) "
+               "bytes "
                "FROM candidates x GROUP BY x.publication_id) ");
 }
 void bindChat(QSqlQuery &query, const HistoryArchive::Key &chat)
@@ -218,11 +219,18 @@ HistoryMediaRefs::Statistics HistoryMediaRefs::chatStatistics(QSqlDatabase db, c
 
 bool HistoryMediaRefs::attachFileDatabase(QSqlDatabase db, const QString &path, QSqlError *error)
 {
+    const QFileInfo file(path);
+    const auto      canonical = file.canonicalFilePath();
+    if (!file.isFile() || canonical.isEmpty()) {
+        if (error)
+            *error = QSqlError("File registry unavailable", {}, QSqlError::ConnectionError);
+        return false;
+    }
     QSqlQuery query(db);
     if (query.exec("PRAGMA database_list")) {
         while (query.next())
             if (query.value(1).toString() == QLatin1String("media_files")) {
-                if (QFileInfo(query.value(2).toString()).absoluteFilePath() == QFileInfo(path).absoluteFilePath())
+                if (QFileInfo(query.value(2).toString()).canonicalFilePath() == canonical)
                     return true;
                 if (error)
                     *error = QSqlError("File registry changed during history access", {}, QSqlError::ConnectionError);
@@ -230,13 +238,8 @@ bool HistoryMediaRefs::attachFileDatabase(QSqlDatabase db, const QString &path, 
             }
     }
     query.finish();
-    if (path.isEmpty() || !QFileInfo(path).isFile()) {
-        if (error)
-            *error = QSqlError("File registry unavailable", {}, QSqlError::ConnectionError);
-        return false;
-    }
     // SQLite URI mode prevents accidental writes or creation by this reader.
-    QUrl uri = QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath());
+    QUrl uri = QUrl::fromLocalFile(canonical);
     uri.setQuery("mode=ro");
     query.prepare("ATTACH DATABASE :path AS media_files");
     query.bindValue(":path", uri.toString(QUrl::FullyEncoded));

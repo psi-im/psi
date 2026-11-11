@@ -71,6 +71,15 @@ MediaFileState MediaChunkCache::fileState(const QString &source, quint64 size) c
 {
     return store_->state(fileKey(source, size));
 }
+QString MediaChunkCache::resolveSource(const QString &source, const QString &account, quint64 size,
+                                       const QList<MediaFileChecksum> &checksums) const
+{
+    return store_->resolveSource(source, account, size, checksums);
+}
+QString MediaChunkCache::localFile(const QString &source, quint64 size) const
+{
+    return store_->localFile(fileKey(source, size), size);
+}
 bool MediaChunkCache::isCompleteFile(const QString &path) const { return store_->isCompleteFile(path); }
 void MediaChunkCache::resume(const QString &source, quint64 size)
 {

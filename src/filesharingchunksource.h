@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPointer>
 
+class PsiAccount;
 class FileSharingItem;
 class MediaChunkCache;
 namespace XMPP::Jingle::FileTransfer {
@@ -18,11 +19,11 @@ class FileSharingChunkSource : public QObject {
 public:
     ~FileSharingChunkSource() override;
     static QString          identity(const FileSharingItem *item);
+    static QString          sourceFor(PsiAccount *, const XMPP::Jingle::FileTransfer::File &);
     static MediaChunkCache *configure(const FileSharingItem *item);
     static void             addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
     static QString          localFile(const FileSharingItem *item);
     static void             cancelFullDownloadFallback(FileSharingItem *item);
-    static QString          error(const FileSharingItem *item);
     static MediaChunkAbort  fetch(FileSharingItem *item, quint64 offset, quint64 length, MediaChunkCompletion done,
                                   QObject *owner, std::function<bool()> allowWhole = {});
 

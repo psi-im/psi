@@ -980,6 +980,44 @@ private slots:
         QCOMPARE(linkCount(), 1);
     }
 
+    void fileRegistryAttachmentAcceptsProfileSymlinks()
+    {
+#ifdef Q_OS_WIN
+        QSKIP("Creating directory symlinks requires a Windows privilege");
+#else
+        const auto alias = dir->filePath("profile alias");
+        QVERIFY(QFile::link(profileDirectory, alias));
+        QSqlError  error;
+        const auto filePath = alias + "/files.sqlite";
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, filePath, &error), qPrintable(error.text()));
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, filePath, &error), qPrintable(error.text()));
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error), qPrintable(error.text()));
+#endif
+    }
+
+    void completeCopyDeterminesReportedByteCount()
+    {
+        migrateHistory();
+        const auto   full = mediaOf("data", {});
+        MediaSharing metadata;
+        metadata.file.setName(full.file.name());
+        metadata.file.setMediaType(full.file.mediaType());
+        metadata.file.setHashes(full.file.computedHashes());
+        metadata.sources = QStringList { "https://example.org/data" };
+        QVERIFY(store(messageWith(alice, { referenceOf(metadata) })));
+        QVERIFY(!storedFile(full, true).isEmpty());
+        auto conflicting = full;
+        conflicting.file.setSize(20);
+        QVERIFY(!storedFile(conflicting, false, corporate, 12).isEmpty());
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        const auto page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error, true);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().storage.availability, ChatMedia::Availability::Complete);
+        QCOMPARE(page.first().storage.downloadedBytes, quint64(4));
+    }
+
     void chatMediaCancellationAndQueryErrorsDoNotLookLikeEmptyResults()
     {
         int  completed = 0;

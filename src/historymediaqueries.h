@@ -19,7 +19,8 @@ struct Cursor {
     bool   undated = false;
     bool   valid() const { return eventId > 0; }
 };
-enum class Availability { Remote, Partial, Complete };
+// Values are also emitted by the SQL projection.
+enum class Availability { Remote = 0, Partial = 1, Complete = 2 };
 struct Storage {
     Availability availability    = Availability::Remote;
     quint64      downloadedBytes = 0;
