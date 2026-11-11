@@ -162,10 +162,11 @@ private slots:
         };
         emit source->changed(view);
         auto *top = viewer.findChild<QWidget *>("mediaViewerControls");
-        auto *player = viewer.findChild<QWidget *>("qite-video-controls")->parentWidget();
         auto *bottom = viewer.findChild<QWidget *>("qite-video-controls");
         auto *idle = viewer.findChild<QTimer *>("mediaVideoIdleTimer");
-        QVERIFY(top && bottom && player && idle);
+        QVERIFY(top && bottom && idle);
+        auto *player = bottom->parentWidget();
+        QVERIFY(player);
         QVERIFY(top->isVisible() && bottom->isVisible());
 
         QTest::keyClick(&viewer, Qt::Key_F11);
@@ -176,6 +177,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
         QVERIFY(!top->isVisible());
         QVERIFY(!bottom->isVisible());
+        const QPoint local(25, 25);
+        QMouseEvent movement(QEvent::MouseMove, QPointF(local), QPointF(player->mapToGlobal(local)),
+                             Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(player, &movement);
+        QVERIFY(top->isVisible());
+        QVERIFY(bottom->isVisible());
+        QVERIFY(idle->isActive());
+        QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
+        QVERIFY(!top->isVisible());
         QTest::keyClick(player, Qt::Key_Space);
         QVERIFY(top->isVisible());
         QVERIFY(bottom->isVisible());
