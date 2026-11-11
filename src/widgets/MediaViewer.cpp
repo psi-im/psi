@@ -59,6 +59,8 @@ MediaViewer::SizeLoader imageViewerSizeLoader;
 MediaViewer::SizeSaver  imageViewerSizeSaver;
 MediaViewer::PathLoader imageViewerSavePathLoader;
 MediaViewer::PathSaver  imageViewerSavePathSaver;
+MediaViewer::FilterLoader mediaViewerFilterLoader;
+MediaViewer::FilterSaver  mediaViewerFilterSaver;
 
 QPointer<MediaViewer> &currentMediaViewer()
 {
@@ -236,6 +238,12 @@ void MediaViewer::setSavePathPersistence(PathLoader loader, PathSaver saver)
     imageViewerSavePathSaver  = std::move(saver);
 }
 
+void MediaViewer::setFilterPersistence(FilterLoader loader, FilterSaver saver)
+{
+    mediaViewerFilterLoader = std::move(loader);
+    mediaViewerFilterSaver = std::move(saver);
+}
+
 void MediaViewer::showImage(const QImage &image, const QString &fileName, MediaNavigationSource *source,
                             bool fullscreen)
 {
@@ -335,12 +343,21 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     if (source) {
         source->setParent(this);
         // An explicit open starts a fresh selection containing that resource.
-        // Subsequent filter changes apply to both navigation and counts.
+        // Restore the user's last choice, or use the focused initial view.
+        // Reset controls without writing options or sending intermediate SQL
+        // queries for each bit of the restored filter.
+        const MediaFilter selected = mediaViewerFilterLoader
+            ? mediaViewerFilterLoader()
+            : MediaFilter { MediaFilter::Images | MediaFilter::Videos,
+                            MediaFilter::Complete | MediaFilter::Partial };
         for (auto *filter : controls_->findChildren<QToolButton *>()) {
-            if (!filter->property("typeBit").isValid() && !filter->property("availabilityBit").isValid())
+            const auto type = filter->property("typeBit");
+            const auto availability = filter->property("availabilityBit");
+            if (!type.isValid() && !availability.isValid())
                 continue;
             const QSignalBlocker blocker(filter);
-            filter->setChecked(filter->property("defaultChecked").toBool());
+            filter->setChecked(type.isValid() ? (selected.types & type.toInt()) != 0
+                                             : (selected.availability & availability.toInt()) != 0);
         }
         connect(source, &MediaNavigationSource::changed, this, &MediaViewer::applyView);
         connect(source, &QObject::destroyed, this, [this] { navigationPending_ = false; });
@@ -393,11 +410,11 @@ void MediaViewer::setupControls()
         button->setToolTip(label);
         button->setAccessibleName(label);
         row->addWidget(button);
-        connect(button, &QToolButton::toggled, this, [this] { applyFilter(); });
+        connect(button, &QToolButton::toggled, this, [this] { applyFilter(true); });
         return button;
     };
     filterButton(0, 1, tr("Images"), { "image-x-generic" }, QStyle::SP_FileIcon);
-    filterButton(0, 2, tr("Videos"), { "video-x-generic" }, QStyle::SP_MediaPlay);
+    filterButton(0, 2, tr("Audio and video"), { "video-x-generic" }, QStyle::SP_MediaPlay);
     filterButton(0, 4, tr("Other files"), { "application-x-generic" }, QStyle::SP_FileIcon);
     separator();
     filterButton(1, 4, tr("Downloaded"), {}, QStyle::SP_FileIcon);
@@ -634,7 +651,7 @@ bool MediaViewer::eventFilter(QObject *object, QEvent *event)
     }
     return QWidget::eventFilter(object, event);
 }
-void MediaViewer::applyFilter()
+void MediaViewer::applyFilter(bool persist)
 {
     if (!navigationSource_)
         return;
@@ -648,6 +665,8 @@ void MediaViewer::applyFilter()
         filter.availability |= button->property("availabilityBit").toInt();
     }
     navigationSource_->setFilter(filter);
+    if (persist && mediaViewerFilterSaver)
+        mediaViewerFilterSaver(filter);
 }
 void MediaViewer::applyView(const MediaNavigationSource::View &view)
 {
