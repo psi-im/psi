@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "chatmediaviewersource.h"
-#include "filedownload.h"
-#include "filereader.h"
+#include "filesharingchunksource.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
 #include "psiaccount.h"
@@ -11,7 +10,6 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QFutureWatcher>
-#include <QImageReader>
 #include <QTimer>
 #include <QThreadPool>
 #include <QtConcurrentRun>
@@ -40,53 +38,43 @@ QThreadPool &imageDecodePool()
     return pool;
 }
 
-MediaChunkAbort decode(FileReader *reader, QObject *receiver, ImageDone done)
+MediaChunkAbort decodeFile(QString path, QObject *receiver, ImageDone done)
 {
+    // Only complete local files reach the codec. A blocking QIODevice that
+    // waits for GUI-driven network chunks can deadlock Qt's image plugin mutex
+    // against icon rendering on the GUI thread.
     struct Result {
-        QImage          image;
+        QImage image;
         MediaChunkError error;
     };
-    auto watcher = new QFutureWatcher<Result>(QCoreApplication::instance());
-    reader->setParent(watcher);
-    const QPointer<QObject>    guard(receiver);
-    const QPointer<FileReader> input(reader);
-    const auto                 cancelled = std::make_shared<std::atomic<bool>>(false);
-    auto                       cancel    = [input, cancelled] {
-        cancelled->store(true);
-        if (input)
-            input->abort();
-    };
+    auto *watcher = new QFutureWatcher<Result>(QCoreApplication::instance());
+    const QPointer<QObject> guard(receiver);
+    const auto cancelled = std::make_shared<std::atomic<bool>>(false);
+    auto cancel = [cancelled] { cancelled->store(true); };
     QObject::connect(receiver, &QObject::destroyed, watcher, cancel);
     QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, watcher, [watcher, cancel] {
         cancel();
-        watcher->waitForFinished(); // A decoder must stop before its device is destroyed.
+        watcher->waitForFinished();
     });
-    QObject::connect(
-        watcher, &QFutureWatcher<Result>::finished, watcher, [watcher, guard, cancelled, done = std::move(done)] {
-            const auto result = watcher->result();
-            watcher->deleteLater();
-            if (guard)
-                done(result.image,
-                     cancelled->load()
-                         ? MediaChunkError(MediaChunkError::Cancelled, QStringLiteral("Image load cancelled"))
-                         : result.error);
-        });
-    watcher->setFuture(QtConcurrent::run(&imageDecodePool(), [reader] {
-        QImageReader decoder(reader);
-        decoder.setAutoTransform(true);
-        const auto size = decoder.size();
-        if (!size.isValid() && reader->errorCode() != MediaChunkError::None)
-            return Result { {}, { reader->errorCode(), reader->errorString() } };
-        if (!size.isValid() || quint64(size.width()) * quint64(size.height()) > MaxImagePixels)
+    QObject::connect(watcher, &QFutureWatcher<Result>::finished, watcher,
+                     [watcher, guard, cancelled, done = std::move(done)] {
+        auto result = watcher->result();
+        watcher->deleteLater();
+        if (guard && !cancelled->load())
+            done(std::move(result.image), std::move(result.error));
+    });
+    watcher->setFuture(QtConcurrent::run(&imageDecodePool(), [path = std::move(path), cancelled] {
+        if (cancelled->load())
+            return Result { {}, { MediaChunkError::Cancelled, QStringLiteral("Image load cancelled") } };
+        const QFileInfo file(path);
+        if (!file.isFile() || file.size() < 0 || quint64(file.size()) > MaxImageBytes)
+            return Result { {}, { MediaChunkError::Unavailable, QObject::tr("Local image is missing or too large") } };
+        QImage image;
+        if (!image.load(path))
+            return Result { {}, { MediaChunkError::Failed, QObject::tr("Cannot decode image") } };
+        if (quint64(image.width()) * quint64(image.height()) > MaxImagePixels)
             return Result { {}, { MediaChunkError::Unavailable, QObject::tr("Unsupported image dimensions") } };
-        const auto image = decoder.read();
-        if (image.isNull()) {
-            const auto code = reader->errorCode();
-            return Result { {},
-                            { code == MediaChunkError::None ? MediaChunkError::Failed : code,
-                              code == MediaChunkError::None ? decoder.errorString() : reader->errorString() } };
-        }
-        return Result { image, {} };
+        return Result { std::move(image), {} };
     }));
     return cancel;
 }
@@ -409,47 +397,42 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
     publish();
     const auto                            epoch = contentEpoch_;
     const QPointer<ChatMediaViewerSource> guard(this);
-    opening_ = manager_->open(
-        item_, this,
-        [guard, epoch](FileReader *reader, MediaChunkError error) {
-            if (!guard || guard->contentEpoch_ != epoch) {
-                if (reader)
-                    reader->deleteLater();
+    const auto onReady = [guard, epoch](QString path, MediaChunkError error) {
+        if (!guard || guard->contentEpoch_ != epoch)
+            return;
+        guard->opening_ = {};
+        if (!error.isEmpty() || path.isEmpty()) {
+            guard->fail(error.isEmpty()
+                            ? MediaChunkError(MediaChunkError::Unavailable, QObject::tr("Image file unavailable"))
+                            : std::move(error));
+            return;
+        }
+        guard->decoding_ = decodeFile(path, guard, [guard, epoch, path](QImage image, MediaChunkError error) {
+            if (!guard || guard->contentEpoch_ != epoch)
                 return;
-            }
+            guard->decoding_ = {};
             if (!error.isEmpty()) {
                 guard->fail(error);
                 return;
             }
-            guard->decoding_ = decode(reader, guard, [guard, epoch](QImage image, MediaChunkError error) {
-                if (!guard || guard->contentEpoch_ != epoch)
-                    return;
-                if (!error.isEmpty()) {
-                    guard->fail(error);
-                    return;
-                }
-                guard->view_.state = State::Ready;
-                guard->view_.error.clear();
-                if (!image.isNull()) {
-                    guard->view_.image = std::move(image);
-                    ++guard->view_.revision;
-                }
-                if (guard->item_)
-                    guard->view_.path = guard->item_->localFilePath();
-                guard->publish();
-            });
-            if (!guard->item_->isCached())
-                if (auto download = guard->manager_->download(guard->item_))
-                    guard->integrity_
-                        = connect(download, &FileDownload::failed, guard, [guard, epoch](MediaChunkError error) {
-                              if (!guard || guard->contentEpoch_ != epoch)
-                                  return;
-                              guard->view_.state = State::Failed;
-                              guard->view_.error = error.message();
-                              guard->publish();
-                          });
-        },
-        MaxImageBytes);
+            guard->view_.state = State::Ready;
+            guard->view_.error.clear();
+            guard->view_.image = std::move(image);
+            ++guard->view_.revision;
+            guard->view_.path = path;
+            guard->publish();
+        });
+    };
+
+    // Reuse an existing complete file without network activity. Otherwise
+    // use the shared verified whole-file downloader and decode only its
+    // completed path. No codec ever reads a live FileReader/remote stream.
+    const QString local = item_->localFilePath();
+    if (!local.isEmpty()) {
+        QTimer::singleShot(0, this, [onReady, local] { onReady(local, {}); });
+    } else {
+        opening_ = FileSharingChunkSource::openWhole(item_, this, MaxImageBytes, onReady);
+    }
 }
 void ChatMediaViewerSource::fail(MediaChunkError error)
 {
