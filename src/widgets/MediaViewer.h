@@ -98,6 +98,7 @@ private:
     void    updateFullscreenUi();
     void    noteFullscreenActivity(bool force = false);
     void    hideIdleVideoControls();
+    void    setVideoControlsShown(QWidget *widget, bool visible, bool animated);
     void    trackVideoWidget(QWidget *widget);
     QRect   contentRect() const;
     qreal   autoFitScale() const;
