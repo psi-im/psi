@@ -231,9 +231,9 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message, int ver
         auto       mime = media.file.mediaType().toLower();
         if (mime.isEmpty() || mime == QLatin1String("application/octet-stream"))
             mime = QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).name();
-        const int   kind = mime.startsWith(QLatin1String("image/")) ? 1
-              : mime.startsWith(QLatin1String("video/"))            ? 2
-                                                                    : 4;
+        const int kind = mime.startsWith(QLatin1String("image/")) ? 1
+            : mime.startsWith(QLatin1String("video/")) || mime.startsWith(QLatin1String("audio/")) ? 2
+                                                                                                    : 4;
         QJsonObject resource { { "hashes", hashes }, { "name", name }, { "mime", mime }, { "kind", kind } };
         if (const auto size = media.file.size())
             resource.insert("size", QString::number(*size));
