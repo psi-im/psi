@@ -19,6 +19,7 @@
 #include <QVector>
 
 class FileSharingDeviceOpener;
+class FileSharingItem;
 class ChatMessageText;
 class QTemporaryDir;
 class QFrame;
