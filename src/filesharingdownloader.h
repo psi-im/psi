@@ -72,7 +72,7 @@ public:
     void setSelfDelete(bool enable);
     // Fails the transfer once the file turns out to be larger, by its declared
     // size or by the bytes received. For downloads the user did not ask for.
-    void setMaximumSize(quint64 bytes);
+    void setMaximumSize(std::optional<quint64> bytes);
     void preferSource(const QString &uri);
 
 protected:
@@ -80,6 +80,8 @@ protected:
     qint64 writeData(const char *data, qint64 maxSize) override;
 
 signals:
+    void activity();
+    void verificationStarted();
     // Validated payload. Pooled media requests may release their receipt later,
     // after the successor content has been accepted.
     void transferCompleted();

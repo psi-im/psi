@@ -24,6 +24,7 @@ public:
     QByteArray             buffer;
     quint64                bufferStart = 0;
     bool                   local = false, opened = false, aborted = false, failed = false;
+    bool                   blockingDemand = false;
     MediaChunkError::Code  error = MediaChunkError::None;
     // The following scheduling fields are used only on the owner thread.
     bool                   scheduled = false, pinned = false;
@@ -194,7 +195,8 @@ qint64 FileReader::bytesAvailable() const
     QMutexLocker lock(&d->mutex);
     if (!d->opened || d->aborted || d->failed || position < 0 || quint64(position) >= d->length)
         return 0;
-    return d->local ? qint64(d->length - quint64(position)) : d->available(quint64(position));
+    return d->local ? qint64(d->length - quint64(position))
+                    : std::min(qint64(d->length - quint64(position)), d->available(quint64(position)));
 }
 
 bool FileReader::atEnd() const
@@ -256,6 +258,7 @@ void FileReader::schedule()
     d->scheduledEpoch = scheduledEpoch;
     QTimer::singleShot(0, this, [this, scheduledEpoch] {
         quint64 position, epoch, requested;
+        bool    buffered = false;
         {
             QMutexLocker lock(&d->mutex);
             if (scheduledEpoch != d->epoch)
@@ -265,6 +268,7 @@ void FileReader::schedule()
                 return;
             position  = d->wanted;
             requested = d->wantedLength;
+            buffered  = d->blockingDemand;
             epoch     = d->epoch;
             if (position >= d->length) {
                 finishRead(epoch);
@@ -278,30 +282,32 @@ void FileReader::schedule()
             return;
         }
         const QPointer<FileReader> guard(this);
-        d->ticket = d->download->read(d->base + position, std::min<quint64>(d->length - position, requested),
-                                      [guard, position, epoch](QByteArray bytes, MediaChunkError error) {
-                                          if (!guard)
-                                              return;
-                                          {
-                                              QMutexLocker lock(&guard->d->mutex);
-                                              if (guard->d->aborted || guard->d->failed || guard->d->epoch != epoch)
+        const auto                 read = buffered ? &FileDownload::readBuffered : &FileDownload::read;
+        d->ticket
+            = (d->download.data()->*read)(d->base + position, std::min<quint64>(d->length - position, requested),
+                                          [guard, position, epoch](QByteArray bytes, MediaChunkError error) {
+                                              if (!guard)
                                                   return;
-                                          }
-                                          guard->d->ticket = 0;
-                                          if (error.isEmpty() && bytes.isEmpty())
-                                              error = QStringLiteral("Incomplete file read");
-                                          if (!error.isEmpty()) {
-                                              guard->fail(error);
-                                              return;
-                                          }
-                                          {
-                                              QMutexLocker lock(&guard->d->mutex);
-                                              guard->d->bufferStart = position;
-                                              guard->d->buffer      = std::move(bytes);
-                                              guard->d->changed.wakeAll();
-                                          }
-                                          emit guard->readyRead();
-                                      });
+                                              {
+                                                  QMutexLocker lock(&guard->d->mutex);
+                                                  if (guard->d->aborted || guard->d->failed || guard->d->epoch != epoch)
+                                                      return;
+                                              }
+                                              guard->d->ticket = 0;
+                                              if (error.isEmpty() && bytes.isEmpty())
+                                                  error = QStringLiteral("Incomplete file read");
+                                              if (!error.isEmpty()) {
+                                                  guard->fail(error);
+                                                  return;
+                                              }
+                                              {
+                                                  QMutexLocker lock(&guard->d->mutex);
+                                                  guard->d->bufferStart = position;
+                                                  guard->d->buffer      = std::move(bytes);
+                                                  guard->d->changed.wakeAll();
+                                              }
+                                              emit guard->readyRead();
+                                          });
         if (!d->ticket) {
             fail(QStringLiteral("Too many pending file reads"));
             return;
@@ -334,20 +340,32 @@ qint64 FileReader::readData(char *data, qint64 maxSize)
             finishRead(d->epoch);
         return count;
     }
-    while (!d->available(quint64(position))) {
-        d->wanted       = quint64(position);
-        d->wantedLength = std::min<quint64>(quint64(maxSize), 64 * 1024);
-        QMetaObject::invokeMethod(this, [this] { schedule(); }, Qt::QueuedConnection);
+    const auto requested = std::min<quint64>(quint64(maxSize), d->length - quint64(position));
+    quint64    copied    = 0;
+    // A blocking consumer expects a short read only at EOF. In particular,
+    // codec format probes may leave a tiny cached prefix: returning just that
+    // prefix to libpng's next larger read looks like a truncated image.
+    while (copied < requested) {
+        const auto at = quint64(position) + copied;
+        while (!d->available(at)) {
+            d->wanted         = at;
+            d->blockingDemand = !owner;
+            d->wantedLength   = std::min<quint64>(requested - copied, 64 * 1024);
+            QMetaObject::invokeMethod(this, [this] { schedule(); }, Qt::QueuedConnection);
+            if (owner)
+                return qint64(copied);
+            d->changed.wait(&d->mutex);
+            if (d->aborted || d->failed)
+                return -1;
+        }
+        const auto count = std::min<quint64>(requested - copied, quint64(d->available(at)));
+        std::memcpy(data + copied, d->buffer.constData() + (at - d->bufferStart), size_t(count));
+        copied += count;
+        d->wanted = quint64(position) + copied;
         if (owner)
-            return 0;
-        d->changed.wait(&d->mutex);
-        if (d->aborted || d->failed)
-            return -1;
+            break;
     }
-    const auto count = std::min(maxSize, d->available(quint64(position)));
-    std::memcpy(data, d->buffer.constData() + (quint64(position) - d->bufferStart), size_t(count));
-    d->wanted = quint64(position + count);
     if (d->wanted == d->length)
         finishRead(d->epoch);
-    return count;
+    return qint64(copied);
 }

@@ -689,18 +689,19 @@ bool FileCache::toRegistry(FileCacheItem *item)
     if (transaction && !db.transaction())
         return false;
     QSqlQuery  query(db);
-    query.prepare(
-        QStringLiteral("INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement,external_mtime) "
-                       "VALUES(:id,:partition,:size,:created,:max_age,:metadata,:path,:placement,:modified) "
-                       "ON CONFLICT(id) DO UPDATE SET size=excluded.size,created=excluded.created,"
-                       "max_age=excluded.max_age,metadata=excluded.metadata,path=excluded.path,"
-                       "placement=excluded.placement,external_mtime=excluded.external_mtime"));
+    query.prepare(QStringLiteral(
+        "INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement,external_mtime,media_type) "
+        "VALUES(:id,:partition,:size,:created,:max_age,:metadata,:path,:placement,:modified,COALESCE(:mime,'')) "
+        "ON CONFLICT(id) DO UPDATE SET size=excluded.size,created=excluded.created,"
+        "max_age=excluded.max_age,metadata=excluded.metadata,path=excluded.path,"
+        "placement=excluded.placement,external_mtime=excluded.external_mtime,media_type=excluded.media_type"));
     query.bindValue(QStringLiteral(":id"), item->_recordId);
     query.bindValue(QStringLiteral(":partition"), _partition);
     query.bindValue(QStringLiteral(":size"), qlonglong(item->size()));
     query.bindValue(QStringLiteral(":created"), item->created().toMSecsSinceEpoch());
     query.bindValue(QStringLiteral(":max_age"), qlonglong(item->maxAge()));
     query.bindValue(QStringLiteral(":metadata"), FileDatabase::encodeMetadata(item->metadata()));
+    query.bindValue(":mime", item->metadata().value("type").toString());
     query.bindValue(QStringLiteral(":path"), item->isExternal() ? item->_externalPath : item->fileName());
     query.bindValue(QStringLiteral(":placement"), item->isExternal() ? 1 : 0);
     query.bindValue(QStringLiteral(":modified"),

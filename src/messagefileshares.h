@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "aesgcmurl.h"
 #include "iris/xmpp_message.h"
 #include "iris/xmpp_reference.h"
 #include "iris/xmpp_url.h"
@@ -16,7 +17,9 @@ namespace MessageFileShares {
 // A cheap, conservative payload check, including unsupported references/URLs.
 inline bool hasFileShares(const XMPP::Message &message)
 {
-    return !message.references().isEmpty() || !message.fileSharings().isEmpty() || !message.urlList().isEmpty();
+    return !message.references().isEmpty() || !message.fileSharings().isEmpty() || !message.urlList().isEmpty()
+        || (message.body().trimmed().startsWith(QLatin1String("aesgcm:"), Qt::CaseInsensitive)
+            && bool(AesGcmUrl::parse(QUrl(message.body().trimmed()))));
 }
 
 struct FileShare {

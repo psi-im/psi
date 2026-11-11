@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "widgets/ImageViewer.h"
+#include "widgets/MediaViewer.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QLabel>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QWheelEvent>
@@ -10,73 +12,125 @@
 #include <cmath>
 
 namespace {
-void zoom(ImageViewer &viewer, int notches)
+void zoom(MediaViewer &viewer, int notches)
 {
     const QPoint centre = viewer.rect().center();
-    QWheelEvent wheel(QPointF(centre), QPointF(viewer.mapToGlobal(centre)),
-                      QPoint(), QPoint(0, notches * 120), Qt::NoButton,
-                      Qt::ControlModifier, Qt::NoScrollPhase, false);
+    QWheelEvent  wheel(QPointF(centre), QPointF(viewer.mapToGlobal(centre)), QPoint(), QPoint(0, notches * 120),
+                       Qt::NoButton, Qt::ControlModifier, Qt::NoScrollPhase, false);
     QApplication::sendEvent(&viewer, &wheel);
     QVERIFY(wheel.isAccepted());
 }
 
-void drag(ImageViewer &viewer, const QPoint &from, const QPoint &to)
+void drag(MediaViewer &viewer, const QPoint &from, const QPoint &to)
 {
     QTest::mousePress(&viewer, Qt::LeftButton, Qt::NoModifier, from);
-    QMouseEvent moved(QEvent::MouseMove, QPointF(to), QPointF(viewer.mapToGlobal(to)),
-                      Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent moved(QEvent::MouseMove, QPointF(to), QPointF(viewer.mapToGlobal(to)), Qt::NoButton, Qt::LeftButton,
+                      Qt::NoModifier);
     QApplication::sendEvent(&viewer, &moved);
     QTest::mouseRelease(&viewer, Qt::LeftButton, Qt::NoModifier, to);
 }
 }
 
-class TestNavigationSource final : public ImageNavigationSource {
+class TestNavigationSource final : public MediaNavigationSource {
 public:
-    int requests = 0;
-    int direction = 0;
-    Result pending;
+    int                                        requests  = 0;
+    int                                        direction = 0;
+    std::function<void(QImage, QString, bool)> pending;
+    MediaFilter                                filter;
+    void                                       setFilter(MediaFilter value) override { filter = value; }
 
-    void adjacent(int step, Result result) override
+    void adjacent(int step) override
     {
         ++requests;
         direction = step;
-        pending = std::move(result);
+        const QPointer<TestNavigationSource> guard(this);
+        pending = [guard](QImage image, QString name, bool ok) {
+            if (!guard)
+                return;
+            View view;
+            view.key      = name;
+            view.name     = name;
+            view.image    = std::move(image);
+            view.revision = 1;
+            view.state    = ok ? State::Ready : State::Failed;
+            emit guard->changed(view);
+        };
     }
 };
 
-class ImageViewerTest final : public QObject {
+class MediaViewerTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void filtersAndPositionShareTheSourceSelection()
+    {
+        QImage image(80, 60, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        MediaViewer viewer(image);
+        auto        source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        auto videos  = viewer.findChild<QCheckBox *>("mediaFilter0_2");
+        auto partial = viewer.findChild<QCheckBox *>("mediaFilter1_2");
+        QVERIFY(videos && partial);
+        videos->setChecked(false);
+        partial->setChecked(false);
+        QCOMPARE(source->filter.types, int(MediaFilter::Images | MediaFilter::Files));
+        QCOMPARE(source->filter.availability, int(MediaFilter::Remote | MediaFilter::Complete));
+        MediaNavigationSource::View view;
+        view.key      = "resource";
+        view.name     = "photo.png";
+        view.image    = image;
+        view.revision = 1;
+        view.index    = 2;
+        view.total    = 5;
+        view.state    = MediaNavigationSource::State::Loading;
+        emit source->changed(view);
+        QCOMPARE(viewer.findChild<QLabel *>("mediaPosition")->text(), QStringLiteral("2 / 5"));
+        QVERIFY(!viewer.findChild<QLabel *>("mediaStatus")->text().isEmpty());
+        zoom(viewer, 1);
+        const auto scale = viewer.currentScale();
+        view.index       = 1;
+        view.total       = 3;
+        view.state       = MediaNavigationSource::State::Ready;
+        emit source->changed(view);
+        QCOMPARE(viewer.findChild<QLabel *>("mediaPosition")->text(), QStringLiteral("1 / 3"));
+        QCOMPARE(viewer.currentScale(), scale);
+        QTest::keyClick(&viewer, Qt::Key_F11);
+        QTRY_VERIFY(viewer.isFullScreen());
+        QTest::keyClick(&viewer, Qt::Key_Escape);
+        QTRY_VERIFY(!viewer.isFullScreen());
+        QVERIFY(viewer.isVisible());
+    }
     void navigationUsesInjectedSourceAndCancelsStaleResults()
     {
         QImage original(80, 60, QImage::Format_RGB32);
         original.fill(Qt::red);
-        ImageViewer viewer(original, QStringLiteral("/cache/unrelated.png"));
-        auto *first = new TestNavigationSource;
+        MediaViewer viewer(original, QStringLiteral("/cache/unrelated.png"));
+        auto       *first = new TestNavigationSource;
         viewer.setNavigationSource(first);
         viewer.show();
         QCoreApplication::processEvents();
 
         const QPoint centre = viewer.rect().center();
-        const auto wheel = [&](int turns, Qt::KeyboardModifiers modifiers = Qt::NoModifier) {
-            QWheelEvent event(QPointF(centre), QPointF(viewer.mapToGlobal(centre)),
-                              {}, QPoint(0, turns * 120), Qt::NoButton,
-                              modifiers, Qt::NoScrollPhase, false);
+        const auto   wheel  = [&](int turns, Qt::KeyboardModifiers modifiers = Qt::NoModifier) {
+            QWheelEvent event(QPointF(centre), QPointF(viewer.mapToGlobal(centre)), {}, QPoint(0, turns * 120),
+                                 Qt::NoButton, modifiers, Qt::NoScrollPhase, false);
             QApplication::sendEvent(&viewer, &event);
             QVERIFY(event.isAccepted());
         };
 
         wheel(-1);
         QCOMPARE(first->requests, 1);
-        QCOMPARE(first->direction, 1); // Newer, in chat-message chronology.
+        QCOMPARE(first->direction, 1); // Next unique resource.
         wheel(-1);
         QCOMPARE(first->requests, 1); // Navigation is in flight.
         zoom(viewer, 1);
         QCOMPARE(first->requests, 1); // Ctrl+wheel still zooms, never browses.
 
-        auto oldResult = first->pending;
-        auto *second = new TestNavigationSource;
+        auto  oldResult = first->pending;
+        auto *second    = new TestNavigationSource;
         viewer.setNavigationSource(second);
         QImage stale(90, 70, QImage::Format_RGB32);
         stale.fill(Qt::yellow);
@@ -97,7 +151,7 @@ private slots:
     {
         QImage image(80, 60, QImage::Format_RGB32);
         image.fill(Qt::red);
-        ImageViewer viewer(image);
+        MediaViewer viewer(image);
         viewer.show();
         QCoreApplication::processEvents();
 
@@ -112,7 +166,7 @@ private slots:
     {
         QImage image(2000, 800, QImage::Format_RGB32);
         image.fill(Qt::blue);
-        ImageViewer viewer(image);
+        MediaViewer viewer(image);
         viewer.show();
         QCoreApplication::processEvents();
 
@@ -129,7 +183,7 @@ private slots:
     {
         QImage image(1000, 800, QImage::Format_RGB32);
         image.fill(Qt::green);
-        ImageViewer viewer(image);
+        MediaViewer viewer(image);
         viewer.resize(350, 270);
         viewer.show();
         QCoreApplication::processEvents();
@@ -145,8 +199,8 @@ private slots:
         QTest::mousePress(&viewer, Qt::LeftButton, Qt::NoModifier, centre);
         QCOMPARE(viewer.cursor().shape(), Qt::ClosedHandCursor);
         const QPoint position = centre + QPoint(45, -30);
-        QMouseEvent moved(QEvent::MouseMove, QPointF(position), QPointF(viewer.mapToGlobal(position)),
-                          Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent  moved(QEvent::MouseMove, QPointF(position), QPointF(viewer.mapToGlobal(position)), Qt::NoButton,
+                           Qt::LeftButton, Qt::NoModifier);
         QApplication::sendEvent(&viewer, &moved);
         QTest::mouseRelease(&viewer, Qt::LeftButton, Qt::NoModifier, position);
         QCOMPARE(viewer.cursor().shape(), Qt::OpenHandCursor);
@@ -175,7 +229,7 @@ private slots:
     {
         QImage image(2500, 100, QImage::Format_RGB32);
         image.fill(Qt::blue);
-        ImageViewer viewer(image);
+        MediaViewer viewer(image);
         viewer.resize(400, 300);
         viewer.show();
         QCoreApplication::processEvents();
@@ -205,7 +259,7 @@ private slots:
     {
         QImage image(1000, 800, QImage::Format_RGB32);
         image.fill(Qt::green);
-        ImageViewer viewer(image);
+        MediaViewer viewer(image);
         viewer.resize(350, 270);
         viewer.show();
         QCoreApplication::processEvents();
@@ -240,5 +294,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(ImageViewerTest)
-#include "ImageViewerTest.moc"
+QTEST_MAIN(MediaViewerTest)
+#include "MediaViewerTest.moc"

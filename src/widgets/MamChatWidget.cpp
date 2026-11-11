@@ -1,20 +1,20 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
-#include "OverlayScrollBarManager.h"
-#include "ImageViewer.h"
-#include "ChatMessageText.h"
 #include "ChatMessageBody.h"
+#include "ChatMessageText.h"
+#include "MamHistoryLog.h"
+#include "MamMessageIdentity.h"
+#include "MediaViewer.h"
 #include "MessagePreview.h"
+#include "OverlayScrollBarManager.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
+#include "iconset.h"
+#include "psirichtext.h"
 #include "textutil.h"
 #include "urlobject.h"
 #include <QContextMenuEvent>
 #include <QCursor>
-#include "MamHistoryLog.h"
-#include "MamMessageIdentity.h"
-#include "iconset.h"
-#include "psirichtext.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -2339,6 +2339,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     auto *body = row->body->text();
     body->setObjectName(QStringLiteral("mamBody"));
     body->setMediaOpener(mediaOpener_);
+    if (mediaOpenHandler_) {
+        const QPointer<MamChatWidget> guard(this);
+        body->setVideoOpenHandler([guard](const QUrl &source, qint64 position, bool fullscreen) {
+            if (!guard || !guard->mediaOpenHandler_ || source.scheme() != QLatin1String("share"))
+                return false;
+            guard->mediaOpenHandler_({}, {}, source.path(), position, fullscreen);
+            return true;
+        });
+    }
     const bool retracted = isRetracted(items_.at(index));
     QString    richText  = richMessage(items_.at(index));
     // The legacy text log: icon, time and nickname at the start of the text,
@@ -3715,7 +3724,6 @@ static QString httpImageLink(const QTextImageFormat &format, const QString &mess
 struct FullImage {
     QImage           image;
     QString          fileName;
-    FileSharingItem *item = nullptr;
 };
 
 static FullImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
@@ -3723,7 +3731,6 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
 {
     FullImage result;
     if (auto *item = sharedImageItem(format, messageHtml, mediaOpener)) {
-        result.item = item;
         // Use the cached original when available. The chat's inline resource
         // is commonly just a downscaled 640x480 preview.
         const QString path = item->fileName();
@@ -3752,19 +3759,12 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
     return result;
 }
 
-void MamChatWidget::openImageViewer(const QImage &image, const QString &name,
-                                    const MessageView &message, FileSharingItem *item, const QString &sourceId)
+void MamChatWidget::openMediaViewer(const QImage &image, const QString &name, const QString &sourceId)
 {
-    int ordinal = 0;
-    if (item) {
-        const int found = message.references().indexOf(item);
-        if (found >= 0)
-            ordinal = found;
-    }
-    if (imageOpenHandler_)
-        imageOpenHandler_(image, name, message.historyId(), message.dateTime(), ordinal, sourceId);
+    if (mediaOpenHandler_)
+        mediaOpenHandler_(image, name, sourceId, 0, false);
     else
-        ImageViewer::showImage(image, name);
+        MediaViewer::showImage(image, name);
 }
 
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
@@ -3885,12 +3885,11 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
                             [image = full.image] { QApplication::clipboard()->setImage(image); });
                     auto *viewImage = menu->addAction(tr("View image"));
                     viewImage->setObjectName(QStringLiteral("mamViewImage"));
-                    connect(viewImage, &QAction::triggered, this,
-                            [this, full, message, name = format->name()] {
-                                const QUrl source(name);
-                                openImageViewer(full.image, full.fileName, message, full.item,
-                                                source.scheme() == QLatin1String("share") ? source.path() : QString());
-                            });
+                    connect(viewImage, &QAction::triggered, this, [this, full, name = format->name()] {
+                        const QUrl source(name);
+                        openMediaViewer(full.image, full.fileName,
+                                        source.scheme() == QLatin1String("share") ? source.path() : QString());
+                    });
                 }
                 if (!link.isEmpty()) {
                     auto *copyImageLink = menu->addAction(tr("Copy image link"));
@@ -4367,7 +4366,7 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                         const FullImage full = fullImage(*format, html, body, mediaOpener_);
                         if (!full.image.isNull()) {
                             const QUrl source(format->name());
-                            openImageViewer(full.image, full.fileName, message, full.item,
+                            openMediaViewer(full.image, full.fileName,
                                             source.scheme() == QLatin1String("share") ? source.path() : QString());
                             mouse->accept();
                             return true;

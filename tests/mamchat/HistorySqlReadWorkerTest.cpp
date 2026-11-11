@@ -40,6 +40,32 @@ struct HistoryDatabase {
         if (!q.exec(QStringLiteral("CREATE TABLE message_media_refs(position INTEGER PRIMARY KEY, "
                                    "event_id INTEGER,ordinal INTEGER,publication_id BLOB,fingerprint BLOB)")))
             qFatal("Cannot initialize media-link fixture");
+        for (const auto *sql :
+             { "CREATE TABLE media_assets(id INTEGER PRIMARY KEY,account TEXT)",
+               "CREATE TABLE media_asset_aliases(account TEXT,alias TEXT,asset_id INTEGER)",
+               "CREATE TABLE message_media_resources(publication_id BLOB PRIMARY KEY,asset_id INTEGER,"
+               "size INTEGER,url_key TEXT,kind INTEGER,name TEXT,mime TEXT)",
+               "CREATE TABLE message_media_hashes(publication_id BLOB,algorithm TEXT,digest BLOB,range_key TEXT)" })
+            if (!q.exec(QLatin1String(sql)))
+                qFatal("Cannot initialize resource fixture");
+        {
+            auto files = QSqlDatabase::addDatabase("QSQLITE", "history-read-files");
+            files.setDatabaseName(directory.filePath("files.db"));
+            if (!files.open())
+                qFatal("Cannot open registry fixture");
+            QSqlQuery f(files);
+            for (const auto *sql :
+                 { "CREATE TABLE files(id BLOB PRIMARY KEY,partition TEXT,resource_key TEXT,scope_account TEXT,"
+                   "complete INTEGER,error TEXT,size INTEGER,media_type TEXT,created INTEGER,max_age INTEGER)",
+                   "CREATE TABLE file_hashes(file_id BLOB,algorithm TEXT,digest BLOB)",
+                   "CREATE TABLE file_checksums(file_id BLOB,algorithm TEXT,digest BLOB,offset INTEGER,length INTEGER)",
+                   "CREATE TABLE file_ranges(file_id BLOB,offset INTEGER,length INTEGER)",
+                   "CREATE TABLE url_content(account TEXT,url_key TEXT,content_hash TEXT)" })
+                if (!f.exec(QLatin1String(sql)))
+                    qFatal("Cannot initialize registry fixture");
+            files.close();
+        }
+        QSqlDatabase::removeDatabase("history-read-files");
         worker.open();
     }
     ~HistoryDatabase()
@@ -124,6 +150,7 @@ private slots:
         request.messageId     = QStringLiteral("client-id");
         request.sender        = fixture.key.archive + QStringLiteral("/desktop");
         request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);
+        request.fileDatabasePath = fixture.directory.filePath("files.db");
         fixture.worker.read(request);
         QCOMPARE(completed.count(), 1);
         const auto result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());
@@ -161,6 +188,7 @@ private slots:
         request.messageId     = QStringLiteral("missing-client-id");
         request.sender        = fixture.key.archive + QStringLiteral("/desktop");
         request.messageTime   = QDateTime::fromMSecsSinceEpoch(1000);
+        request.fileDatabasePath = fixture.directory.filePath("files.db");
         fixture.worker.read(request);
         QCOMPARE(completed.count(), 1);
         const auto result = qvariant_cast<HistoryReadResult>(completed.takeFirst().first());

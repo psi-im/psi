@@ -912,12 +912,14 @@ private:
             return false;
         }
         QSqlQuery query(db);
-        query.prepare(QStringLiteral(
-            "INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement,"
-            "resource_key,complete,payload_modified,error,scope_account) "
-            "VALUES(:id,:partition,:size,:created,4294967295,:metadata,:path,0,:key,:complete,:modified,:error,:account) "
-            "ON CONFLICT(id) DO UPDATE SET metadata=excluded.metadata,complete=excluded.complete,"
-            "payload_modified=excluded.payload_modified,error=excluded.error,scope_account=excluded.scope_account"));
+        query.prepare(
+            QStringLiteral("INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement,"
+                           "resource_key,complete,payload_modified,error,scope_account,media_type) "
+                           "VALUES(:id,:partition,:size,:created,4294967295,:metadata,:path,0,:key,:complete,:modified,"
+                           ":error,:account,COALESCE(:mime,'')) "
+                           "ON CONFLICT(id) DO UPDATE SET metadata=excluded.metadata,complete=excluded.complete,"
+                           "payload_modified=excluded.payload_modified,error=excluded.error,scope_account=excluded."
+                           "scope_account,media_type=excluded.media_type"));
         query.bindValue(QStringLiteral(":id"), entry.id);
         query.bindValue(QStringLiteral(":partition"), partition_);
         query.bindValue(QStringLiteral(":size"), qlonglong(entry.state.size));
@@ -926,6 +928,7 @@ private:
         query.bindValue(QStringLiteral(":path"), QFileInfo(entry.state.path).fileName());
         query.bindValue(QStringLiteral(":key"), key);
         query.bindValue(QStringLiteral(":account"), entry.state.metadata.value("account").toString());
+        query.bindValue(":mime", entry.state.metadata.value("type").toString());
         query.bindValue(QStringLiteral(":complete"), entry.state.complete);
         const auto modified = QFileInfo(entry.state.path).lastModified();
         query.bindValue(QStringLiteral(":modified"),

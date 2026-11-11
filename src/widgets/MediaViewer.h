@@ -1,13 +1,14 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "mediafilter.h"
 #include <QImage>
 #include <QPoint>
 #include <QPointF>
+#include <QPointer>
 #include <QRectF>
 #include <QSize>
 #include <QString>
-#include <QPointer>
 #include <QWidget>
 #include <functional>
 
@@ -18,6 +19,8 @@ class QMouseEvent;
 class QMoveEvent;
 class QResizeEvent;
 class QWheelEvent;
+class QLabel;
+class QProgressBar;
 
 // A lightweight, independent window. Window geometry determines fit-to-image
 // zoom, capped at 100% of the original. Ctrl+wheel and keyboard shortcuts zoom
@@ -25,14 +28,29 @@ class QWheelEvent;
 // window fit factor; Ctrl+0 restores the fit. An oversized image can be dragged
 // with the left mouse button. Navigation is supplied by the caller rather
 // than inferred from the directory of an image's cached payload.
-class ImageNavigationSource : public QObject {
+class MediaNavigationSource : public QObject {
+    Q_OBJECT
 public:
-    using Result = std::function<void(const QImage &, const QString &, bool)>;
+    enum class State { Ready, Loading, Failed, Empty };
+    struct View {
+        QString                                                    key, name, path, error;
+        QImage                                                     image;
+        quint64                                                    revision = 0, index = 0, total = 0;
+        State                                                      state      = State::Ready;
+        bool                                                       navigating = false;
+        std::function<QWidget *(QWidget *, std::function<void()>)> video;
+    };
     using QObject::QObject;
-    virtual void adjacent(int direction, Result result) = 0;
+    virtual void start() { }
+    virtual void adjacent(int direction) = 0;
+    virtual void setFilter(MediaFilter) { }
+    virtual void retry() { }
+    virtual bool saveAs(QWidget *) { return false; }
+signals:
+    void changed(const MediaNavigationSource::View &);
 };
 
-class ImageViewer final : public QWidget {
+class MediaViewer final : public QWidget {
     Q_OBJECT
 public:
     using SizeLoader = std::function<QSize()>;
@@ -40,14 +58,15 @@ public:
     using PathLoader = std::function<QString()>;
     using PathSaver  = std::function<void(const QString &)>;
 
-    explicit ImageViewer(const QImage &image, QWidget *parent = nullptr);
-    ImageViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
+    explicit MediaViewer(const QImage &image, QWidget *parent = nullptr);
+    MediaViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
     static void setSavePathPersistence(PathLoader loader, PathSaver saver);
-    static void showImage(const QImage &image, const QString &fileName, ImageNavigationSource *source = nullptr);
+    static void showImage(const QImage &image, const QString &fileName, MediaNavigationSource *source = nullptr,
+                          bool fullscreen = false);
     // The viewer takes ownership. Replacing the source cancels pending navigation.
-    void setNavigationSource(ImageNavigationSource *source);
+    void setNavigationSource(MediaNavigationSource *source);
 
     QRectF displayedImageRect() const;
     qreal  currentScale() const;
@@ -67,6 +86,11 @@ protected:
     void changeEvent(QEvent *event) override;
 
 private:
+    void    applyView(const MediaNavigationSource::View &);
+    void    setupControls();
+    void    applyFilter();
+    void    toggleFullscreen();
+    QRect   contentRect() const;
     qreal   autoFitScale() const;
     bool    canPan() const;
     QPointF constrainedPanOffset(const QPointF &offset) const;
@@ -81,15 +105,20 @@ private:
     void    zoomBy(qreal factor);
     void    resetTemporaryZoom();
 
-    QImage      image_;
-    qreal       temporaryScale_ = 1.0;
-    QPointF     panOffset_;
-    QPoint      lastDragPosition_;
-    QString     currentFilePath_;
-    QString     currentFileName_;
-    QPointer<ImageNavigationSource> navigationSource_;
-    quint64     navigationSerial_ = 0;
-    bool        navigationPending_ = false;
-    bool        temporaryZoom_     = false;
-    bool        dragging_          = false;
+    QImage                          image_;
+    qreal                           temporaryScale_ = 1.0;
+    QPointF                         panOffset_;
+    QPoint                          lastDragPosition_;
+    QString                         currentFilePath_;
+    QString                         currentFileName_;
+    QPointer<MediaNavigationSource> navigationSource_;
+    QWidget                        *controls_ = nullptr;
+    QLabel                         *position_ = nullptr, *status_ = nullptr;
+    QProgressBar                   *loading_ = nullptr;
+    QPointer<QWidget>               video_;
+    QString                         currentKey_;
+    quint64                         currentRevision_   = 0;
+    bool                            navigationPending_ = false;
+    bool                            temporaryZoom_     = false;
+    bool                            dragging_          = false;
 };

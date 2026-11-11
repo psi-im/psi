@@ -645,6 +645,10 @@ QString PsiTextView::getHtml() const { return getTextHelper(true); }
 QString PsiTextView::getPlainText() const { return getTextHelper(false); }
 
 void PsiTextView::setMediaOpener(FileSharingDeviceOpener *opener) { d->mediaOpener = opener; }
+void PsiTextView::setVideoOpenHandler(std::function<bool(const QUrl &, qint64, bool)> handler)
+{
+    d->videoCtrl->setWindowHandler(std::move(handler));
+}
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {

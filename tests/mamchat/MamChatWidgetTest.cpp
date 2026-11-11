@@ -1,24 +1,24 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/MamChatWidget.h"
-#include "widgets/OverlayScrollBarManager.h"
-#include "widgets/ImageViewer.h"
+#include "desktopcolorpalette.h"
+#include "filesharingmanager.h"
+#include "messagestyling.h"
+#include "qiteaudio.h"
+#include "qitevideo.h"
 #include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
 #include "widgets/CodeBlockWidget.h"
-#include "widgets/MessagePreview.h"
 #include "widgets/LinkButton.h"
+#include "widgets/MediaViewer.h"
+#include "widgets/MessagePreview.h"
 #include "widgets/NativeChatThemeRegistry.h"
+#include "widgets/OverlayScrollBarManager.h"
 #include "widgets/psirichtext.h"
+#include "widgets/urlobject.h"
 #include <QContextMenuEvent>
 #include <QCursor>
 #include <QTextBrowser>
 #include <QVBoxLayout>
-#include "widgets/urlobject.h"
-#include "desktopcolorpalette.h"
-#include "filesharingmanager.h"
-#include "qiteaudio.h"
-#include "qitevideo.h"
-#include "messagestyling.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
@@ -1062,10 +1062,10 @@ private slots:
         QCOMPARE(QApplication::clipboard()->image().size(), original.size());
         QCOMPARE(QApplication::clipboard()->image().pixelColor(0, 0), QColor(Qt::red));
 
-        const auto viewerWindow = []() -> ImageViewer * {
+        const auto viewerWindow = []() -> MediaViewer * {
             for (auto *widget : QApplication::topLevelWidgets())
                 if (widget->isVisible() && widget->objectName() == QLatin1String("imageViewer"))
-                    return qobject_cast<ImageViewer *>(widget);
+                    return qobject_cast<MediaViewer *>(widget);
             return nullptr;
         };
         auto *viewAction = menu->findChild<QAction *>(QStringLiteral("mamViewImage"));
@@ -1862,10 +1862,10 @@ private slots:
         QVERIFY(text);
         QTRY_VERIFY(text->viewport()->isVisible());
 
-        const auto viewerWindow = []() -> ImageViewer * {
+        const auto viewerWindow = []() -> MediaViewer * {
             for (auto *widget : QApplication::topLevelWidgets())
                 if (widget->isVisible() && widget->objectName() == QLatin1String("imageViewer"))
-                    return qobject_cast<ImageViewer *>(widget);
+                    return qobject_cast<MediaViewer *>(widget);
             return nullptr;
         };
         // Collapsed, the thumbnail is as high as three lines, keeping its 3:2 aspect.

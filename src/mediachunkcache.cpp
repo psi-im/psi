@@ -71,6 +71,10 @@ MediaFileState MediaChunkCache::fileState(const QString &source, quint64 size) c
 {
     return store_->state(fileKey(source, size));
 }
+quint64 MediaChunkCache::availableLength(const QString &source, quint64 size, quint64 offset, quint64 maximum) const
+{
+    return store_->availableLength(fileKey(source, size), size, offset, maximum);
+}
 QString MediaChunkCache::resolveSource(const QString &source, const QString &account, quint64 size,
                                        const QList<MediaFileChecksum> &checksums) const
 {

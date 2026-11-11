@@ -16,6 +16,9 @@ enum State { Unverified = 0, Archived = 1, LocalOnly = 2, ProvenanceMask = 3, Li
 struct Key {
     QString account, archive, peer;
     bool    room = false;
+    // Optional EDB contact kind; private MUC chats retain the full occupant JID.
+    // -1 keeps the usual room/chat default for existing archive callers.
+    int contactKind = -1;
 };
 struct Entry {
     QString uid, xml;

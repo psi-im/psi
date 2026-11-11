@@ -9,6 +9,8 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include <QElapsedTimer>
+#include <QFile>
+#include <QFileInfo>
 #include <QHash>
 #include <QPointer>
 #include <QTimer>
@@ -179,6 +181,189 @@ private:
     QHash<quint64, Waiter>    waiters_;
     bool                      stopped_ = false, writing_ = false, accepted_ = false;
 };
+// Unknown-length and monolithic authenticated sources need one shared whole
+// transfer before a seekable, verified reader can be opened. Consumers retain
+// independent cancellation and size limits; bytes are never accumulated in RAM.
+class FileSharingChunkSource::WholeDownload : public QObject {
+    struct Waiter {
+        QPointer<QObject>       receiver;
+        quint64                 limit;
+        PathDone                done;
+        QMetaObject::Connection lifetime;
+    };
+
+public:
+    WholeDownload(FileSharingItem *item, QObject *parent) : QObject(parent), item_(item)
+    {
+        QTimer::singleShot(0, this, [this] { start(); });
+    }
+    bool    stopped() const { return stopped_; }
+    quint64 add(QObject *receiver, quint64 limit, PathDone done)
+    {
+        const auto id       = ++next_;
+        auto       lifetime = connect(receiver, &QObject::destroyed, this, [this, id] { cancel(id, false); });
+        waiters_.insert(id, { receiver, limit, std::move(done), lifetime });
+        updateLimit();
+        return id;
+    }
+    void cancel(quint64 id, bool notify = true)
+    {
+        if (!waiters_.contains(id))
+            return;
+        auto waiter = waiters_.take(id);
+        disconnect(waiter.lifetime);
+        const QPointer<WholeDownload> guard(this);
+        if (notify && waiter.receiver)
+            waiter.done({}, { MediaChunkError::Cancelled, QStringLiteral("Content open cancelled") });
+        if (guard && waiters_.isEmpty())
+            finish({ MediaChunkError::Cancelled, QStringLiteral("Content open cancelled") });
+        else if (guard)
+            updateLimit();
+    }
+
+private:
+    void updateLimit()
+    {
+        if (!download_)
+            return;
+        quint64 maximum = 0;
+        for (const auto &waiter : waiters_) {
+            if (!waiter.limit) {
+                download_->setMaximumSize(std::nullopt);
+                return;
+            }
+            maximum = std::max(maximum, waiter.limit);
+        }
+        download_->setMaximumSize(maximum);
+    }
+    void start()
+    {
+        if (stopped_ || waiters_.isEmpty())
+            return;
+        if (!item_) {
+            finish({ MediaChunkError::Unavailable, QStringLiteral("Media source disappeared") });
+            return;
+        }
+        download_ = item_->download();
+        if (!download_) {
+            finish({ MediaChunkError::Unavailable, QStringLiteral("No media source") });
+            return;
+        }
+        download_->setParent(this);
+        updateLimit();
+        connect(item_, &FileSharingItem::downloadFinished, this, [this] {
+            const auto path = item_->localFilePath();
+            finish(path.isEmpty() ? item_->downloadError() : MediaChunkError(), path);
+        });
+        connect(download_, &QIODevice::readyRead, this, [this] { schedule(); });
+        connect(download_, &FileShareDownloader::transferCompleted, this, [this] {
+            accepted_ = true;
+            stall_.stop();
+            schedule();
+        });
+        connect(download_, &FileShareDownloader::failed, this, [this] {
+            finish({ download_->hasIntegrityError() ? MediaChunkError::IntegrityError : MediaChunkError::Failed,
+                     download_->errorString() });
+        });
+        connect(download_, &FileShareDownloader::progress, this, [this](size_t, size_t) { stall_.start(); });
+        connect(download_, &FileShareDownloader::activity, this, [this] {
+            if (!processing_)
+                stall_.start();
+        });
+        connect(download_, &FileShareDownloader::verificationStarted, this, [this] {
+            processing_ = true;
+            stall_.stop();
+        });
+        stall_.setSingleShot(true);
+        stall_.setInterval(60000);
+        connect(&stall_, &QTimer::timeout, this, [this] { finish(QStringLiteral("Media download stalled")); });
+        stall_.start();
+        if (!download_->open(QIODevice::ReadOnly))
+            finish(download_->errorString());
+    }
+    void schedule()
+    {
+        if (pending_ || stopped_)
+            return;
+        pending_ = true;
+        QTimer::singleShot(0, this, [this] {
+            pending_ = false;
+            if (stopped_ || !download_)
+                return;
+            int budget = 256 * 1024;
+            while (budget > 0 && download_->bytesAvailable() > 0) {
+                const auto data = download_->read(std::min(budget, 64 * 1024));
+                if (stopped_)
+                    return;
+                if (data.isEmpty()) {
+                    finish(download_->errorString());
+                    return;
+                }
+                budget -= data.size();
+                if (!accepted_ && !processing_)
+                    stall_.start();
+            }
+            if (download_->bytesAvailable() > 0)
+                schedule();
+        });
+    }
+    void finish(MediaChunkError error, const QString &path = {})
+    {
+        if (stopped_)
+            return;
+        stopped_ = true;
+        stall_.stop();
+        if (item_)
+            item_->disconnect(this);
+        if (download_) {
+            download_->disconnect(this);
+            if (!error.isEmpty())
+                download_->abort();
+        }
+        const auto waiters = std::exchange(waiters_, {});
+        deleteLater();
+        for (auto waiter : waiters) {
+            disconnect(waiter.lifetime);
+            if (!waiter.receiver)
+                continue;
+            if (error.isEmpty() && path.isEmpty())
+                waiter.done({}, QStringLiteral("Downloaded media is unavailable"));
+            else if (error.isEmpty() && waiter.limit && quint64(QFileInfo(path).size()) > waiter.limit)
+                waiter.done({}, QStringLiteral("Media exceeds the requested size limit"));
+            else
+                waiter.done(path, error);
+        }
+    }
+    QPointer<FileSharingItem>     item_;
+    QPointer<FileShareDownloader> download_;
+    QHash<quint64, Waiter>        waiters_;
+    quint64                       next_    = 0;
+    bool                          stopped_ = false, pending_ = false, accepted_ = false, processing_ = false;
+    QTimer                        stall_;
+};
+MediaChunkAbort FileSharingChunkSource::openWhole(FileSharingItem *item, QObject *receiver, quint64 maximumBytes,
+                                                  PathDone done)
+{
+    const auto local = item->localFilePath();
+    if (!local.isEmpty()) {
+        const auto cancelled = std::make_shared<bool>(false);
+        QTimer::singleShot(0, receiver, [cancelled, done = std::move(done), local] {
+            if (!*cancelled)
+                done(local, {});
+        });
+        return [cancelled] { *cancelled = true; };
+    }
+    auto source = state(item);
+    if (!source->whole_ || source->whole_->stopped())
+        source->whole_ = new WholeDownload(item, source);
+    const QPointer<WholeDownload> job(source->whole_);
+    const auto                    id = job->add(receiver, maximumBytes, std::move(done));
+    return [job, id] {
+        if (job)
+            job->cancel(id);
+    };
+}
+
 FileSharingChunkSource::FileSharingChunkSource(FileSharingItem *item) : QObject(item) { }
 FileSharingChunkSource::~FileSharingChunkSource() = default;
 
@@ -254,7 +439,7 @@ void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMP
     if (anchor.isValid())
         hashes.append({ 0, size, anchor.stringType(), anchor.data() });
     item->_rangeConfigured = true;
-    cache->configure(source, size, hashes, { { "account", item->account()->id() } });
+    cache->configure(source, size, hashes, { { "account", item->account()->id() }, { "type", item->mimeType() } });
 }
 MediaChunkCache *FileSharingChunkSource::configure(const FileSharingItem *item)
 {
@@ -296,6 +481,24 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
         }
         done(std::move(bytes), error);
     };
+    if (AesGcmUrl::parse(QUrl(source)) && allowWhole && allowWhole()) {
+        return openWhole(item, owner, 0, [deliver, offset, length](QString path, MediaChunkError error) {
+            if (!error.isEmpty()) {
+                deliver({}, std::move(error));
+                return;
+            }
+            QFile file(path);
+            if (!file.open(QIODevice::ReadOnly) || !file.seek(qint64(offset))) {
+                deliver({}, QStringLiteral("Cannot read authenticated media"));
+                return;
+            }
+            const auto bytes = file.read(qint64(length));
+            deliver(bytes,
+                    quint64(bytes.size()) == length
+                        ? MediaChunkError()
+                        : MediaChunkError(QStringLiteral("Incomplete authenticated media")));
+        });
+    }
     struct Request {
         bool            cancelled = false;
         MediaChunkAbort fallback;

@@ -1,0 +1,378 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#include "chatmediaviewersource.h"
+#include "filedownload.h"
+#include "filereader.h"
+#include "filesharingitem.h"
+#include "filesharingmanager.h"
+#include "psiaccount.h"
+#include "psicon.h"
+#include "qitevideo.h"
+#include "widgets/MamChatWidget.h"
+#include <QCoreApplication>
+#include <QFileInfo>
+#include <QFutureWatcher>
+#include <QImageReader>
+#include <QTimer>
+#include <QtConcurrentRun>
+#include <atomic>
+#include <memory>
+
+namespace {
+constexpr quint64 MaxImageBytes  = 128 * 1024 * 1024;
+constexpr quint64 MaxImagePixels = 32 * 1024 * 1024;
+using ImageDone                  = std::function<void(QImage, MediaChunkError)>;
+MediaChunkAbort decode(FileReader *reader, QObject *receiver, ImageDone done)
+{
+    struct Result {
+        QImage          image;
+        MediaChunkError error;
+    };
+    auto watcher = new QFutureWatcher<Result>(QCoreApplication::instance());
+    reader->setParent(watcher);
+    const QPointer<QObject>    guard(receiver);
+    const QPointer<FileReader> input(reader);
+    const auto                 cancelled = std::make_shared<std::atomic<bool>>(false);
+    auto                       cancel    = [input, cancelled] {
+        cancelled->store(true);
+        if (input)
+            input->abort();
+    };
+    QObject::connect(receiver, &QObject::destroyed, watcher, cancel);
+    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, watcher, [watcher, cancel] {
+        cancel();
+        watcher->waitForFinished(); // A decoder must stop before its device is destroyed.
+    });
+    QObject::connect(
+        watcher, &QFutureWatcher<Result>::finished, watcher, [watcher, guard, cancelled, done = std::move(done)] {
+            const auto result = watcher->result();
+            watcher->deleteLater();
+            if (guard)
+                done(result.image,
+                     cancelled->load()
+                         ? MediaChunkError(MediaChunkError::Cancelled, QStringLiteral("Image load cancelled"))
+                         : result.error);
+        });
+    watcher->setFuture(QtConcurrent::run([reader] {
+        QImageReader decoder(reader);
+        decoder.setAutoTransform(true);
+        const auto size = decoder.size();
+        if (!size.isValid() && reader->errorCode() != MediaChunkError::None)
+            return Result { {}, { reader->errorCode(), reader->errorString() } };
+        if (!size.isValid() || quint64(size.width()) * quint64(size.height()) > MaxImagePixels)
+            return Result { {}, { MediaChunkError::Unavailable, QObject::tr("Unsupported image dimensions") } };
+        const auto image = decoder.read();
+        if (image.isNull()) {
+            const auto code = reader->errorCode();
+            return Result { {},
+                            { code == MediaChunkError::None ? MediaChunkError::Failed : code,
+                              code == MediaChunkError::None ? decoder.errorString() : reader->errorString() } };
+        }
+        return Result { image, {} };
+    }));
+    return cancel;
+}
+}
+
+ChatMediaViewerSource::ChatMediaViewerSource(FileSharingManager *manager, PsiAccount *account,
+                                             const HistoryArchive::Key &key, QString source, QImage preview,
+                                             QString path, qint64 position) :
+    manager_(manager), account_(account), source_(std::move(source)), initialPosition_(position)
+{
+    view_.key   = "initial";
+    view_.image = std::move(preview);
+    if (QFileInfo(path).isAbsolute())
+        view_.path = path;
+    view_.name     = QFileInfo(path).fileName();
+    view_.revision = 1;
+    if (manager && account)
+        browser_ = manager->chatMedia(account, key, this);
+    if (browser_)
+        connect(browser_, &ChatMedia::changed, this, [this] {
+            if (!started_ || refreshPending_)
+                return;
+            refreshPending_ = true;
+            QTimer::singleShot(750, this, [this] {
+                refreshPending_ = false;
+                refresh();
+            });
+        });
+    if (account)
+        connect(account, &QObject::destroyed, this, [this] {
+            cancelContent();
+            view_.navigating = false;
+            view_.state      = State::Failed;
+            view_.error      = tr("Account closed");
+            publish();
+        });
+    if (browser_)
+        connect(browser_, &QObject::destroyed, this, [this] {
+            view_.navigating = false;
+            view_.error      = tr("Chat media history unavailable");
+            publish();
+        });
+}
+ChatMediaViewerSource::~ChatMediaViewerSource() { cancelContent(); }
+void ChatMediaViewerSource::cancelContent()
+{
+    ++contentEpoch_;
+    disconnect(integrity_);
+    auto opening = std::exchange(opening_, {}), decoding = std::exchange(decoding_, {});
+    if (opening)
+        opening();
+    if (decoding)
+        decoding();
+}
+void ChatMediaViewerSource::publish() { emit changed(view_); }
+void ChatMediaViewerSource::start()
+{
+    started_ = true;
+    publish();
+    refresh();
+}
+void ChatMediaViewerSource::setFilter(MediaFilter filter)
+{
+    view_.navigating = false;
+    if (browser_)
+        browser_->setFilter(filter);
+    if (started_)
+        refresh();
+}
+void ChatMediaViewerSource::refresh()
+{
+    if (!browser_ || !account_)
+        return;
+    if (view_.navigating) {
+        if (!refreshPending_) {
+            refreshPending_ = true;
+            QTimer::singleShot(200, this, [this] {
+                refreshPending_ = false;
+                refresh();
+            });
+        }
+        return;
+    }
+    const auto                            epoch = ++queryEpoch_;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    browser_->requestEntry(source_, [guard, epoch](ChatMedia::Page page, bool ok) {
+        if (!guard || guard->queryEpoch_ != epoch)
+            return;
+        if (!ok) {
+            guard->view_.navigating = false;
+            guard->view_.error      = tr("Cannot read chat media");
+            guard->publish();
+            return;
+        }
+        if (!page.entries.isEmpty()) {
+            if (!guard->entry_ || guard->entry_->type != page.entries.first().type)
+                guard->select(page.entries.first());
+            else {
+                guard->entry_      = page.entries.first();
+                guard->view_.index = guard->entry_->index;
+                guard->view_.total = guard->entry_->total;
+                guard->view_.path
+                    = guard->entry_->storage.availability == ChatMedia::Availability::Complete && guard->item_
+                    ? guard->item_->localFilePath()
+                    : QString();
+                guard->publish();
+            }
+        } else if (guard->entry_) {
+            guard->browser_->requestAdjacent(*guard->entry_, false, [guard, epoch](ChatMedia::Page page, bool ok) {
+                if (!guard || guard->queryEpoch_ != epoch)
+                    return;
+                if (!ok || !page.entries.isEmpty()) {
+                    guard->choose(std::move(page), ok, 1, true);
+                    return;
+                }
+                guard->browser_->requestAdjacent(*guard->entry_, true, [guard, epoch](ChatMedia::Page page, bool ok) {
+                    if (guard && guard->queryEpoch_ == epoch)
+                        guard->choose(std::move(page), ok, -1, true);
+                });
+            });
+        } else {
+            guard->browser_->requestStatistics([guard, epoch](ChatMedia::Statistics stats, bool ok) {
+                if (!guard || guard->queryEpoch_ != epoch)
+                    return;
+                guard->view_.index = 0;
+                guard->view_.total = ok ? stats.total() : 0;
+                guard->publish();
+            });
+        }
+    });
+}
+void ChatMediaViewerSource::adjacent(int direction)
+{
+    if (!browser_ || !account_ || !direction) {
+        view_.navigating = false;
+        publish();
+        return;
+    }
+    direction_                                  = direction;
+    skips_                                      = 0;
+    const auto                            epoch = ++queryEpoch_;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    view_.navigating = true;
+    publish();
+    const auto done = [guard, epoch, direction](ChatMedia::Page page, bool ok) {
+        if (guard && guard->queryEpoch_ == epoch)
+            guard->choose(std::move(page), ok, direction, false);
+    };
+    if (entry_)
+        browser_->requestAdjacent(*entry_, direction < 0, done);
+    else
+        browser_->requestPage({}, direction < 0, 1, done);
+}
+void ChatMediaViewerSource::choose(ChatMedia::Page page, bool ok, int direction, bool replace)
+{
+    view_.navigating = false;
+    if (!ok) {
+        view_.state = State::Failed;
+        view_.error = tr("Cannot read chat media");
+        publish();
+        return;
+    }
+    if (page.entries.isEmpty()) {
+        if (replace) {
+            cancelContent();
+            entry_.reset();
+            item_       = nullptr;
+            view_       = {};
+            view_.state = State::Empty;
+            view_.key   = QString::number(contentEpoch_);
+        }
+        publish();
+        return;
+    }
+    direction_ = direction;
+    select(page.entries.first());
+}
+void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
+{
+    const bool initial = !entry_;
+    auto       preview = initial ? view_.image : QImage();
+    cancelContent();
+    entry_         = entry;
+    source_        = entry.sourceId;
+    view_          = {};
+    view_.key      = QString::number(contentEpoch_);
+    view_.revision = 1;
+    view_.name     = entry.name;
+    view_.index    = entry.index;
+    view_.total    = entry.total;
+    view_.image    = preview;
+    item_          = manager_ && account_ ? manager_->chatMediaItem(entry, account_) : nullptr;
+    if (!item_) {
+        fail({ MediaChunkError::Unavailable, tr("Media source unavailable") });
+        return;
+    }
+    if (entry.storage.availability == ChatMedia::Availability::Complete)
+        view_.path = item_->localFilePath();
+    if (entry.type == HistoryMediaRefs::Video) {
+        const QUrl                              url(QStringLiteral("share:%1").arg(item_->sums().first().toString()));
+        const QPointer<FileSharingDeviceOpener> opener(account_->fileSharingDeviceOpener());
+        const auto                              position = std::exchange(initialPosition_, 0);
+        view_.video = [url, opener, position](QWidget *parent, std::function<void()> fullscreen) {
+            return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position)
+                          : nullptr;
+        };
+        view_.state = State::Ready;
+        publish();
+        return;
+    }
+    if (entry.type != HistoryMediaRefs::Image && preview.isNull()) {
+        view_.state = State::Ready;
+        publish();
+        return;
+    }
+    view_.state = State::Loading;
+    publish();
+    const auto                            epoch = contentEpoch_;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    opening_ = manager_->open(
+        item_, this,
+        [guard, epoch](FileReader *reader, MediaChunkError error) {
+            if (!guard || guard->contentEpoch_ != epoch) {
+                if (reader)
+                    reader->deleteLater();
+                return;
+            }
+            if (!error.isEmpty()) {
+                guard->fail(error);
+                return;
+            }
+            guard->decoding_ = decode(reader, guard, [guard, epoch](QImage image, MediaChunkError error) {
+                if (!guard || guard->contentEpoch_ != epoch)
+                    return;
+                if (!error.isEmpty()) {
+                    guard->fail(error);
+                    return;
+                }
+                guard->view_.state = State::Ready;
+                guard->view_.error.clear();
+                if (!image.isNull()) {
+                    guard->view_.image = std::move(image);
+                    ++guard->view_.revision;
+                }
+                if (guard->item_)
+                    guard->view_.path = guard->item_->localFilePath();
+                guard->publish();
+            });
+            if (!guard->item_->isCached())
+                if (auto download = guard->manager_->download(guard->item_))
+                    guard->integrity_
+                        = connect(download, &FileDownload::failed, guard, [guard, epoch](MediaChunkError error) {
+                              if (!guard || guard->contentEpoch_ != epoch)
+                                  return;
+                              guard->view_.state = State::Failed;
+                              guard->view_.error = error.message();
+                              guard->publish();
+                          });
+        },
+        MaxImageBytes);
+}
+void ChatMediaViewerSource::fail(MediaChunkError error)
+{
+    view_.state = State::Failed;
+    view_.error = error.message();
+    publish();
+    if (error.code() != MediaChunkError::Unavailable || ++skips_ >= 100 || !browser_)
+        return;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    const auto                            query = ++queryEpoch_;
+    browser_->requestAdjacent(*entry_, direction_ < 0, [guard, query](ChatMedia::Page page, bool ok) {
+        if (guard && guard->queryEpoch_ == query)
+            guard->choose(std::move(page), ok, guard->direction_, false);
+    });
+}
+void ChatMediaViewerSource::retry()
+{
+    if (entry_) {
+        if (account_ && item_)
+            account_->fileSharingDeviceOpener()->retry(
+                QUrl(QStringLiteral("share:%1").arg(item_->sums().first().toString())));
+        skips_ = 0;
+        select(*entry_);
+    } else
+        refresh();
+}
+bool ChatMediaViewerSource::saveAs(QWidget *parent)
+{
+    if (!account_ || !item_)
+        return false;
+    const QUrl url(QStringLiteral("share:%1").arg(item_->sums().first().toString()));
+    account_->fileSharingDeviceOpener()->saveAs(url, parent);
+    return true;
+}
+void ChatMediaViewerSource::install(MamChatWidget *chat, PsiAccount *account, const HistoryArchive::Key &key)
+{
+    if (!chat || !account || !account->psi())
+        return;
+    const QPointer<PsiAccount>         acc(account);
+    const QPointer<FileSharingManager> manager(account->psi()->fileSharingManager());
+    chat->setMediaOpenHandler([acc, manager, key](const QImage &image, const QString &path, const QString &source,
+                                                  qint64 position, bool fullscreen) {
+        auto viewer = acc && manager && !source.isEmpty()
+            ? new ChatMediaViewerSource(manager, acc, key, source, image, path, position)
+            : nullptr;
+        MediaViewer::showImage(image, path, viewer, fullscreen);
+    });
+}

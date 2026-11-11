@@ -18,9 +18,12 @@
  */
 
 #include "filesharingitem.h"
+#include "aesgcmurl.h"
 #include "filecache.h"
+#include "filedownload.h"
+#include "filereader.h"
 #include "filesharingchunksource.h"
-#include "filesharinghashjob.h"
+#include "filesharingfilejob.h"
 #include "filesharingmanager.h"
 #include "filesharingpublication.h"
 #include "filesourceselector.h"
@@ -399,6 +402,11 @@ bool FileSharingItem::savePublishedFile()
     const auto path = localFilePath();
     if (!QFileInfo(path).isReadable())
         return false;
+    const auto detected = QMimeDatabase().mimeTypeForFile(path, QMimeDatabase::MatchContent).name();
+    if (!detected.isEmpty() && detected != QLatin1String("application/octet-stream")) {
+        _mimeType = detected;
+        meta.insert("type", detected);
+    }
     return _manager->trackExternal(_sums, QFileInfo(path), meta, FILE_TTL) != nullptr;
 }
 
@@ -470,6 +478,8 @@ FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader
             file.addHash(h);
 
     auto downloader = new FileShareDownloader(_acc, _urlOnly ? HashSums() : _sums, file, _jids, _uris, this);
+    if (!range)
+        _downloadError = {};
     if (!preferredSource.isEmpty())
         downloader->preferSource(preferredSource);
     if (range) {
@@ -500,9 +510,18 @@ FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader
 
         // Cache insertion and item state changes are confined to this object's
         // thread, even when hashing multi-gigabyte URL-only downloads.
-        const auto completeCache = [this, dlFileName, vm = std::move(vm)](const HashSums &actualHashes) {
+        const auto completeCache = [this, dlFileName, vm = std::move(vm)](const HashSums &actualHashes,
+                                                                          MediaChunkError error) mutable {
+            _downloadError           = std::move(error);
             const bool     automatic = std::exchange(_autoDownloading, false);
             FileCacheItem *cache     = nullptr;
+            if (!actualHashes.isEmpty()) {
+                const auto detected = QMimeDatabase().mimeTypeForFile(dlFileName, QMimeDatabase::MatchContent).name();
+                if (!detected.isEmpty() && detected != QLatin1String("application/octet-stream")) {
+                    _mimeType = detected;
+                    vm.insert("type", detected);
+                }
+            }
             if (!actualHashes.isEmpty())
                 cache = _manager->moveToCache(actualHashes, QFileInfo(dlFileName), vm, FILE_TTL);
             _autoFailed |= automatic && !cache; // never retry unasked
@@ -513,29 +532,28 @@ FileShareDownloader *FileSharingItem::download(std::optional<FileShareDownloader
                             _sums.append(hash);
                     _fileSize = cache->size();
                     _manager->rememberUrlContent(_acc->id(), _sums.first(), actualHashes.first());
-                }
+                } else
+                    for (const auto &hash : actualHashes)
+                        if (!_sums.contains(hash))
+                            _sums.append(hash);
                 _fileType = FileType::LocalFile;
                 _displayName = vm.value("name").toString();
                 _fileName    = cache->filePath();
             }
+            if (!cache && _downloadError.isEmpty())
+                _downloadError = QStringLiteral("Cannot retain downloaded media");
             emit downloadFinished();
         };
-        if (_urlOnly) {
-            // Hashing the whole payload on the GUI thread would stall Psi for
-            // multi-gigabyte OOB files. The temporary file is kept alive until
-            // the worker finishes, and cleaned up if this item is destroyed.
-            FileSharingHashJob::sha256TemporaryFile(
-                dlFileName, this, [completeCache](const XMPP::Hash &hash) {
-                    completeCache(hash.isValid() ? HashSums { hash } : HashSums {});
-                });
-        } else {
-            completeCache(_sums);
-        }
+        // Whole HTTP and authenticated AES downloads use the same checksum
+        // policy as range storage, including all announced algorithms.
+        FileSharingFileJob::verifyTemporaryFile(dlFileName, _urlOnly ? HashSums {} : _sums, this, completeCache);
     });
 
     connect(downloader, &FileShareDownloader::failed, this, [downloader, this]() {
         downloader->disconnect(this);
         _autoFailed |= std::exchange(_autoDownloading, false);
+        _downloadError = { downloader->hasIntegrityError() ? MediaChunkError::IntegrityError : MediaChunkError::Failed,
+                           downloader->errorString() };
         emit downloadFinished();
     });
 
@@ -550,7 +568,8 @@ void FileSharingItem::checkRemote()
     if (!url.isValid())
         return;
     _remoteCheck = RemoteCheck::Running;
-    QNetworkRequest request(url.adjusted(QUrl::RemoveFragment));
+    const auto      encrypted = AesGcmUrl::parse(url);
+    QNetworkRequest request(encrypted ? encrypted->transport : url.adjusted(QUrl::RemoveFragment));
     // As in Conversations: the size of the stored bytes, not of an encoding.
     request.setRawHeader("Accept-Encoding", "identity");
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
@@ -559,14 +578,14 @@ void FileSharingItem::checkRemote()
 #endif
     auto *reply = _acc->psi()->networkAccessManager()->head(request);
     connect(reply, &QNetworkReply::finished, reply, &QObject::deleteLater);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, encrypted]() {
         _remoteCheck     = RemoteCheck::Done;
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         if (reply->error() == QNetworkReply::NoError && status >= 200 && status < 300) {
             bool       ok   = false;
             const auto size = reply->rawHeader("Content-Length").trimmed().toULongLong(&ok);
-            if (ok && size && !_fileSize) // a zero length tells nothing of a file
-                _fileSize = size;
+            if (ok && size && !_fileSize && (!encrypted || size >= 16))
+                _fileSize = encrypted ? size - 16 : size;
             // The extension of the file name in the URL wins over the server's type.
             const QString type
                 = QString::fromLatin1(reply->rawHeader("Content-Type")).section(QLatin1Char(';'), 0, 0).trimmed();
@@ -601,16 +620,38 @@ void FileSharingItem::autoDownload(quint64 limit)
     }
     if (!_fileSize || *_fileSize > limit)
         return;
-    auto *downloader = download();
-    if (!downloader)
-        return;
     _autoDownloading = true;
-    downloader->setMaximumSize(limit);
-    downloader->setSelfDelete(true);
-    // read just for cache
-    connect(downloader, &FileShareDownloader::readyRead, this,
-            [downloader]() { downloader->read(downloader->bytesAvailable()); });
-    downloader->open();
+    const QPointer<FileSharingItem> guard(this);
+    const auto                      sources       = FileSourceSelector::prioritized(_uris);
+    const bool                      encryptedOnly = !sources.isEmpty()
+        && std::all_of(sources.cbegin(), sources.cend(),
+                       [](const QString &uri) { return bool(AesGcmUrl::parse(QUrl(uri))); });
+    if (!_urlOnly && !encryptedOnly) {
+        if (auto controller = _manager->download(this)) {
+            controller->downloadAll([guard](const QString &path, MediaChunkError error) {
+                if (!guard)
+                    return;
+                guard->_autoDownloading = false;
+                guard->_downloadError   = error;
+                guard->_autoFailed |= !error.isEmpty() || path.isEmpty() || !guard->savePublishedFile();
+                emit guard->downloadFinished();
+            });
+            return;
+        }
+    }
+    _manager->open(
+        this, this,
+        [guard](FileReader *reader, MediaChunkError error) {
+            if (reader) {
+                reader->abort();
+                reader->deleteLater();
+            }
+            if (!guard)
+                return;
+            guard->_autoDownloading = false;
+            guard->_autoFailed |= !error.isEmpty();
+        },
+        limit);
 }
 
 // try take http or ftp source to be passed directly to media backend

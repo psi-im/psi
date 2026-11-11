@@ -15,7 +15,9 @@ budgets are 150 ms for interactive reads and 400 ms for background chunks,
 excluding queued admission.
 
 A gap returns zero on the owner thread and later emits `readyRead`. A decoder on
-a foreign thread waits on a condition variable. The device has one cursor caller
+a foreign thread waits on a condition variable until its requested read is filled
+or reaches EOF. It may reuse already resident bytes for buffered codec probing;
+that read-ahead never creates additional network demand. The device has one cursor caller
 at a time: the owner must not operate that cursor concurrently with the decoder.
 `abort()` is safe from either thread and wakes pending reads. Consumers must
 stop before closing or destroying the device. qite interrupts the device before
@@ -59,10 +61,11 @@ Save As adds a full goal and then exports the completed local file through the
 existing bounded `QSaveFile` copy job. An existing destination survives failure
 or cancellation. Downloading directly to the chosen destination remains future
 work. This implementation downloads to the cache before exporting the completed
-file. Address-only and unknown-size resources retain their existing network
-path. Cross-account identity unification, transport consolidation, attributed
-source recovery, persistent completion evidence and bounded item lifetimes
-remain part of the broader access-layer plan.
+file. Address-only, unknown-size and authenticated encrypted sources use the
+common cancellable preparation path before export. AES GCM plaintext is exposed
+only after whole-file authentication. Complete local files satisfy a full goal
+without fetching or copying their bytes into range storage. See the
+[chat media opening contract](chat-media-api.md#opening-content).
 
 ## Disk pressure and partial-file lifetime
 

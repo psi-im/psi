@@ -31,11 +31,11 @@
 #include "activecontactsmenu.h"
 #include "avatars.h"
 #include "avcall/avcall.h"
+#include "chatmediaviewersource.h"
 #include "coloropt.h"
 #include "eventdb.h"
 #include "fancylabel.h"
 #include "filesharingmanager.h"
-#include "chatmediaimagesource.h"
 #include "historysync.h"
 #include "iconaction.h"
 #include "iconlabel.h"
@@ -582,9 +582,11 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     delete ui_.log; // The .ui placeholder is not part of the native timeline.
     configureNativeChat(nativeTimeline_, account(), false);
-    ChatMediaImageSource::install(nativeTimeline_, account(),
-        { account()->id(), account()->jid().bare(), jid().bare(), false });
     roomOccupantChat_ = isRoomOccupantChat();
+    ChatMediaViewerSource::install(nativeTimeline_, account(),
+                                   { account()->id(), account()->jid().bare(),
+                                     roomOccupantChat_ ? jid().full() : jid().bare(), false,
+                                     roomOccupantChat_ ? EDB::GroupChatContact : EDB::Contact });
     if (nativeTimeline_)
         nativeTimeline_->setLocalDeletionEnabled(!roomOccupantChat_
                                                  && (account()->edb()->features() & EDB::LocalDeletion));

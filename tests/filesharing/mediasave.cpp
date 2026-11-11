@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <QtTest>
 #include <functional>
 
@@ -37,6 +38,60 @@ class MediaSaveTest : public QObject {
         return file.readAll();
     }
 private slots:
+    void asynchronousPreparationExportsThroughTheSameSaveJob()
+    {
+        QTemporaryDir directory;
+        ITEMediaState state;
+        const auto    path      = directory.filePath("saved");
+        int           completed = 0;
+        new FileSharingMediaSave(
+            [](QObject *owner, FileSharingMediaSave::OpenReady ready) -> MediaChunkAbort {
+                QTimer::singleShot(0, owner, [owner, ready] {
+                    auto input = new QBuffer(owner);
+                    input->setData("verified");
+                    input->open(QIODevice::ReadOnly);
+                    ready(input, 8, {});
+                });
+                return {};
+            },
+            path, &state, this,
+            [&](const QString &result, const QString &error) {
+                QVERIFY(error.isEmpty());
+                QCOMPARE(result, path);
+                ++completed;
+            });
+        QTRY_COMPARE(completed, 1);
+        QCOMPARE(read(path), QByteArray("verified"));
+    }
+
+    void cancellingAsynchronousPreparationPreservesTheDestination()
+    {
+        QTemporaryDir directory;
+        const auto    path = directory.filePath("existing");
+        QFile         previous(path);
+        QVERIFY(previous.open(QIODevice::WriteOnly));
+        previous.write("keep");
+        previous.close();
+        ITEMediaState state;
+        int           started = 0, cancelled = 0, completed = 0;
+        auto          job = new FileSharingMediaSave(
+            [&](QObject *, FileSharingMediaSave::OpenReady) -> MediaChunkAbort {
+                ++started;
+                return [&] { ++cancelled; };
+            },
+            path, &state, this,
+            [&](const QString &result, const QString &error) {
+                QVERIFY(result.isEmpty());
+                QVERIFY(!error.isEmpty());
+                ++completed;
+            });
+        QTRY_COMPARE(started, 1);
+        job->cancel();
+        QCOMPARE(cancelled, 1);
+        QCOMPARE(completed, 1);
+        QCOMPARE(read(path), QByteArray("keep"));
+    }
+
     void explicitGoalExportsAfterCompletion()
     {
         QTemporaryDir                  directory;

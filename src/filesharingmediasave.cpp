@@ -24,7 +24,20 @@ FileSharingMediaSave::FileSharingMediaSave(QIODevice *input, std::optional<quint
             finish(output_.errorString());
             return;
         }
-        if (download_) {
+        if (open_) {
+            const QPointer<FileSharingMediaSave> guard(this);
+            cancelOpen_ = open_(this, [guard](QIODevice *input, quint64 size, QString error) {
+                if (!guard || guard->stopped_)
+                    return;
+                if (!error.isEmpty()) {
+                    guard->finish(error);
+                    return;
+                }
+                guard->size_ = size;
+                guard->attachInput(input);
+                guard->openInput();
+            });
+        } else if (download_) {
             const QPointer<FileSharingMediaSave> guard(this);
             goal_ = download_->downloadAll(
                 [guard](const QString &path, MediaChunkError error) {
@@ -61,6 +74,13 @@ FileSharingMediaSave::FileSharingMediaSave(FileDownload *download, const QString
     downloadPinned_ = true;
     connect(download, &QObject::destroyed, this, [this] { fail(tr("Download source disappeared")); });
 }
+FileSharingMediaSave::FileSharingMediaSave(Open open, const QString &path, ITEMediaState *state, QObject *parent,
+                                           Callback completed, ProgressCallback progress) :
+    FileSharingMediaSave(static_cast<QIODevice *>(nullptr), {}, false, path, state, parent, std::move(completed),
+                         std::move(progress))
+{
+    open_ = std::move(open);
+}
 
 FileSharingMediaSave::~FileSharingMediaSave()
 {
@@ -70,6 +90,8 @@ FileSharingMediaSave::~FileSharingMediaSave()
 
 void FileSharingMediaSave::releaseGoal()
 {
+    if (auto cancel = std::exchange(cancelOpen_, {}))
+        cancel();
     if (!download_)
         return;
     if (auto goal = std::exchange(goal_, 0))

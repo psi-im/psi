@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "mediachunktypes.h"
 #include <QObject>
 #include <QPointer>
 #include <QSaveFile>
@@ -23,6 +24,10 @@ public:
                          ProgressCallback onProgress = {});
     FileSharingMediaSave(FileDownload *download, const QString &path, ITEMediaState *state, QObject *parent,
                          Callback onFinished = {}, ProgressCallback onProgress = {});
+    using OpenReady = std::function<void(QIODevice *, quint64, QString)>;
+    using Open      = std::function<MediaChunkAbort(QObject *, OpenReady)>;
+    FileSharingMediaSave(Open, const QString &path, ITEMediaState *, QObject *parent, Callback onFinished = {},
+                         ProgressCallback onProgress = {});
     ~FileSharingMediaSave() override;
     void validated();
     void sourceClosed();
@@ -38,6 +43,8 @@ private:
     void                    pump();
     void                    finish(const QString &error = {});
     Callback                onFinished_;
+    Open                    open_;
+    MediaChunkAbort         cancelOpen_;
     ProgressCallback        onProgress_;
     QSaveFile               output_;
     QPointer<QIODevice>     input_;

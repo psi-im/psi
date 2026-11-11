@@ -1,4 +1,5 @@
 #pragma once
+#include "aesgcmurl.h"
 #include <QHash>
 #include <QMultiMap>
 #include <QStringList>
@@ -13,6 +14,8 @@ public:
     static Type type(const QString &uri)
     {
         const auto scheme = QUrl(uri).scheme();
+        if (scheme == QLatin1String("aesgcm") && AesGcmUrl::parse(QUrl(uri)))
+            return Type::HTTP;
         if (scheme == QLatin1String("http") || scheme == QLatin1String("https"))
             return Type::HTTP;
         if (scheme == QLatin1String("xmpp"))

@@ -22,6 +22,7 @@
 
 #include "chatmedia.h"
 #include "filesharingitem.h"
+#include "mediachunktypes.h"
 #include "qite.h"
 
 #include <QNetworkReply>
@@ -84,6 +85,10 @@ public:
     // Lazily resolve through the same item registry used by message views.
     FileSharingItem *chatMediaItem(const ChatMedia::Entry &, PsiAccount *account);
     FileReader *reader(FileSharingItem *item, QObject *parent, quint64 offset = 0, std::optional<quint64> length = {});
+    using OpenDone = std::function<void(FileReader *, MediaChunkError)>;
+    // Queued completion; the returned function cancels only this consumer.
+    // Whole authenticated/unknown-length sources are shared and verified first.
+    MediaChunkAbort           open(FileSharingItem *, QObject *owner, OpenDone, quint64 maximumBytes = 0);
     void        removeIncomplete(const std::function<void(quint64, const QString &)> &completed);
     FileSharingJingleSession *jingleMediaSessions(PsiAccount *account);
     FileCacheItem *cacheItem(const QList<XMPP::Hash> &hashes, bool reborn = false, QString *fileName = nullptr);
@@ -143,6 +148,7 @@ public:
 
     static XMPP::Hash urlToSourceId(const QUrl &url);
     QIODevice        *open(QUrl &url) override;
+    CancelOpen        openAsync(QUrl, QObject *, OpenDone) override;
     void              close(QIODevice *dev) override;
     void              abort(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;

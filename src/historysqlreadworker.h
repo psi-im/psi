@@ -41,7 +41,7 @@ struct HistoryReadRequest {
     HistoryArchive::Key archiveKey;
     QString cursor;
     QString fileDatabasePath;
-    HistoryMediaRefs::Cursor mediaCursor;
+    HistoryMediaRefs::Query mediaQuery;
     QString sender, messageId;
     QDateTime messageTime;
     int archiveIndex = -1, snapshotCount = -1;

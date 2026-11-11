@@ -603,9 +603,12 @@ private slots:
             QVERIFY(query.exec("CREATE TABLE file_hashes(file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE,"
                                "position INTEGER NOT NULL,algorithm TEXT NOT NULL,digest BLOB NOT NULL,"
                                "PRIMARY KEY(file_id,position))"));
+            QVERIFY(query.exec("CREATE TABLE url_content(account TEXT NOT NULL,url_key TEXT NOT NULL,"
+                               "content_hash TEXT NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(account,url_key))"));
             QVERIFY(query.exec("PRAGMA user_version=2"));
             for (int index = 1; index <= 2; ++index) {
                 QVariantMap metadata;
+                metadata.insert("type", "image/png");
                 if (index == 2)
                     metadata.insert("link", original);
                 QByteArray  encoded;
@@ -642,6 +645,10 @@ private slots:
             QVERIFY(stamp.exec("SELECT external_mtime FROM files WHERE placement=1"));
             QVERIFY(stamp.next());
             QVERIFY(stamp.value(0).isNull()); // Unknown is distinct from a valid timestamp at the Unix epoch.
+            stamp.finish();
+            QVERIFY(stamp.exec("SELECT media_type FROM files WHERE placement=0"));
+            QVERIFY(stamp.next());
+            QCOMPARE(stamp.value(0).toString(), QString("image/png"));
         }
         QVERIFY(!cache->get(hashOf("old original"))); // No stamp existed to prove the old original is unchanged.
         QVERIFY(QFileInfo::exists(original));

@@ -664,7 +664,7 @@ private slots:
         QCOMPARE(query.value(0).toInt(), 1);
         QVERIFY(query.exec("PRAGMA user_version"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 6);
+        QCOMPARE(query.value(0).toInt(), 7);
         QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
     }
 
@@ -717,53 +717,54 @@ private slots:
 
     // ------------------------------------------------------------------ links in history
 
-    void chatMediaPagesUseChronologyAndIsolateChats()
+    void chatMediaPagesUseStableResourceCursorsAndIsolateChats()
     {
         migrateHistory();
         const auto message = messageWith(alice,
                                          { referenceOf(mediaOf("one", { "https://example.org/1" })),
                                            referenceOf(mediaOf("two", { "https://example.org/2" })) });
-        const auto first   = store(message);
-        const auto second  = store(message);
-        const auto foreign = store(message, 2);
+        const auto first = store(message), second = store(message), foreign = store(message, 2);
         QVERIFY(first && second && foreign);
         QSqlQuery query(history);
         QVERIFY(query.exec("INSERT INTO contacts VALUES(3,'corporate',3,'alice@example.org',-1)"));
         QVERIFY(store(message, 3));
-        // Archive pages may arrive after newer live messages.
-        QVERIFY(
-            query.exec(QString("UPDATE events SET history_date_ms=CASE WHEN id=%1 THEN 200 ELSE 100 END").arg(first)));
-        QSqlError error;
-        auto      page = HistoryMediaRefs::chatLinks(history, key, {}, false, 1, &error);
-        QVERIFY(!error.isValid());
-        QCOMPARE(page.size(), 1);
-        QCOMPARE(page.first().cursor.eventId, second);
-        QCOMPARE(page.first().ordinal, 0);
-        const auto cursor = page.first().cursor;
-        // A deleted cursor row must not break keyset pagination.
-        QVERIFY(query.exec(QString("DELETE FROM message_media_refs WHERE event_id=%1 AND ordinal=0").arg(second)));
-        page = HistoryMediaRefs::chatLinks(history, key, cursor, false, 10, &error);
-        QCOMPARE(page.size(), 3);
-        QCOMPARE(page.first().cursor.eventId, second);
-        QCOMPARE(page.first().ordinal, 1);
-        QCOMPARE(page.last().cursor.eventId, first);
-        page = HistoryMediaRefs::chatLinks(history, key, {}, true, 10, &error);
-        QCOMPARE(page.size(), 3);
-        QCOMPARE(page.first().cursor.eventId, first);
-        QCOMPARE(page.first().ordinal, 1);
-        page = HistoryMediaRefs::chatLinks(history, key, page.last().cursor, true, 10, &error);
-        QVERIFY(page.isEmpty());
-        QVERIFY(!error.isValid());
+        // Import order and missing message dates must not alter resource cursors.
+        QVERIFY(query.exec(QString("UPDATE events SET history_date_ms=200 WHERE id=%1").arg(first)));
         QVERIFY(query.exec(QString("UPDATE events SET history_date_ms=NULL WHERE id=%1").arg(second)));
-        page = HistoryMediaRefs::chatLinks(history, key, {}, false, 1, &error);
-        QVERIFY(page.first().cursor.undated);
-        page = HistoryMediaRefs::chatLinks(history, key, page.first().cursor, false, 1, &error);
-        QVERIFY(!page.first().cursor.undated);
-        QCOMPARE(page.first().cursor.eventId, first);
-        page = HistoryMediaRefs::chatLinks(history, key, page.first().cursor, true, 1, &error);
-        QVERIFY(page.first().cursor.undated);
-        QCOMPARE(page.first().cursor.eventId, second);
-        QVERIFY(!error.isValid());
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        HistoryMediaRefs::Query request;
+        request.older = false;
+        request.limit = 1;
+        auto page     = HistoryMediaRefs::chatAssets(history, key, request, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().total, quint64(2));
+        QCOMPARE(page.first().ordinal, 0);
+        request.cursor = page.first().cursor;
+        // Delete all occurrences of the current resource in this chat.
+        QVERIFY(query.exec(
+            QString("DELETE FROM message_media_refs WHERE event_id IN (%1,%2) AND ordinal=0").arg(first).arg(second)));
+        page = HistoryMediaRefs::chatAssets(history, key, request, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().ordinal, 1);
+        auto adjacent     = request;
+        adjacent.adjacent = true;
+        adjacent.source   = mediaOf("one", { "https://example.org/1" }).file.computedHashes().first().toString();
+        QCOMPARE(HistoryMediaRefs::chatAssets(history, key, adjacent, &error).size(), 1);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.first().total, quint64(1));
+        QCOMPARE(page.first().index, quint64(1));
+        request.cursor = page.first().cursor;
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, request, &error).isEmpty());
+        request.cursor = {};
+        request.older  = true;
+        page           = HistoryMediaRefs::chatAssets(history, key, request, &error);
+        QCOMPARE(page.size(), 1);
+        request.cursor = page.first().cursor;
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, request, &error).isEmpty());
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
     }
 
     void chatMediaUsesVisibleRevisionAndHidesDeletedOrRetractedMessages()
@@ -780,14 +781,15 @@ private slots:
                            .arg(edit)
                            .arg(root)));
         QSqlError error;
-        auto      page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error);
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        auto page = HistoryMediaRefs::chatAssets(history, key, {}, &error);
         QVERIFY(!error.isValid());
         QCOMPARE(page.size(), 1); // The edit removed the original attachment.
-        QCOMPARE(page.first().cursor.eventId, visible);
+        QCOMPARE(page.first().eventId, visible);
         QVERIFY(q.exec(QString("UPDATE events SET message_flags=8 WHERE id=%1").arg(visible)));
-        QVERIFY(HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error).isEmpty());
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, {}, &error).isEmpty());
         QVERIFY(q.exec(QString("UPDATE events SET message_flags=16 WHERE id=%1").arg(visible)));
-        QVERIFY(HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error).isEmpty());
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, {}, &error).isEmpty());
         QVERIFY(!error.isValid());
     }
 
@@ -808,28 +810,28 @@ private slots:
         QVERIFY(damaged.exec("UPDATE events SET extra_data='not JSON' WHERE id=1"));
         int       reads = 0, counts = 0, completed = 0;
         ChatMedia browser(
-            [&](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
+            [&](ChatMedia::Query query, QObject *receiver, ChatMedia::LinksDone done) {
                 ++reads;
-                QTimer::singleShot(0, receiver, [&, cursor, older, limit, done] {
+                QTimer::singleShot(0, receiver, [&, query, done] {
                     QSqlError  e;
-                    const auto links = HistoryMediaRefs::chatLinks(history, key, cursor, older, limit, &e, true);
+                    const auto links = HistoryMediaRefs::chatAssets(history, key, query, &e);
                     done(links, !e.isValid());
                 });
             },
-            [&](QObject *receiver, ChatMedia::StatisticsDone done) {
+            [&](ChatMedia::Filter, QObject *receiver, ChatMedia::StatisticsDone done) {
                 ++counts;
                 QTimer::singleShot(0, receiver, [&, done] {
                     QSqlError  e;
-                    const auto stats = HistoryMediaRefs::chatStatistics(history, key, &e);
+                    const auto stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &e);
                     QVERIFY2(!e.isValid(), qPrintable(e.text()));
                     done(stats, !e.isValid());
                 });
             });
         browser.requestStatistics([&](ChatMedia::Statistics stats, bool ok) {
             QVERIFY(ok);
-            QCOMPARE(stats.complete, quint64(69));
-            QCOMPARE(stats.partial, quint64(68));
-            QCOMPARE(stats.remote, quint64(68));
+            QCOMPARE(stats.complete, quint64(1));
+            QCOMPARE(stats.partial, quint64(1));
+            QCOMPARE(stats.remote, quint64(1));
             QVERIFY(stats.stale);
             ++completed;
         });
@@ -842,8 +844,8 @@ private slots:
             QCOMPARE(page.entries.size(), 2);
             QVERIFY(page.hasMore);
             QVERIFY(page.next.valid());
-            QCOMPARE(page.entries.first().storage.availability, ChatMedia::Availability::Complete);
-            QCOMPARE(page.entries.last().storage.availability, ChatMedia::Availability::Remote);
+            QCOMPARE(page.entries.first().storage.availability, ChatMedia::Availability::Remote);
+            QCOMPARE(page.entries.last().storage.availability, ChatMedia::Availability::Partial);
             ++completed;
         });
         QTRY_COMPARE(completed, 2);
@@ -866,62 +868,63 @@ private slots:
         QVERIFY(!storedFile(partial, false, personal, 2).isEmpty());
         QSqlError error;
         QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error), qPrintable(error.text()));
-        auto stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        auto stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
-        QCOMPARE(stats.complete, quint64(2)); // Two occurrences, not four hash aliases.
+        QCOMPARE(stats.complete, quint64(1)); // Repeated announcements refer to one resource.
         QCOMPARE(stats.partial, quint64(0));  // Another account's partial ranges are inaccessible.
         QCOMPARE(stats.remote, quint64(1));
         const auto partId = storedFile(partial, false, corporate, 3);
         QVERIFY(!partId.isEmpty());
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
-        QCOMPARE(stats.complete, quint64(2));
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QCOMPARE(stats.complete, quint64(1));
         QCOMPARE(stats.partial, quint64(1));
         QCOMPARE(stats.remote, quint64(0));
-        auto page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error, true);
-        QCOMPARE(page.size(), 3);
+        auto page = HistoryMediaRefs::chatAssets(history, key, {}, &error);
+        QCOMPARE(page.size(), 2);
+        std::reverse(page.begin(), page.end());
         QCOMPARE(page.at(1).storage.downloadedBytes, quint64(3));
         QCOMPARE(page.at(1).storage.availability, ChatMedia::Availability::Partial);
         auto alias = partial;
         alias.file.setHashes({ partial.file.computedHashes().at(1) });
         QVERIFY(store(messageWith(alice, { referenceOf(alias) })));
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
-        QCOMPARE(stats.partial, quint64(2)); // The later announcement knows only the secondary hash.
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QCOMPARE(stats.partial, quint64(1)); // The later announcement knows only the secondary hash.
         auto url = messageWith(alice, {});
         url.urlAdd(Url("https://example.org/address-only"));
         QVERIFY(store(url));
         const auto address = MessageFileShares::urlIdentity(QUrl("https://example.org/address-only"));
         QVERIFY(catalog->rememberUrlContent(personal, address, full.file.computedHashes().first()));
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.remote, quint64(1));
         QVERIFY(catalog->rememberUrlContent(corporate, address, full.file.computedHashes().first()));
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
-        QCOMPARE(stats.complete, quint64(3));
-        QCOMPARE(stats.partial, quint64(2));
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QCOMPARE(stats.complete, quint64(1));
+        QCOMPARE(stats.partial, quint64(1));
         // Physical ownership changes drive counts; there is no counter to maintain.
         QSqlQuery files(FileDatabase::connection());
         files.prepare("UPDATE files SET max_age=1,created=0 WHERE id=:id");
         files.bindValue(":id", fullId);
         QVERIFY(files.exec());
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.complete, quint64(0));
-        QCOMPARE(stats.remote, quint64(3));
+        QCOMPARE(stats.remote, quint64(1));
         files.prepare("UPDATE files SET max_age=4294967295 WHERE id=:id");
         files.bindValue(":id", fullId);
         QVERIFY(files.exec());
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
-        QCOMPARE(stats.complete, quint64(3));
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QCOMPARE(stats.complete, quint64(1));
         files.prepare("DELETE FROM files WHERE id=:id");
         files.bindValue(":id", fullId);
         QVERIFY(files.exec());
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.complete, quint64(0));
-        QCOMPARE(stats.remote, quint64(3));
+        QCOMPARE(stats.remote, quint64(1));
         files.prepare("DELETE FROM file_ranges WHERE file_id=:id");
         files.bindValue(":id", partId);
         QVERIFY(files.exec());
-        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.partial, quint64(0));
-        QCOMPARE(stats.remote, quint64(5));
+        QCOMPARE(stats.remote, quint64(2));
         QVERIFY(!error.isValid());
         QVERIFY(!q.exec("DELETE FROM media_files.files")); // Attachment is read-only.
         QVERIFY(insertEvent("history still writable", "{}"));
@@ -980,6 +983,144 @@ private slots:
         QCOMPARE(linkCount(), 1);
     }
 
+    void chatAssetsCountUniqueResourcesAndApplyBothFilters()
+    {
+        migrateHistory();
+        auto image = mediaOf("image", { "https://example.org/photo.png" });
+        image.file.setMediaType("image/png");
+        image.file.setName("photo.png");
+        auto video = mediaOf("video", { "https://example.org/movie.webm" });
+        video.file.setMediaType("video/webm");
+        video.file.setName("movie.webm");
+        auto other = mediaOf("other", { "https://example.org/archive.zip" });
+        for (int i = 0; i < 5; ++i)
+            QVERIFY(store(messageWith(alice, { referenceOf(image) })));
+        QVERIFY(store(messageWith(alice, { referenceOf(video), referenceOf(other) })));
+        QVERIFY(!storedFile(image, true).isEmpty());
+        QVERIFY(!storedFile(video, false).isEmpty());
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        auto stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(stats.complete, quint64(1));
+        QCOMPARE(stats.partial, quint64(1));
+        QCOMPARE(stats.remote, quint64(1));
+        HistoryMediaRefs::Query q;
+        q.older   = false;
+        q.limit   = 20;
+        auto page = HistoryMediaRefs::chatAssets(history, key, q, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 3);
+        for (int i = 0; i < page.size(); ++i) {
+            QCOMPARE(page[i].index, quint64(i + 1));
+            QCOMPARE(page[i].total, quint64(3));
+        }
+        q.filter = { HistoryMediaRefs::Image | HistoryMediaRefs::Video, 4 };
+        page     = HistoryMediaRefs::chatAssets(history, key, q, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().kind, int(HistoryMediaRefs::Image));
+        QCOMPARE(page.first().index, quint64(1));
+        QCOMPARE(page.first().total, quint64(1));
+        stats = HistoryMediaRefs::chatAssetStatistics(history, key, q.filter, &error);
+        QCOMPARE(stats.total(), quint64(1));
+        q.filter = {};
+        q.source = image.file.computedHashes().first().toString();
+        page     = HistoryMediaRefs::chatAssets(history, key, q, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        q.messagesFor = page.first().cursor.assetId;
+        q.source.clear();
+        const auto messages = HistoryMediaRefs::chatAssets(history, key, q, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(messages.size(), 5);
+        q.messagesFor  = 0;
+        q.filter.types = 0;
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, q, &error).isEmpty());
+        QCOMPARE(HistoryMediaRefs::chatAssetStatistics(history, key, q.filter, &error).total(), quint64(0));
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+    }
+
+    void opaqueUrlUsesVerifiedContentTypeAndRemainsOneResourceAfterExpiry()
+    {
+        migrateHistory();
+        const auto media = mediaOf("image-payload", { "https://example.org/opaque" });
+        auto       first = messageWith(alice, {}), second = messageWith(alice, {});
+        first.urlAdd(Url("https://example.org/opaque"));
+        second.urlAdd(Url("https://example.org/another"));
+        QVERIFY(store(first));
+        QVERIFY(store(second));
+        const auto id = storedFile(media, true);
+        QVERIFY(!id.isEmpty());
+        QSqlQuery files(FileDatabase::connection());
+        files.prepare("UPDATE files SET media_type='image/png' WHERE id=:id");
+        files.bindValue(":id", id);
+        QVERIFY(files.exec());
+        const auto hash = media.file.computedHashes().first();
+        for (const auto &url : { "https://example.org/opaque", "https://example.org/another" })
+            QVERIFY(catalog->rememberUrlContent(corporate, MessageFileShares::urlIdentity(QUrl(url)), hash));
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        HistoryMediaRefs::Query query;
+        query.filter = { HistoryMediaRefs::Image, MediaFilter::Complete };
+        auto page    = HistoryMediaRefs::chatAssets(history, key, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().mime, QString("image/png"));
+        QCOMPARE(page.first().total, quint64(1));
+        files.prepare("DELETE FROM files WHERE id=:id");
+        files.bindValue(":id", id);
+        QVERIFY(files.exec());
+        const auto stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(stats.remote, quint64(1));
+        QCOMPARE(stats.total(), quint64(1));
+    }
+
+    void privateRoomConversationKeepsFullJidAndContactKind()
+    {
+        migrateHistory();
+        QSqlQuery sql(history);
+        QVERIFY(sql.exec("INSERT INTO contacts VALUES(3,'corporate',2,'room@conference.example.org/alice',-1)"));
+        QVERIFY(sql.exec("INSERT INTO contacts VALUES(4,'corporate',2,'room@conference.example.org/bob',-1)"));
+        const auto message = messageWith(alice, { referenceOf(mediaOf("private", { "https://example.org/file" })) });
+        QVERIFY(store(message, 3));
+        QVERIFY(store(message, 4));
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        auto scope        = key;
+        scope.peer        = "room@conference.example.org/alice";
+        scope.contactKind = 2;
+        const auto page   = HistoryMediaRefs::chatAssets(history, scope, {}, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().total, quint64(1));
+        scope.contactKind = 1;
+        QVERIFY(HistoryMediaRefs::chatAssets(history, scope, {}, &error).isEmpty());
+        scope.contactKind = 2;
+        scope.peer        = "room@conference.example.org";
+        QVERIFY(HistoryMediaRefs::chatAssets(history, scope, {}, &error).isEmpty());
+    }
+
+    void standaloneEncryptedUrlIsIndexedWithoutChangingOtherOrdinals()
+    {
+        migrateHistory();
+        auto message = messageWith(alice, {});
+        message.setBody("aesgcm://files.example.org/photo.png#" + QString(88, 'a'));
+        const auto event = store(message);
+        QVERIFY(event);
+        QCOMPARE(links(event).size(), 1);
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        const auto page = HistoryMediaRefs::chatAssets(history, key, {}, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().kind, int(HistoryMediaRefs::Image));
+        const auto announcement = HistoryMediaRefs::announcement(page.first());
+        QVERIFY(announcement);
+        QCOMPARE(announcement->file.url(), QUrl(message.body()));
+    }
+
     void fileRegistryAttachmentAcceptsProfileSymlinks()
     {
 #ifdef Q_OS_WIN
@@ -1011,7 +1152,7 @@ private slots:
         QVERIFY(!storedFile(conflicting, false, corporate, 12).isEmpty());
         QSqlError error;
         QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
-        const auto page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error, true);
+        const auto page = HistoryMediaRefs::chatAssets(history, key, {}, &error);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
         QCOMPARE(page.size(), 1);
         QCOMPARE(page.first().storage.availability, ChatMedia::Availability::Complete);
@@ -1021,10 +1162,10 @@ private slots:
     void chatMediaCancellationAndQueryErrorsDoNotLookLikeEmptyResults()
     {
         int  completed = 0;
-        auto read      = [](ChatMedia::Cursor, bool, int, QObject *receiver, ChatMedia::LinksDone done) {
+        auto read      = [](ChatMedia::Query, QObject *receiver, ChatMedia::LinksDone done) {
             QTimer::singleShot(0, receiver, [done] { done({}, false); });
         };
-        auto count = [](QObject *receiver, ChatMedia::StatisticsDone done) {
+        auto count = [](ChatMedia::Filter, QObject *receiver, ChatMedia::StatisticsDone done) {
             QTimer::singleShot(0, receiver, [done] { done({}, false); });
         };
         auto browser = new ChatMedia(read, count);
@@ -1757,6 +1898,7 @@ private slots:
                  QStringList { "xmpp:alice@example.org/desktop?jingle-ft" });
         request.archiveKey = key;
         request.type = HistoryReadRequest::ChatMediaLinks;
+        request.fileDatabasePath = FileDatabase::path();
         request.direction = 1;
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);

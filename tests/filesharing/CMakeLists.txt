@@ -51,7 +51,7 @@ add_executable(filesharing_file_reader_test filereader.cpp rangedatabase.cpp
     ../../src/mediachunkscheduler.cpp)
 set_target_properties(filesharing_file_reader_test PROPERTIES AUTOMOC ON)
 target_include_directories(filesharing_file_reader_test PRIVATE ../../src)
-target_link_libraries(filesharing_file_reader_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql)
+target_link_libraries(filesharing_file_reader_test PRIVATE Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Sql Qt${QT_DEFAULT_MAJOR_VERSION}::Gui)
 add_test(NAME filesharing_file_reader COMMAND filesharing_file_reader_test)
 set_tests_properties(filesharing_file_reader PROPERTIES TIMEOUT 45)
 find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Widgets)
@@ -116,11 +116,15 @@ endif()
 # Uses only public Iris APIs, including when linked against the external SDK.
 if(TARGET iris)
     find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Concurrent)
-    add_executable(filesharing_hash_job_test hashjob.cpp ../../src/filesharinghashjob.cpp)
+    add_executable(filesharing_hash_job_test hashjob.cpp ../../src/filesharingfilejob.cpp)
     set_target_properties(filesharing_hash_job_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_hash_job_test PRIVATE ../../src)
-    target_link_libraries(filesharing_hash_job_test PRIVATE
+    target_link_libraries(filesharing_hash_job_test
         iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test Qt${QT_DEFAULT_MAJOR_VERSION}::Concurrent)
+    if(NOT TARGET Qca3::Qca AND NOT TARGET Qca::Qca)
+        find_package(Qca REQUIRED)
+    endif()
+    psi_link_qca(filesharing_hash_job_test)
     add_test(NAME filesharing_hash_job COMMAND filesharing_hash_job_test)
     set_tests_properties(filesharing_hash_job PROPERTIES TIMEOUT 45)
 
