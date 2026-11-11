@@ -200,7 +200,7 @@ class PublicationsTest : public QObject {
         q.bindValue(":path", QString::fromLatin1(id.toHex()) + ".data");
         q.bindValue(":key",
                     complete ? QString()
-                             : FileIdentity::rangeKey(account, media.file.computedHashes().first().toString(),
+                             : FileIdentity::rangeKey(account, media.file.computedHashes().constFirst().toString(),
                                                       *media.file.size()));
         q.bindValue(":complete", complete);
         q.bindValue(":account", complete ? QString() : account);
@@ -365,7 +365,7 @@ private slots:
         QVERIFY(HistoryMediaRefs::link(history, event));
         QCOMPARE(links(event), ids); // No ownership churn on a replay of the same stored projection.
         syncEverything();
-        const auto record = catalog->find(corporate, media.file.computedHashes().first());
+        const auto record = catalog->find(corporate, media.file.computedHashes().constFirst());
         QVERIFY(record);
         QCOMPARE(record->media.sources.size(), 2);
         QVERIFY(catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/tail"))));
@@ -470,7 +470,7 @@ private slots:
 
         // A deleted announcement takes its source and its peer along.
         catalog->remove({ firstId });
-        const auto record = catalog->find(corporate, first.file.computedHashes().first());
+        const auto record = catalog->find(corporate, first.file.computedHashes().constFirst());
         QVERIFY(record);
         QCOMPARE(record->media.sources, second.sources);
         QCOMPARE(record->peers, QStringList { bob.full() });
@@ -483,7 +483,7 @@ private slots:
         claimed.file.setSize(99);
         QVERIFY(catalog->add(newId(), corporate, alice, attachmentOf(first)));
         QVERIFY(catalog->add(newId(), corporate, bob, attachmentOf(claimed)));
-        const auto record = catalog->find(corporate, first.file.computedHashes().first());
+        const auto record = catalog->find(corporate, first.file.computedHashes().constFirst());
         QVERIFY(record);
         QCOMPARE(record->media.file.size().value(), quint64(7));
         QCOMPARE(record->media.sources, first.sources);
@@ -497,7 +497,7 @@ private slots:
         QVERIFY(catalog->add(id, corporate, alice, attachmentOf(media)));
         QVERIFY(catalog->add(id, corporate, alice, attachmentOf(media)));
         QCOMPARE(publicationCount(), 1);
-        QCOMPARE(catalog->find(corporate, media.file.computedHashes().first())->media.sources, media.sources);
+        QCOMPARE(catalog->find(corporate, media.file.computedHashes().constFirst())->media.sources, media.sources);
     }
 
     void aUrlOnlyFileIsKnownByItsAddress()
@@ -546,8 +546,8 @@ private slots:
         const auto privateFile = mediaOf("private", {});
         QVERIFY(catalog->serve(personal, self, publicFile, {}));
         QVERIFY(catalog->serve(corporate, self, privateFile, {}));
-        const auto publicHash  = publicFile.file.computedHashes().first();
-        const auto privateHash = privateFile.file.computedHashes().last();
+        const auto publicHash  = publicFile.file.computedHashes().constFirst();
+        const auto privateHash = privateFile.file.computedHashes().constLast();
         QVERIFY(!catalog->isServed(personal, { privateHash, publicHash }));
         QVERIFY(!catalog->servedRecord(personal, { privateHash, publicHash }));
         const auto grant = catalog->servedRecord(personal, { publicHash });
@@ -559,11 +559,11 @@ private slots:
     void receivedHashAliasesDoNotExpandServingAuthority()
     {
         auto       own  = mediaOf("public", {});
-        const auto sha1 = own.file.computedHashes().last();
+        const auto sha1 = own.file.computedHashes().constLast();
         own.file.setHashes({ sha1 }); // Legacy own files may have only this hash.
         QVERIFY(catalog->serve(personal, self, own, {}));
         auto       forged  = mediaOf("secret", { "https://example.org/forged" });
-        const auto foreign = forged.file.computedHashes().first();
+        const auto foreign = forged.file.computedHashes().constFirst();
         forged.file.setHashes({ sha1, foreign });
         QVERIFY(catalog->add(newId(), personal, alice, attachmentOf(forged)));
         const auto grant = catalog->servedRecord(personal, { sha1 });
@@ -593,15 +593,15 @@ private slots:
         QCOMPARE(file.write("payload"), qint64(7));
         file.close();
         QVERIFY(catalog->serve(corporate, self, media, path));
-        QCOMPARE(catalog->find(corporate, media.file.computedHashes().first())->readableLocalPath(), path);
+        QCOMPARE(catalog->find(corporate, media.file.computedHashes().constFirst())->readableLocalPath(), path);
 
         QVERIFY(file.open(QIODevice::WriteOnly));
         QCOMPARE(file.write("changed bytes"), qint64(13));
         file.close();
-        QVERIFY(catalog->find(corporate, media.file.computedHashes().first())->readableLocalPath().isEmpty());
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().constFirst())->readableLocalPath().isEmpty());
 
         QVERIFY(file.remove());
-        QVERIFY(catalog->find(corporate, media.file.computedHashes().first())->readableLocalPath().isEmpty());
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().constFirst())->readableLocalPath().isEmpty());
 
         QVERIFY2(catalog->serve(corporate, self, mediaOf("other size", {}), dir->filePath(QStringLiteral("none"))),
                  "a missing copy does not stop a file being shared by upload");
@@ -751,7 +751,7 @@ private slots:
         QCOMPARE(page.first().ordinal, 1);
         auto adjacent     = request;
         adjacent.adjacent = true;
-        adjacent.source   = mediaOf("one", { "https://example.org/1" }).file.computedHashes().first().toString();
+        adjacent.source   = mediaOf("one", { "https://example.org/1" }).file.computedHashes().constFirst().toString();
         QCOMPARE(HistoryMediaRefs::chatAssets(history, key, adjacent, &error).size(), 1);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
         QCOMPARE(page.first().total, quint64(1));
@@ -893,10 +893,10 @@ private slots:
         url.urlAdd(Url("https://example.org/address-only"));
         QVERIFY(store(url));
         const auto address = MessageFileShares::urlIdentity(QUrl("https://example.org/address-only"));
-        QVERIFY(catalog->rememberUrlContent(personal, address, full.file.computedHashes().first()));
+        QVERIFY(catalog->rememberUrlContent(personal, address, full.file.computedHashes().constFirst()));
         stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.remote, quint64(1));
-        QVERIFY(catalog->rememberUrlContent(corporate, address, full.file.computedHashes().first()));
+        QVERIFY(catalog->rememberUrlContent(corporate, address, full.file.computedHashes().constFirst()));
         stats = HistoryMediaRefs::chatAssetStatistics(history, key, {}, &error);
         QCOMPARE(stats.complete, quint64(1));
         QCOMPARE(stats.partial, quint64(1));
@@ -971,7 +971,7 @@ private slots:
         QVERIFY(q.exec("SELECT range_key FROM message_media_hashes WHERE algorithm='sha-256'"));
         QVERIFY(q.next());
         QCOMPARE(q.value(0).toString(),
-                 FileIdentity::rangeKey(corporate, media.file.computedHashes().first().toString(), *media.file.size()));
+                 FileIdentity::rangeKey(corporate, media.file.computedHashes().constFirst().toString(), *media.file.size()));
         q.finish();
         QVERIFY(history.transaction());
         QVERIFY(q.exec("CREATE TRIGGER reject_resource BEFORE INSERT ON message_media_hashes BEGIN "
@@ -1025,7 +1025,7 @@ private slots:
         stats = HistoryMediaRefs::chatAssetStatistics(history, key, q.filter, &error);
         QCOMPARE(stats.total(), quint64(1));
         q.filter = {};
-        q.source = image.file.computedHashes().first().toString();
+        q.source = image.file.computedHashes().constFirst().toString();
         page     = HistoryMediaRefs::chatAssets(history, key, q, &error);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
         QCOMPARE(page.size(), 1);
@@ -1056,7 +1056,7 @@ private slots:
         files.prepare("UPDATE files SET media_type='image/png' WHERE id=:id");
         files.bindValue(":id", id);
         QVERIFY(files.exec());
-        const auto hash = media.file.computedHashes().first();
+        const auto hash = media.file.computedHashes().constFirst();
         for (const auto &url : { "https://example.org/opaque", "https://example.org/another" })
             QVERIFY(catalog->rememberUrlContent(corporate, MessageFileShares::urlIdentity(QUrl(url)), hash));
         QSqlError error;
@@ -1327,16 +1327,16 @@ private slots:
         FileSharingPublicationSync sync(historyAccess(), catalog.get());
         sync.reconcile();
         QTRY_VERIFY(sync.isIdle());
-        QVERIFY(!catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(!catalog->find(corporate, media.file.computedHashes().constFirst()));
 
         QVERIFY(store(messageWith(alice, { referenceOf(media) })));
         sync.linksAdded();
         QTRY_VERIFY(sync.isIdle());
-        auto record = catalog->find(corporate, media.file.computedHashes().first());
+        auto record = catalog->find(corporate, media.file.computedHashes().constFirst());
         QVERIFY(record);
         QCOMPARE(record->media.sources, media.sources);
         QCOMPARE(record->peers, QStringList { alice.full() });
-        QVERIFY2(!catalog->find(personal, media.file.computedHashes().first()),
+        QVERIFY2(!catalog->find(personal, media.file.computedHashes().constFirst()),
                  "a publication belongs to the account of the conversation");
 
         // The same file in another message, from someone else.
@@ -1344,7 +1344,7 @@ private slots:
         QVERIFY(store(messageWith(bob, { referenceOf(other) })));
         sync.linksAdded();
         QTRY_VERIFY(sync.isIdle());
-        record = catalog->find(corporate, media.file.computedHashes().first());
+        record = catalog->find(corporate, media.file.computedHashes().constFirst());
         QCOMPARE(record->media.sources.size(), 2);
         QCOMPARE(record->peers.size(), 2);
         QVERIFY2(!catalog->isServed(corporate, media.file.computedHashes()), "receiving a file shares nothing");
@@ -1383,7 +1383,7 @@ private slots:
         const auto event = store(message);
         QCOMPARE(links(event).size(), 1);
         syncEverything();
-        auto record = catalog->find(corporate, file.computedHashes().first());
+        auto record = catalog->find(corporate, file.computedHashes().constFirst());
         QVERIFY(record);
         QVERIFY(!record->urlOnly);
         QCOMPARE(record->media.sources, QStringList { url });
@@ -1394,7 +1394,7 @@ private slots:
         // Whatever the protocol, it is one file.
         QVERIFY(store(messageWith(alice, { referenceOf(sims) })));
         syncEverything();
-        record = catalog->find(corporate, file.computedHashes().first());
+        record = catalog->find(corporate, file.computedHashes().constFirst());
         QCOMPARE(record->media.sources.size(), 2);
         QCOMPARE(record->peers.size(), 2);
 
@@ -1413,15 +1413,15 @@ private slots:
         const auto media = mediaOf("payload", { QStringLiteral("https://one.example/f") });
         const auto event = store(messageWith(alice, { referenceOf(media) }));
         syncEverything();
-        QVERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().constFirst()));
         QVERIFY(catalog->serve(corporate, self, media, {}));
 
         loseFileDatabase();
         QCOMPARE(publicationCount(), 0);
-        QVERIFY(!catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(!catalog->find(corporate, media.file.computedHashes().constFirst()));
 
         syncEverything();
-        const auto record = catalog->find(corporate, media.file.computedHashes().first());
+        const auto record = catalog->find(corporate, media.file.computedHashes().constFirst());
         QVERIFY(record);
         QCOMPARE(record->media.sources, media.sources);
         QCOMPARE(record->peers, QStringList { alice.full() });
@@ -1440,13 +1440,13 @@ private slots:
         const auto event = store(messageWith(bob, { referenceOf(erased) }));
         QVERIFY(catalog->serve(corporate, self, shared, {}));
         syncEverything();
-        QCOMPARE(catalog->find(corporate, kept.file.computedHashes().first())->media.sources.size(), 2);
+        QCOMPARE(catalog->find(corporate, kept.file.computedHashes().constFirst())->media.sources.size(), 2);
         QCOMPARE(publicationCount(), 3);
 
         QSqlQuery query(history);
         QVERIFY(query.exec(QStringLiteral("DELETE FROM events WHERE id=%1").arg(event)));
         syncEverything();
-        const auto record = catalog->find(corporate, kept.file.computedHashes().first());
+        const auto record = catalog->find(corporate, kept.file.computedHashes().constFirst());
         QCOMPARE(record->media.sources, kept.sources);
         QCOMPARE(record->peers, QStringList { alice.full() });
         QVERIFY2(catalog->isServed(corporate, shared.file.computedHashes()), "deleting a message does not unshare");
@@ -1464,10 +1464,10 @@ private slots:
         FileSharingPublicationSync sync(historyAccess(), catalog.get());
         sync.reconcile();
         QTest::qWait(100);
-        QVERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().constFirst()));
         QVERIFY(query.exec("ALTER TABLE unavailable_refs RENAME TO message_media_refs"));
         QTRY_VERIFY(sync.isIdle());
-        QVERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(catalog->find(corporate, media.file.computedHashes().constFirst()));
     }
 
     void aLongPassGoesInSteps()
@@ -1477,7 +1477,7 @@ private slots:
         QList<Hash> hashes;
         for (int i = 0; i < 250; ++i) {
             const auto media = mediaOf(QByteArray::number(i), { QStringLiteral("https://example.org/%1").arg(i) });
-            hashes.append(media.file.computedHashes().first());
+            hashes.append(media.file.computedHashes().constFirst());
             QVERIFY(store(messageWith(alice, { referenceOf(media) })));
         }
         QVERIFY(history.commit());
@@ -1539,7 +1539,7 @@ private slots:
         QCOMPARE(links(envelope), kept);
 
         syncEverything();
-        QCOMPARE(catalog->find(corporate, media.file.computedHashes().first())->peers, QStringList { alice.full() });
+        QCOMPARE(catalog->find(corporate, media.file.computedHashes().constFirst())->peers, QStringList { alice.full() });
         const auto old = catalog->find(corporate, MessageFileShares::urlIdentity(QUrl("https://example.org/old")));
         QVERIFY(old);
         QCOMPARE(old->peers, QStringList { QStringLiteral("alice@example.org") });
@@ -1603,7 +1603,7 @@ private slots:
             share(personal, unmarked, legacyDescriptor(unmarked, { self.full() }, write("unmarked")));
             QVERIFY(query.exec("INSERT INTO served_files_imported VALUES('personal')"));
             query.prepare("INSERT INTO served_files VALUES('personal',:hash)");
-            query.bindValue(":hash", marked.file.computedHashes().last().toString());
+            query.bindValue(":hash", marked.file.computedHashes().constLast().toString());
             QVERIFY(query.exec());
             // An account that no longer exists.
             share(QStringLiteral("removed"), gone, legacyDescriptor(gone, { self.full() }, write("gone")));
@@ -1621,13 +1621,13 @@ private slots:
 
         const auto hashes = [](const MediaSharing &media) { return media.file.computedHashes(); };
         QVERIFY(catalog->isServed(corporate, hashes(own)));
-        const auto record = catalog->find(corporate, hashes(own).first());
+        const auto record = catalog->find(corporate, hashes(own).constFirst());
         QCOMPARE(record->media.sources, own.sources);
         QCOMPARE(record->readableLocalPath(), dir->filePath(QStringLiteral("own")));
-        QVERIFY2(!catalog->find(corporate, hashes(noCopy).first()), "history brings back what was not shared");
-        QVERIFY2(!catalog->find(corporate, hashes(received).first()), "a received file is merely cached");
+        QVERIFY2(!catalog->find(corporate, hashes(noCopy).constFirst()), "history brings back what was not shared");
+        QVERIFY2(!catalog->find(corporate, hashes(received).constFirst()), "a received file is merely cached");
         QVERIFY(catalog->isServed(personal, hashes(marked)));
-        QVERIFY(!catalog->find(personal, hashes(unmarked).first()));
+        QVERIFY(!catalog->find(personal, hashes(unmarked).constFirst()));
         QVERIFY(!catalog->isServed(QStringLiteral("removed"), hashes(gone)));
         QCOMPARE(publicationCount(), 2);
         QCOMPARE(catalog->contentForUrl(corporate, sha256("address")).value().toString(), sha256("bytes").toString());
@@ -1889,7 +1889,7 @@ private slots:
         QTRY_COMPARE(read.count(), 1);
         QCOMPARE(wrote.count(), 1);
         QVERIFY(qvariant_cast<HistoryWriteResult>(wrote.first().first()).success);
-        const auto result = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        const auto result = qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst());
         QVERIFY(result.success);
         QCOMPARE(result.mediaLinks.size(), 1);
         const auto told = HistoryMediaRefs::announcement(result.mediaLinks.first());
@@ -1902,7 +1902,7 @@ private slots:
         request.direction = 1;
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);
-        const auto chatResult = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        const auto chatResult = qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst());
         QVERIFY(chatResult.success);
         QCOMPARE(chatResult.mediaLinks.size(), 1);
         QVERIFY(chatResult.mediaLinks.first().cursor.valid());
@@ -1911,7 +1911,7 @@ private slots:
         request.fileDatabasePath = FileDatabase::path();
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);
-        const auto statsResult = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        const auto statsResult = qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst());
         QVERIFY(statsResult.success);
         QCOMPARE(statsResult.mediaStatistics.remote, quint64(1));
         QSqlQuery damage(history);
@@ -1920,18 +1920,18 @@ private slots:
         QVERIFY(damage.exec("DROP TABLE message_media_hashes"));
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);
-        QVERIFY(!qvariant_cast<HistoryReadResult>(read.takeFirst().first()).success);
+        QVERIFY(!qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst()).success);
         QVERIFY(damage.exec(repair));
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);
-        QVERIFY(qvariant_cast<HistoryReadResult>(read.takeFirst().first()).success);
+        QVERIFY(qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst()).success);
         request.fileDatabasePath.clear();
         request.archiveKey = {};
         request.type           = HistoryReadRequest::MediaLinked;
         request.publicationIds = { result.mediaLinks.first().publicationId };
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
         QTRY_COMPARE(read.count(), 1);
-        const auto linked = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        const auto linked = qvariant_cast<HistoryReadResult>(read.takeFirst().constFirst());
         QVERIFY(linked.success);
         QVERIFY(linked.linkedPublications.contains(request.publicationIds.first()));
     }
@@ -1979,8 +1979,8 @@ private slots:
         QVERIFY(HistoryMediaRefs::link(history, event));
         QVERIFY(links(event) != before);
         syncEverything();
-        QVERIFY(!catalog->find(corporate, old.file.computedHashes().first()));
-        QVERIFY(catalog->find(corporate, fresh.file.computedHashes().first()));
+        QVERIFY(!catalog->find(corporate, old.file.computedHashes().constFirst()));
+        QVERIFY(catalog->find(corporate, fresh.file.computedHashes().constFirst()));
     }
 
     void publicationWriteFailureIsRetriedWithoutRestart()
@@ -1996,9 +1996,9 @@ private slots:
         QVERIFY(store(messageWith(alice, { referenceOf(media) })));
         sync.linksAdded();
         QTest::qWait(100);
-        QVERIFY(!catalog->find(corporate, media.file.computedHashes().first()));
+        QVERIFY(!catalog->find(corporate, media.file.computedHashes().constFirst()));
         QVERIFY(fail.exec("DROP TRIGGER reject_publication"));
-        QTRY_VERIFY(catalog->find(corporate, media.file.computedHashes().first()));
+        QTRY_VERIFY(catalog->find(corporate, media.file.computedHashes().constFirst()));
     }
 
     void legacyServingIsNotReimportedAfterFileDatabaseLoss()
@@ -2016,14 +2016,14 @@ private slots:
             QVERIFY(query.exec("CREATE TABLE served_files_imported(account_id TEXT)"));
             QVERIFY(query.exec("INSERT INTO served_files_imported VALUES('corporate')"));
             query.prepare("INSERT INTO shared_files VALUES('corporate',:hash,:descriptor)");
-            query.bindValue(":hash", media.file.computedHashes().first().toString());
+            query.bindValue(":hash", media.file.computedHashes().constFirst().toString());
             query.bindValue(
                 ":descriptor",
                 QString::fromUtf8(
                     QJsonDocument(legacyDescriptor(media, { self.full() })).toJson(QJsonDocument::Compact)));
             QVERIFY(query.exec());
             query.prepare("INSERT INTO served_files VALUES('corporate',:hash)");
-            query.bindValue(":hash", media.file.computedHashes().first().toString());
+            query.bindValue(":hash", media.file.computedHashes().constFirst().toString());
             QVERIFY(query.exec());
             db.close();
         }
