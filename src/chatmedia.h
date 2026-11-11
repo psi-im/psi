@@ -10,12 +10,10 @@
 class ChatMedia : public QObject {
     Q_OBJECT
 public:
-    using Cursor = HistoryMediaRefs::Cursor;
-    enum class Availability { Remote, Partial, Complete };
-    struct Storage {
-        Availability availability    = Availability::Remote;
-        quint64      downloadedBytes = 0;
-    };
+    using Cursor       = HistoryMediaRefs::Cursor;
+    using Availability = HistoryMediaRefs::Availability;
+    using Storage      = HistoryMediaRefs::Storage;
+    using Statistics   = HistoryMediaRefs::Statistics;
     struct Entry {
         Cursor                         cursor;
         QByteArray                     publicationId;
@@ -27,17 +25,13 @@ public:
         Cursor       next;
         bool         hasMore = false;
     };
-    struct Statistics {
-        quint64 complete = 0, partial = 0, remote = 0;
-        // History/storage changed during the bounded asynchronous scan.
-        bool stale = false;
-    };
-    using LinksDone      = std::function<void(QList<HistoryMediaRefs::Link>, bool)>;
-    using Read           = std::function<void(Cursor, bool older, int limit, QObject *, LinksDone)>;
-    using Inspect        = std::function<Storage(const HistoryMediaRefs::Announcement &)>;
+    using LinksDone = std::function<void(QList<HistoryMediaRefs::Link>, bool)>;
+    using Read      = std::function<void(Cursor, bool older, int limit, QObject *, LinksDone)>;
+
     using PageDone       = std::function<void(Page, bool)>;
     using StatisticsDone = std::function<void(Statistics, bool)>;
-    ChatMedia(Read read, Inspect inspect, QObject *parent = nullptr);
+    using Count          = std::function<void(QObject *, StatisticsDone)>;
+    ChatMedia(Read read, Count count, QObject *parent = nullptr);
     // Initial empty cursor starts at the newest/oldest position. Bound: 1..200.
     // Callbacks run on this object's thread; deleting it cancels delivery.
     void requestPage(Cursor cursor, bool older, int limit, PageDone done);
@@ -47,8 +41,7 @@ signals:
     void changed();
 
 private:
-    void    statisticsStep(QObject *request, Cursor cursor, quint64 generation, Statistics stats, StatisticsDone done);
     Read    read_;
-    Inspect inspect_;
+    Count   count_;
     quint64 generation_ = 0;
 };

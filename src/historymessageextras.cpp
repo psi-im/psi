@@ -218,7 +218,18 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message, int ver
         const auto       fingerprint = QCryptographicHash::hash(QJsonDocument(content).toJson(QJsonDocument::Compact),
                                                                 QCryptographicHash::Sha256)
                                      .toHex();
-        index.append(QJsonObject { { "ordinal", ordinal }, { "fingerprint", QString::fromLatin1(fingerprint) } });
+        QJsonArray hashes;
+        for (const auto &hash : media.file.computedHashes())
+            hashes.append(QJsonObject { { "algorithm", hash.stringType() },
+                                        { "digest", QString::fromLatin1(hash.data().toHex()) },
+                                        { "id", hash.toString() } });
+        QJsonObject resource { { "hashes", hashes } };
+        if (const auto size = media.file.size())
+            resource.insert("size", QString::number(*size));
+        if (!file.hasContentHashes())
+            resource.insert("url", MessageFileShares::urlIdentity(file.url()).toString());
+        index.append(QJsonObject {
+            { "ordinal", ordinal }, { "fingerprint", QString::fromLatin1(fingerprint) }, { "resource", resource } });
     }
     return index;
 }
@@ -257,10 +268,12 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
     if (MessageFileShares::hasFileShares(message)) {
         extra.insert("psi:media-refs",
                      QJsonObject { { "version", mediaRefsVersion }, { "items", mediaRefs(message) } });
+        if (extra.contains("psi:media-refs"))
+            extra.insert("psi:media-resources", 1);
     }
     if (message.reply().isValid())
         extra.insert(QStringLiteral("urn:xmpp:reply:0"),
-                     QJsonObject {{"id", message.reply().id}, {"to", message.reply().to.full()}});
+                     QJsonObject { { "id", message.reply().id }, { "to", message.reply().to.full() } });
     QJsonArray urls;
     for (const auto &url : message.urlList()) {
         if (url.url().isEmpty())
@@ -358,7 +371,7 @@ void HistoryMessageExtras::restore(const QString &json, XMPP::Message &message)
     const auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
     const auto reply = extra.value(QStringLiteral("urn:xmpp:reply:0")).toObject();
     if (!reply.isEmpty())
-        message.setReply({XMPP::Jid(reply.value("to").toString()), reply.value("id").toString()});
+        message.setReply({ XMPP::Jid(reply.value("to").toString()), reply.value("id").toString() });
     if (extra.value("psi:has-body").toBool() && message.body().isEmpty())
         message.setBody(QStringLiteral(""));
     if (extra.value("psi:encrypted").toBool()) {

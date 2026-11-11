@@ -3,6 +3,7 @@
 #include "applicationinfo.h"
 #include "chatmedia.h"
 #include "filedatabase.h"
+#include "fileidentity.h"
 #include "filesharingcatalog.h"
 #include "filesharingpublicationsync.h"
 #include "historyarchive.h"
@@ -46,6 +47,17 @@ const Jid     self("me@example.org/desktop");
 Hash sha256(const QByteArray &bytes)
 {
     return Hash(Hash::Sha256, QCryptographicHash::hash(bytes, QCryptographicHash::Sha256));
+}
+
+QJsonArray fingerprintProjection(const QJsonArray &index)
+{
+    QJsonArray result;
+    for (const auto &value : index) {
+        auto item = value.toObject();
+        item.remove("resource");
+        result.append(item);
+    }
+    return result;
 }
 
 MediaSharing mediaOf(const QByteArray &content, const QStringList &sources)
@@ -128,6 +140,7 @@ class PublicationsTest : public QObject {
     void createHistory()
     {
         history = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), historyConnection);
+        history.setConnectOptions("QSQLITE_OPEN_URI");
         history.setDatabaseName(dir->filePath(QStringLiteral("history.db")));
         QVERIFY(history.open());
         QSqlQuery query(history);
@@ -170,6 +183,57 @@ class PublicationsTest : public QObject {
     {
         const auto event = insertEvent(message.body(), HistoryMessageExtras::encode(message), 2, contact);
         return event && HistoryMediaRefs::link(history, event) ? event : 0;
+    }
+
+    QByteArray storedFile(const MediaSharing &media, bool complete, const QString &account = corporate,
+                          quint64 bytes = 1)
+    {
+        const auto id = QUuid::createUuid().toRfc4122();
+        QSqlQuery  q(FileDatabase::connection());
+        q.prepare(
+            "INSERT INTO files(id,partition,size,created,max_age,metadata,path,resource_key,complete,scope_account) "
+            "VALUES(:id,:partition,:size,0,4294967295,:meta,:path,:key,:complete,:account)");
+        q.bindValue(":id", id);
+        q.bindValue(":partition", complete ? "shares" : "shares:ranges");
+        q.bindValue(":size", qlonglong(*media.file.size()));
+        q.bindValue(":meta", FileDatabase::encodeMetadata({}));
+        q.bindValue(":path", QString::fromLatin1(id.toHex()) + ".data");
+        q.bindValue(":key",
+                    complete ? QString()
+                             : FileIdentity::rangeKey(account, media.file.computedHashes().first().toString(),
+                                                      *media.file.size()));
+        q.bindValue(":complete", complete);
+        q.bindValue(":account", complete ? QString() : account);
+        if (!q.exec())
+            return {};
+        if (complete) {
+            int position = 0;
+            for (const auto &hash : media.file.computedHashes()) {
+                q.prepare("INSERT INTO file_hashes VALUES(:id,:position,:algorithm,:digest)");
+                q.bindValue(":id", id);
+                q.bindValue(":position", position++);
+                q.bindValue(":algorithm", hash.stringType());
+                q.bindValue(":digest", hash.data());
+                if (!q.exec())
+                    return {};
+            }
+        } else {
+            q.prepare("INSERT INTO file_ranges VALUES(:id,0,:bytes)");
+            q.bindValue(":id", id);
+            q.bindValue(":bytes", qlonglong(bytes));
+            if (!q.exec())
+                return {};
+            for (const auto &hash : media.file.computedHashes()) {
+                q.prepare("INSERT INTO file_checksums VALUES(:id,0,:size,:algorithm,:digest,0)");
+                q.bindValue(":id", id);
+                q.bindValue(":size", qlonglong(*media.file.size()));
+                q.bindValue(":algorithm", hash.stringType());
+                q.bindValue(":digest", hash.data());
+                if (!q.exec())
+                    return {};
+            }
+        }
+        return id;
     }
 
     int linkCount() const
@@ -289,7 +353,7 @@ private slots:
             {"fingerprint":"16bb6010ac0594d41bc0676572e1c58efd11bbe1fecc7566ab2d39107900e92d","ordinal":2}
         ])")
                                   .array();
-        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        QCOMPARE(fingerprintProjection(HistoryMessageExtras::mediaRefs(message, 1)), oldIndex);
         auto extra = QJsonDocument::fromJson(HistoryMessageExtras::encode(message).toUtf8()).object();
         extra.insert("psi:media-refs", QJsonObject { { "version", 1 }, { "items", oldIndex } });
         const auto json  = QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact));
@@ -317,7 +381,7 @@ private slots:
             {"fingerprint":"cd2e96d8b1fcf8102675e6531122ee0fad5cf2917f670a1736b59b323282bac2","ordinal":0}
         ])")
                                   .array();
-        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        QCOMPARE(fingerprintProjection(HistoryMessageExtras::mediaRefs(message, 1)), oldIndex);
         const auto files = HistoryMessageExtras::indexedFiles(message, 1);
         QCOMPARE(files.size(), 1);
         QCOMPARE(files.first().reference.begin(), 0);
@@ -344,7 +408,7 @@ private slots:
             {"fingerprint":"16bb6010ac0594d41bc0676572e1c58efd11bbe1fecc7566ab2d39107900e92d","ordinal":2}
         ])")
                                   .array();
-        QCOMPARE(HistoryMessageExtras::mediaRefs(message, 1), oldIndex);
+        QCOMPARE(fingerprintProjection(HistoryMessageExtras::mediaRefs(message, 1)), oldIndex);
         QCOMPARE(message.urlList().size(), 3);
         const auto normalized = MessageFileShares::collect(message).files;
         QCOMPARE(normalized.size(), 2);
@@ -586,6 +650,9 @@ private slots:
             QSqlQuery query(db);
             QVERIFY(query.exec("CREATE TABLE files (id BLOB PRIMARY KEY, partition TEXT NOT NULL, size INTEGER NOT "
                                "NULL, created INTEGER NOT NULL, max_age INTEGER NOT NULL, metadata BLOB NOT NULL)"));
+            QVERIFY(query.exec("CREATE TABLE file_hashes(file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE,"
+                               "position INTEGER NOT NULL,algorithm TEXT NOT NULL,digest BLOB NOT NULL,"
+                               "PRIMARY KEY(file_id,position))"));
             QVERIFY(query.exec("INSERT INTO files VALUES(x'01','shares',1,1,1,x'')"));
             QVERIFY(query.exec("PRAGMA user_version=1"));
             db.close();
@@ -597,7 +664,7 @@ private slots:
         QCOMPARE(query.value(0).toInt(), 1);
         QVERIFY(query.exec("PRAGMA user_version"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 4);
+        QCOMPARE(query.value(0).toInt(), 5);
         QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
     }
 
@@ -700,29 +767,39 @@ private slots:
         QVERIFY(!error.isValid());
     }
 
-    void chatMediaStatisticsAreBoundedAndDoNotResolveItems()
+    void chatMediaStatisticsUseOneAggregateAndDoNotResolveAnnouncements()
     {
         migrateHistory();
-        const auto message = messageWith(alice, { referenceOf(mediaOf("one", { "https://example.org/1" })) });
+        const QList<MediaSharing> media { mediaOf("one", { "https://example.org/1" }),
+                                          mediaOf("two", { "https://example.org/2" }),
+                                          mediaOf("three", { "https://example.org/3" }) };
         for (int i = 0; i < 205; ++i)
-            QVERIFY(store(message));
-        int       reads = 0, inspected = 0, completed = 0;
+            QVERIFY(store(messageWith(alice, { referenceOf(media.at(i % 3)) })));
+        QVERIFY(!storedFile(media.at(0), true).isEmpty());
+        QVERIFY(!storedFile(media.at(1), false).isEmpty());
+        QSqlError error;
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error), qPrintable(error.text()));
+        // Aggregate availability does not decode event payloads.
+        QSqlQuery damaged(history);
+        QVERIFY(damaged.exec("UPDATE events SET extra_data='not JSON' WHERE id=1"));
+        int       reads = 0, counts = 0, completed = 0;
         ChatMedia browser(
             [&](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
                 ++reads;
-                QVERIFY(limit <= 101);
                 QTimer::singleShot(0, receiver, [&, cursor, older, limit, done] {
-                    QSqlError  error;
-                    const auto links = HistoryMediaRefs::chatLinks(history, key, cursor, older, limit, &error);
-                    done(links, !error.isValid());
+                    QSqlError  e;
+                    const auto links = HistoryMediaRefs::chatLinks(history, key, cursor, older, limit, &e, true);
+                    done(links, !e.isValid());
                 });
             },
-            [&](const HistoryMediaRefs::Announcement &) {
-                const auto kind = inspected++ % 3;
-                return ChatMedia::Storage { kind == 0       ? ChatMedia::Availability::Complete
-                                                : kind == 1 ? ChatMedia::Availability::Partial
-                                                            : ChatMedia::Availability::Remote,
-                                            0 };
+            [&](QObject *receiver, ChatMedia::StatisticsDone done) {
+                ++counts;
+                QTimer::singleShot(0, receiver, [&, done] {
+                    QSqlError  e;
+                    const auto stats = HistoryMediaRefs::chatStatistics(history, key, &e);
+                    QVERIFY2(!e.isValid(), qPrintable(e.text()));
+                    done(stats, !e.isValid());
+                });
             });
         browser.requestStatistics([&](ChatMedia::Statistics stats, bool ok) {
             QVERIFY(ok);
@@ -734,17 +811,149 @@ private slots:
         });
         browser.invalidate();
         QTRY_COMPARE(completed, 1);
-        QCOMPARE(reads, 3);
-        QCOMPARE(inspected, 205);
+        QCOMPARE(reads, 0);
+        QCOMPARE(counts, 1);
         browser.requestPage({}, true, 2, [&](ChatMedia::Page page, bool ok) {
             QVERIFY(ok);
             QCOMPARE(page.entries.size(), 2);
             QVERIFY(page.hasMore);
             QVERIFY(page.next.valid());
-            QCOMPARE(page.entries.first().announcement.account, corporate);
+            QCOMPARE(page.entries.first().storage.availability, ChatMedia::Availability::Complete);
+            QCOMPARE(page.entries.last().storage.availability, ChatMedia::Availability::Remote);
             ++completed;
         });
         QTRY_COMPARE(completed, 2);
+        QCOMPARE(reads, 1);
+    }
+
+    void chatMediaAggregateFollowsStorageAndScopesRangesAndUrls()
+    {
+        migrateHistory();
+        const auto full    = mediaOf("full", { "https://example.org/full" });
+        const auto partial = mediaOf("partial", { "https://example.org/partial" });
+        QVERIFY(store(messageWith(alice, { referenceOf(full), referenceOf(partial) })));
+        QVERIFY(store(messageWith(alice, { referenceOf(full) })));
+        QVERIFY(store(messageWith(alice, { referenceOf(full) }), 2));
+        QSqlQuery q(history);
+        QVERIFY(q.exec("INSERT INTO contacts VALUES(3,'corporate',3,'alice@example.org',-1)"));
+        QVERIFY(store(messageWith(alice, { referenceOf(full) }), 3));
+        const auto fullId = storedFile(full, true);
+        QVERIFY(!fullId.isEmpty());
+        QVERIFY(!storedFile(partial, false, personal, 2).isEmpty());
+        QSqlError error;
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error), qPrintable(error.text()));
+        auto stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(stats.complete, quint64(2)); // Two occurrences, not four hash aliases.
+        QCOMPARE(stats.partial, quint64(0));  // Another account's partial ranges are inaccessible.
+        QCOMPARE(stats.remote, quint64(1));
+        const auto partId = storedFile(partial, false, corporate, 3);
+        QVERIFY(!partId.isEmpty());
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.complete, quint64(2));
+        QCOMPARE(stats.partial, quint64(1));
+        QCOMPARE(stats.remote, quint64(0));
+        auto page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error, true);
+        QCOMPARE(page.size(), 3);
+        QCOMPARE(page.at(1).storage.downloadedBytes, quint64(3));
+        QCOMPARE(page.at(1).storage.availability, ChatMedia::Availability::Partial);
+        auto alias = partial;
+        alias.file.setHashes({ partial.file.computedHashes().at(1) });
+        QVERIFY(store(messageWith(alice, { referenceOf(alias) })));
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.partial, quint64(2)); // The later announcement knows only the secondary hash.
+        auto url = messageWith(alice, {});
+        url.urlAdd(Url("https://example.org/address-only"));
+        QVERIFY(store(url));
+        const auto address = MessageFileShares::urlIdentity(QUrl("https://example.org/address-only"));
+        QVERIFY(catalog->rememberUrlContent(personal, address, full.file.computedHashes().first()));
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.remote, quint64(1));
+        QVERIFY(catalog->rememberUrlContent(corporate, address, full.file.computedHashes().first()));
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.complete, quint64(3));
+        QCOMPARE(stats.partial, quint64(2));
+        // Physical ownership changes drive counts; there is no counter to maintain.
+        QSqlQuery files(FileDatabase::connection());
+        files.prepare("UPDATE files SET max_age=1,created=0 WHERE id=:id");
+        files.bindValue(":id", fullId);
+        QVERIFY(files.exec());
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.complete, quint64(0));
+        QCOMPARE(stats.remote, quint64(3));
+        files.prepare("UPDATE files SET max_age=4294967295 WHERE id=:id");
+        files.bindValue(":id", fullId);
+        QVERIFY(files.exec());
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.complete, quint64(3));
+        files.prepare("DELETE FROM files WHERE id=:id");
+        files.bindValue(":id", fullId);
+        QVERIFY(files.exec());
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.complete, quint64(0));
+        QCOMPARE(stats.remote, quint64(3));
+        files.prepare("DELETE FROM file_ranges WHERE file_id=:id");
+        files.bindValue(":id", partId);
+        QVERIFY(files.exec());
+        stats = HistoryMediaRefs::chatStatistics(history, key, &error);
+        QCOMPARE(stats.partial, quint64(0));
+        QCOMPARE(stats.remote, quint64(5));
+        QVERIFY(!error.isValid());
+        QVERIFY(!q.exec("DELETE FROM media_files.files")); // Attachment is read-only.
+        QVERIFY(insertEvent("history still writable", "{}"));
+        QVERIFY(q.exec("EXPLAIN QUERY PLAN SELECT file_id FROM media_files.file_hashes "
+                       "WHERE (algorithm || '+' || lower(hex(digest)))='sha-256+00'"));
+        bool indexed = false;
+        while (q.next())
+            indexed |= q.value(3).toString().contains("file_hashes_key");
+        QVERIFY(indexed);
+    }
+
+    void resourceMigrationPreservesPublicationIdsAndScanPositions()
+    {
+        migrateHistory();
+        const auto media   = mediaOf("preserved", { "https://example.org/old" });
+        const auto message = messageWith(alice, { referenceOf(media) });
+        const auto event   = store(message);
+        QVERIFY(event);
+        const auto ids = links(event);
+        QSqlQuery  q(history);
+        QVERIFY(q.exec("SELECT position FROM message_media_refs"));
+        QVERIFY(q.next());
+        const auto position = q.value(0).toLongLong();
+        q.finish();
+        QVERIFY(q.exec("DROP TABLE message_media_hashes"));
+        QVERIFY(q.exec("DROP TABLE message_media_resources"));
+        auto extra = QJsonDocument::fromJson(HistoryMessageExtras::encode(message).toUtf8()).object();
+        auto index = extra.value("psi:media-refs").toObject();
+        index.insert("items", fingerprintProjection(index.value("items").toArray()));
+        extra.insert("psi:media-refs", index);
+        extra.remove("psi:media-resources");
+        q.prepare("UPDATE events SET extra_data=:extra WHERE id=:id");
+        q.bindValue(":extra", QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact)));
+        q.bindValue(":id", event);
+        QVERIFY(q.exec());
+        QVERIFY(HistoryMediaRefs::needsMigration(history));
+        QVERIFY(HistoryMediaRefs::migrate(history));
+        QVERIFY(!HistoryMediaRefs::needsMigration(history));
+        QCOMPARE(links(event), ids);
+        QVERIFY(q.exec("SELECT position FROM message_media_refs"));
+        QVERIFY(q.next());
+        QCOMPARE(q.value(0).toLongLong(), position);
+        q.finish();
+        QVERIFY(q.exec("SELECT range_key FROM message_media_hashes WHERE algorithm='sha-256'"));
+        QVERIFY(q.next());
+        QCOMPARE(q.value(0).toString(),
+                 FileIdentity::rangeKey(corporate, media.file.computedHashes().first().toString(), *media.file.size()));
+        q.finish();
+        QVERIFY(history.transaction());
+        QVERIFY(q.exec("CREATE TRIGGER reject_resource BEFORE INSERT ON message_media_hashes BEGIN "
+                       "SELECT RAISE(ABORT,'resource failure'); END"));
+        const auto next = insertEvent(message.body(), HistoryMessageExtras::encode(message));
+        QVERIFY(next);
+        QVERIFY(!HistoryMediaRefs::link(history, next));
+        QVERIFY(history.rollback());
+        QCOMPARE(linkCount(), 1);
     }
 
     void chatMediaCancellationAndQueryErrorsDoNotLookLikeEmptyResults()
@@ -753,13 +962,15 @@ private slots:
         auto read      = [](ChatMedia::Cursor, bool, int, QObject *receiver, ChatMedia::LinksDone done) {
             QTimer::singleShot(0, receiver, [done] { done({}, false); });
         };
-        auto inspect = [](const HistoryMediaRefs::Announcement &) { return ChatMedia::Storage(); };
-        auto browser = new ChatMedia(read, inspect);
+        auto count = [](QObject *receiver, ChatMedia::StatisticsDone done) {
+            QTimer::singleShot(0, receiver, [done] { done({}, false); });
+        };
+        auto browser = new ChatMedia(read, count);
         browser->requestStatistics([&](ChatMedia::Statistics, bool) { ++completed; });
         delete browser;
         QTest::qWait(10);
         QCOMPARE(completed, 0);
-        ChatMedia live(read, inspect);
+        ChatMedia live(read, count);
         live.requestStatistics([&](ChatMedia::Statistics, bool ok) {
             QVERIFY(!ok);
             ++completed;
@@ -1492,6 +1703,25 @@ private slots:
         QCOMPARE(chatResult.mediaLinks.size(), 1);
         QVERIFY(chatResult.mediaLinks.first().cursor.valid());
         QCOMPARE(chatResult.mediaLinks.first().account, corporate);
+        request.type = HistoryReadRequest::ChatMediaStatistics;
+        request.fileDatabasePath = FileDatabase::path();
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        const auto statsResult = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(statsResult.success);
+        QCOMPARE(statsResult.mediaStatistics.remote, quint64(1));
+        QSqlQuery damage(history);
+        QVERIFY(damage.exec("SELECT sql FROM sqlite_master WHERE name='message_media_hashes'")); QVERIFY(damage.next());
+        const auto repair = damage.value(0).toString(); damage.finish();
+        QVERIFY(damage.exec("DROP TABLE message_media_hashes"));
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        QVERIFY(!qvariant_cast<HistoryReadResult>(read.takeFirst().first()).success);
+        QVERIFY(damage.exec(repair));
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        QVERIFY(qvariant_cast<HistoryReadResult>(read.takeFirst().first()).success);
+        request.fileDatabasePath.clear();
         request.archiveKey = {};
         request.type           = HistoryReadRequest::MediaLinked;
         request.publicationIds = { result.mediaLinks.first().publicationId };

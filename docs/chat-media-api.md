@@ -26,19 +26,54 @@ two gallery positions. A page carries the publication ID, announcement metadata
 Browsing does not instantiate `FileSharingItem`, fetch payloads, pin cache entries
 or refresh their retention time.
 
-`requestStatistics(callback)` counts complete, partial and remote occurrences.
-Complete includes readable cached files, unchanged external originals and fully
-verified range files. Partial means some bytes are stored on disk; a full byte
-map still awaiting verification also remains partial. Remote includes files with
-no retained disk bytes. Volatile RAM chunks do not count as durable downloads.
-Statistics scan the same filtered history in batches of 100, with bounded memory
-and a yield between batches. Its cost grows with the local conversation history; this is not a constant-time
-aggregate across the separate history and file databases. It does
-not create one runtime file object per occurrence. `stale` reports that a change
-notification arrived during the scan. Listen to `changed()` and refresh as
-needed; notifications cover history links, cache contents and range storage.
-Notifications can concern other chats in the same profile; debounce refreshes
-during an active transfer.
+`requestStatistics(callback)` counts complete, partial and remote occurrences with
+one aggregate SQL statement on the existing history worker. There is no page
+loop, message reconstruction, filesystem scan or runtime item creation for a
+count. SQLite selects the account and peer through the history contact index and
+resolves storage through indexed identities. Only entries selected for a page
+have their announcement metadata reconstructed for presentation.
+
+The counts and page availability use the same SQL projection. Complete means the
+file registry records a complete, verified copy, including registered external
+originals. Partial means a checkpoint retains some ranges on disk, including a
+full byte map still awaiting verification. Remote means no registered copy or
+checkpointed ranges. Volatile RAM chunks do not count as durable downloads.
+Results describe committed registry state: coalesced range checkpoints can lag
+an active transfer. Reading or opening content still validates the actual file;
+SQL cannot detect an external edit or deletion before the storage layer does.
+
+`stale` reports a change notification while the request was pending. Listen to
+`changed()` and refresh as needed. Notifications cover history links, cache
+contents and range storage; they can concern other chats in the same profile.
+Debounce refreshes during an active transfer. A SQL aggregate still processes
+matching rows; it is not a constant-time precomputed counter.
+
+## SQL ownership and resource identity
+
+History owns conversation membership: `contacts` identifies the account, peer and
+contact kind, `events` identifies the message, and `message_media_refs` identifies
+an attachment occurrence. The new `message_media_resources` and
+`message_media_hashes` tables normalize its size, URL identity, content hashes and
+account-scoped range keys. They are written in the message transaction and
+cascade away with its references. The opaque message payload remains available
+for display, but is no longer needed to join an attachment to its bytes.
+
+The file registry owns physical copies, aliases, verified completion and ranges.
+The history worker attaches that existing registry read-only. The aggregate
+joins only the conversation's eligible references to complete cache aliases,
+account-scoped range records and URL mappings. Whole-file checksum aliases also
+resolve range copies when a later announcement uses a different hash. Hash aliases are alternatives;
+multiple matching hashes or copies never multiply an occurrence. Retiring a file
+or withdrawing its ranges changes the next result without updating counters or
+running another synchronization service.
+
+The range-key encoding is shared with the download cache in `FileIdentity` and
+remains compatible with existing payloads. File schema 5 adds an expression
+index for canonical hash keys used by URL mappings, explicit account scope on
+range records, and a whole-file checksum lookup index. History migration backfills
+normalized identities while preserving publication IDs, attachment ordinals and
+scan positions. SFS protocol reconstruction stays on the GUI before threaded
+migration; SQL workers consume value-only resource projections.
 
 Both callbacks distinguish failure from an empty result with their boolean
 argument. They run on the browser's thread. Destroying the browser cancels

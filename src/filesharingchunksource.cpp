@@ -1,4 +1,5 @@
 #include "filesharingchunksource.h"
+#include "fileidentity.h"
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
@@ -209,11 +210,7 @@ MediaChunkAbort FileSharingChunkSource::sequential(FileSharingItem *item, const 
 
 QString FileSharingChunkSource::identity(const FileSharingItem *item)
 {
-    return item && item->account() ? identity(item->account()->id(), item->sums().value(0)) : QString();
-}
-QString FileSharingChunkSource::identity(const QString &account, const XMPP::Hash &hash)
-{
-    return account + QChar(0) + hash.toString();
+    return item && item->account() ? FileIdentity::source(item->account()->id(), item->sums().value(0).toString()) : QString();
 }
 void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {
@@ -233,7 +230,7 @@ void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMP
             if (!h.data().isEmpty())
                 hashes.append({ range.offset, length, h.stringType(), h.data() });
     }
-    item->account()->psi()->fileSharingManager()->mediaChunkCache()->configure(identity(item), size, hashes);
+    item->account()->psi()->fileSharingManager()->mediaChunkCache()->configure(identity(item), size, hashes, { { "account", item->account()->id() } });
 }
 MediaChunkCache *FileSharingChunkSource::configure(const FileSharingItem *item)
 {

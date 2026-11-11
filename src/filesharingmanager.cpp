@@ -430,62 +430,17 @@ ChatMedia *FileSharingManager::chatMedia(PsiAccount *account, const HistoryArchi
 {
     if (!account || !parent || key.account != account->id() || key.peer.isEmpty() || !d->history)
         return nullptr;
-    const QPointer<EDBSqLite>          history(d->history);
-    const QPointer<FileSharingManager> manager(this);
-    auto                               browser = new ChatMedia(
-        [history, key](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
-            if (history)
-                history->requestChatMediaLinks(key, cursor, older, limit, receiver, std::move(done));
-            else
-                QTimer::singleShot(0, receiver, [done] { done({}, false); });
+    const QPointer<EDBSqLite> history(d->history);
+    const auto filesPath = FileDatabase::path();
+    auto browser = new ChatMedia(
+        [history, key, filesPath](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
+            if (history) history->requestChatMediaLinks(key, cursor, older, limit, receiver, std::move(done), filesPath);
+            else QTimer::singleShot(0, receiver, [done] { done({}, false); });
         },
-        [manager](const HistoryMediaRefs::Announcement &announcement) {
-            ChatMedia::Storage result;
-            if (!manager)
-                return result;
-            const auto &file   = announcement.file;
-            const auto  hashes = file.reference.mediaSharing().file.computedHashes();
-            if (file.hasContentHashes()) {
-                if (auto cached = manager->cacheItem(hashes)) {
-                    result.availability    = ChatMedia::Availability::Complete;
-                    result.downloadedBytes = cached->size();
-                    return result;
-                }
-                const auto record = manager->d->catalog->find(announcement.account, hashes.first());
-                if (record && !record->readableLocalPath().isEmpty()) {
-                    result.availability    = ChatMedia::Availability::Complete;
-                    result.downloadedBytes = record->localSize;
-                    return result;
-                }
-                const auto size = file.reference.mediaSharing().file.size();
-                if (size) {
-                    for (const auto &hash : hashes) {
-                        const auto state = manager->mediaChunkCache()->fileState(
-                            FileSharingChunkSource::identity(announcement.account, hash), *size);
-                        quint64 bytes = 0;
-                        for (const auto &range : state.ranges)
-                            bytes += range.second;
-                        result.downloadedBytes = std::max(result.downloadedBytes, bytes);
-                        if (state.complete) {
-                            result.availability = ChatMedia::Availability::Complete;
-                            break;
-                        }
-                        if (bytes)
-                            result.availability = ChatMedia::Availability::Partial;
-                    }
-                }
-            } else {
-                const auto id      = MessageFileShares::urlIdentity(file.url());
-                const auto content = manager->contentForUrl(announcement.account, id);
-                if (content)
-                    if (auto cached = manager->cacheItem(*content)) {
-                        result.availability    = ChatMedia::Availability::Complete;
-                        result.downloadedBytes = cached->size();
-                    }
-            }
-            return result;
-        },
-        parent);
+        [history, key, filesPath](QObject *receiver, ChatMedia::StatisticsDone done) {
+            if (history) history->requestChatMediaStatistics(key, filesPath, receiver, std::move(done));
+            else QTimer::singleShot(0, receiver, [done] { done({}, false); });
+        }, parent);
     connect(this, &FileSharingManager::chatMediaChanged, browser, &ChatMedia::invalidate);
     const auto close = [browser] { delete browser; };
     connect(account, &QObject::destroyed, browser, close);
