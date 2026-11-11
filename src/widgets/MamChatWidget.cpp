@@ -3753,7 +3753,7 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
 }
 
 void MamChatWidget::openImageViewer(const QImage &image, const QString &name,
-                                    const MessageView &message, FileSharingItem *item)
+                                    const MessageView &message, FileSharingItem *item, const QString &sourceId)
 {
     int ordinal = 0;
     if (item) {
@@ -3762,7 +3762,7 @@ void MamChatWidget::openImageViewer(const QImage &image, const QString &name,
             ordinal = found;
     }
     if (imageOpenHandler_)
-        imageOpenHandler_(image, name, message.historyId(), message.dateTime(), ordinal);
+        imageOpenHandler_(image, name, message.historyId(), message.dateTime(), ordinal, sourceId);
     else
         ImageViewer::showImage(image, name);
 }
@@ -3886,7 +3886,11 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
                     auto *viewImage = menu->addAction(tr("View image"));
                     viewImage->setObjectName(QStringLiteral("mamViewImage"));
                     connect(viewImage, &QAction::triggered, this,
-                            [this, full, message] { openImageViewer(full.image, full.fileName, message, full.item); });
+                            [this, full, message, name = format->name()] {
+                                const QUrl source(name);
+                                openImageViewer(full.image, full.fileName, message, full.item,
+                                                source.scheme() == QLatin1String("share") ? source.path() : QString());
+                            });
                 }
                 if (!link.isEmpty()) {
                     auto *copyImageLink = menu->addAction(tr("Copy image link"));
@@ -4362,7 +4366,9 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                                                                          : message.formattedText();
                         const FullImage full = fullImage(*format, html, body, mediaOpener_);
                         if (!full.image.isNull()) {
-                            openImageViewer(full.image, full.fileName, message, full.item);
+                            const QUrl source(format->name());
+                            openImageViewer(full.image, full.fileName, message, full.item,
+                                            source.scheme() == QLatin1String("share") ? source.path() : QString());
                             mouse->accept();
                             return true;
                         }

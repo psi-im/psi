@@ -52,11 +52,11 @@ struct ChatMediaImageSource::Walk {
 
 ChatMediaImageSource::ChatMediaImageSource(FileSharingManager *manager, PsiAccount *account,
                                          const HistoryArchive::Key &key, qint64 eventId,
-                                         const QDateTime &date, int ordinal)
+                                         const QDateTime &date, int ordinal, const QString &sourceId)
     : manager_(manager), account_(account),
       cursor_ { date.isValid() ? date.toMSecsSinceEpoch() : qint64(0),
                 eventId, ordinal, !date.isValid() },
-      hasOriginalEvent_(eventId > 0)
+      sourceId_(sourceId), hasOriginalEvent_(eventId > 0)
 {
     if (manager_ && account_)
         browser_ = manager_->chatMedia(account_, key, this);
@@ -70,9 +70,9 @@ void ChatMediaImageSource::install(MamChatWidget *chat, PsiAccount *account,
     const QPointer<PsiAccount> acc(account);
     const QPointer<FileSharingManager> manager(account->psi()->fileSharingManager());
     chat->setImageOpenHandler([acc, manager, key](const QImage &image, const QString &path,
-                                                  qint64 eventId, const QDateTime &date, int ordinal) {
+                                                  qint64 eventId, const QDateTime &date, int ordinal, const QString &sourceId) {
         auto *source = acc && manager
-            ? new ChatMediaImageSource(manager, acc, key, eventId, date, ordinal)
+            ? new ChatMediaImageSource(manager, acc, key, eventId, date, ordinal, sourceId)
             : nullptr;
         ImageViewer::showImage(image, path, source);
     });
@@ -96,6 +96,42 @@ void ChatMediaImageSource::adjacent(int direction, Result result)
             position.eventId = direction < 0 ? std::numeric_limits<qint64>::max() : qint64(1);
             position.ordinal = direction < 0 ? std::numeric_limits<int>::max() : -1;
         }
+    }
+    // The presentation may reorder references by their body offsets, while
+    // the archive's attachment ordinals retain protocol order. Resolve the
+    // clicked share identity against this one message before traversing.
+    if (!anchorResolved_ && hasOriginalEvent_ && !sourceId_.isEmpty()) {
+        anchorResolved_ = true;
+        auto before = cursor_;
+        before.ordinal = -1;
+        const QPointer<ChatMediaImageSource> guard(this);
+        browser_->requestPage(before, false, 200, [guard, walk, position](ChatMedia::Page page, bool ok) {
+            if (!guard)
+                return;
+            if (ok) {
+                ChatMedia::Cursor matched;
+                int distance = std::numeric_limits<int>::max();
+                for (const auto &entry : page.entries) {
+                    if (entry.cursor.eventId != guard->cursor_.eventId)
+                        break;
+                    const auto &file = entry.announcement.file;
+                    bool same = false;
+                    for (const auto &hash : file.reference.mediaSharing().file.computedHashes())
+                        same |= hash.toString() == guard->sourceId_;
+                    if (!same && !file.hasContentHashes() && file.url().isValid())
+                        same = MessageFileShares::urlIdentity(file.url()).toString() == guard->sourceId_;
+                    const int delta = std::abs(entry.cursor.ordinal - guard->cursor_.ordinal);
+                    if (same && delta < distance) {
+                        matched = entry.cursor;
+                        distance = delta;
+                    }
+                }
+                if (matched.valid())
+                    guard->cursor_ = matched;
+            }
+            guard->requestPage(walk, guard->cursor_.valid() ? guard->cursor_ : position);
+        });
+        return;
     }
     requestPage(walk, position);
 }

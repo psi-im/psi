@@ -18,7 +18,7 @@ class ChatMediaImageSource final : public ImageNavigationSource {
 public:
     ChatMediaImageSource(FileSharingManager *manager, PsiAccount *account,
                          const HistoryArchive::Key &key, qint64 eventId,
-                         const QDateTime &date, int ordinal);
+                         const QDateTime &date, int ordinal, const QString &sourceId);
     void adjacent(int direction, Result result) override;
     static void install(MamChatWidget *chat, PsiAccount *account, const HistoryArchive::Key &key);
 
@@ -33,5 +33,7 @@ private:
     QPointer<PsiAccount> account_;
     QPointer<ChatMedia> browser_;
     ChatMedia::Cursor cursor_;
+    QString sourceId_;
     bool hasOriginalEvent_ = false;
+    bool anchorResolved_ = false;
 };
