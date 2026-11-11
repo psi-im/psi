@@ -95,6 +95,23 @@ QIcon fullscreenArrowsIcon(const QPalette &palette, bool inward)
     return QIcon(pixmap);
 }
 
+
+QIcon partiallyDownloadedIcon(const QPalette &palette)
+{
+    QPixmap pixmap(24, 24);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QRectF circle(4, 4, 16, 16);
+    painter.setPen(QPen(palette.color(QPalette::ButtonText), 1.8));
+    painter.drawEllipse(circle);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(palette.color(QPalette::ButtonText));
+    painter.drawPie(circle.adjusted(2, 2, -2, -2), 90 * 16, 180 * 16);
+    painter.end();
+    return QIcon(pixmap);
+}
+
 QIcon rotateClockwiseIcon(const QPalette &palette)
 {
     QPixmap pixmap(24, 24);
@@ -287,8 +304,10 @@ void MediaViewer::setupControls()
     separator();
     filterButton(1, 4, tr("Downloaded"), { "folder-download", "emblem-downloads" },
                  QStyle::SP_DialogSaveButton);
-    filterButton(1, 2, tr("Partially downloaded"), { "media-playback-pause", "view-statistics" },
-                 QStyle::SP_MediaPause);
+    auto *partial = filterButton(1, 2, tr("Partially downloaded"), { "download-in-progress" },
+                                 QStyle::SP_MediaPause);
+    partial->setIcon(QIcon::fromTheme(QStringLiteral("download-in-progress"),
+                                       partiallyDownloadedIcon(palette())));
     filterButton(1, 1, tr("Remote"), { "network-server", "network-workgroup" }, QStyle::SP_DriveNetIcon);
     separator();
 
@@ -436,6 +455,14 @@ void MediaViewer::updateFullscreenUi()
         button->setIcon(QIcon::fromTheme(full ? QStringLiteral("view-restore") : QStringLiteral("view-fullscreen"),
                                          fullscreenArrowsIcon(palette(), full)));
     }
+    if (video_) {
+        if (auto *videoFullscreen = video_->findChild<QToolButton *>(QStringLiteral("qite-video-fullscreen-button"))) {
+            const bool full = isFullScreen();
+            videoFullscreen->setIcon(
+                QIcon::fromTheme(full ? QStringLiteral("view-restore") : QStringLiteral("view-fullscreen"),
+                                 fullscreenArrowsIcon(palette(), full)));
+        }
+    }
     if (isFullScreen() && video_) {
         noteFullscreenActivity(true);
         return;
@@ -541,6 +568,13 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
         });
         if (video_) {
             videoControls_ = video_->findChild<QWidget *>(QStringLiteral("qite-video-controls"));
+            if (auto *videoFullscreen = video_->findChild<QToolButton *>(QStringLiteral("qite-video-fullscreen-button"))) {
+                // qite updates its own icon after invoking the host's fullscreen
+                // callback; our later connection reapplies the themed arrows.
+                connect(videoFullscreen, &QToolButton::clicked, this, [this] {
+                    updateFullscreenUi();
+                });
+            }
             trackVideoWidget(video_);
             video_->setGeometry(contentRect());
             video_->show();
