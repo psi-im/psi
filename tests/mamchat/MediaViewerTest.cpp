@@ -14,6 +14,7 @@
 #include <QWindowStateChangeEvent>
 #include <QtTest/QtTest>
 #include <cmath>
+#include <memory>
 
 namespace {
 void zoom(MediaViewer &viewer, int notches)
@@ -72,6 +73,46 @@ class MediaViewerTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void filtersAreRestoredAcrossViewerInstances()
+    {
+        auto preferences = std::make_shared<MediaFilter>(
+            MediaFilter { MediaFilter::Images | MediaFilter::Videos,
+                          MediaFilter::Complete | MediaFilter::Partial });
+        MediaViewer::setFilterPersistence(
+            [preferences] { return *preferences; },
+            [preferences](MediaFilter value) { *preferences = value; });
+        QImage image(80, 60, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        {
+            MediaViewer viewer(image);
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            QCOMPARE(source->filter.types, int(MediaFilter::Images | MediaFilter::Videos));
+            QCOMPARE(source->filter.availability, int(MediaFilter::Complete | MediaFilter::Partial));
+            auto *audioVideo = viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter0_2"));
+            auto *remote = viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter1_1"));
+            QVERIFY(audioVideo && remote);
+            audioVideo->setChecked(false);
+            remote->setChecked(true);
+            QCOMPARE(preferences->types, int(MediaFilter::Images));
+            QCOMPARE(preferences->availability,
+                     int(MediaFilter::Complete | MediaFilter::Partial | MediaFilter::Remote));
+        }
+        {
+            MediaViewer viewer(image);
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            auto *audioVideo = viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter0_2"));
+            auto *remote = viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter1_1"));
+            QVERIFY(audioVideo && remote);
+            QVERIFY(!audioVideo->isChecked());
+            QVERIFY(remote->isChecked());
+            QCOMPARE(source->filter.types, preferences->types);
+            QCOMPARE(source->filter.availability, preferences->availability);
+        }
+        MediaViewer::setFilterPersistence({}, {});
+    }
+
     void filtersAndPositionShareTheSourceSelection()
     {
         QImage image(80, 60, QImage::Format_RGB32);
