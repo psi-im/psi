@@ -3713,8 +3713,9 @@ static QString httpImageLink(const QTextImageFormat &format, const QString &mess
 }
 
 struct FullImage {
-    QImage  image;
-    QString fileName;
+    QImage           image;
+    QString          fileName;
+    FileSharingItem *item = nullptr;
 };
 
 static FullImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
@@ -3722,6 +3723,7 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
 {
     FullImage result;
     if (auto *item = sharedImageItem(format, messageHtml, mediaOpener)) {
+        result.item = item;
         // Use the cached original when available. The chat's inline resource
         // is commonly just a downscaled 640x480 preview.
         const QString path = item->fileName();
@@ -3750,9 +3752,19 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
     return result;
 }
 
-static void openImageViewer(const FullImage &full)
+void MamChatWidget::openImageViewer(const QImage &image, const QString &name,
+                                    const MessageView &message, FileSharingItem *item)
 {
-    ImageViewer::showImage(full.image, full.fileName);
+    int ordinal = 0;
+    if (item) {
+        const int found = message.references().indexOf(item);
+        if (found >= 0)
+            ordinal = found;
+    }
+    if (imageOpenHandler_)
+        imageOpenHandler_(image, name, message.historyId(), message.dateTime(), ordinal);
+    else
+        ImageViewer::showImage(image, name);
 }
 
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
@@ -3874,7 +3886,7 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
                     auto *viewImage = menu->addAction(tr("View image"));
                     viewImage->setObjectName(QStringLiteral("mamViewImage"));
                     connect(viewImage, &QAction::triggered, this,
-                            [full] { openImageViewer(full); });
+                            [this, full, message] { openImageViewer(full.image, full.fileName, message, full.item); });
                 }
                 if (!link.isEmpty()) {
                     auto *copyImageLink = menu->addAction(tr("Copy image link"));
@@ -4350,7 +4362,7 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                                                                          : message.formattedText();
                         const FullImage full = fullImage(*format, html, body, mediaOpener_);
                         if (!full.image.isNull()) {
-                            openImageViewer(full);
+                            openImageViewer(full.image, full.fileName, message, full.item);
                             mouse->accept();
                             return true;
                         }

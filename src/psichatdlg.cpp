@@ -35,6 +35,7 @@
 #include "eventdb.h"
 #include "fancylabel.h"
 #include "filesharingmanager.h"
+#include "chatmediaimagesource.h"
 #include "historysync.h"
 #include "iconaction.h"
 #include "iconlabel.h"
@@ -581,6 +582,8 @@ void PsiChatDlg::initUi()
     delete ui_.topFrame->layout()->replaceWidget(ui_.log, nativeTimeline_);
     delete ui_.log; // The .ui placeholder is not part of the native timeline.
     configureNativeChat(nativeTimeline_, account(), false);
+    ChatMediaImageSource::install(nativeTimeline_, account(),
+        { account()->id(), account()->jid().bare(), jid().bare(), false });
     roomOccupantChat_ = isRoomOccupantChat();
     if (nativeTimeline_)
         nativeTimeline_->setLocalDeletionEnabled(!roomOccupantChat_

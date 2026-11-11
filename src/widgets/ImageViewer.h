@@ -7,7 +7,7 @@
 #include <QRectF>
 #include <QSize>
 #include <QString>
-#include <QStringList>
+#include <QPointer>
 #include <QWidget>
 #include <functional>
 
@@ -23,8 +23,15 @@ class QWheelEvent;
 // zoom, capped at 100% of the original. Ctrl+wheel and keyboard shortcuts zoom
 // temporarily, deliberately decoupled from both the original size and the
 // window fit factor; Ctrl+0 restores the fit. An oversized image can be dragged
-// with the left mouse button. Without Ctrl, the wheel browses the other images
-// in the same directory, oldest first.
+// with the left mouse button. Navigation is supplied by the caller rather
+// than inferred from the directory of an image's cached payload.
+class ImageNavigationSource : public QObject {
+public:
+    using Result = std::function<void(const QImage &, const QString &, bool)>;
+    using QObject::QObject;
+    virtual void adjacent(int direction, Result result) = 0;
+};
+
 class ImageViewer final : public QWidget {
     Q_OBJECT
 public:
@@ -38,7 +45,9 @@ public:
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
     static void setSavePathPersistence(PathLoader loader, PathSaver saver);
-    static void showImage(const QImage &image, const QString &fileName);
+    static void showImage(const QImage &image, const QString &fileName, ImageNavigationSource *source = nullptr);
+    // The viewer takes ownership. Replacing the source cancels pending navigation.
+    void setNavigationSource(ImageNavigationSource *source);
 
     QRectF displayedImageRect() const;
     qreal  currentScale() const;
@@ -63,8 +72,6 @@ private:
     QPointF constrainedPanOffset(const QPointF &offset) const;
     void    updatePanCursor();
     bool    showAdjacentImage(int step);
-    void    rebuildImageList();
-    void    resetImageListToCurrent();
     void    setImage(const QImage &image, const QString &fileName);
     void    saveWindowSize() const;
     void    bringToFront();
@@ -78,10 +85,11 @@ private:
     qreal       temporaryScale_ = 1.0;
     QPointF     panOffset_;
     QPoint      lastDragPosition_;
-    QString     directoryPath_;
+    QString     currentFilePath_;
     QString     currentFileName_;
-    QStringList imageFileNames_;
-    int         currentImageIndex_ = -1;
+    QPointer<ImageNavigationSource> navigationSource_;
+    quint64     navigationSerial_ = 0;
+    bool        navigationPending_ = false;
     bool        temporaryZoom_     = false;
     bool        dragging_          = false;
 };

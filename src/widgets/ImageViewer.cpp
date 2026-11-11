@@ -7,12 +7,10 @@
 #include <QContextMenuEvent>
 #include <QCoreApplication>
 #include <QCursor>
-#include <QDateTime>
 #include <QDir>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
-#include <QImageReader>
 #include <QImageWriter>
 #include <QKeyEvent>
 #include <QMenu>
@@ -23,7 +21,6 @@
 #include <QPointer>
 #include <QResizeEvent>
 #include <QScreen>
-#include <QSet>
 #include <QWindow>
 #include <QWheelEvent>
 #include <algorithm>
@@ -45,15 +42,7 @@ QPointer<ImageViewer> &currentImageViewer()
     return viewer;
 }
 
-const QSet<QString> &supportedImageSuffixes()
-{
-    static const QSet<QString> suffixes = [] {
-        QSet<QString> result;
-        for (const QByteArray &format : QImageReader::supportedImageFormats())
-            result.insert(QString::fromLatin1(format).toLower());
-        return result;
-    }();
-    return suffixes;
+
 }
 }
 
@@ -69,16 +58,20 @@ void ImageViewer::setSavePathPersistence(PathLoader loader, PathSaver saver)
     imageViewerSavePathSaver  = std::move(saver);
 }
 
-void ImageViewer::showImage(const QImage &image, const QString &fileName)
+void ImageViewer::showImage(const QImage &image, const QString &fileName, ImageNavigationSource *source)
 {
-    if (image.isNull())
+    if (image.isNull()) {
+        delete source;
         return;
+    }
     if (ImageViewer *viewer = currentImageViewer()) {
+        viewer->setNavigationSource(source);
         viewer->setImage(image, fileName);
         viewer->bringToFront();
         return;
     }
     auto *viewer = new ImageViewer(image, fileName);
+    viewer->setNavigationSource(source);
     currentImageViewer() = viewer;
     viewer->show();
     viewer->bringToFront();
@@ -138,16 +131,22 @@ void ImageViewer::setImage(const QImage &image, const QString &fileName)
     image_ = image;
     const QFileInfo fileInfo(fileName);
     currentFileName_ = fileInfo.fileName();
+    currentFilePath_ = fileInfo.isAbsolute() ? fileInfo.absoluteFilePath() : QString();
     setWindowTitle(currentFileName_.isEmpty() ? tr("Image") : currentFileName_);
-    if (!fileName.isEmpty() && fileInfo.isAbsolute() && fileInfo.dir().exists()) {
-        directoryPath_ = fileInfo.absolutePath();
-        rebuildImageList();
-    } else {
-        directoryPath_.clear();
-        resetImageListToCurrent();
-    }
     resetTemporaryZoom();
     update();
+}
+
+void ImageViewer::setNavigationSource(ImageNavigationSource *source)
+{
+    if (navigationSource_ == source)
+        return;
+    ++navigationSerial_;
+    navigationPending_ = false;
+    delete navigationSource_.data();
+    navigationSource_ = source;
+    if (source)
+        source->setParent(this);
 }
 
 void ImageViewer::saveWindowSize() const
@@ -180,9 +179,7 @@ void ImageViewer::bringToFront()
 
 QString ImageViewer::currentFilePath() const
 {
-    if (directoryPath_.isEmpty() || currentFileName_.isEmpty())
-        return {};
-    return QDir(directoryPath_).filePath(currentFileName_);
+    return currentFilePath_;
 }
 
 void ImageViewer::showInFolder()
@@ -250,94 +247,22 @@ void ImageViewer::contextMenuEvent(QContextMenuEvent *event)
     event->accept();
 }
 
-void ImageViewer::resetImageListToCurrent()
-{
-    imageFileNames_.clear();
-    if (!currentFileName_.isEmpty())
-        imageFileNames_.append(currentFileName_);
-    currentImageIndex_ = imageFileNames_.isEmpty() ? -1 : 0;
-}
-
-void ImageViewer::rebuildImageList()
-{
-    imageFileNames_.clear();
-    currentImageIndex_ = -1;
-    if (directoryPath_.isEmpty()) {
-        resetImageListToCurrent();
-        return;
-    }
-    QDir directory(directoryPath_);
-    if (!directory.exists()) {
-        directoryPath_.clear();
-        resetImageListToCurrent();
-        return;
-    }
-
-    const QFileInfoList entries = directory.entryInfoList(QDir::Files | QDir::Readable, QDir::NoSort);
-    QFileInfoList       images;
-    images.reserve(entries.size());
-    for (const QFileInfo &entry : entries) {
-        if (supportedImageSuffixes().contains(entry.suffix().toLower()))
-            images.append(entry);
-    }
-
-    const QFileInfo current(directory.filePath(currentFileName_));
-    bool            currentListed = false;
-    for (const QFileInfo &image : images) {
-        if (image.fileName() == currentFileName_) {
-            currentListed = true;
-            break;
-        }
-    }
-    if (!currentListed && current.isFile()) {
-        QImageReader reader(current.absoluteFilePath());
-        if (reader.canRead())
-            images.append(current);
-    }
-
-    std::sort(images.begin(), images.end(), [](const QFileInfo &left, const QFileInfo &right) {
-        const QDateTime leftTime  = left.lastModified();
-        const QDateTime rightTime = right.lastModified();
-        if (leftTime != rightTime)
-            return leftTime < rightTime;
-        return left.fileName() < right.fileName();
-    });
-
-    imageFileNames_.reserve(images.size());
-    for (const QFileInfo &image : images)
-        imageFileNames_.append(image.fileName());
-    currentImageIndex_ = imageFileNames_.indexOf(currentFileName_);
-}
-
 bool ImageViewer::showAdjacentImage(int step)
 {
-    if (step == 0 || directoryPath_.isEmpty() || imageFileNames_.size() < 2 || currentImageIndex_ < 0)
+    if (!navigationSource_ || navigationPending_ || step == 0)
         return false;
-
-    const QDir directory(directoryPath_);
-    int        index = currentImageIndex_;
-    while (true) {
-        index += step;
-        if (index < 0 || index >= imageFileNames_.size())
-            return false;
-        const QFileInfo fileInfo(directory.filePath(imageFileNames_.at(index)));
-        if (!fileInfo.isFile())
-            continue;
-        QImageReader reader(fileInfo.absoluteFilePath());
-        reader.setAutoTransform(true);
-        QImage nextImage = reader.read();
-        if (nextImage.isNull())
-            continue;
-
-        image_           = nextImage;
-        directoryPath_   = fileInfo.absolutePath();
-        currentFileName_ = fileInfo.fileName();
-        setWindowTitle(currentFileName_);
-        resetTemporaryZoom();
-        rebuildImageList();
-        update();
-        return true;
-    }
+    navigationPending_ = true;
+    const quint64 serial = ++navigationSerial_;
+    const QPointer<ImageViewer> viewer(this);
+    const QPointer<ImageNavigationSource> source(navigationSource_);
+    navigationSource_->adjacent(step, [viewer, source, serial](const QImage &image, const QString &fileName, bool ok) {
+        if (!viewer || viewer->navigationSerial_ != serial || viewer->navigationSource_ != source)
+            return;
+        viewer->navigationPending_ = false;
+        if (ok && !image.isNull())
+            viewer->setImage(image, fileName);
+    });
+    return true;
 }
 
 bool ImageViewer::canPan() const
