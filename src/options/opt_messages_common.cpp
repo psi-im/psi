@@ -66,8 +66,8 @@ QWidget *OptionsTabMsgCommon::widget()
         });
     });
     d->ck_tabChats->setToolTip(tr("Makes Psi open chats in a tabbed window."));
-    d->ck_showPreviews->setToolTip(tr("Show under links to some media content preview of the content."
-                                      " It's also possible to play audio and video right in chat."));
+    d->ck_showPreviews->setToolTip(tr("Show previews below links to media content."
+                                      " Audio and video can also be played directly in the chat."));
     for (auto *combo : { d->cb_autoDownloadChats, d->cb_autoDownloadGroupchats }) {
         for (const quint64 size : MediaDownloadPolicy::choices())
             combo->addItem(autoDownloadText(size), qulonglong(size));
@@ -76,21 +76,20 @@ QWidget *OptionsTabMsgCommon::widget()
     connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadChats, &QLabel::setEnabled);
     connect(d->ck_showPreviews, &QCheckBox::toggled, d->lb_autoDownloadGroupchats, &QLabel::setEnabled);
     d->cb_autoDownloadChats->setToolTip(
-        tr("Pictures, voice messages and other media from contacts in your roster, and from your own other"
+        tr("Pictures, voice messages and other media from contacts in your roster, and from your other"
            " devices, are downloaded and shown right away up to this size. Larger files and files from"
            " anyone else are downloaded only when you ask."));
     d->cb_autoDownloadGroupchats->setToolTip(
         tr("Media in group chats is downloaded and shown right away up to this size, whoever sent it."
            " Larger files are downloaded only when you ask."));
-    d->ck_showCounter->setToolTip(tr("Makes Psi show message length counter."
-                                     " Check this if you want to know how long is your message."
-                                     " Can be useful when you're using SMS transport."));
+    d->ck_showCounter->setToolTip(tr("Show the number of characters in your message."
+                                     " This can be useful when using an SMS transport."));
     d->ck_contactsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact by using "
-           "the deprecated XHTML-IM (XEP-0071)"));
+        tr("If enabled, Psi will display incoming messages using the contact's formatting, provided through "
+           "the deprecated XHTML-IM extension (XEP-0071)."));
     d->ck_sendHtmlsMessageFormatting->setToolTip(
-        tr("If enabled, Psi will send outcoming formatted messages with additional XHTML-IM (XEP-0071). Note: it's "
-           "deprecated badly supported."));
+        tr("If enabled, Psi will include formatting in outgoing messages using XHTML-IM (XEP-0071). "
+           "This extension is deprecated and poorly supported."));
 
     d->cb_tabMdlClick->addItems(clickActList);
     d->cb_tabDblClick->addItems(clickActList);
