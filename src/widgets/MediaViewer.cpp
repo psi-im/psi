@@ -24,6 +24,7 @@
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPointer>
 #include <QSlider>
 #include <QTimer>
@@ -42,6 +43,12 @@
 #include <utility>
 
 namespace {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+QPoint globalMousePoint(const QMouseEvent *event) { return event->globalPosition().toPoint(); }
+#else
+QPoint globalMousePoint(const QMouseEvent *event) { return globalMousePoint(event); }
+#endif
+
 constexpr int   Margin   = 16;
 constexpr qreal ZoomStep = 1.2;
 
@@ -96,21 +103,107 @@ QIcon fullscreenArrowsIcon(const QPalette &palette, bool inward)
 }
 
 
-QIcon partiallyDownloadedIcon(const QPalette &palette)
-{
-    QPixmap pixmap(24, 24);
-    pixmap.fill(Qt::transparent);
-    QPainter painter(&pixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    const QRectF circle(4, 4, 16, 16);
-    painter.setPen(QPen(palette.color(QPalette::ButtonText), 1.8));
-    painter.drawEllipse(circle);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(palette.color(QPalette::ButtonText));
-    painter.drawPie(circle.adjusted(2, 2, -2, -2), 90 * 16, 180 * 16);
-    painter.end();
-    return QIcon(pixmap);
-}
+// A consistent document glyph with progressively less solid outline. The
+// active filter palette is applied at paint time, so it tracks theme changes.
+class MediaFilterButton final : public QToolButton {
+public:
+    explicit MediaFilterButton(QWidget *parent) : QToolButton(parent)
+    {
+        setCheckable(true);
+        setAutoRaise(true);
+        setFocusPolicy(Qt::StrongFocus);
+        setFixedSize(34, 34);
+        setIconSize(QSize(20, 20));
+    }
+
+    void setFileState(int state) { fileState_ = state; }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        const QRectF bounds = QRectF(rect()).adjusted(2, 2, -2, -2);
+        const QColor accent = palette().color(QPalette::Highlight);
+        if (isChecked()) {
+            QColor tint = accent;
+            tint.setAlpha(42);
+            painter.setBrush(tint);
+            painter.setPen(QPen(accent, 1.5));
+            painter.drawRoundedRect(bounds, 5, 5);
+        } else if (underMouse() || isDown()) {
+            QColor tint = palette().color(QPalette::ButtonText);
+            tint.setAlpha(25);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(tint);
+            painter.drawRoundedRect(bounds, 5, 5);
+        }
+        if (hasFocus()) {
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QPen(accent, 1, Qt::DotLine));
+            painter.drawRoundedRect(bounds.adjusted(2, 2, -2, -2), 4, 4);
+        }
+
+        painter.setOpacity(isEnabled() ? (isChecked() ? 1.0 : 0.45) : 0.25);
+        if (fileState_ != -1) {
+            painter.save();
+            painter.translate((width() - 20) / 2.0, (height() - 20) / 2.0);
+            painter.scale(20.0 / 24.0, 20.0 / 24.0);
+            const QColor ink = palette().color(QPalette::ButtonText);
+            QPainterPath outline;
+            outline.moveTo(5, 2);
+            outline.lineTo(14, 2);
+            outline.lineTo(20, 8);
+            outline.lineTo(20, 22);
+            outline.lineTo(5, 22);
+            outline.closeSubpath();
+            QPainterPath fold;
+            fold.moveTo(14, 2);
+            fold.lineTo(14, 8);
+            fold.lineTo(20, 8);
+            QPainterPath content;
+            content.moveTo(8, 12);
+            content.lineTo(17, 12);
+            content.moveTo(8, 16);
+            content.lineTo(16, 16);
+            auto draw = [&](Qt::PenStyle style) {
+                QPen pen(ink, 1.6, style, Qt::SquareCap, Qt::MiterJoin);
+                if (style == Qt::DashLine)
+                    pen.setDashPattern({ 2.0, 2.0 });
+                painter.setPen(pen);
+                painter.setBrush(Qt::NoBrush);
+                painter.drawPath(outline);
+                painter.drawPath(fold);
+                painter.drawPath(content);
+            };
+            if (fileState_ == 4) {
+                draw(Qt::SolidLine);
+            } else if (fileState_ == 1) {
+                draw(Qt::DashLine);
+            } else {
+                painter.setClipRect(QRectF(0, 0, 12, 24));
+                draw(Qt::SolidLine);
+                painter.setClipRect(QRectF(12, 0, 12, 24), Qt::ReplaceClip);
+                draw(Qt::DashLine);
+            }
+            painter.restore();
+        } else {
+            const QPixmap pixmap = icon().pixmap(iconSize(),
+                isEnabled() ? QIcon::Normal : QIcon::Disabled,
+                isChecked() ? QIcon::On : QIcon::Off);
+            if (!pixmap.isNull()) {
+                const QSizeF logical = QSizeF(pixmap.size()) / pixmap.devicePixelRatio();
+                painter.drawPixmap(QRectF((width() - logical.width()) / 2.0,
+                                          (height() - logical.height()) / 2.0,
+                                          logical.width(), logical.height()),
+                                   pixmap, QRectF(QPointF(0, 0), pixmap.size()));
+            }
+        }
+    }
+
+private:
+    int fileState_ = -1;
+};
 
 QIcon rotateClockwiseIcon(const QPalette &palette)
 {
@@ -244,7 +337,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
             if (!filter->property("typeBit").isValid() && !filter->property("availabilityBit").isValid())
                 continue;
             const QSignalBlocker blocker(filter);
-            filter->setChecked(true);
+            filter->setChecked(filter->property("defaultChecked").toBool());
         }
         connect(source, &MediaNavigationSource::changed, this, &MediaViewer::applyView);
         connect(source, &QObject::destroyed, this, [this] { navigationPending_ = false; });
@@ -284,14 +377,16 @@ void MediaViewer::setupControls()
     const auto filterButton = [this, row](int group, int bit, const QString &label,
                                           std::initializer_list<const char *> icons,
                                           QStyle::StandardPixmap fallback) {
-        auto *button = new QToolButton(controls_);
+        auto *button = new MediaFilterButton(controls_);
         button->setObjectName(QStringLiteral("mediaFilter%1_%2").arg(group).arg(bit));
         button->setProperty(group ? "availabilityBit" : "typeBit", bit);
-        button->setCheckable(true);
-        button->setChecked(true);
-        button->setAutoRaise(false); // Checked = sunken, not a separate checkbox.
-        button->setIcon(themedIcon(icons, style(), fallback));
-        button->setIconSize(QSize(18, 18));
+        const bool checkedByDefault = !(group == 0 && bit == 4) && !(group == 1 && bit == 1);
+        button->setProperty("defaultChecked", checkedByDefault);
+        button->setChecked(checkedByDefault);
+        if (group == 1)
+            button->setFileState(bit);
+        else
+            button->setIcon(themedIcon(icons, style(), fallback));
         button->setToolTip(label);
         button->setAccessibleName(label);
         row->addWidget(button);
@@ -302,13 +397,9 @@ void MediaViewer::setupControls()
     filterButton(0, 2, tr("Videos"), { "video-x-generic" }, QStyle::SP_MediaPlay);
     filterButton(0, 4, tr("Other files"), { "application-x-generic" }, QStyle::SP_FileIcon);
     separator();
-    filterButton(1, 4, tr("Downloaded"), { "folder-download", "emblem-downloads" },
-                 QStyle::SP_DialogSaveButton);
-    auto *partial = filterButton(1, 2, tr("Partially downloaded"), { "download-in-progress" },
-                                 QStyle::SP_MediaPause);
-    partial->setIcon(QIcon::fromTheme(QStringLiteral("download-in-progress"),
-                                       partiallyDownloadedIcon(palette())));
-    filterButton(1, 1, tr("Remote"), { "network-server", "network-workgroup" }, QStyle::SP_DriveNetIcon);
+    filterButton(1, 4, tr("Downloaded"), {}, QStyle::SP_FileIcon);
+    filterButton(1, 2, tr("Partially downloaded"), {}, QStyle::SP_FileIcon);
+    filterButton(1, 1, tr("Remote"), {}, QStyle::SP_FileIcon);
     separator();
 
     const auto actionButton = [this, row](const QString &name, const QString &label,
@@ -482,9 +573,9 @@ bool MediaViewer::eventFilter(QObject *object, QEvent *event)
     if (isFullScreen() && video_) {
         if (event->type() == QEvent::MouseMove) {
             auto *move = static_cast<QMouseEvent *>(event);
-            if (move->globalPos() != lastVideoCursorPos_) {
+            if (globalMousePoint(move) != lastVideoCursorPos_) {
                 noteFullscreenActivity(true);
-                lastVideoCursorPos_ = move->globalPos();
+                lastVideoCursorPos_ = globalMousePoint(move);
             }
         } else if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::KeyPress
                    || event->type() == QEvent::Wheel) {
@@ -684,7 +775,7 @@ void MediaViewer::contextMenuEvent(QContextMenuEvent *event)
     saveAs->setObjectName(QStringLiteral("imageViewerSaveAs"));
     connect(saveAs, &QAction::triggered, this, &MediaViewer::saveImageAs);
 
-    menu.exec(event->globalPos());
+    menu.exec(globalMousePoint(event));
     event->accept();
 }
 
@@ -762,9 +853,9 @@ void MediaViewer::mousePressEvent(QMouseEvent *event)
 
 void MediaViewer::mouseMoveEvent(QMouseEvent *event)
 {
-    if (isFullScreen() && video_ && event->globalPos() != lastVideoCursorPos_) {
+    if (isFullScreen() && video_ && globalMousePoint(event) != lastVideoCursorPos_) {
         noteFullscreenActivity(true);
-        lastVideoCursorPos_ = event->globalPos();
+        lastVideoCursorPos_ = globalMousePoint(event);
     }
     if (dragging_) {
         const QPoint  position = event->pos();
