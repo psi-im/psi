@@ -2,7 +2,9 @@
 #include "widgets/MediaViewer.h"
 
 #include <QApplication>
-#include <QCheckBox>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QTimer>
 #include <QLabel>
 #include <QProgressBar>
 #include <QMouseEvent>
@@ -78,9 +80,20 @@ private slots:
         viewer.setNavigationSource(source);
         viewer.show();
         QCoreApplication::processEvents();
-        auto videos  = viewer.findChild<QCheckBox *>("mediaFilter0_2");
-        auto partial = viewer.findChild<QCheckBox *>("mediaFilter1_2");
-        QVERIFY(videos && partial);
+        auto *videos  = viewer.findChild<QToolButton *>("mediaFilter0_2");
+        auto *partial = viewer.findChild<QToolButton *>("mediaFilter1_2");
+        auto *previous = viewer.findChild<QToolButton *>("mediaPrevious");
+        auto *rotate = viewer.findChild<QToolButton *>("mediaRotate");
+        auto *retry = viewer.findChild<QToolButton *>("mediaRetry");
+        QVERIFY(videos && partial && previous && rotate && retry);
+        QVERIFY(videos->isCheckable() && partial->isCheckable());
+        QVERIFY(videos->isChecked() && partial->isChecked());
+        QVERIFY(!videos->icon().isNull());
+        QVERIFY(!rotate->icon().isNull());
+        QCOMPARE(videos->parentWidget(), previous->parentWidget());
+        QCOMPARE(videos->geometry().center().y(), previous->geometry().center().y());
+        QCOMPARE(rotate->geometry().center().y(), previous->geometry().center().y());
+        QVERIFY(retry->toolTip().contains("download"));
         videos->setChecked(false);
         partial->setChecked(false);
         QCOMPARE(source->filter.types, int(MediaFilter::Images | MediaFilter::Files));
@@ -118,6 +131,62 @@ private slots:
         QTRY_VERIFY(!viewer.isFullScreen());
         QVERIFY(viewer.isVisible());
     }
+    void fullscreenVideoAutoHidesBothControlBars()
+    {
+        QImage image(80, 60, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        MediaViewer viewer(image);
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+
+        MediaNavigationSource::View view;
+        view.key = QStringLiteral("video");
+        view.name = QStringLiteral("video.mp4");
+        view.revision = 1;
+        view.index = 1;
+        view.total = 1;
+        view.state = MediaNavigationSource::State::Ready;
+        view.video = [](QWidget *parent, std::function<void()>) {
+            auto *player = new QWidget(parent);
+            auto *layout = new QVBoxLayout(player);
+            layout->setContentsMargins(0, 0, 0, 0);
+            auto *surface = new QWidget(player);
+            layout->addWidget(surface, 1);
+            auto *bottom = new QWidget(player);
+            bottom->setObjectName(QStringLiteral("qite-video-controls"));
+            bottom->setFixedHeight(32);
+            layout->addWidget(bottom);
+            return player;
+        };
+        emit source->changed(view);
+        auto *top = viewer.findChild<QWidget *>("mediaViewerControls");
+        auto *player = viewer.findChild<QWidget *>("qite-video-controls")->parentWidget();
+        auto *bottom = viewer.findChild<QWidget *>("qite-video-controls");
+        auto *idle = viewer.findChild<QTimer *>("mediaVideoIdleTimer");
+        QVERIFY(top && bottom && player && idle);
+        QVERIFY(top->isVisible() && bottom->isVisible());
+
+        QTest::keyClick(&viewer, Qt::Key_F11);
+        QTRY_VERIFY(viewer.isFullScreen());
+        QVERIFY(top->isVisible() && bottom->isVisible());
+        QVERIFY(idle->isActive());
+        // Exercise the timeout deterministically; no dependence on real sleep.
+        QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
+        QVERIFY(!top->isVisible());
+        QVERIFY(!bottom->isVisible());
+        QTest::keyClick(player, Qt::Key_Space);
+        QVERIFY(top->isVisible());
+        QVERIFY(bottom->isVisible());
+
+        QTest::keyClick(&viewer, Qt::Key_Escape);
+        QTRY_VERIFY(!viewer.isFullScreen());
+        QVERIFY(top->isVisible());
+        QVERIFY(bottom->isVisible());
+        QVERIFY(!idle->isActive());
+    }
+
     void rapidWheelBurstIsCoalescedAndMultiNotchInputIsPreserved()
     {
         QImage image(80, 60, QImage::Format_RGB32);
