@@ -108,13 +108,12 @@ QIcon fullscreenArrowsIcon(const QPalette &palette, bool inward)
 }
 
 
-// A consistent document glyph with progressively less solid outline. The
-// active filter palette is applied at paint time, so it tracks theme changes.
-class MediaFilterButton final : public QToolButton {
+// A single transparent style for both actions and filters. Active filters
+// receive a restrained palette-accent outline; action icons stay fully opaque.
+class MediaToolbarButton final : public QToolButton {
 public:
-    explicit MediaFilterButton(QWidget *parent) : QToolButton(parent)
+    explicit MediaToolbarButton(QWidget *parent) : QToolButton(parent)
     {
-        setCheckable(true);
         setAutoRaise(true);
         setFocusPolicy(Qt::StrongFocus);
         setFixedSize(34, 34);
@@ -130,26 +129,27 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         const QRectF bounds = QRectF(rect()).adjusted(2, 2, -2, -2);
         const QColor accent = palette().color(QPalette::Highlight);
-        if (isChecked()) {
+        if (isCheckable() && isChecked()) {
             QColor tint = accent;
-            tint.setAlpha(42);
+            tint.setAlpha(22);
+            QColor frame = accent;
+            frame.setAlpha(155);
             painter.setBrush(tint);
-            painter.setPen(QPen(accent, 1.5));
-            painter.drawRoundedRect(bounds, 5, 5);
-        } else if (underMouse() || isDown()) {
-            QColor tint = palette().color(QPalette::ButtonText);
-            tint.setAlpha(25);
+            painter.setPen(QPen(frame, 0.9));
+        } else {
+            QColor tint = palette().color(QPalette::Button);
+            tint.setAlpha(underMouse() || isDown() ? 100 : 55);
             painter.setPen(Qt::NoPen);
             painter.setBrush(tint);
-            painter.drawRoundedRect(bounds, 5, 5);
         }
+        painter.drawRoundedRect(bounds, 5, 5);
         if (hasFocus()) {
             painter.setBrush(Qt::NoBrush);
             painter.setPen(QPen(accent, 1, Qt::DotLine));
             painter.drawRoundedRect(bounds.adjusted(2, 2, -2, -2), 4, 4);
         }
 
-        painter.setOpacity(isEnabled() ? (isChecked() ? 1.0 : 0.45) : 0.25);
+        painter.setOpacity(!isEnabled() ? 0.25 : isCheckable() && !isChecked() ? 0.47 : 1.0);
         if (fileState_ != -1) {
             painter.save();
             painter.translate((width() - 20) / 2.0, (height() - 20) / 2.0);
@@ -162,34 +162,24 @@ protected:
             outline.lineTo(20, 22);
             outline.lineTo(5, 22);
             outline.closeSubpath();
-            QPainterPath fold;
-            fold.moveTo(14, 2);
-            fold.lineTo(14, 8);
-            fold.lineTo(20, 8);
-            QPainterPath content;
-            content.moveTo(8, 12);
-            content.lineTo(17, 12);
-            content.moveTo(8, 16);
-            content.lineTo(16, 16);
-            auto draw = [&](Qt::PenStyle style) {
-                QPen pen(ink, 1.6, style, Qt::SquareCap, Qt::MiterJoin);
-                if (style == Qt::DashLine)
-                    pen.setDashPattern({ 2.0, 2.0 });
+            auto draw = [&](bool dotted) {
+                QPen pen(ink, 1.7, dotted ? Qt::DotLine : Qt::SolidLine,
+                         Qt::RoundCap, Qt::RoundJoin);
                 painter.setPen(pen);
                 painter.setBrush(Qt::NoBrush);
                 painter.drawPath(outline);
-                painter.drawPath(fold);
-                painter.drawPath(content);
             };
             if (fileState_ == 4) {
-                draw(Qt::SolidLine);
+                draw(false);
             } else if (fileState_ == 1) {
-                draw(Qt::DashLine);
+                draw(true);
             } else {
+                painter.save();
                 painter.setClipRect(QRectF(0, 0, 12, 24));
-                draw(Qt::SolidLine);
-                painter.setClipRect(QRectF(12, 0, 12, 24), Qt::ReplaceClip);
-                draw(Qt::DashLine);
+                draw(false);
+                painter.restore();
+                painter.setClipRect(QRectF(12, 0, 12, 24));
+                draw(true);
             }
             painter.restore();
         } else {
@@ -397,9 +387,10 @@ void MediaViewer::setupControls()
     const auto filterButton = [this, row](int group, int bit, const QString &label,
                                           std::initializer_list<const char *> icons,
                                           QStyle::StandardPixmap fallback) {
-        auto *button = new MediaFilterButton(controls_);
+        auto *button = new MediaToolbarButton(controls_);
         button->setObjectName(QStringLiteral("mediaFilter%1_%2").arg(group).arg(bit));
         button->setProperty(group ? "availabilityBit" : "typeBit", bit);
+        button->setCheckable(true);
         const bool checkedByDefault = !(group == 0 && bit == 4) && !(group == 1 && bit == 1);
         button->setProperty("defaultChecked", checkedByDefault);
         button->setChecked(checkedByDefault);
@@ -426,7 +417,7 @@ void MediaViewer::setupControls()
                                            std::initializer_list<const char *> icons,
                                            QStyle::StandardPixmap fallback,
                                            std::function<void()> action) {
-        auto *button = new QToolButton(controls_);
+        auto *button = new MediaToolbarButton(controls_);
         button->setObjectName(name);
         button->setToolTip(label);
         button->setAccessibleName(label);
