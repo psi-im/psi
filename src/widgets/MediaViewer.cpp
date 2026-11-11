@@ -555,7 +555,9 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
                          : view.error);
     status_->setToolTip(view.error);
     loading_->setVisible(loading || view.navigating);
-    controls_->findChild<QToolButton *>("mediaRetry")->setEnabled(view.state == MediaNavigationSource::State::Failed);
+    // Retrying is meaningful only when this item failed to load.
+    controls_->findChild<QToolButton *>("mediaRetry")->setVisible(
+        view.state == MediaNavigationSource::State::Failed);
     controls_->findChild<QToolButton *>("mediaPrevious")
         ->setEnabled(!view.navigating && view.total && (view.index == 0 || view.index > 1));
     controls_->findChild<QToolButton *>("mediaNext")
