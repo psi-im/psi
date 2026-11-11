@@ -70,7 +70,9 @@ running another synchronization service.
 The range-key encoding is shared with the download cache in `FileIdentity` and
 remains compatible with existing payloads. File schema 5 adds an expression
 index for canonical hash keys used by URL mappings, explicit account scope on
-range records, and a whole-file checksum lookup index. History migration backfills
+range records, and a whole-file checksum lookup index. Schema 6 makes the indexed
+canonical hash expression explicitly TEXT, matching URL mappings so SQLite uses
+the expression index for joins. Existing version-5 profiles upgrade in place. History migration backfills
 normalized identities while preserving publication IDs, attachment ordinals and
 scan positions. SFS protocol reconstruction stays on the GUI before threaded
 migration; SQL workers consume value-only resource projections.

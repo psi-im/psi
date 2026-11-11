@@ -24,6 +24,9 @@ QString chatFilter()
 }
 // All candidates are physical file records. Hash aliases remain alternatives,
 // not extra occurrences; account-scoped range keys prevent cross-account reuse.
+// The canonical hash expression is explicitly TEXT, matching the URL mapping
+// column and its expression index. Without that affinity SQLite may choose a
+// full cache-file loop instead of an indexed hash lookup.
 QString storageCte(const QString &scope)
 {
     return QStringLiteral("WITH scope AS (") + scope
@@ -54,7 +57,8 @@ QString storageCte(const QString &scope)
                "JOIN message_media_refs r ON r.publication_id=m.publication_id "
                "JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
                "JOIN media_files.url_content u ON u.account=c.acc_id AND u.url_key=m.url_key "
-               "JOIN media_files.file_hashes fh ON (fh.algorithm || '+' || lower(hex(fh.digest)))=u.content_hash "
+               "JOIN media_files.file_hashes fh ON CAST(fh.algorithm || '+' || lower(hex(fh.digest)) AS "
+               "TEXT)=u.content_hash "
                "JOIN media_files.files f ON f.id=fh.file_id AND f.partition='shares' "
                "AND (f.max_age IN (0,4294967295) OR f.created/1000+f.max_age>=CAST(strftime('%s','now') AS INTEGER))), "
                "availability AS (SELECT x.publication_id,MAX(CASE "

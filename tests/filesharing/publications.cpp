@@ -664,8 +664,32 @@ private slots:
         QCOMPARE(query.value(0).toInt(), 1);
         QVERIFY(query.exec("PRAGMA user_version"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 5);
+        QCOMPARE(query.value(0).toInt(), 6);
         QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
+    }
+
+    void untypedHashIndexUpgradesWithoutReplacingFileRecords()
+    {
+        const auto id = storedFile(mediaOf("preserved-index", {}), true);
+        QVERIFY(!id.isEmpty());
+        closeFileDatabase();
+        const auto name = QStringLiteral("schema-five");
+        {
+            auto db = QSqlDatabase::addDatabase("QSQLITE", name);
+            db.setDatabaseName(FileDatabase::path());
+            QVERIFY(db.open());
+            QSqlQuery q(db);
+            QVERIFY(q.exec("DROP INDEX file_hashes_key"));
+            QVERIFY(q.exec("CREATE INDEX file_hashes_key ON file_hashes(algorithm || '+' || lower(hex(digest)))"));
+            QVERIFY(q.exec("PRAGMA user_version=5"));
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(name);
+        QSqlQuery q(FileDatabase::connection());
+        q.prepare("SELECT 1 FROM files WHERE id=:id"); q.bindValue(":id", id);
+        QVERIFY(q.exec() && q.next()); q.finish();
+        QVERIFY(q.exec("SELECT sql FROM sqlite_master WHERE name='file_hashes_key'")); QVERIFY(q.next());
+        QVERIFY(q.value(0).toString().contains("CAST("));
     }
 
     void aDatabaseFromANewerPsiIsLeftAlone()
@@ -902,7 +926,7 @@ private slots:
         QVERIFY(!q.exec("DELETE FROM media_files.files")); // Attachment is read-only.
         QVERIFY(insertEvent("history still writable", "{}"));
         QVERIFY(q.exec("EXPLAIN QUERY PLAN SELECT file_id FROM media_files.file_hashes "
-                       "WHERE (algorithm || '+' || lower(hex(digest)))='sha-256+00'"));
+                       "WHERE CAST(algorithm || '+' || lower(hex(digest)) AS TEXT)='sha-256+00'"));
         bool indexed = false;
         while (q.next())
             indexed |= q.value(3).toString().contains("file_hashes_key");
