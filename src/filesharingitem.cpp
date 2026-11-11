@@ -84,9 +84,6 @@ FileSharingItem::FileSharingItem(const MediaSharing &ms, const Jid &from, PsiAcc
     if (ampl.size()) {
         _metaData.insert(QLatin1String("amplitudes"), ampl);
     }
-
-    if (_fileType == FileType::RemoteFile)
-        FileSharingChunkSource::configure(this);
 }
 
 // OOB supplies only an HTTP URL: this SHA-256 is an address-routing key,
@@ -331,8 +328,6 @@ QString FileSharingItem::fileName() const
 
 QString FileSharingItem::localFilePath() const
 {
-    if (!FileSharingChunkSource::error(this).isEmpty())
-        return { };
     QString path;
     if (_manager->cacheItem(_sums, false, &path))
         return path;
@@ -341,26 +336,37 @@ QString FileSharingItem::localFilePath() const
 
 void FileSharingItem::mergeSources(const MediaSharing &media, const Jid &peer)
 {
-    if (_receivedMetadata.isValid())
-        _receivedMetadata.merge(media.file);
-    else
-        _receivedMetadata = media.file;
+    if (_fileSize && media.file.size() && _fileSize != media.file.size())
+        return;
+    const auto hashes = media.file.computedHashes();
+    for (const auto &known : _sums)
+        for (const auto &claim : hashes)
+            if (known.type() == claim.type() && known.data() != claim.data())
+                return;
+    // File::merge may add hashes before reporting a conflict. Keep rejected
+    // announcements from changing a resource that other readers already use.
+    auto metadata = _receivedMetadata;
+    if (metadata.isValid()) {
+        if (!metadata.merge(media.file))
+            return;
+    } else
+        metadata = media.file;
+    _receivedMetadata = std::move(metadata);
     _uris = media.sources + _uris;
     _uris.removeDuplicates();
-    for (const auto &hash : media.file.computedHashes())
+    for (const auto &hash : hashes)
         if (!_sums.contains(hash))
             _sums.append(hash);
     if (!peer.isEmpty() && !_jids.contains(peer))
         _jids.append(peer);
     if (!media.file.amplitudes().isEmpty())
         _metaData.insert(QStringLiteral("amplitudes"), media.file.amplitudes());
-    FileSharingChunkSource::configure(this);
+    if (_rangeConfigured)
+        FileSharingChunkSource::configure(this);
 }
 
 FileCacheItem *FileSharingItem::cache(bool reborn) const
 {
-    if (!FileSharingChunkSource::error(this).isEmpty())
-        return nullptr;
     for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i) {
         auto c = _manager->cacheItem(_sums.at(i), reborn);
         if (c)

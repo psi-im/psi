@@ -46,7 +46,7 @@ void HistorySqlReadWorker::open()
     db_.setDatabaseName(path_);
     // The same worker serializes SQLite reads and new appends/erasures.
     // Migration and legacy archive APIs are still being moved off the GUI.
-    db_.setConnectOptions(QStringLiteral("QSQLITE_BUSY_TIMEOUT=2000"));
+    db_.setConnectOptions(QStringLiteral("QSQLITE_OPEN_URI;QSQLITE_BUSY_TIMEOUT=2000"));
     if (!db_.open()) {
         qWarning() << "[history-db] Cannot open worker SQLite connection:" << db_.lastError().text();
         return;
@@ -81,6 +81,15 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
     // A reader must observe all earlier appends in the same worker queue.
     // Complete their transaction and notify write handles before reading.
     flushPendingAppends();
+    if ((request.type == HistoryReadRequest::ChatMediaLinks && !request.fileDatabasePath.isEmpty())
+        || request.type == HistoryReadRequest::ChatMediaStatistics) {
+        QSqlError attachError;
+        if (!HistoryMediaRefs::attachFileDatabase(db_, request.fileDatabasePath, &attachError)) {
+            qWarning() << "[history-media] Cannot read file registry:" << attachError.text();
+            emit completed(result);
+            return;
+        }
+    }
     ReadSnapshot snapshot(db_);
     if (!snapshot.active()) {
         qWarning() << "[history-read] Cannot open read transaction:" << db_.lastError().text();
@@ -100,8 +109,16 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         }
         emit completed(result);
     };
-    if (request.type == HistoryReadRequest::MediaLinks) {
-        result.mediaLinks = HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error);
+    if (request.type == HistoryReadRequest::MediaLinks || request.type == HistoryReadRequest::ChatMediaLinks) {
+        result.mediaLinks = request.type == HistoryReadRequest::MediaLinks
+            ? HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error)
+            : HistoryMediaRefs::chatLinks(db_, request.archiveKey, request.mediaCursor, request.direction != 0,
+                                          request.limit, &error, !request.fileDatabasePath.isEmpty());
+        finish();
+        return;
+    }
+    if (request.type == HistoryReadRequest::ChatMediaStatistics) {
+        result.mediaStatistics = HistoryMediaRefs::chatStatistics(db_, request.archiveKey, &error);
         finish();
         return;
     }

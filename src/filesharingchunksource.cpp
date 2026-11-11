@@ -1,4 +1,5 @@
 #include "filesharingchunksource.h"
+#include "fileidentity.h"
 #include "filesharingdownloader.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
@@ -8,7 +9,6 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include <QElapsedTimer>
-#include <QFileInfo>
 #include <QHash>
 #include <QPointer>
 #include <QTimer>
@@ -209,7 +209,24 @@ MediaChunkAbort FileSharingChunkSource::sequential(FileSharingItem *item, const 
 
 QString FileSharingChunkSource::identity(const FileSharingItem *item)
 {
-    return item && item->account() ? item->account()->id() + QChar(0) + item->sums().value(0).toString() : QString();
+    if (!item || !item->account())
+        return {};
+    if (item->_rangeSource.isEmpty() && !item->isUrlOnly() && item->fileSize())
+        item->_rangeSource = sourceFor(item->account(), item->fileMetadata());
+    return item->_rangeSource.isEmpty() ? FileIdentity::source(item->account()->id(), item->sums().value(0).toString())
+                                        : item->_rangeSource;
+}
+QString FileSharingChunkSource::sourceFor(PsiAccount *account, const XMPP::Jingle::FileTransfer::File &file)
+{
+    const auto sums = file.computedHashes();
+    if (!account || !file.size() || sums.isEmpty())
+        return {};
+    QList<MediaFileChecksum> hashes;
+    for (const auto &h : sums)
+        hashes.append({ 0, *file.size(), h.stringType(), h.data() });
+    const auto source = FileIdentity::source(account->id(), sums.first().toString());
+    return account->psi()->fileSharingManager()->mediaChunkCache()->resolveSource(source, account->id(), *file.size(),
+                                                                                  hashes);
 }
 void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {
@@ -229,7 +246,15 @@ void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMP
             if (!h.data().isEmpty())
                 hashes.append({ range.offset, length, h.stringType(), h.data() });
     }
-    item->account()->psi()->fileSharingManager()->mediaChunkCache()->configure(identity(item), size, hashes);
+    auto       cache  = item->account()->psi()->fileSharingManager()->mediaChunkCache();
+    const auto source = identity(item);
+    // Keep the key's anchor hash when a later announcement uses another alias.
+    // It must remain resolvable after the old generation is retired and recreated.
+    const auto anchor = XMPP::Hash::from(source.mid(item->account()->id().size() + 1));
+    if (anchor.isValid())
+        hashes.append({ 0, size, anchor.stringType(), anchor.data() });
+    item->_rangeConfigured = true;
+    cache->configure(source, size, hashes, { { "account", item->account()->id() } });
 }
 MediaChunkCache *FileSharingChunkSource::configure(const FileSharingItem *item)
 {
@@ -242,17 +267,9 @@ QString FileSharingChunkSource::localFile(const FileSharingItem *item)
 {
     if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
         return {};
-    auto       cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
-    const auto state = cache->fileState(identity(item), *item->fileSize());
-    return state.complete && state.error.isEmpty() && QFileInfo(state.path).isReadable() ? state.path : QString();
-}
-
-QString FileSharingChunkSource::error(const FileSharingItem *item)
-{
-    if (!item || !item->account() || !item->fileSize() || item->isUrlOnly())
-        return {};
-    auto cache = item->account()->psi()->fileSharingManager()->mediaChunkCache();
-    return cache->fileState(identity(item), *item->fileSize()).error;
+    auto cache
+        = item->_rangeConfigured ? item->account()->psi()->fileSharingManager()->mediaChunkCache() : configure(item);
+    return cache->localFile(identity(item), *item->fileSize());
 }
 
 MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 offset, quint64 length,

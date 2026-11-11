@@ -1,6 +1,7 @@
 #include "mediachunkstore.h"
 #include "filecachememory.h"
 #include "filedatabase.h"
+#include "fileidentity.h"
 #include <QBuffer>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -27,6 +28,7 @@
 #include <cerrno>
 #include <limits>
 #include <optional>
+#include <tuple>
 #include <utility>
 #ifdef Q_OS_WIN
 #include <io.h>
@@ -912,10 +914,10 @@ private:
         QSqlQuery query(db);
         query.prepare(QStringLiteral(
             "INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement,"
-            "resource_key,complete,payload_modified,error) "
-            "VALUES(:id,:partition,:size,:created,4294967295,:metadata,:path,0,:key,:complete,:modified,:error) "
+            "resource_key,complete,payload_modified,error,scope_account) "
+            "VALUES(:id,:partition,:size,:created,4294967295,:metadata,:path,0,:key,:complete,:modified,:error,:account) "
             "ON CONFLICT(id) DO UPDATE SET metadata=excluded.metadata,complete=excluded.complete,"
-            "payload_modified=excluded.payload_modified,error=excluded.error"));
+            "payload_modified=excluded.payload_modified,error=excluded.error,scope_account=excluded.scope_account"));
         query.bindValue(QStringLiteral(":id"), entry.id);
         query.bindValue(QStringLiteral(":partition"), partition_);
         query.bindValue(QStringLiteral(":size"), qlonglong(entry.state.size));
@@ -923,6 +925,7 @@ private:
         query.bindValue(QStringLiteral(":metadata"), FileDatabase::encodeMetadata(entry.state.metadata));
         query.bindValue(QStringLiteral(":path"), QFileInfo(entry.state.path).fileName());
         query.bindValue(QStringLiteral(":key"), key);
+        query.bindValue(QStringLiteral(":account"), entry.state.metadata.value("account").toString());
         query.bindValue(QStringLiteral(":complete"), entry.state.complete);
         const auto modified = QFileInfo(entry.state.path).lastModified();
         query.bindValue(QStringLiteral(":modified"),
@@ -1076,6 +1079,22 @@ public:
         }
         return volatileFiles.insert(key, { size, 0, QUuid::createUuid().toRfc4122(), {} }).value();
     }
+    QString      partition, directory, databasePath, metadataConnection;
+    QSqlDatabase metadataDatabase() const
+    {
+        if (!QFileInfo(databasePath).isFile())
+            return {};
+        auto db = QSqlDatabase::contains(metadataConnection)
+            ? QSqlDatabase::database(metadataConnection, false)
+            : QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), metadataConnection);
+        if (!db.isOpen()) {
+            db.setDatabaseName(databasePath);
+            db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_READONLY"));
+            if (!db.open())
+                return {};
+        }
+        return db;
+    }
     QThread                           thread;
     DiskWorker                       *worker;
     quint64                           next = 0, bytes = 0;
@@ -1096,6 +1115,11 @@ MediaChunkStore::MediaChunkStore(QString partition, QString directory, QString d
                                  FileCacheMemory *memory, QObject *parent, Hasher hasher) :
     QObject(parent), d(new Private)
 {
+    d->partition    = partition;
+    d->directory    = directory;
+    d->databasePath = databasePath;
+    d->metadataConnection
+        = QStringLiteral("media-metadata-%1").arg(qulonglong(reinterpret_cast<quintptr>(this)), 0, 16);
     if (!memory)
         d->ownedMemory = std::make_unique<FileCacheMemory>(16 * 1024 * 1024);
     d->memory = memory ? memory : d->ownedMemory.get();
@@ -1161,10 +1185,141 @@ MediaChunkStore::~MediaChunkStore()
     QMetaObject::invokeMethod(d->worker, [worker = d->worker] { worker->shutdown(); }, Qt::BlockingQueuedConnection);
     d->thread.quit();
     d->thread.wait();
+    if (QSqlDatabase::contains(d->metadataConnection)) {
+        {
+            auto db = QSqlDatabase::database(d->metadataConnection, false);
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(d->metadataConnection);
+    }
 }
 quint64        MediaChunkStore::diskBytes() const { return d->bytes; }
 MediaFileState MediaChunkStore::state(const QString &key) const { return d->states.value(key); }
-bool           MediaChunkStore::contains(const QString &key, quint64 offset, quint64 length) const
+QString        MediaChunkStore::resolveSource(const QString &fallback, const QString &account, quint64 size,
+                                              const QList<MediaFileChecksum> &checksums) const
+{
+    if (account.isEmpty())
+        return fallback;
+    const auto db = d->metadataDatabase();
+    if (!db.isOpen())
+        return fallback;
+    QString                         chosen = fallback;
+    std::tuple<bool, bool, quint64> best { false, false, 0 };
+    bool                            found = false;
+    QSet<QByteArray>                visited;
+    for (const auto &wanted : checksums) {
+        if (wanted.offset || wanted.length != size || wanted.digest.isEmpty())
+            continue;
+        QSqlQuery candidates(db);
+        candidates.prepare(
+            QStringLiteral("SELECT f.id,f.resource_key,f.complete,f.error,"
+                           "COALESCE((SELECT SUM(length) FROM file_ranges WHERE file_id=f.id),0) "
+                           "FROM file_checksums h JOIN files f ON f.id=h.file_id "
+                           "WHERE f.partition=:partition AND f.size=:size AND h.offset=0 AND h.length=:size "
+                           "AND h.algorithm=:algorithm AND h.digest=:digest "
+                           "AND (f.scope_account=:account OR f.scope_account IS NULL OR f.scope_account='')"));
+        candidates.bindValue(":partition", d->partition);
+        candidates.bindValue(":size", qlonglong(size));
+        candidates.bindValue(":algorithm", wanted.algorithm);
+        candidates.bindValue(":digest", wanted.digest);
+        candidates.bindValue(":account", account);
+        if (!candidates.exec())
+            continue;
+        while (candidates.next()) {
+            const auto id = candidates.value(0).toByteArray();
+            if (visited.contains(id))
+                continue;
+            visited.insert(id);
+            QSqlQuery hashes(db);
+            hashes.prepare(
+                "SELECT algorithm,digest FROM file_checksums WHERE file_id=:id AND offset=0 AND length=:size");
+            hashes.bindValue(":id", id);
+            hashes.bindValue(":size", qlonglong(size));
+            if (!hashes.exec())
+                continue;
+            QString       source;
+            bool          compatible = true;
+            QSet<QString> declared;
+            while (hashes.next()) {
+                const auto algorithm = hashes.value(0).toString();
+                const auto digest    = hashes.value(1).toByteArray();
+                declared.insert(checksumId({ 0, size, algorithm, digest }));
+                for (const auto &claim : checksums)
+                    if (!claim.offset && claim.length == size && claim.algorithm == algorithm && claim.digest != digest)
+                        compatible = false;
+                const auto candidate
+                    = FileIdentity::source(account, algorithm + QLatin1Char('+') + QString::fromLatin1(digest.toHex()));
+                // This also identifies the account of pre-scope_account records.
+                if (FileIdentity::rangeKey(candidate, size) == candidates.value(1).toString())
+                    source = candidate;
+            }
+            // Reusing a physical copy must not add new, unverified identity
+            // claims to it merely because one other digest happens to match.
+            for (const auto &claim : checksums)
+                if (!claim.offset && claim.length == size && !declared.contains(checksumId(claim)))
+                    compatible = false;
+            if (hashes.lastError().isValid() || !compatible || source.isEmpty())
+                continue;
+            const bool healthy = candidates.value(3).toString().isEmpty();
+            const auto rank
+                = std::make_tuple(healthy && candidates.value(2).toBool(), healthy, candidates.value(4).toULongLong());
+            if (!found || rank > best) {
+                found  = true;
+                best   = rank;
+                chosen = source;
+            }
+        }
+    }
+    return chosen;
+}
+
+QString MediaChunkStore::localFile(const QString &key, quint64 size) const
+{
+    if (d->mutations.contains(key))
+        return {};
+    const auto known = d->states.constFind(key);
+    if (known != d->states.cend() && (!known->complete || !known->error.isEmpty() || !known->completionError.isEmpty()))
+        return {};
+    const auto db = d->metadataDatabase();
+    if (!db.isOpen())
+        return {};
+    QSqlQuery q(db);
+    q.prepare("SELECT id,path,payload_modified FROM files WHERE partition=:partition AND resource_key=:key "
+              "AND size=:size AND complete=1 AND error=''");
+    q.bindValue(":partition", d->partition);
+    q.bindValue(":key", key);
+    q.bindValue(":size", qlonglong(size));
+    if (!q.exec() || !q.next())
+        return {};
+    const auto id   = q.value(0).toByteArray();
+    const auto name = q.value(1).toString();
+    if (!FileDatabase::safePayloadName(name) || q.value(2).isNull())
+        return {};
+    const auto modified = q.value(2).toLongLong();
+    const auto path     = d->directory + QLatin1Char('/') + name;
+    q.finish();
+    // A freshly constructed store may not have delivered its initial snapshots
+    // yet. Use durable proofs, including requirements queued by configure().
+    QSet<QString> verified;
+    q.prepare("SELECT offset,length,algorithm,digest FROM file_checksums WHERE file_id=:id AND verified=1");
+    q.bindValue(":id", id);
+    if (!q.exec())
+        return {};
+    while (q.next())
+        verified.insert(checksumId(
+            { q.value(0).toULongLong(), q.value(1).toULongLong(), q.value(2).toString(), q.value(3).toByteArray() }));
+    if (q.lastError().isValid())
+        return {};
+    for (const auto &h : d->volatileFiles.value(key).checksums)
+        if (!verified.contains(checksumId(h)))
+            return {};
+    const QFileInfo file(path);
+    return file.isFile() && !file.isSymLink() && file.isReadable() && quint64(file.size()) == size
+            && file.lastModified().toMSecsSinceEpoch() == modified
+        ? path
+        : QString();
+}
+bool MediaChunkStore::contains(const QString &key, quint64 offset, quint64 length) const
 {
     const auto state = d->states.value(key);
     return !state.path.isEmpty() && state.error.isEmpty() && covers(state.ranges, offset, length);

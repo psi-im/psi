@@ -31,6 +31,8 @@ struct HistoryReadRequest {
         ArchiveLookup,
         OwnPlaintext,
         MediaLinks,
+        ChatMediaLinks,
+        ChatMediaStatistics,
         MediaLinked
     };
     int id = 0;
@@ -38,6 +40,8 @@ struct HistoryReadRequest {
     QString account, peer, text;
     HistoryArchive::Key archiveKey;
     QString cursor;
+    QString fileDatabasePath;
+    HistoryMediaRefs::Cursor mediaCursor;
     QString sender, messageId;
     QDateTime messageTime;
     int archiveIndex = -1, snapshotCount = -1;
@@ -61,6 +65,7 @@ struct HistoryReadResult {
     bool archiveExact = false;
     QList<HistoryMediaRefs::Link>   mediaLinks;
     QSet<QByteArray>                linkedPublications;
+    HistoryMediaRefs::Statistics mediaStatistics;
 };
 Q_DECLARE_METATYPE(HistoryReadResult)
 

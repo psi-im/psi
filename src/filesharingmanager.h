@@ -20,6 +20,7 @@
 #ifndef FILESHARINGMANAGER_H
 #define FILESHARINGMANAGER_H
 
+#include "chatmedia.h"
 #include "filesharingitem.h"
 #include "qite.h"
 
@@ -79,6 +80,9 @@ public:
     static QString   cacheDir();
     MediaChunkCache *mediaChunkCache();
     FileDownload    *download(FileSharingItem *item);
+    ChatMedia       *chatMedia(PsiAccount *account, const HistoryArchive::Key &chat, QObject *parent);
+    // Lazily resolve through the same item registry used by message views.
+    FileSharingItem *chatMediaItem(const ChatMedia::Entry &, PsiAccount *account);
     FileReader *reader(FileSharingItem *item, QObject *parent, quint64 offset = 0, std::optional<quint64> length = {});
     void        removeIncomplete(const std::function<void(quint64, const QString &)> &completed);
     FileSharingJingleSession *jingleMediaSessions(PsiAccount *account);
@@ -119,10 +123,13 @@ public:
     void followHistory(EDBSqLite *history);
 
 signals:
+    void chatMediaChanged();
 
 public slots:
 
 private:
+    FileSharingItem *rangeItem(const XMPP::MediaSharing &, PsiAccount *);
+    FileSharingItem *fromShare(const MessageFileShares::FileShare &, const XMPP::Jid &, PsiAccount *);
     class Private;
     std::unique_ptr<Private> d;
 };

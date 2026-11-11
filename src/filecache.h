@@ -204,6 +204,9 @@ protected:
      */
     virtual void removeItem(FileCacheItem *item, bool needSync);
 
+signals:
+    void contentsChanged();
+
 public slots:
     void sync();
     void lazySync();

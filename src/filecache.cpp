@@ -421,6 +421,7 @@ FileCacheItem *FileCache::append(const QList<XMPP::Hash> &sums, const QByteArray
     for (auto const &s : sums)
         _items.insert(s, item);
     _syncTimer->start(1000);
+    emit contentsChanged();
     return item;
 }
 
@@ -446,6 +447,7 @@ FileCacheItem *FileCache::moveToCache(const QList<XMPP::Hash> &sums, const QFile
     for (const auto &sum : sums)
         _items.insert(sum, item);
     _syncTimer->start(1000);
+    emit contentsChanged();
     return item;
 }
 
@@ -482,6 +484,7 @@ FileCacheItem *FileCache::trackExternal(const QList<XMPP::Hash> &sums, const QFi
     for (const auto &sum : sums)
         _items.insert(sum, item);
     _syncTimer->start(1000);
+    emit contentsChanged();
     return item;
 }
 
@@ -528,6 +531,7 @@ void FileCache::removeItem(FileCacheItem *item, bool needSync)
             _items.remove(sum);
     _memory.remove(item->memoryKey());
     delete item;
+    emit contentsChanged();
     if (!_inTransaction)
         drainTrash();
     if (needSync)

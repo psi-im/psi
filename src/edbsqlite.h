@@ -52,6 +52,10 @@ public:
                                        std::function<void(bool, bool)>) override;
     void       requestMediaLinks(qint64 position, int limit, QObject *receiver,
                                  std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished);
+    void requestChatMediaLinks(const HistoryArchive::Key &, HistoryMediaRefs::Cursor, bool older, int limit,
+                               QObject *, std::function<void(QList<HistoryMediaRefs::Link>, bool)>, const QString &fileDatabasePath = {});
+    void requestChatMediaStatistics(const HistoryArchive::Key &, const QString &fileDatabasePath, QObject *,
+                                    std::function<void(HistoryMediaRefs::Statistics, bool)>);
     void       requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiver,
                                   std::function<void(QSet<QByteArray>, bool)> finished);
     EDBItemPtr archivedEvent(const HistoryArchive::Key &, const QString &, const QDateTime & = {}) override;
@@ -113,6 +117,8 @@ private:
         QList<qint64> eventIds;
         QList<QByteArray>            publicationIds;
         QString archiveCursor;
+        HistoryMediaRefs::Cursor mediaCursor;
+        QString fileDatabasePath;
         QString ownSender, ownMessageId;
         QDateTime ownTime;
         ArchiveReadMode archiveMode = ArchiveReadMode::Before;
@@ -131,6 +137,8 @@ private:
             Type_lookup,
             Type_plaintext,
             Type_mediaLinks,
+            Type_chatMediaLinks,
+            Type_chatMediaStatistics,
             Type_mediaLinked,
             Type_deleteLocal,
             Type_checkSuppression
@@ -146,6 +154,11 @@ private:
         QPointer<QObject>                                        receiver;
         std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished;
     };
+    struct PendingMediaStatistics {
+        QPointer<QObject> receiver;
+        std::function<void(HistoryMediaRefs::Statistics, bool)> finished;
+    };
+    QHash<int, PendingMediaStatistics> pendingMediaStatistics_;
     struct PendingMediaLinked {
         QPointer<QObject>                           receiver;
         std::function<void(QSet<QByteArray>, bool)> finished;

@@ -1,4 +1,5 @@
 #include "mediachunkcache.h"
+#include "fileidentity.h"
 #include "mediachunkcallback.h"
 #include "mediachunkstore.h"
 #include <QCryptographicHash>
@@ -57,11 +58,7 @@ quint64 MediaChunkCache::diskBytes() const { return store_->diskBytes(); }
 
 QString MediaChunkCache::fileKey(const QString &source, quint64 size) const
 {
-    QByteArray  identity;
-    QDataStream stream(&identity, QIODevice::WriteOnly);
-    stream.setVersion(QDataStream::Qt_5_10);
-    stream << source << size;
-    return QString::fromLatin1(digest(identity).toHex());
+    return FileIdentity::rangeKey(source, size);
 }
 void MediaChunkCache::configure(const QString &source, quint64 size, QList<MediaFileChecksum> checksums,
                                 QVariantMap metadata)
@@ -73,6 +70,15 @@ void MediaChunkCache::configure(const QString &source, quint64 size, QList<Media
 MediaFileState MediaChunkCache::fileState(const QString &source, quint64 size) const
 {
     return store_->state(fileKey(source, size));
+}
+QString MediaChunkCache::resolveSource(const QString &source, const QString &account, quint64 size,
+                                       const QList<MediaFileChecksum> &checksums) const
+{
+    return store_->resolveSource(source, account, size, checksums);
+}
+QString MediaChunkCache::localFile(const QString &source, quint64 size) const
+{
+    return store_->localFile(fileKey(source, size), size);
 }
 bool MediaChunkCache::isCompleteFile(const QString &path) const { return store_->isCompleteFile(path); }
 void MediaChunkCache::resume(const QString &source, quint64 size)

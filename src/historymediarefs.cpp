@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "historymediarefs.h"
 
+#include "fileidentity.h"
 #include "historymessageextras.h"
 #include "iris/xmpp_message.h"
+#include <limits>
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -14,25 +16,36 @@
 #include <QThread>
 #include <QUuid>
 #include <QVariant>
-#include <utility>
 #include <algorithm>
+#include <utility>
 
 namespace {
-const QString tableName = QStringLiteral("message_media_refs");
+const QString tableName          = QStringLiteral("message_media_refs");
 const QString mayHaveAttachments = QStringLiteral("(instr(extra_data,'\"urn:xmpp:reference:0\"')>0 "
-                                                   "OR instr(extra_data,'\"urn:xmpp:sfs:0\"')>0 "
-                                                   "OR instr(extra_data,'\"jabber:x:oob\"')>0)");
+                                                  "OR instr(extra_data,'\"urn:xmpp:sfs:0\"')>0 "
+                                                  "OR instr(extra_data,'\"jabber:x:oob\"')>0)");
 
 std::optional<QJsonArray> indexOf(const QString &body, const QString &json)
 {
     const auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
     if (extra.contains(QStringLiteral("psi:media-refs"))) {
-        const auto index = extra.value(QStringLiteral("psi:media-refs")).toObject();
+        const auto index   = extra.value(QStringLiteral("psi:media-refs")).toObject();
         const int  version = index.value(QStringLiteral("version")).toInt();
         if ((version != 1 && version != HistoryMessageExtras::mediaRefsVersion)
             || !index.value(QStringLiteral("items")).isArray())
             return {};
-        return index.value(QStringLiteral("items")).toArray();
+        const auto items = index.value(QStringLiteral("items")).toArray();
+        if (items.isEmpty() || std::all_of(items.cbegin(), items.cend(), [](const auto &value) {
+                return value.toObject().contains("resource");
+            }))
+            return items;
+        if (extra.contains(XMPP::StatelessFileSharing::NS) && QCoreApplication::instance()
+            && QThread::currentThread() != QCoreApplication::instance()->thread())
+            return {};
+        XMPP::Message message;
+        message.setBody(body);
+        HistoryMessageExtras::restoreFileSharing(json, message);
+        return HistoryMessageExtras::mediaRefs(message, version);
     }
     // Released history before this feature stored only SIMS/OOB. Those
     // parsers do not prepare JIDs. Old development SFS rows are prepared on
@@ -57,7 +70,7 @@ bool HistoryMediaRefs::needsMigration(QSqlDatabase db)
     QSqlQuery query(db);
     if (!query.exec(QStringLiteral("SELECT position,fingerprint FROM message_media_refs LIMIT 0")))
         return true;
-    return false;
+    return !db.tables().contains(QStringLiteral("message_media_resources"));
 }
 
 bool HistoryMediaRefs::prepareLegacySfs(QSqlDatabase db)
@@ -66,9 +79,10 @@ bool HistoryMediaRefs::prepareLegacySfs(QSqlDatabase db)
     if (!db.transaction())
         return false;
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT id,m_text,extra_data FROM events WHERE "
-                                 "instr(extra_data,'\"urn:xmpp:sfs:0\"')>0 "
-                                 "AND instr(extra_data,'\"psi:media-refs\"')=0"));
+    query.prepare(
+        QStringLiteral("SELECT id,m_text,extra_data FROM events WHERE "
+                       "instr(extra_data,'\"urn:xmpp:sfs:0\"')>0 AND "
+                       "(instr(extra_data,'\"psi:media-resources\"')=0 OR instr(extra_data,'\"psi:media-refs\"')=0)"));
     bool      ok = query.exec();
     QSqlQuery update(db);
     update.prepare(QStringLiteral("UPDATE events SET extra_data=:extra WHERE id=:id"));
@@ -79,8 +93,10 @@ bool HistoryMediaRefs::prepareLegacySfs(QSqlDatabase db)
             ok = false;
             break;
         }
-        auto extra = QJsonDocument::fromJson(json.toUtf8()).object();
-        extra.insert(QStringLiteral("psi:media-refs"), QJsonObject { { "version", 1 }, { "items", *index } });
+        auto       extra   = QJsonDocument::fromJson(json.toUtf8()).object();
+        const auto version = extra.value("psi:media-refs").toObject().value("version").toInt(1);
+        extra.insert(QStringLiteral("psi:media-refs"), QJsonObject { { "version", version }, { "items", *index } });
+        extra.insert("psi:media-resources", 1);
         update.bindValue(QStringLiteral(":id"), query.value(0));
         update.bindValue(QStringLiteral(":extra"),
                          QString::fromUtf8(QJsonDocument(extra).toJson(QJsonDocument::Compact)));
@@ -102,15 +118,31 @@ bool HistoryMediaRefs::migrate(QSqlDatabase db, const std::function<void(qint64)
     if (!db.transaction())
         return false;
     QSqlQuery query(db);
-    // The old development schema had neither a stable scan position nor an
-    // attachment fingerprint. Rebuild derived links atomically; startup
-    // reconciliation retires their old non-serving publications.
-    bool ok = query.exec(QStringLiteral("DROP TABLE IF EXISTS message_media_refs"))
-        && query.exec(QStringLiteral("CREATE TABLE message_media_refs ("
-                                     "position INTEGER PRIMARY KEY AUTOINCREMENT, "
-                                     "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE, "
-                                     "ordinal INTEGER NOT NULL, publication_id BLOB NOT NULL UNIQUE, "
-                                     "fingerprint BLOB NOT NULL, UNIQUE(event_id,ordinal))"));
+    // Rebuild only obsolete link schemas. Adding resource bindings preserves
+    // publication IDs, including the serving decisions that refer to them.
+    const bool linksExist = query.exec(QStringLiteral("SELECT position,fingerprint FROM message_media_refs LIMIT 0"));
+    query.finish();
+    bool ok = linksExist;
+    if (!linksExist) {
+        ok = query.exec(QStringLiteral("DROP TABLE IF EXISTS message_media_refs"))
+            && query.exec(QStringLiteral("CREATE TABLE message_media_refs ("
+                                         "position INTEGER PRIMARY KEY AUTOINCREMENT, "
+                                         "event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE, "
+                                         "ordinal INTEGER NOT NULL, publication_id BLOB NOT NULL UNIQUE, "
+                                         "fingerprint BLOB NOT NULL, UNIQUE(event_id,ordinal))"));
+    }
+    ok = ok
+        && query.exec(QStringLiteral(
+            "CREATE TABLE IF NOT EXISTS message_media_resources ("
+            "publication_id BLOB PRIMARY KEY NOT NULL REFERENCES message_media_refs(publication_id) ON DELETE CASCADE, "
+            "size INTEGER, url_key TEXT)"))
+        && query.exec(QStringLiteral(
+            "CREATE TABLE IF NOT EXISTS message_media_hashes ("
+            "publication_id BLOB NOT NULL REFERENCES message_media_resources(publication_id) ON DELETE CASCADE, "
+            "algorithm TEXT NOT NULL,digest BLOB NOT NULL,range_key TEXT, "
+            "PRIMARY KEY(publication_id,algorithm,digest))"))
+        && query.exec(
+            QStringLiteral("CREATE INDEX IF NOT EXISTS message_media_range_key ON message_media_hashes(range_key)"));
     qint64 last = 0;
     while (ok) {
         query.prepare(QStringLiteral("SELECT id FROM events WHERE id>:id AND ") + mayHaveAttachments
@@ -140,11 +172,13 @@ bool HistoryMediaRefs::migrate(QSqlDatabase db, const std::function<void(qint64)
 bool HistoryMediaRefs::link(QSqlDatabase db, qint64 eventId, bool *removed)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT m_text,extra_data FROM events WHERE id=:id"));
+    query.prepare(QStringLiteral(
+        "SELECT e.m_text,e.extra_data,c.acc_id FROM events e JOIN contacts c ON c.id=e.contact_id WHERE e.id=:id"));
     query.bindValue(QStringLiteral(":id"), eventId);
     if (!query.exec() || !query.next())
         return false;
-    const auto index = indexOf(query.value(0).toString(), query.value(1).toString());
+    const auto account = query.value(2).toString();
+    const auto index   = indexOf(query.value(0).toString(), query.value(1).toString());
     if (!index)
         return false;
     query.finish();
@@ -181,9 +215,8 @@ bool HistoryMediaRefs::link(QSqlDatabase db, qint64 eventId, bool *removed)
     }
     if (removed && !obsolete.isEmpty())
         *removed = true;
-    query.prepare(
-        QStringLiteral("INSERT INTO message_media_refs(event_id,ordinal,publication_id,fingerprint) "
-                       "VALUES(:event,:ordinal,:publication,:fingerprint)"));
+    query.prepare(QStringLiteral("INSERT INTO message_media_refs(event_id,ordinal,publication_id,fingerprint) "
+                                 "VALUES(:event,:ordinal,:publication,:fingerprint)"));
     // Ordinals, and therefore scan positions, are deterministic within a message.
     auto ordinals = expected.keys();
     std::sort(ordinals.begin(), ordinals.end());
@@ -194,6 +227,39 @@ bool HistoryMediaRefs::link(QSqlDatabase db, qint64 eventId, bool *removed)
         query.bindValue(QStringLiteral(":fingerprint"), expected.value(ordinal));
         if (!query.exec())
             return false;
+    }
+    // Normalize the identities in the event's own transaction. Replays update
+    // this projection without consuming a new scan position or publication ID.
+    for (const auto &value : *index) {
+        const auto entry    = value.toObject();
+        const auto resource = entry.value("resource").toObject();
+        bool       sizeOk   = false;
+        const auto size     = resource.value("size").toString().toULongLong(&sizeOk);
+        sizeOk &= size <= quint64(std::numeric_limits<qint64>::max());
+        query.prepare(QStringLiteral(
+            "INSERT OR IGNORE INTO message_media_resources(publication_id,size,url_key) "
+            "SELECT publication_id,:size,:url FROM message_media_refs WHERE event_id=:event AND ordinal=:ordinal"));
+        query.bindValue(":event", eventId);
+        query.bindValue(":ordinal", entry.value("ordinal").toInt());
+        query.bindValue(":size", sizeOk ? QVariant(qlonglong(size)) : QVariant());
+        query.bindValue(":url", resource.value("url").toString());
+        if (!query.exec())
+            return false;
+        for (const auto &hashValue : resource.value("hashes").toArray()) {
+            const auto hash = hashValue.toObject();
+            query.prepare(
+                QStringLiteral("INSERT OR IGNORE INTO message_media_hashes(publication_id,algorithm,digest,range_key) "
+                               "SELECT publication_id,:algorithm,:digest,:key FROM message_media_refs WHERE "
+                               "event_id=:event AND ordinal=:ordinal"));
+            query.bindValue(":event", eventId);
+            query.bindValue(":ordinal", entry.value("ordinal").toInt());
+            query.bindValue(":algorithm", hash.value("algorithm").toString());
+            query.bindValue(":digest", QByteArray::fromHex(hash.value("digest").toString().toLatin1()));
+            query.bindValue(":key",
+                            sizeOk ? FileIdentity::rangeKey(account, hash.value("id").toString(), size) : QString());
+            if (!query.exec())
+                return false;
+        }
     }
     return true;
 }

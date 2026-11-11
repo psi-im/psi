@@ -151,5 +151,7 @@ private:
     QStringList                  _log;
     QList<XMPP::Jid>             _jids;
     XMPP::Jingle::FileTransfer::File _receivedMetadata;
+    mutable QString                  _rangeSource; // Stable storage identity, independent of announcement hash order.
+    mutable bool                     _rangeConfigured = false;
     QPointer<FileSharingChunkSource> _chunkSource; // owned QObject child
 };

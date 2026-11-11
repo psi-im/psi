@@ -90,6 +90,8 @@ private slots:
         QTest::newRow("archive-lookup") << int(HistoryReadRequest::ArchiveLookup) << "archive_items";
         QTest::newRow("own-plaintext") << int(HistoryReadRequest::OwnPlaintext) << "events";
         QTest::newRow("media-links") << int(HistoryReadRequest::MediaLinks) << "message_media_refs";
+        QTest::newRow("chat-media-links") << int(HistoryReadRequest::ChatMediaLinks) << "message_media_refs";
+        QTest::newRow("chat-media-revisions") << int(HistoryReadRequest::ChatMediaLinks) << "message_revisions";
         QTest::newRow("media-linked") << int(HistoryReadRequest::MediaLinked) << "message_media_refs";
     }
 

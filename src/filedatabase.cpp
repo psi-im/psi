@@ -19,7 +19,7 @@
 #endif
 
 namespace {
-const int SchemaVersion = 4;
+const int SchemaVersion = 6;
 
 // What each schema version adds to the one before it.
 const QList<QStringList> &schemaUpgrades()
@@ -64,7 +64,12 @@ const QList<QStringList> &schemaUpgrades()
           "CREATE TABLE file_checksums (file_id BLOB NOT NULL REFERENCES files(id) ON DELETE CASCADE, "
           "offset INTEGER NOT NULL CHECK(offset>=0), length INTEGER NOT NULL CHECK(length>=0), "
           "algorithm TEXT NOT NULL, digest BLOB NOT NULL, verified INTEGER NOT NULL DEFAULT 0, "
-          "PRIMARY KEY(file_id,offset,length,algorithm,digest))" }
+          "PRIMARY KEY(file_id,offset,length,algorithm,digest))" },
+        { "CREATE INDEX file_hashes_key ON file_hashes(algorithm || '+' || lower(hex(digest)))",
+          "ALTER TABLE files ADD COLUMN scope_account TEXT",
+          "CREATE INDEX file_checksums_digest ON file_checksums(algorithm,digest,file_id) WHERE offset=0" },
+        { "DROP INDEX file_hashes_key",
+          "CREATE INDEX file_hashes_key ON file_hashes(CAST(algorithm || '+' || lower(hex(digest)) AS TEXT))" }
     };
     return upgrades;
 }

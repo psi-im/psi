@@ -1025,7 +1025,7 @@ bool storePage(QSqlDatabase db, const Key &key, const QString &before, int limit
                 // Replace known protocol fields, retaining extension/plugin data.
                 for (const auto &name : { "psi:message", "psi:events", "psi:html", "psi:ids", "psi:origin",
                                           "psi:encrypted", "psi:encryption-protocol", "psi:decoded", "psi:has-body",
-                                          "psi:decryption-error", "psi:protocol-only", "psi:media-refs",
+                                          "psi:decryption-error", "psi:protocol-only", "psi:media-refs", "psi:media-resources",
                                           "urn:xmpp:reference:0", "urn:xmpp:sfs:0", "jabber:x:oob" })
                     merged.remove(QLatin1String(name));
                 for (auto it = incoming.begin(); it != incoming.end(); ++it)

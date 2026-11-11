@@ -13,7 +13,7 @@ inline constexpr int mediaRefsVersion = 2;
 HistoryArchive::Entry identity(const XMPP::Message &, bool local, const QString &archiveUid = {});
 QString encode(const XMPP::Message &message);
 void    restore(const QString &json, XMPP::Message &message);
-// A compact, value-only index of eligible attachment ordinals and fingerprints.
+// Value-only index of attachment ordinals, fingerprints and resource identities.
 // Build on the GUI thread, alongside the protocol snapshot. SQL workers consume
 // the index without parsing JIDs hidden inside SFS/Jingle sources.
 QJsonArray mediaRefs(const XMPP::Message &message, int version = mediaRefsVersion);

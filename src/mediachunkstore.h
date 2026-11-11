@@ -35,11 +35,16 @@ public:
     void           pin(const QString &key, bool active);
     quint64        diskBytes() const;
     MediaFileState state(const QString &key) const;
-    bool           contains(const QString &key, quint64 offset, quint64 length) const;
-    quint64        availableLength(const QString &key, quint64 size, quint64 offset, quint64 maximum) const;
-    bool           containsCached(const QString &key, quint64 size, quint64 offset, quint64 length) const;
-    bool           isCompleteFile(const QString &path) const;
-    void           setDiskLimit(quint64 limit);
+    // Resolve a selected resource through persisted whole-file checksum aliases.
+    // Metadata only: no payload reads, allocation or TTL changes.
+    QString resolveSource(const QString &fallback, const QString &account, quint64 size,
+                          const QList<MediaFileChecksum> &checksums) const;
+    QString localFile(const QString &key, quint64 size) const;
+    bool    contains(const QString &key, quint64 offset, quint64 length) const;
+    quint64 availableLength(const QString &key, quint64 size, quint64 offset, quint64 maximum) const;
+    bool    containsCached(const QString &key, quint64 size, quint64 offset, quint64 length) const;
+    bool    isCompleteFile(const QString &path) const;
+    void    setDiskLimit(quint64 limit);
     // Force a checkpoint, for pause/close and before publishing a payload path.
     void checkpoint(Completion done = {});
     // Zero removes all inactive partial payloads; otherwise use a UTC epoch cutoff.

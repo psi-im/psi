@@ -72,6 +72,8 @@ list(APPEND HEADERS
     historyarchivevalues.h
     historysqlitepolicy.h
     historysqlreadworker.h
+    fileidentity.h
+    chatmedia.h
     historymediaqueries.h
     historyeventfactory.h
     aboutdlg.h
@@ -416,6 +418,7 @@ list(APPEND SOURCES
     historymessageextras.cpp
     filesharingcatalog.cpp
     filesharingpublicationsync.cpp
+    chatmedia.cpp
     historymediaqueries.cpp
     historymediarefs.cpp
     edbsqlite.cpp

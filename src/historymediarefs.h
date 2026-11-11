@@ -26,7 +26,7 @@ struct Announcement {
 
 // Adds the links, for every message stored so far, in one transaction.
 bool needsMigration(QSqlDatabase db);
-// Compatibility for SFS rows written by older development versions; GUI only.
+// Prepare protocol-derived SFS resource values before threaded backfill; GUI only.
 bool prepareLegacySfs(QSqlDatabase db);
 bool migrate(QSqlDatabase db, const std::function<void(qint64)> &progress = {});
 

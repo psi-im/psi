@@ -43,6 +43,9 @@ public:
     void           configure(const QString &source, quint64 fileSize, QList<MediaFileChecksum> checksums,
                              QVariantMap metadata = {});
     MediaFileState fileState(const QString &source, quint64 fileSize) const;
+    QString        resolveSource(const QString &source, const QString &account, quint64 size,
+                                 const QList<MediaFileChecksum> &checksums) const;
+    QString        localFile(const QString &source, quint64 size) const;
     bool           isCompleteFile(const QString &path) const;
     void           resume(const QString &source, quint64 fileSize);
     void           pin(const QString &source, quint64 fileSize, bool active);
