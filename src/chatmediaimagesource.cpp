@@ -16,6 +16,7 @@
 #include <QPointer>
 #include <QUrl>
 #include <algorithm>
+#include <cstdlib>
 #include <limits>
 #include <memory>
 
@@ -34,8 +35,10 @@ QString imageName(const ChatMedia::Entry &entry)
 bool isImage(const ChatMedia::Entry &entry)
 {
     const QString type = entry.announcement.file.reference.mediaSharing().file.mediaType();
-    if (!type.isEmpty())
-        return type.startsWith(QLatin1String("image/"));
+    if (type.startsWith(QLatin1String("image/")))
+        return true;
+    if (!type.isEmpty() && type != QLatin1String("application/octet-stream"))
+        return false;
     return QMimeDatabase().mimeTypeForFile(imageName(entry), QMimeDatabase::MatchExtension)
         .name().startsWith(QLatin1String("image/"));
 }
