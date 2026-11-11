@@ -30,10 +30,69 @@ void drag(ImageViewer &viewer, const QPoint &from, const QPoint &to)
 }
 }
 
+class TestNavigationSource final : public ImageNavigationSource {
+public:
+    int requests = 0;
+    int direction = 0;
+    Result pending;
+
+    void adjacent(int step, Result result) override
+    {
+        ++requests;
+        direction = step;
+        pending = std::move(result);
+    }
+};
+
 class ImageViewerTest final : public QObject {
     Q_OBJECT
 
 private slots:
+    void navigationUsesInjectedSourceAndCancelsStaleResults()
+    {
+        QImage original(80, 60, QImage::Format_RGB32);
+        original.fill(Qt::red);
+        ImageViewer viewer(original, QStringLiteral("/cache/unrelated.png"));
+        auto *first = new TestNavigationSource;
+        viewer.setNavigationSource(first);
+        viewer.show();
+        QCoreApplication::processEvents();
+
+        const QPoint centre = viewer.rect().center();
+        const auto wheel = [&](int turns, Qt::KeyboardModifiers modifiers = Qt::NoModifier) {
+            QWheelEvent event(QPointF(centre), QPointF(viewer.mapToGlobal(centre)),
+                              {}, QPoint(0, turns * 120), Qt::NoButton,
+                              modifiers, Qt::NoScrollPhase, false);
+            QApplication::sendEvent(&viewer, &event);
+            QVERIFY(event.isAccepted());
+        };
+
+        wheel(-1);
+        QCOMPARE(first->requests, 1);
+        QCOMPARE(first->direction, 1); // Newer, in chat-message chronology.
+        wheel(-1);
+        QCOMPARE(first->requests, 1); // Navigation is in flight.
+        zoom(viewer, 1);
+        QCOMPARE(first->requests, 1); // Ctrl+wheel still zooms, never browses.
+
+        auto oldResult = first->pending;
+        auto *second = new TestNavigationSource;
+        viewer.setNavigationSource(second);
+        QImage stale(90, 70, QImage::Format_RGB32);
+        stale.fill(Qt::yellow);
+        oldResult(stale, QStringLiteral("stale.png"), true);
+        QCOMPARE(viewer.windowTitle(), QStringLiteral("unrelated.png"));
+
+        wheel(1);
+        QCOMPARE(second->requests, 1);
+        QCOMPARE(second->direction, -1);
+        QImage next(64, 48, QImage::Format_RGB32);
+        next.fill(Qt::blue);
+        second->pending(next, QStringLiteral("chat-photo.png"), true);
+        QCOMPARE(viewer.windowTitle(), QStringLiteral("chat-photo.png"));
+        QCOMPARE(viewer.displayedImageRect().size(), QSizeF(64, 48));
+        QVERIFY(!viewer.hasTemporaryZoom());
+    }
     void smallImageKeepsOriginalSizeAndCompactWindow()
     {
         QImage image(80, 60, QImage::Format_RGB32);

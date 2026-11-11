@@ -41,9 +41,6 @@ QPointer<ImageViewer> &currentImageViewer()
     static QPointer<ImageViewer> viewer;
     return viewer;
 }
-
-
-}
 }
 
 void ImageViewer::setSizePersistence(SizeLoader loader, SizeSaver saver)
