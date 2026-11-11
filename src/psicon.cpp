@@ -771,6 +771,21 @@ bool PsiCon::init()
     MediaViewer::setSavePathPersistence(
         [] { return PsiOptions::instance()->getOption("options.ui.save.image-viewer-save-path").toString(); },
         [](const QString &path) { PsiOptions::instance()->setOption("options.ui.save.image-viewer-save-path", path); });
+    MediaViewer::setFilterPersistence(
+        [] {
+            auto *options = PsiOptions::instance();
+            return MediaFilter {
+                options->getOption("options.ui.save.media-viewer-types",
+                                   int(MediaFilter::Images | MediaFilter::Videos)).toInt(),
+                options->getOption("options.ui.save.media-viewer-availability",
+                                   int(MediaFilter::Complete | MediaFilter::Partial)).toInt()
+            };
+        },
+        [](MediaFilter filter) {
+            auto *options = PsiOptions::instance();
+            options->setOption("options.ui.save.media-viewer-types", filter.types);
+            options->setOption("options.ui.save.media-viewer-availability", filter.availability);
+        });
 
     // try autologin if needed
     for (PsiAccount *account : d->contactList->accounts()) {
