@@ -68,6 +68,47 @@ QIcon themedIcon(std::initializer_list<const char *> names, QStyle *style, QStyl
     return style->standardIcon(fallback);
 }
 
+QIcon fullscreenArrowsIcon(const QPalette &palette, bool inward)
+{
+    QPixmap pixmap(24, 24);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(palette.color(QPalette::ButtonText), 2, Qt::SolidLine, Qt::RoundCap,
+                        Qt::RoundJoin));
+    if (inward) {
+        painter.drawLine(QPointF(4, 4), QPointF(10, 10));
+        painter.drawLine(QPointF(10, 10), QPointF(10, 5));
+        painter.drawLine(QPointF(10, 10), QPointF(5, 10));
+        painter.drawLine(QPointF(20, 20), QPointF(14, 14));
+        painter.drawLine(QPointF(14, 14), QPointF(14, 19));
+        painter.drawLine(QPointF(14, 14), QPointF(19, 14));
+    } else {
+        painter.drawLine(QPointF(10, 10), QPointF(4, 4));
+        painter.drawLine(QPointF(4, 4), QPointF(4, 9));
+        painter.drawLine(QPointF(4, 4), QPointF(9, 4));
+        painter.drawLine(QPointF(14, 14), QPointF(20, 20));
+        painter.drawLine(QPointF(20, 20), QPointF(15, 20));
+        painter.drawLine(QPointF(20, 20), QPointF(20, 15));
+    }
+    painter.end();
+    return QIcon(pixmap);
+}
+
+QIcon rotateClockwiseIcon(const QPalette &palette)
+{
+    QPixmap pixmap(24, 24);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(palette.color(QPalette::ButtonText), 2, Qt::SolidLine, Qt::RoundCap));
+    painter.drawArc(QRectF(4, 4, 16, 16), 30 * 16, 280 * 16);
+    painter.drawLine(QPointF(17, 5), QPointF(20, 8));
+    painter.drawLine(QPointF(20, 8), QPointF(16, 9));
+    painter.end();
+    return QIcon(pixmap);
+}
+
 }
 
 void MediaViewer::setSizePersistence(SizeLoader loader, SizeSaver saver)
@@ -288,22 +329,24 @@ void MediaViewer::setupControls()
         if (navigationSource_)
             navigationSource_->retry();
     });
-    actionButton("mediaRotate", tr("Rotate clockwise"), { "object-rotate-right" },
-                 QStyle::SP_ArrowForward, [this] {
+    auto *rotate = actionButton("mediaRotate", tr("Rotate clockwise"), { "object-rotate-right" },
+                                QStyle::SP_ArrowForward, [this] {
         if (image_.isNull())
             return;
         image_ = image_.transformed(QTransform().rotate(90));
         resetTemporaryZoom();
         update();
     });
+    rotate->setIcon(QIcon::fromTheme(QStringLiteral("object-rotate-right"), rotateClockwiseIcon(palette())));
     actionButton("mediaCopy", tr("Copy image"), { "edit-copy" }, QStyle::SP_FileIcon, [this] {
         if (!image_.isNull())
             QGuiApplication::clipboard()->setImage(image_);
     });
     actionButton("mediaSave", tr("Save as…"), { "document-save-as", "document-save" },
                  QStyle::SP_DialogSaveButton, [this] { saveImageAs(); });
-    actionButton("mediaFullscreen", tr("Full screen"), { "view-fullscreen" },
-                 QStyle::SP_TitleBarMaxButton, [this] { toggleFullscreen(); });
+    auto *full = actionButton("mediaFullscreen", tr("Full screen"), { "view-fullscreen" },
+                              QStyle::SP_TitleBarMaxButton, [this] { toggleFullscreen(); });
+    full->setIcon(QIcon::fromTheme(QStringLiteral("view-fullscreen"), fullscreenArrowsIcon(palette(), false)));
     controls_->hide();
     trackVideoWidget(controls_);
     videoIdleTimer_ = new QTimer(this);
@@ -390,9 +433,8 @@ void MediaViewer::updateFullscreenUi()
         const QString label = full ? tr("Exit full screen") : tr("Full screen");
         button->setToolTip(label);
         button->setAccessibleName(label);
-        button->setIcon(themedIcon(full ? std::initializer_list<const char *> { "view-restore", "view-fullscreen" }
-                                      : std::initializer_list<const char *> { "view-fullscreen" },
-                                   style(), full ? QStyle::SP_TitleBarNormalButton : QStyle::SP_TitleBarMaxButton));
+        button->setIcon(QIcon::fromTheme(full ? QStringLiteral("view-restore") : QStringLiteral("view-fullscreen"),
+                                         fullscreenArrowsIcon(palette(), full)));
     }
     if (isFullScreen() && video_) {
         noteFullscreenActivity(true);
