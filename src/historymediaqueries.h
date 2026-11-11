@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "historyarchivevalues.h"
 #include <QByteArray>
 #include <QList>
 #include <QSet>
@@ -12,12 +13,21 @@
 // SQL projections contain values only. Protocol/JID reconstruction belongs to
 // the GUI; these queries share the existing ordered history worker.
 namespace HistoryMediaRefs {
+struct Cursor {
+    qint64 timestamp = 0, eventId = 0;
+    int    ordinal = 0;
+    bool   undated = false;
+    bool   valid() const { return eventId > 0; }
+};
 struct Link {
     qint64     position = 0;
     QByteArray publicationId;
     int        ordinal = 0, direction = 0;
     QString    body, extra, account, peer;
+    Cursor     cursor;
 };
-QList<Link>                     linksAfter(QSqlDatabase db, qint64 position, int limit, QSqlError *error = nullptr);
+QList<Link> chatLinks(QSqlDatabase db, const HistoryArchive::Key &chat, Cursor cursor, bool older, int limit,
+                      QSqlError *error = nullptr);
+QList<Link> linksAfter(QSqlDatabase db, qint64 position, int limit, QSqlError *error = nullptr);
 std::optional<QSet<QByteArray>> linked(QSqlDatabase db, const QList<QByteArray> &ids, QSqlError *error = nullptr);
 }

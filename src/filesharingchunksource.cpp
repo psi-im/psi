@@ -209,7 +209,11 @@ MediaChunkAbort FileSharingChunkSource::sequential(FileSharingItem *item, const 
 
 QString FileSharingChunkSource::identity(const FileSharingItem *item)
 {
-    return item && item->account() ? item->account()->id() + QChar(0) + item->sums().value(0).toString() : QString();
+    return item && item->account() ? identity(item->account()->id(), item->sums().value(0)) : QString();
+}
+QString FileSharingChunkSource::identity(const QString &account, const XMPP::Hash &hash)
+{
+    return account + QChar(0) + hash.toString();
 }
 void FileSharingChunkSource::addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file)
 {

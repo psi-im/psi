@@ -31,6 +31,7 @@ struct HistoryReadRequest {
         ArchiveLookup,
         OwnPlaintext,
         MediaLinks,
+        ChatMediaLinks,
         MediaLinked
     };
     int id = 0;
@@ -38,6 +39,7 @@ struct HistoryReadRequest {
     QString account, peer, text;
     HistoryArchive::Key archiveKey;
     QString cursor;
+    HistoryMediaRefs::Cursor mediaCursor;
     QString sender, messageId;
     QDateTime messageTime;
     int archiveIndex = -1, snapshotCount = -1;

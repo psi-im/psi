@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 // Publications come from what history stores and what an account chooses to share.
 #include "applicationinfo.h"
+#include "chatmedia.h"
 #include "filedatabase.h"
 #include "filesharingcatalog.h"
 #include "filesharingpublicationsync.h"
@@ -624,6 +625,152 @@ private slots:
     }
 
     // ------------------------------------------------------------------ links in history
+
+    void chatMediaPagesUseChronologyAndIsolateChats()
+    {
+        migrateHistory();
+        const auto message = messageWith(alice,
+                                         { referenceOf(mediaOf("one", { "https://example.org/1" })),
+                                           referenceOf(mediaOf("two", { "https://example.org/2" })) });
+        const auto first   = store(message);
+        const auto second  = store(message);
+        const auto foreign = store(message, 2);
+        QVERIFY(first && second && foreign);
+        QSqlQuery query(history);
+        QVERIFY(query.exec("INSERT INTO contacts VALUES(3,'corporate',3,'alice@example.org',-1)"));
+        QVERIFY(store(message, 3));
+        // Archive pages may arrive after newer live messages.
+        QVERIFY(
+            query.exec(QString("UPDATE events SET history_date_ms=CASE WHEN id=%1 THEN 200 ELSE 100 END").arg(first)));
+        QSqlError error;
+        auto      page = HistoryMediaRefs::chatLinks(history, key, {}, false, 1, &error);
+        QVERIFY(!error.isValid());
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().cursor.eventId, second);
+        QCOMPARE(page.first().ordinal, 0);
+        const auto cursor = page.first().cursor;
+        // A deleted cursor row must not break keyset pagination.
+        QVERIFY(query.exec(QString("DELETE FROM message_media_refs WHERE event_id=%1 AND ordinal=0").arg(second)));
+        page = HistoryMediaRefs::chatLinks(history, key, cursor, false, 10, &error);
+        QCOMPARE(page.size(), 3);
+        QCOMPARE(page.first().cursor.eventId, second);
+        QCOMPARE(page.first().ordinal, 1);
+        QCOMPARE(page.last().cursor.eventId, first);
+        page = HistoryMediaRefs::chatLinks(history, key, {}, true, 10, &error);
+        QCOMPARE(page.size(), 3);
+        QCOMPARE(page.first().cursor.eventId, first);
+        QCOMPARE(page.first().ordinal, 1);
+        page = HistoryMediaRefs::chatLinks(history, key, page.last().cursor, true, 10, &error);
+        QVERIFY(page.isEmpty());
+        QVERIFY(!error.isValid());
+        QVERIFY(query.exec(QString("UPDATE events SET history_date_ms=NULL WHERE id=%1").arg(second)));
+        page = HistoryMediaRefs::chatLinks(history, key, {}, false, 1, &error);
+        QVERIFY(page.first().cursor.undated);
+        page = HistoryMediaRefs::chatLinks(history, key, page.first().cursor, false, 1, &error);
+        QVERIFY(!page.first().cursor.undated);
+        QCOMPARE(page.first().cursor.eventId, first);
+        page = HistoryMediaRefs::chatLinks(history, key, page.first().cursor, true, 1, &error);
+        QVERIFY(page.first().cursor.undated);
+        QCOMPARE(page.first().cursor.eventId, second);
+        QVERIFY(!error.isValid());
+    }
+
+    void chatMediaUsesVisibleRevisionAndHidesDeletedOrRetractedMessages()
+    {
+        migrateHistory();
+        const auto message = messageWith(alice, { referenceOf(mediaOf("one", { "https://example.org/1" })) });
+        const auto root    = store(message);
+        const auto edit    = store(messageWith(alice, {}));
+        const auto visible = store(message);
+        QVERIFY(root && edit && visible);
+        QSqlQuery q(history);
+        QVERIFY(q.exec(QString("INSERT INTO message_revisions VALUES(%1,1,1,2,'alice','original','',%1)").arg(root)));
+        QVERIFY(q.exec(QString("INSERT INTO message_revisions VALUES(%1,1,1,2,'alice','edit','original',%2)")
+                           .arg(edit)
+                           .arg(root)));
+        QSqlError error;
+        auto      page = HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error);
+        QVERIFY(!error.isValid());
+        QCOMPARE(page.size(), 1); // The edit removed the original attachment.
+        QCOMPARE(page.first().cursor.eventId, visible);
+        QVERIFY(q.exec(QString("UPDATE events SET message_flags=8 WHERE id=%1").arg(visible)));
+        QVERIFY(HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error).isEmpty());
+        QVERIFY(q.exec(QString("UPDATE events SET message_flags=16 WHERE id=%1").arg(visible)));
+        QVERIFY(HistoryMediaRefs::chatLinks(history, key, {}, false, 10, &error).isEmpty());
+        QVERIFY(!error.isValid());
+    }
+
+    void chatMediaStatisticsAreBoundedAndDoNotResolveItems()
+    {
+        migrateHistory();
+        const auto message = messageWith(alice, { referenceOf(mediaOf("one", { "https://example.org/1" })) });
+        for (int i = 0; i < 205; ++i)
+            QVERIFY(store(message));
+        int       reads = 0, inspected = 0, completed = 0;
+        ChatMedia browser(
+            [&](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
+                ++reads;
+                QVERIFY(limit <= 101);
+                QTimer::singleShot(0, receiver, [&, cursor, older, limit, done] {
+                    QSqlError  error;
+                    const auto links = HistoryMediaRefs::chatLinks(history, key, cursor, older, limit, &error);
+                    done(links, !error.isValid());
+                });
+            },
+            [&](const HistoryMediaRefs::Announcement &) {
+                const auto kind = inspected++ % 3;
+                return ChatMedia::Storage { kind == 0       ? ChatMedia::Availability::Complete
+                                                : kind == 1 ? ChatMedia::Availability::Partial
+                                                            : ChatMedia::Availability::Remote,
+                                            0 };
+            });
+        browser.requestStatistics([&](ChatMedia::Statistics stats, bool ok) {
+            QVERIFY(ok);
+            QCOMPARE(stats.complete, quint64(69));
+            QCOMPARE(stats.partial, quint64(68));
+            QCOMPARE(stats.remote, quint64(68));
+            QVERIFY(stats.stale);
+            ++completed;
+        });
+        browser.invalidate();
+        QTRY_COMPARE(completed, 1);
+        QCOMPARE(reads, 3);
+        QCOMPARE(inspected, 205);
+        browser.requestPage({}, true, 2, [&](ChatMedia::Page page, bool ok) {
+            QVERIFY(ok);
+            QCOMPARE(page.entries.size(), 2);
+            QVERIFY(page.hasMore);
+            QVERIFY(page.next.valid());
+            QCOMPARE(page.entries.first().announcement.account, corporate);
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 2);
+    }
+
+    void chatMediaCancellationAndQueryErrorsDoNotLookLikeEmptyResults()
+    {
+        int  completed = 0;
+        auto read      = [](ChatMedia::Cursor, bool, int, QObject *receiver, ChatMedia::LinksDone done) {
+            QTimer::singleShot(0, receiver, [done] { done({}, false); });
+        };
+        auto inspect = [](const HistoryMediaRefs::Announcement &) { return ChatMedia::Storage(); };
+        auto browser = new ChatMedia(read, inspect);
+        browser->requestStatistics([&](ChatMedia::Statistics, bool) { ++completed; });
+        delete browser;
+        QTest::qWait(10);
+        QCOMPARE(completed, 0);
+        ChatMedia live(read, inspect);
+        live.requestStatistics([&](ChatMedia::Statistics, bool ok) {
+            QVERIFY(!ok);
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 1);
+        live.requestPage({}, false, 201, [&](ChatMedia::Page, bool ok) {
+            QVERIFY(!ok);
+            ++completed;
+        });
+        QTRY_COMPARE(completed, 2);
+    }
 
     void everyFileOfAStoredMessageIsLinked()
     {
@@ -1335,6 +1482,17 @@ private slots:
         QVERIFY(told);
         QCOMPARE(told->file.reference.mediaSharing().sources,
                  QStringList { "xmpp:alice@example.org/desktop?jingle-ft" });
+        request.archiveKey = key;
+        request.type = HistoryReadRequest::ChatMediaLinks;
+        request.direction = 1;
+        QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));
+        QTRY_COMPARE(read.count(), 1);
+        const auto chatResult = qvariant_cast<HistoryReadResult>(read.takeFirst().first());
+        QVERIFY(chatResult.success);
+        QCOMPARE(chatResult.mediaLinks.size(), 1);
+        QVERIFY(chatResult.mediaLinks.first().cursor.valid());
+        QCOMPARE(chatResult.mediaLinks.first().account, corporate);
+        request.archiveKey = {};
         request.type           = HistoryReadRequest::MediaLinked;
         request.publicationIds = { result.mediaLinks.first().publicationId };
         QVERIFY(QMetaObject::invokeMethod(worker.db, "read", Qt::QueuedConnection, Q_ARG(HistoryReadRequest, request)));

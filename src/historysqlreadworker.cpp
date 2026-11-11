@@ -100,8 +100,11 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
         }
         emit completed(result);
     };
-    if (request.type == HistoryReadRequest::MediaLinks) {
-        result.mediaLinks = HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error);
+    if (request.type == HistoryReadRequest::MediaLinks || request.type == HistoryReadRequest::ChatMediaLinks) {
+        result.mediaLinks = request.type == HistoryReadRequest::MediaLinks
+            ? HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error)
+            : HistoryMediaRefs::chatLinks(db_, request.archiveKey, request.mediaCursor, request.direction != 0,
+                                          request.limit, &error);
         finish();
         return;
     }

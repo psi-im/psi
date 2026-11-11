@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPointer>
 
+namespace XMPP { class Hash; }
 class FileSharingItem;
 class MediaChunkCache;
 namespace XMPP::Jingle::FileTransfer {
@@ -18,6 +19,7 @@ class FileSharingChunkSource : public QObject {
 public:
     ~FileSharingChunkSource() override;
     static QString          identity(const FileSharingItem *item);
+    static QString          identity(const QString &account, const XMPP::Hash &hash);
     static MediaChunkCache *configure(const FileSharingItem *item);
     static void             addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
     static QString          localFile(const FileSharingItem *item);

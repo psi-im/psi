@@ -101,6 +101,30 @@ private slots:
         QVERIFY(store.state(active).path.isEmpty());
         QVERIFY(store.state(complete).complete);
     }
+    void downloadingMoreBytesRenewsPartialLifetime()
+    {
+        QTemporaryDir   directory;
+        MediaChunkStore store(directory.path(), 1024);
+        const auto      old      = QDateTime::currentSecsSinceEpoch() - 11 * 86400;
+        int             finished = 0;
+        auto            done     = [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++finished;
+        };
+        store.write(key, 20, 0, "first", done);
+        store.configure(key, 20, {}, { { "last-access", old } }, done);
+        QTRY_COMPARE(finished, 2);
+        store.write(key, 20, 5, "more", done);
+        QTRY_COMPARE(finished, 3);
+        QVERIFY(store.state(key).metadata.value("last-access").toLongLong() > old);
+        store.removeIncomplete(QDateTime::currentSecsSinceEpoch() - 10 * 86400, [&](quint64 freed, QString error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(freed, quint64(0));
+            ++finished;
+        });
+        QTRY_COMPARE(finished, 4);
+        QVERIFY(!store.state(key).path.isEmpty());
+    }
     void volatileCompletionCannotBypassNewChecksums()
     {
         QTemporaryDir   directory;

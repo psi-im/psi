@@ -83,6 +83,7 @@ static bool obsoleteRangePayload(const QString &path)
 // ======================================================================
 class FileSharingManager::Private {
 public:
+    QPointer<EDBSqLite>                                  history;
     FileCache                                           *cache;
     MediaChunkCache                                     *chunkCache = nullptr;
     QHash<FileSharingItem *, FileDownload *>             downloads;
@@ -113,6 +114,8 @@ FileSharingManager::FileSharingManager(QObject *parent) : QObject(parent), d(new
     d->cache->setMemoryCacheSize(16 * 1024 * 1024);
     d->cache->importLegacy(legacy);
     d->catalog.reset(new FileSharingCatalog);
+    connect(d->cache, &FileCache::contentsChanged, this, &FileSharingManager::chatMediaChanged, Qt::QueuedConnection);
+    connect(d->cache->rangeStore(), &MediaChunkStore::fileChanged, this, &FileSharingManager::chatMediaChanged);
     const auto expire = [this] {
         const auto days = std::clamp(
             PsiOptions::instance()->getOption(QStringLiteral("options.media.incomplete-max-age-days")).toInt(), 1,
@@ -273,12 +276,16 @@ std::optional<Hash> FileSharingManager::contentForUrl(const QString &account, co
 
 bool FileSharingManager::rememberUrlContent(const QString &account, const Hash &urlIdentity, const Hash &contentHash)
 {
-    return d->catalog->rememberUrlContent(account, urlIdentity, contentHash);
+    const bool ok = d->catalog->rememberUrlContent(account, urlIdentity, contentHash);
+    if (ok)
+        emit chatMediaChanged();
+    return ok;
 }
 
 void FileSharingManager::forgetUrlContent(const QString &account, const Hash &urlIdentity)
 {
     d->catalog->forgetUrlContent(account, urlIdentity);
+    emit chatMediaChanged();
 }
 
 FileSharingItem *FileSharingManager::item(const Hash &id, PsiAccount *account)
@@ -395,6 +402,105 @@ QList<FileSharingItem *> FileSharingManager::fromFilesList(const QStringList &fi
     return ret;
 }
 
+FileSharingItem *FileSharingManager::fromShare(const MessageFileShares::FileShare &file, const Jid &from,
+                                               PsiAccount *acc)
+{
+    if (!acc)
+        return nullptr;
+    const auto       ms       = file.reference.mediaSharing();
+    FileSharingItem *resource = nullptr;
+    if (file.hasContentHashes()) {
+        resource = item(ms.file.computedHashes().first(), acc);
+        if (!resource)
+            resource = new FileSharingItem(ms, from, acc, this);
+        else
+            resource->mergeSources(ms, from);
+    } else if (const auto url = file.url(); url.isValid()) {
+        const auto identity = MessageFileShares::urlIdentity(url);
+        resource            = d->accountItems.value(acc->id()).value(identity);
+        if (!resource || resource->account() != acc || !resource->isUrlOnly())
+            resource = new FileSharingItem(url, identity, acc, this, file.description);
+    }
+    if (resource)
+        d->rememberItem(resource);
+    return resource;
+}
+
+ChatMedia *FileSharingManager::chatMedia(PsiAccount *account, const HistoryArchive::Key &key, QObject *parent)
+{
+    if (!account || !parent || key.account != account->id() || key.peer.isEmpty() || !d->history)
+        return nullptr;
+    const QPointer<EDBSqLite>          history(d->history);
+    const QPointer<FileSharingManager> manager(this);
+    auto                               browser = new ChatMedia(
+        [history, key](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
+            if (history)
+                history->requestChatMediaLinks(key, cursor, older, limit, receiver, std::move(done));
+            else
+                QTimer::singleShot(0, receiver, [done] { done({}, false); });
+        },
+        [manager](const HistoryMediaRefs::Announcement &announcement) {
+            ChatMedia::Storage result;
+            if (!manager)
+                return result;
+            const auto &file   = announcement.file;
+            const auto  hashes = file.reference.mediaSharing().file.computedHashes();
+            if (file.hasContentHashes()) {
+                if (auto cached = manager->cacheItem(hashes)) {
+                    result.availability    = ChatMedia::Availability::Complete;
+                    result.downloadedBytes = cached->size();
+                    return result;
+                }
+                const auto record = manager->d->catalog->find(announcement.account, hashes.first());
+                if (record && !record->readableLocalPath().isEmpty()) {
+                    result.availability    = ChatMedia::Availability::Complete;
+                    result.downloadedBytes = record->localSize;
+                    return result;
+                }
+                const auto size = file.reference.mediaSharing().file.size();
+                if (size) {
+                    for (const auto &hash : hashes) {
+                        const auto state = manager->mediaChunkCache()->fileState(
+                            FileSharingChunkSource::identity(announcement.account, hash), *size);
+                        quint64 bytes = 0;
+                        for (const auto &range : state.ranges)
+                            bytes += range.second;
+                        result.downloadedBytes = std::max(result.downloadedBytes, bytes);
+                        if (state.complete) {
+                            result.availability = ChatMedia::Availability::Complete;
+                            break;
+                        }
+                        if (bytes)
+                            result.availability = ChatMedia::Availability::Partial;
+                    }
+                }
+            } else {
+                const auto id      = MessageFileShares::urlIdentity(file.url());
+                const auto content = manager->contentForUrl(announcement.account, id);
+                if (content)
+                    if (auto cached = manager->cacheItem(*content)) {
+                        result.availability    = ChatMedia::Availability::Complete;
+                        result.downloadedBytes = cached->size();
+                    }
+            }
+            return result;
+        },
+        parent);
+    connect(this, &FileSharingManager::chatMediaChanged, browser, &ChatMedia::invalidate);
+    const auto close = [browser] { delete browser; };
+    connect(account, &QObject::destroyed, browser, close);
+    connect(this, &QObject::destroyed, browser, close);
+    connect(d->history, &QObject::destroyed, browser, close);
+    return browser;
+}
+
+FileSharingItem *FileSharingManager::chatMediaItem(const ChatMedia::Entry &entry, PsiAccount *account)
+{
+    if (!account || entry.announcement.account != account->id())
+        return nullptr;
+    return fromShare(entry.announcement.file, entry.announcement.announcer, account);
+}
+
 void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiAccount *acc)
 {
     if (!acc)
@@ -420,31 +526,13 @@ void FileSharingManager::fillMessageView(MessageView &mv, const Message &m, PsiA
 
     int lastEnd = 0;
     for (const auto &file : files) {
-        const auto  &r  = file.reference;
-        MediaSharing ms = r.mediaSharing();
+        const auto &r = file.reference;
         // qDebug() << "BEGIN:" << r.begin() << "END:" << r.end();
         // Every SIMS file needs a share object, not only inline media.
         // Non-media files can have an unknown size (streaming sources).
-        FileSharingItem *item = nullptr;
-        if (file.hasContentHashes()) {
-            item = this->item(ms.file.computedHashes().first(), acc);
-            if (!item)
-                item = new FileSharingItem(ms, m.from(), acc, this);
-            else
-                item->mergeSources(ms, m.from());
-            d->rememberItem(item);
-        } else if (const QUrl source = file.url(); source.isValid()) {
-            // An HTTP(S) URL without SIMS metadata, usually from OOB. Shares of
-            // the same URL are one item; the item keeps the full URL to open.
-            const Hash identity = MessageFileShares::urlIdentity(source);
-            item                = d->accountItems.value(acc->id()).value(identity, nullptr);
-            if (!item || item->account() != acc || !item->isUrlOnly()) {
-                item = new FileSharingItem(QUrl::fromEncoded(r.uri().toUtf8()), identity, acc, this, file.description);
-                d->rememberItem(item);
-            }
-        } else {
+        auto item = fromShare(file, m.from(), acc);
+        if (!item)
             continue;
-        }
         mv.addReference(item);
         const QString itemAuto = file.manualFetch ? QString() : autoAttr;
 
@@ -584,6 +672,9 @@ void FileSharingManager::importLegacyCatalog(const QList<PsiAccount *> &accounts
 
 void FileSharingManager::followHistory(EDBSqLite *history)
 {
+    d->history = history;
+    connect(history, &EDBSqLite::mediaLinksAdded, this, &FileSharingManager::chatMediaChanged);
+    connect(history, &EDBSqLite::mediaLinksRemoved, this, &FileSharingManager::chatMediaChanged);
     const QPointer<EDBSqLite>                 database(history);
     FileSharingPublicationSync::HistoryAccess access;
     access.readLinks = [database](qint64 position, int limit, QObject *receiver,

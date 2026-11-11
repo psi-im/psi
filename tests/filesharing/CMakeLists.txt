@@ -144,7 +144,7 @@ if(TARGET iris)
     add_test(NAME filesharing_sims_history COMMAND filesharing_sims_history_test)
     set_tests_properties(filesharing_sims_history PROPERTIES TIMEOUT 30)
 
-    add_executable(filesharing_publications_test publications.cpp ../../src/filesharingcatalog.cpp
+    add_executable(filesharing_publications_test publications.cpp ../../src/chatmedia.cpp ../../src/chatmedia.h ../../src/filesharingcatalog.cpp
         ../../src/filesharingpublicationsync.cpp ../../src/filedatabase.cpp ../../src/historymediarefs.cpp
         ../../src/historymediaqueries.cpp ../../src/historysqlreadworker.cpp ../../src/historysqlreadworker.h
         ../../src/historymessageextras.cpp ../../src/messagefileshares.cpp

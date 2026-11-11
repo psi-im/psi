@@ -546,6 +546,24 @@ void EDBSqLite::requestMediaLinks(qint64 position, int limit, QObject *receiver,
     QTimer::singleShot(0, this, SLOT(performRequests()));
 }
 
+void EDBSqLite::requestChatMediaLinks(const HistoryArchive::Key &chat, HistoryMediaRefs::Cursor cursor, bool older,
+                                      int limit, QObject *receiver,
+                                      std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished)
+{
+    if (!receiver)
+        return;
+    auto *r        = new item_query_req;
+    r->id          = genUniqueId();
+    r->type        = item_query_req::Type_chatMediaLinks;
+    r->archiveKey  = chat;
+    r->mediaCursor = cursor;
+    r->dir         = older ? 1 : 0;
+    r->len         = limit;
+    pendingMediaLinks_.insert(r->id, { receiver, std::move(finished) });
+    rlist.append(r);
+    QTimer::singleShot(0, this, SLOT(performRequests()));
+}
+
 void EDBSqLite::requestLinkedMedia(const QList<QByteArray> &ids, QObject *receiver,
                                    std::function<void(QSet<QByteArray>, bool)> finished)
 {
@@ -923,7 +941,7 @@ void EDBSqLite::performRequests()
             auto pending = pendingLocalDeletion_.take(r->id);
             if (pending.receiver)
                 pending.finished(false, false);
-        } else if (type == item_query_req::Type_mediaLinks) {
+        } else if (type == item_query_req::Type_mediaLinks || type == item_query_req::Type_chatMediaLinks) {
             auto pending = pendingMediaLinks_.take(r->id);
             if (pending.receiver)
                 pending.finished({}, false);
@@ -968,7 +986,7 @@ void EDBSqLite::performRequests()
         || type == item_query_req::Type_displayed || type == item_query_req::Type_archiveRead
         || type == item_query_req::Type_resolved || type == item_query_req::Type_lookup
         || type == item_query_req::Type_plaintext || type == item_query_req::Type_mediaLinks
-        || type == item_query_req::Type_mediaLinked) {
+        || type == item_query_req::Type_mediaLinked || type == item_query_req::Type_chatMediaLinks) {
         HistoryReadRequest read;
         read.id = r->id;
         read.account = r->accId;
@@ -980,6 +998,7 @@ void EDBSqLite::performRequests()
         read.limit = r->len;
         read.before = r->localBefore;
         read.archiveKey = r->archiveKey;
+        read.mediaCursor = r->mediaCursor;
         read.cursor = r->archiveCursor;
         read.archiveIndex = r->archiveIndex;
         read.snapshotCount = r->snapshotCount;
@@ -990,6 +1009,8 @@ void EDBSqLite::performRequests()
         read.messageTime = r->ownTime;
         if (type == item_query_req::Type_mediaLinks)
             read.type = HistoryReadRequest::MediaLinks;
+        else if (type == item_query_req::Type_chatMediaLinks)
+            read.type = HistoryReadRequest::ChatMediaLinks;
         else if (type == item_query_req::Type_mediaLinked)
             read.type = HistoryReadRequest::MediaLinked;
         else if (type == item_query_req::Type_local)
