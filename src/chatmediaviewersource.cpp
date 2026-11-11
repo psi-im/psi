@@ -13,6 +13,7 @@
 #include <QFutureWatcher>
 #include <QImageReader>
 #include <QTimer>
+#include <QThreadPool>
 #include <QtConcurrentRun>
 #include <atomic>
 #include <algorithm>
@@ -24,6 +25,21 @@ namespace {
 constexpr quint64 MaxImageBytes  = 128 * 1024 * 1024;
 constexpr quint64 MaxImagePixels = 32 * 1024 * 1024;
 using ImageDone                  = std::function<void(QImage, MediaChunkError)>;
+
+// A rapid gallery scroll can cancel several image decodes in succession.
+// Keeping a small, dedicated pool prevents large JPEG/PNG decoders from
+// exhausting the global worker pool or allocating many huge images at once.
+QThreadPool &imageDecodePool()
+{
+    static QThreadPool pool;
+    static const bool configured = [] {
+        pool.setMaxThreadCount(2);
+        return true;
+    }();
+    Q_UNUSED(configured);
+    return pool;
+}
+
 MediaChunkAbort decode(FileReader *reader, QObject *receiver, ImageDone done)
 {
     struct Result {
@@ -55,7 +71,7 @@ MediaChunkAbort decode(FileReader *reader, QObject *receiver, ImageDone done)
                          ? MediaChunkError(MediaChunkError::Cancelled, QStringLiteral("Image load cancelled"))
                          : result.error);
         });
-    watcher->setFuture(QtConcurrent::run([reader] {
+    watcher->setFuture(QtConcurrent::run(&imageDecodePool(), [reader] {
         QImageReader decoder(reader);
         decoder.setAutoTransform(true);
         const auto size = decoder.size();
