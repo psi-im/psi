@@ -20,6 +20,7 @@ public:
     ~ChatMediaViewerSource() override;
     void        start() override;
     void        adjacent(int direction) override;
+    bool        enqueueAdjacent(int direction) override;
     void        setFilter(MediaFilter) override;
     void        retry() override;
     bool        saveAs(QWidget *) override;
@@ -27,6 +28,8 @@ public:
 
 private:
     void                            refresh();
+    void                            requestNavigationPage(int steps, const ChatMedia::Entry &anchor, quint64 epoch);
+    void                            completeNavigation(std::optional<ChatMedia::Entry> candidate, quint64 epoch, bool ok);
     void                            choose(ChatMedia::Page, bool ok, int direction, bool replace);
     void                            select(const ChatMedia::Entry &);
     void                            cancelContent();
@@ -43,6 +46,6 @@ private:
     QMetaObject::Connection         integrity_;
     quint64                         queryEpoch_ = 0, contentEpoch_ = 0;
     qint64                          initialPosition_ = 0;
-    int                             direction_ = 1, skips_ = 0;
-    bool                            started_ = false, refreshPending_ = false;
+    int                             direction_ = 1, skips_ = 0, queuedSteps_ = 0;
+    bool                            started_ = false, refreshPending_ = false, navigationActive_ = false;
 };

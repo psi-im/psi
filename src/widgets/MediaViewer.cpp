@@ -428,8 +428,10 @@ void MediaViewer::contextMenuEvent(QContextMenuEvent *event)
 
 bool MediaViewer::showAdjacentImage(int step)
 {
-    if (!navigationSource_ || navigationPending_ || step == 0)
+    if (!navigationSource_ || step == 0)
         return false;
+    if (navigationPending_)
+        return navigationSource_->enqueueAdjacent(step);
     navigationPending_ = true;
     navigationSource_->adjacent(step);
     return true;
@@ -559,7 +561,11 @@ void MediaViewer::wheelEvent(QWheelEvent *event)
     }
     if (!(event->modifiers() & Qt::ControlModifier)) {
         // Wheel down advances to the next file; wheel up goes to the previous.
-        showAdjacentImage((delta ? delta : pixels) < 0 ? 1 : -1);
+        const int movement = delta ? delta : pixels;
+        // A fast wheel notch stream can represent several media positions.
+        // Let the source select the destination without decoding each one.
+        const int steps = qBound(1, std::abs(movement) / 120, 40);
+        showAdjacentImage(movement < 0 ? steps : -steps);
         event->accept();
         return;
     }

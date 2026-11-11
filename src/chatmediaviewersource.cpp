@@ -15,6 +15,8 @@
 #include <QTimer>
 #include <QtConcurrentRun>
 #include <atomic>
+#include <algorithm>
+#include <cstdlib>
 #include <memory>
 
 namespace {
@@ -131,6 +133,9 @@ void ChatMediaViewerSource::start()
 }
 void ChatMediaViewerSource::setFilter(MediaFilter filter)
 {
+    ++queryEpoch_; // Invalidate any query made with the previous filter.
+    navigationActive_ = false;
+    queuedSteps_ = 0;
     view_.navigating = false;
     if (browser_)
         browser_->setFilter(filter);
@@ -199,6 +204,16 @@ void ChatMediaViewerSource::refresh()
         }
     });
 }
+bool ChatMediaViewerSource::enqueueAdjacent(int direction)
+{
+    if (!navigationActive_)
+        return false;
+    // Multiple wheel events are one logical navigation operation: never open
+    // or decode images that the user merely scrolls past.
+    queuedSteps_ = qBound(-200, queuedSteps_ + direction, 200);
+    return true;
+}
+
 void ChatMediaViewerSource::adjacent(int direction)
 {
     if (!browser_ || !account_ || !direction) {
@@ -206,21 +221,98 @@ void ChatMediaViewerSource::adjacent(int direction)
         publish();
         return;
     }
-    direction_                                  = direction;
-    skips_                                      = 0;
+    if (navigationActive_) {
+        enqueueAdjacent(direction);
+        return;
+    }
+    direction_        = direction < 0 ? -1 : 1;
+    skips_            = 0;
+    navigationActive_ = true;
+    queuedSteps_      = 0;
     const auto                            epoch = ++queryEpoch_;
     const QPointer<ChatMediaViewerSource> guard(this);
     view_.navigating = true;
     publish();
-    const auto done = [guard, epoch, direction](ChatMedia::Page page, bool ok) {
-        if (guard && guard->queryEpoch_ == epoch)
-            guard->choose(std::move(page), ok, direction, false);
-    };
-    if (entry_)
-        browser_->requestAdjacent(*entry_, direction < 0, done);
-    else
-        browser_->requestPage({}, direction < 0, 1, done);
+
+    if (entry_) {
+        requestNavigationPage(direction, *entry_, epoch);
+        return;
+    }
+
+    // On first open, resolve the clicked resource, even when it is filtered
+    // out, rather than jumping to the first/last item in the whole chat.
+    browser_->requestAdjacent(source_, direction < 0, [guard, epoch, direction](ChatMedia::Page page, bool ok) {
+        if (!guard || guard->queryEpoch_ != epoch || !guard->navigationActive_)
+            return;
+        if (!ok || page.entries.isEmpty()) {
+            guard->completeNavigation({}, epoch, ok);
+            return;
+        }
+        const ChatMedia::Entry anchor = page.entries.first();
+        const int remaining = direction - (direction < 0 ? -1 : 1);
+        if (remaining)
+            guard->requestNavigationPage(remaining, anchor, epoch);
+        else
+            guard->completeNavigation(anchor, epoch, true);
+    });
 }
+
+void ChatMediaViewerSource::requestNavigationPage(int steps, const ChatMedia::Entry &anchor, quint64 epoch)
+{
+    if (!browser_ || queryEpoch_ != epoch || !navigationActive_)
+        return;
+    const int count = qMin(std::abs(steps), 200);
+    if (!count) {
+        completeNavigation(anchor, epoch, true);
+        return;
+    }
+    const QPointer<ChatMediaViewerSource> guard(this);
+    browser_->requestPage(anchor.cursor, steps < 0, count,
+                          [guard, anchor, epoch, steps, count](ChatMedia::Page page, bool ok) {
+        if (!guard || guard->queryEpoch_ != epoch || !guard->navigationActive_)
+            return;
+        if (!ok) {
+            guard->completeNavigation({}, epoch, false);
+            return;
+        }
+        auto candidate = page.entries.isEmpty() ? anchor : page.entries.last();
+        if (std::abs(steps) > count && !page.entries.isEmpty()) {
+            guard->requestNavigationPage(steps - (steps < 0 ? -count : count), candidate, epoch);
+            return;
+        }
+        guard->completeNavigation(candidate, epoch, true);
+    });
+}
+
+void ChatMediaViewerSource::completeNavigation(std::optional<ChatMedia::Entry> candidate, quint64 epoch, bool ok)
+{
+    if (queryEpoch_ != epoch || !navigationActive_)
+        return;
+    if (!ok) {
+        navigationActive_ = false;
+        queuedSteps_      = 0;
+        view_.navigating  = false;
+        view_.error       = tr("Cannot read chat media");
+        publish();
+        return;
+    }
+    const int further = std::exchange(queuedSteps_, 0);
+    if (further && candidate) {
+        requestNavigationPage(further, *candidate, epoch);
+        return;
+    }
+    navigationActive_ = false;
+    view_.navigating  = false;
+    if (candidate) {
+        direction_ = entry_ && candidate->cursor.assetId < entry_->cursor.assetId ? -1 : 1;
+        if (!entry_ || entry_->cursor.assetId != candidate->cursor.assetId) {
+            select(*candidate);
+            return;
+        }
+    }
+    publish();
+}
+
 void ChatMediaViewerSource::choose(ChatMedia::Page page, bool ok, int direction, bool replace)
 {
     view_.navigating = false;
@@ -334,7 +426,7 @@ void ChatMediaViewerSource::fail(MediaChunkError error)
     view_.state = State::Failed;
     view_.error = error.message();
     publish();
-    if (error.code() != MediaChunkError::Unavailable || ++skips_ >= 100 || !browser_)
+    if (error.code() != MediaChunkError::Unavailable || ++skips_ >= 8 || !browser_)
         return;
     const QPointer<ChatMediaViewerSource> guard(this);
     const auto                            query = ++queryEpoch_;

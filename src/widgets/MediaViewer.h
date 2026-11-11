@@ -43,6 +43,8 @@ public:
     using QObject::QObject;
     virtual void start() { }
     virtual void adjacent(int direction) = 0;
+    // Combine additional wheel events while a navigation query is in flight.
+    virtual bool enqueueAdjacent(int) { return false; }
     virtual void setFilter(MediaFilter) { }
     virtual void retry() { }
     virtual bool saveAs(QWidget *) { return false; }
