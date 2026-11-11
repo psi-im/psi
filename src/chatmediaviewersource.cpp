@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "chatmediaviewersource.h"
 #include "filesharingchunksource.h"
+#include "filedownload.h"
+#include "filesourceselector.h"
+#include "aesgcmurl.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
 #include "psiaccount.h"
@@ -12,6 +15,7 @@
 #include <QFutureWatcher>
 #include <QTimer>
 #include <QThreadPool>
+#include <QUrl>
 #include <QtConcurrentRun>
 #include <atomic>
 #include <algorithm>
@@ -394,6 +398,7 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
         return;
     }
     view_.state = State::Loading;
+    view_.progressPercent = -1;
     publish();
     const auto                            epoch = contentEpoch_;
     const QPointer<ChatMediaViewerSource> guard(this);
@@ -407,6 +412,9 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
                             : std::move(error));
             return;
         }
+        // The verified payload is now complete. Image decoding is local-only.
+        guard->view_.progressPercent = -1;
+        guard->publish();
         guard->decoding_ = decodeFile(path, guard, [guard, epoch, path](QImage image, MediaChunkError error) {
             if (!guard || guard->contentEpoch_ != epoch)
                 return;
@@ -424,15 +432,50 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
         });
     };
 
-    // Reuse an existing complete file without network activity. Otherwise
-    // use the shared verified whole-file downloader and decode only its
-    // completed path. No codec ever reads a live FileReader/remote stream.
+    // Complete cached payloads can be opened directly. Known-length, ranged
+    // sources reuse existing verified chunks, filling only missing ranges.
+    // Encrypted whole-file and unknown-length sources retain the shared
+    // whole-download fallback. No decoder consumes a live network device.
     const QString local = item_->localFilePath();
     if (!local.isEmpty()) {
         QTimer::singleShot(0, this, [onReady, local] { onReady(local, {}); });
-    } else {
-        opening_ = FileSharingChunkSource::openWhole(item_, this, MaxImageBytes, onReady);
+        return;
     }
+    if (item_->fileSize() && *item_->fileSize() > MaxImageBytes) {
+        fail({ MediaChunkError::Unavailable, tr("Image exceeds the requested size limit") });
+        return;
+    }
+    const auto sources = FileSourceSelector::prioritized(item_->uris());
+    const bool authenticatedWhole = !sources.isEmpty()
+        && std::all_of(sources.cbegin(), sources.cend(),
+                       [](const QString &uri) { return bool(AesGcmUrl::parse(QUrl(uri))); });
+    if (!item_->isUrlOnly() && item_->fileSize() && !authenticatedWhole) {
+        if (auto *download = manager_->download(item_)) {
+            const QPointer<FileDownload> controller(download);
+            const quint64 goal = download->downloadAll(
+                [guard, epoch, onReady](const QString &path, MediaChunkError error) {
+                    if (guard && guard->contentEpoch_ == epoch)
+                        onReady(path, std::move(error));
+                },
+                [guard, epoch](qreal fraction) {
+                    if (!guard || guard->contentEpoch_ != epoch)
+                        return;
+                    const int percent = qBound(0, qRound(fraction * 100), 100);
+                    if (guard->view_.progressPercent != percent) {
+                        guard->view_.progressPercent = percent;
+                        guard->publish();
+                    }
+                });
+            if (goal) {
+                opening_ = [controller, goal] {
+                    if (controller)
+                        controller->cancelGoal(goal);
+                };
+                return;
+            }
+        }
+    }
+    opening_ = FileSharingChunkSource::openWhole(item_, this, MaxImageBytes, onReady);
 }
 void ChatMediaViewerSource::fail(MediaChunkError error)
 {

@@ -36,6 +36,7 @@ public:
         QString                                                    key, name, path, error;
         QImage                                                     image;
         quint64                                                    revision = 0, index = 0, total = 0;
+        int                                                        progressPercent = -1; // Unknown/indeterminate.
         State                                                      state      = State::Ready;
         bool                                                       navigating = false;
         std::function<QWidget *(QWidget *, std::function<void()>)> video;

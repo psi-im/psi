@@ -302,9 +302,16 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
     currentFilePath_ = view.path;
     setWindowTitle(view.name.isEmpty() ? tr("Media") : view.name);
     position_->setText(QStringLiteral("%1 / %2").arg(view.index).arg(view.total));
-    status_->setText(view.state == MediaNavigationSource::State::Loading ? tr("Loading…") : view.error);
+    const bool loading = view.state == MediaNavigationSource::State::Loading;
+    const bool determinate = loading && view.progressPercent >= 0;
+    loading_->setRange(0, determinate ? 100 : 0);
+    if (determinate)
+        loading_->setValue(qBound(0, view.progressPercent, 100));
+    status_->setText(loading
+                         ? (determinate ? tr("Loading… %1%").arg(view.progressPercent) : tr("Loading…"))
+                         : view.error);
     status_->setToolTip(view.error);
-    loading_->setVisible(view.state == MediaNavigationSource::State::Loading || view.navigating);
+    loading_->setVisible(loading || view.navigating);
     controls_->findChild<QToolButton *>("mediaRetry")->setEnabled(view.state == MediaNavigationSource::State::Failed);
     controls_->findChild<QToolButton *>("mediaPrevious")
         ->setEnabled(!view.navigating && view.total && (view.index == 0 || view.index > 1));

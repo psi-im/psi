@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QLabel>
+#include <QProgressBar>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QWheelEvent>
@@ -95,6 +96,14 @@ private slots:
         emit source->changed(view);
         QCOMPARE(viewer.findChild<QLabel *>("mediaPosition")->text(), QStringLiteral("2 / 5"));
         QVERIFY(!viewer.findChild<QLabel *>("mediaStatus")->text().isEmpty());
+        auto progress = viewer.findChild<QProgressBar *>("mediaLoading");
+        QVERIFY(progress);
+        QCOMPARE(progress->maximum(), 0); // Unknown-length transfer.
+        view.progressPercent = 47;
+        emit source->changed(view);
+        QCOMPARE(progress->maximum(), 100);
+        QCOMPARE(progress->value(), 47);
+        QVERIFY(viewer.findChild<QLabel *>("mediaStatus")->text().contains("47%"));
         zoom(viewer, 1);
         const auto scale = viewer.currentScale();
         view.index       = 1;
