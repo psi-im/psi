@@ -1,16 +1,34 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "filereader.h"
+#include "filedatabase.h"
 #include "filedownload.h"
 #include "mediachunkcache.h"
 #include <QCryptographicHash>
 #include <QFile>
+#include <QSemaphore>
 #include <QSignalSpy>
+#include <QSqlQuery>
 #include <QTemporaryDir>
 #include <QtTest>
 #include <atomic>
 #include <thread>
+#include <utility>
 
 namespace {
+struct ReleaseHash {
+    QSemaphore &gate;
+    bool        released = false;
+    void        release()
+    {
+        if (!std::exchange(released, true))
+            gate.release();
+    }
+    ~ReleaseHash() { release(); }
+};
+struct ScopedFileDatabase {
+    QString path;
+    ~ScopedFileDatabase() { FileDatabase::closeConnection(path); }
+};
 QByteArray pattern(quint64 offset, quint64 length)
 {
     QByteArray bytes(int(length), '\0');
@@ -276,6 +294,86 @@ private slots:
         QFile file(path);
         QVERIFY(file.open(QIODevice::ReadOnly));
         QCOMPARE(file.readAll(), pattern(0, size));
+    }
+    void fullDownloadWaitsForLargeVerification_data()
+    {
+        QTest::addColumn<bool>("matchingHash");
+        QTest::addColumn<bool>("checkpointFails");
+        QTest::newRow("verified") << true << false;
+        QTest::newRow("mismatch") << false << false;
+        QTest::newRow("checkpoint-error") << true << true;
+    }
+    void fullDownloadWaitsForLargeVerification()
+    {
+        QFETCH(bool, matchingHash);
+        QFETCH(bool, checkpointFails);
+        QTemporaryDir      directory;
+        ScopedFileDatabase registry { directory.filePath("files.sqlite") };
+        const QByteArray   bytes(8 * 1024 * 1024, 'x');
+        QSemaphore         gate;
+        std::atomic<int>   hashing { 0 };
+        MediaChunkCache    cache(directory.path(), nullptr, MediaChunkMaxSize, 32 * 1024 * 1024,
+                                 [&](const QString &, QIODevice *input) {
+                                  ++hashing;
+                                  gate.acquire();
+                                  QCryptographicHash hash(QCryptographicHash::Sha256);
+                                  return hash.addData(input) ? hash.result() : QByteArray();
+                              });
+        ReleaseHash        release { gate };
+        auto               digest = QCryptographicHash::hash(bytes, QCryptographicHash::Sha256);
+        if (!matchingHash)
+            digest[0] = char(digest.at(0) ^ 1);
+        cache.configure("movie", quint64(bytes.size()), { { 0, quint64(bytes.size()), "sha-256", digest } });
+        FileDownload    download(&cache, "movie", quint64(bytes.size()), "account",
+                                 [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed,
+                                  MediaChunkCompletion done) -> MediaChunkAbort {
+                                  done(bytes.mid(qsizetype(offset), qsizetype(length)), {});
+                                  return {};
+                              });
+        int             finished = 0;
+        QString         path;
+        MediaChunkError result;
+        QVERIFY(download.downloadAll([&](const QString &file, MediaChunkError error) {
+            path   = file;
+            result = error;
+            ++finished;
+        }));
+        QTRY_COMPARE_WITH_TIMEOUT(hashing.load(), 1, 10000);
+        QCOMPARE(finished, 0);
+        QVERIFY(!download.state().complete);
+        FileReader reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.seek(bytes.size() / 2));
+        QVERIFY(reader.read(4096).isEmpty());
+        QTRY_COMPARE(reader.bytesAvailable(), qint64(4096));
+        QCOMPARE(reader.read(4096), bytes.mid(bytes.size() / 2, 4096));
+        QCOMPARE(finished, 0); // All bytes are readable, but verification is still blocked.
+        if (checkpointFails) {
+            QSqlQuery query(FileDatabase::connection(registry.path));
+            QVERIFY(query.exec("CREATE TRIGGER reject_completion BEFORE UPDATE OF complete ON files "
+                               "WHEN NEW.complete = 1 BEGIN SELECT RAISE(ABORT, 'test checkpoint failure'); END"));
+        }
+        release.release();
+        QTRY_COMPARE(finished, 1);
+        QCOMPARE(hashing.load(), 1);
+        if (!matchingHash) {
+            QCOMPARE(result.code(), MediaChunkError::IntegrityError);
+            QVERIFY(path.isEmpty());
+            QVERIFY(!download.state().complete);
+        } else if (checkpointFails) {
+            QCOMPARE(result.code(), MediaChunkError::StorageUnavailable);
+            QVERIFY(path.isEmpty());
+            QVERIFY(!download.state().complete);
+            QVERIFY(!download.state().completionError.isEmpty());
+            QVERIFY(reader.seek(0));
+            QVERIFY(reader.read(4096).isEmpty());
+            QTRY_COMPARE(reader.bytesAvailable(), qint64(4096));
+            QCOMPARE(reader.read(4096), bytes.left(4096));
+        } else {
+            QVERIFY(result.isEmpty());
+            QCOMPARE(path, download.state().path);
+            QVERIFY(download.state().complete);
+        }
     }
     void foreignReadWaitsAndAbortWakesIt()
     {

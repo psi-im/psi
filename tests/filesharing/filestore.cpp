@@ -3,9 +3,11 @@
 #include "mediachunkstore.h"
 #include <QCryptographicHash>
 #include <QDateTime>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QSemaphore>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QTemporaryDir>
@@ -13,8 +15,19 @@
 #include <QThread>
 #include <atomic>
 #include <cstdlib>
+#include <utility>
 
 namespace {
+struct ReleaseHash {
+    QSemaphore &gate;
+    bool        released = false;
+    void        release()
+    {
+        if (!std::exchange(released, true))
+            gate.release();
+    }
+    ~ReleaseHash() { release(); }
+};
 class RangeDatabase {
 public:
     explicit RangeDatabase(const QString &directory) : path(directory + QStringLiteral("/files.sqlite")) { }
@@ -126,6 +139,81 @@ private slots:
             ++finished;
         });
         QTRY_COMPARE(finished, 3);
+    }
+    void largeVerificationKeepsReadsAndWritesAvailableAndRejectsStalePasses()
+    {
+        QTemporaryDir    directory;
+        const QByteArray bytes(8 * 1024 * 1024, 'x');
+        QSemaphore       gate;
+        std::atomic<int> hashing { 0 };
+        MediaChunkStore  store(directory.path(), 32 * 1024 * 1024, nullptr, [&](const QString &, QIODevice *input) {
+            if (++hashing == 1)
+                gate.acquire();
+            QCryptographicHash hash(QCryptographicHash::Sha256);
+            return hash.addData(input) ? hash.result() : QByteArray();
+        });
+        ReleaseHash      release { gate };
+        int              finished = 0;
+        auto             done     = [&](QByteArray, MediaChunkError error) {
+            QVERIFY2(error.isEmpty(), qPrintable(error.message()));
+            ++finished;
+        };
+        store.configure(key, quint64(bytes.size()), { checksum(0, bytes) }, {}, done);
+        QTRY_COMPARE(finished, 1);
+        store.write(key, quint64(bytes.size()), 0, bytes.left(4 * 1024 * 1024), done);
+        store.write(key, quint64(bytes.size()), 4 * 1024 * 1024, bytes.mid(4 * 1024 * 1024), done);
+        QTRY_COMPARE(finished, 3);
+        QTRY_COMPARE(hashing.load(), 1);
+        QVERIFY(!store.state(key).complete);
+        store.read(key, quint64(bytes.size()), 1024, 4096, [&](QByteArray data, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(data, bytes.mid(1024, 4096));
+            ++finished;
+        });
+        QTRY_COMPARE(finished, 4); // The hash thread is still blocked on the gate.
+        store.write(key, quint64(bytes.size()), 0, bytes.left(4 * 1024 * 1024), done);
+        QTRY_COMPARE(finished, 5); // A rewrite must invalidate the in-flight pass.
+        release.release();
+        QTRY_VERIFY(store.state(key).complete);
+        QVERIFY(store.state(key).error.isEmpty());
+        QCOMPARE(hashing.load(), 2);
+    }
+    void shutdownCancelsLargeVerificationWithoutPublishingCompletion()
+    {
+        QTemporaryDir     directory;
+        RangeDatabase     registry(directory.path());
+        const QByteArray  bytes(8 * 1024 * 1024, 'x');
+        std::atomic<bool> hashing { false };
+        auto              store    = std::make_unique<MediaChunkStore>(directory.path(), 32 * 1024 * 1024, nullptr,
+                                                                       [&](const QString &, QIODevice *input) {
+                                                           hashing = true;
+                                                           QCryptographicHash hash(QCryptographicHash::Sha256);
+                                                           char               block[4096];
+                                                           while (!input->atEnd()) {
+                                                               const auto count = input->read(block, sizeof(block));
+                                                               if (count <= 0)
+                                                                   return QByteArray();
+                                                               hash.addData(QByteArray(block, int(count)));
+                                                               QThread::msleep(10);
+                                                           }
+                                                           return hash.result();
+                                                       });
+        int               finished = 0;
+        auto              done     = [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++finished;
+        };
+        store->configure(key, quint64(bytes.size()), { checksum(0, bytes) }, {}, done);
+        QTRY_COMPARE(finished, 1);
+        store->write(key, quint64(bytes.size()), 0, bytes.left(4 * 1024 * 1024), done);
+        store->write(key, quint64(bytes.size()), 4 * 1024 * 1024, bytes.mid(4 * 1024 * 1024), done);
+        QTRY_VERIFY(hashing.load());
+        QElapsedTimer timer;
+        timer.start();
+        store.reset();
+        QVERIFY(timer.elapsed() < 2000);
+        QCOMPARE(registry.value("SELECT complete FROM files").toInt(), 0);
+        QCOMPARE(registry.value("SELECT max(verified) FROM file_checksums").toInt(), 0);
     }
     void metadataOnlyConfigurationKeepsHotBytesAvailable()
     {

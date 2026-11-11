@@ -9,16 +9,21 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHash>
+#include <QPointer>
+#include <QQueue>
 #include <QRegularExpression>
+#include <QRunnable>
 #include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStorageInfo>
 #include <QTemporaryFile>
 #include <QThread>
+#include <QThreadPool>
 #include <QTimer>
 #include <QUuid>
 #include <algorithm>
+#include <atomic>
 #include <cerrno>
 #include <limits>
 #include <optional>
@@ -114,7 +119,8 @@ QString checksumId(const MediaFileChecksum &h)
 }
 class HashRange : public QIODevice {
 public:
-    HashRange(QFile &file, quint64 offset, quint64 length) : file(file), left(length)
+    HashRange(QFile &file, quint64 offset, quint64 length, std::shared_ptr<std::atomic_bool> cancelled = {}) :
+        file(file), left(length), cancelled(std::move(cancelled))
     {
         if (file.seek(qint64(offset)))
             QIODevice::open(ReadOnly);
@@ -123,6 +129,8 @@ public:
     bool   atEnd() const override { return !left; }
     qint64 readData(char *out, qint64 count) override
     {
+        if (cancelled && cancelled->load())
+            return -1;
         const auto got = file.read(out, qint64(std::min<quint64>(quint64(count), left)));
         if (got > 0)
             left -= quint64(got);
@@ -132,8 +140,9 @@ public:
     bool   complete() const { return !left; }
 
 private:
-    QFile  &file;
-    quint64 left;
+    QFile                            &file;
+    quint64                           left;
+    std::shared_ptr<std::atomic_bool> cancelled;
 };
 QByteArray qtHash(const QString &algorithm, QIODevice *device)
 {
@@ -153,6 +162,8 @@ QByteArray qtHash(const QString &algorithm, QIODevice *device)
 class DiskWorker : public QObject {
     Q_OBJECT
     struct Entry {
+        QString               key;
+        quint64               revision = 0;
         MediaFileState        state;
         QByteArray            id;
         quint64               age       = 0;
@@ -170,6 +181,8 @@ public:
         partition_(std::move(partition)), directory_(std::move(directory)), databasePath_(std::move(databasePath)),
         limit_(limit), hasher_(hasher ? std::move(hasher) : qtHash)
     {
+        hashPool_ = new QThreadPool(this);
+        hashPool_->setMaxThreadCount(1);
     }
     void initialize()
     {
@@ -201,6 +214,7 @@ public:
             if (!validKey(key) || size < 0 || !FileDatabase::safePayloadName(path))
                 continue;
             Entry entry;
+            entry.key              = key;
             entry.id               = query.value(0).toByteArray();
             entry.state.generation = entry.id;
             entry.state.size       = quint64(size);
@@ -274,6 +288,14 @@ public:
     }
     void shutdown()
     {
+        shuttingDown_ = true;
+        if (hashCancelled_)
+            hashCancelled_->store(true);
+        hashPool_->waitForDone();
+        hashQueue_.clear();
+        queuedHashes_.clear();
+        if (!hashKey_.isEmpty())
+            pin(hashKey_, false);
         checkpointAll();
         if (timer_)
             timer_->stop();
@@ -421,6 +443,9 @@ public:
             finish(id, {}, QStringLiteral("Too many cached file ranges"));
             return;
         }
+        ++entry->revision;
+        if (hashKey_ == key && hashCancelled_)
+            hashCancelled_->store(true);
         bool overwrite = false;
         for (const auto &r : entry->checkpointed)
             overwrite |= r.first < offset + quint64(bytes.size()) && offset < r.first + r.second;
@@ -517,6 +542,7 @@ public:
             return;
         }
         it->state.error.clear();
+        it->state.completionError.clear();
         dirty(*it);
         auto error = verify(*it);
         if (!save(key, *it)) {
@@ -567,6 +593,8 @@ public:
             }
             bytes_ -= entry.accounted;
             entries_.remove(key);
+            hashQueue_.removeAll(key);
+            queuedHashes_.remove(key);
             emit changed(key, {}, diskBytes());
         }
         const auto freed = FileDatabase::drainTrash(db, partition_, directory_);
@@ -579,6 +607,9 @@ public:
             finish(id, {}, QStringLiteral("Invalid shared file invalidation"));
             return;
         }
+        ++entry->revision;
+        if (hashKey_ == key && hashCancelled_)
+            hashCancelled_->store(true);
         removeRange(entry->state.ranges, offset, length);
         entry->state.complete = false;
         entry->state.error    = message;
@@ -655,6 +686,7 @@ private:
         if (entries_.size() >= MaxFiles)
             return nullptr;
         Entry entry;
+        entry.key              = key;
         entry.id               = QUuid::createUuid().toRfc4122();
         entry.state.generation = entry.id;
         entry.state.size       = size;
@@ -692,6 +724,9 @@ private:
             dirty(entry);
         }
         if (!entry.payloadDirty && (!entry.modified || *entry.modified != info.lastModified().toMSecsSinceEpoch())) {
+            ++entry.revision;
+            if (hashKey_ == entry.key && hashCancelled_)
+                hashCancelled_->store(true);
             if (!entry.verified.isEmpty()) {
                 entry.verified.clear();
                 dirty(entry);
@@ -707,12 +742,100 @@ private:
         auto           &state    = entry.state;
         const bool      previous = state.complete;
         const QFileInfo info(state.path);
-        state.complete = state.error.isEmpty() && info.isFile() && !info.isSymLink() && info.isReadable()
-            && covers(state.ranges, 0, state.size);
+        state.complete = state.error.isEmpty() && state.completionError.isEmpty() && info.isFile() && !info.isSymLink()
+            && info.isReadable() && covers(state.ranges, 0, state.size);
         for (const auto &h : state.checksums)
             state.complete &= entry.verified.contains(checksumId(h));
         if (previous != state.complete)
             dirty(entry);
+    }
+    void queueHash(Entry &entry)
+    {
+        if (shuttingDown_ || queuedHashes_.contains(entry.key))
+            return;
+        queuedHashes_.insert(entry.key);
+        hashQueue_.enqueue(entry.key);
+        startHash();
+    }
+    void startHash()
+    {
+        if (shuttingDown_ || hashCancelled_)
+            return;
+        while (!hashQueue_.isEmpty()) {
+            const auto key = hashQueue_.dequeue();
+            queuedHashes_.remove(key);
+            auto it = entries_.find(key);
+            if (it == entries_.end() || !it->state.error.isEmpty())
+                continue;
+            for (const auto &h : it->state.checksums) {
+                if (h.length <= MediaChunkMaxSize || it->verified.contains(checksumId(h))
+                    || !covers(it->state.ranges, h.offset, h.length))
+                    continue;
+                hashKey_       = key;
+                hashCancelled_ = std::make_shared<std::atomic_bool>(false);
+                pin(key, true);
+                const QPointer<DiskWorker> guard(this);
+                hashPool_->start(
+                    QRunnable::create([guard, key, id = it->id, revision = it->revision, path = it->state.path, h,
+                                       hasher = hasher_, cancelled = hashCancelled_] {
+                        QFile      file(path);
+                        QByteArray actual;
+                        const auto before = QFileInfo(path).lastModified();
+                        if (file.open(QIODevice::ReadOnly)) {
+                            HashRange span(file, h.offset, h.length, cancelled);
+                            actual = hasher(h.algorithm, &span);
+                            if (!span.complete())
+                                actual.clear();
+                        }
+                        const bool unchanged = before.isValid() && before == QFileInfo(path).lastModified();
+                        if (guard)
+                            QMetaObject::invokeMethod(
+                                guard,
+                                [guard, key, id, revision, h, actual, unchanged] {
+                                    if (guard)
+                                        guard->hashFinished(key, id, revision, h, actual, unchanged);
+                                },
+                                Qt::QueuedConnection);
+                    }));
+                return;
+            }
+        }
+    }
+    void hashFinished(const QString &key, const QByteArray &id, quint64 revision, const MediaFileChecksum &h,
+                      const QByteArray &actual, bool unchanged)
+    {
+        if (shuttingDown_)
+            return;
+        hashCancelled_.reset();
+        hashKey_.clear();
+        auto it = entries_.find(key);
+        if (it != entries_.end() && it->id == id && it->revision == revision && it->state.error.isEmpty()) {
+            if (!unchanged || actual.isEmpty() || actual != h.digest) {
+                removeRange(it->state.ranges, h.offset, h.length);
+                it->verified.clear();
+                it->state.error = QStringLiteral("Shared file checksum verification failed (%1, offset %2, length %3)")
+                                      .arg(h.algorithm)
+                                      .arg(h.offset)
+                                      .arg(h.length);
+            } else {
+                it->verified.insert(checksumId(h));
+                const auto error = verify(*it);
+                if (!error.isEmpty() && it->state.error.isEmpty())
+                    it->state.completionError = error.message();
+            }
+            dirty(*it);
+            updateComplete(*it);
+            if (!save(key, *it)) {
+                it->state.complete        = false;
+                it->state.completionError = QStringLiteral("Cannot checkpoint shared file verification");
+            }
+            publish(key);
+            queueHash(*it); // Another announced algorithm may still need a pass.
+        } else if (it != entries_.end() && it->state.error.isEmpty()) {
+            queueHash(*it); // The payload changed while an obsolete pass was running.
+        }
+        pin(key, false);
+        startHash();
     }
     MediaChunkError verify(Entry &entry)
     {
@@ -726,6 +849,10 @@ private:
         for (const auto &h : state.checksums) {
             if (!covers(state.ranges, h.offset, h.length) || entry.verified.contains(checksumId(h)))
                 continue;
+            if (h.length > MediaChunkMaxSize) {
+                queueHash(entry);
+                continue;
+            }
             if (!file.isOpen() && !file.open(QIODevice::ReadOnly)) {
                 state.complete = false;
                 return QStringLiteral("Cannot open shared file for verification");
@@ -850,10 +977,13 @@ private:
         for (auto it = entries_.begin(); it != entries_.end(); ++it) {
             if (!it->dirty)
                 continue;
+            it->state.completionError.clear();
             updateComplete(*it);
             const bool saved = save(it.key(), *it);
-            if (!saved)
-                it->state.complete = false;
+            if (!saved) {
+                it->state.complete        = false;
+                it->state.completionError = QStringLiteral("Cannot checkpoint shared file metadata");
+            }
             publish(it.key());
             ok = saved && ok;
         }
@@ -895,18 +1025,26 @@ private:
                 break;
             bytes_ -= oldest->accounted;
             entries_.erase(oldest);
+            hashQueue_.removeAll(key);
+            queuedHashes_.remove(key);
             FileDatabase::drainTrash(db, partition_, directory_);
             emit changed(key, {}, diskBytes());
         }
     }
-    QString                 partition_, directory_, databasePath_;
-    quint64                 limit_, age_ = 0, bytes_ = 0;
-    MediaChunkStore::Hasher hasher_;
-    QHash<QString, Entry>   entries_;
-    QHash<QString, int>     pins_;
-    QTimer                 *timer_ = nullptr;
-    bool                    ready_ = false;
-    std::optional<bool>     sparse_;
+    QString                           partition_, directory_, databasePath_;
+    quint64                           limit_, age_ = 0, bytes_ = 0;
+    MediaChunkStore::Hasher           hasher_;
+    QHash<QString, Entry>             entries_;
+    QHash<QString, int>               pins_;
+    QTimer                           *timer_ = nullptr;
+    bool                              ready_ = false;
+    std::optional<bool>               sparse_;
+    QThreadPool                      *hashPool_ = nullptr;
+    QQueue<QString>                   hashQueue_;
+    QSet<QString>                     queuedHashes_;
+    QString                           hashKey_;
+    std::shared_ptr<std::atomic_bool> hashCancelled_;
+    bool                              shuttingDown_ = false;
 };
 }
 

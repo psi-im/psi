@@ -177,6 +177,10 @@ void FileDownload::pump()
         finish({ MediaChunkError::IntegrityError, current.error });
         return;
     }
+    if (!current.completionError.isEmpty()) {
+        finish({ MediaChunkError::StorageUnavailable, current.completionError });
+        return;
+    }
     quint64 available = 0;
     for (const auto &range : current.ranges)
         available += range.second;

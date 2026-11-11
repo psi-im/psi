@@ -42,6 +42,7 @@ struct MediaFileState {
     QList<MediaFileChecksum> checksums;
     QVariantMap              metadata;
     QString                  path, error;
+    QString                  completionError; // Transient checkpoint failure; cached reads remain usable.
     bool                     complete = false;
     QByteArray               generation;
 };

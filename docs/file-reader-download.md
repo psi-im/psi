@@ -18,9 +18,9 @@ a foreign thread waits on a condition variable. The device has one cursor caller
 at a time: the owner must not operate that cursor concurrently with the decoder.
 `abort()` is safe from either thread and wakes pending reads. Consumers must stop
 before closing or destroying the device. qite interrupts the device before
-tearing down its decoder, then closes it afterward. Known-size playback uses the device directly with FFmpeg (Qt's desktop default
-since 6.5, or an explicit `QT_MEDIA_BACKEND=ffmpeg`). Qt 5 and GStreamer retain the
-loopback HTTP adapter over the same reader: their seekable appsrc path reads on
+tearing down its decoder, then closes it afterward. Known-size playback uses the
+device directly with FFmpeg (Qt's desktop default since 6.5, or an explicit
+`QT_MEDIA_BACKEND=ffmpeg`). Qt 5 and GStreamer retain the loopback HTTP adapter over the same reader: their seekable appsrc path reads on
 the GUI thread and interprets a temporary zero read as EOF. Without a loopback
 server those backends require a complete download before playback. Completed
 local files can use a device with every backend, because their reads have no gaps.
@@ -38,8 +38,12 @@ removes one waiter, preserving other consumers.
 A complete range map does not settle a full goal while transport work remains
 pending. In particular, a shared sequential fallback exposes its prefix to
 readers as data becomes available, but full goals wait for accepted EOF and a
-storage checkpoint. A source ignoring Range may use one shared sequential
-fallback only while an explicit full goal exists. Cancelling the last goal
+storage checkpoint. Large checksum spans run in a single-worker verification
+queue, keeping the I/O worker available for playback. A full goal waits for every
+announced checksum and the durable verification checkpoint. Writes invalidate
+in-flight verification by payload revision; shutdown cooperatively cancels a
+long pass. A source ignoring Range may use one shared sequential fallback only
+while an explicit full goal exists. Cancelling the last goal
 revokes that permission, including during pending range negotiation. Playback
 alone reports `RangeUnsupported` instead of silently draining the entire file.
 This is application policy; HTTP and Jingle response parsing stay in their
@@ -90,8 +94,11 @@ availability without premature download completion, RAM-only reads with hash
 checks, and expiry with pins and allocated-byte accounting. Native Qt 6 tests
 decode and seek a WebM through delayed device data or the loopback reader adapter,
 according to backend policy, and tear down a decoder during a network stall.
-Ubuntu 24.04/Qt 6.4 exercises the GStreamer adapter; newer FFmpeg exercises direct devices. Existing qite playback and detached-window lifetime tests cover
-the opener's abort/close order.
+Ubuntu 24.04/Qt 6.4 exercises the GStreamer adapter; newer FFmpeg exercises direct
+devices. Existing qite playback and detached-window lifetime tests cover the
+opener's abort/close order. Large-hash regressions hold verification while reading
+and rewriting cached bytes, reject stale passes, cancel at shutdown, and ensure
+full goals wait for hash success and report late integrity or checkpoint errors.
 
 The compatibility choice follows the public default-backend policy in
 [Qt 6.5 Multimedia](https://doc.qt.io/qt-6.5/qtmultimedia-index.html#ffmpeg-as-the-default-backend).

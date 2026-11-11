@@ -17,12 +17,15 @@ class MediaChunkStore : public QObject {
 public:
     using Completion        = MediaChunkCompletion;
     using CleanupCompletion = std::function<void(quint64 freed, QString error)>;
-    using Hasher            = std::function<QByteArray(const QString &, QIODevice *)>;
+    // Hashers may run concurrently on the I/O worker and the large-span verification worker.
+    using Hasher = std::function<QByteArray(const QString &, QIODevice *)>;
     MediaChunkStore(QString directory, quint64 diskLimit, QObject *parent = nullptr, Hasher hasher = {});
     ~MediaChunkStore() override;
     void configure(QString key, quint64 size, QList<MediaFileChecksum> checksums, QVariantMap metadata,
                    Completion done = {});
     void read(QString key, quint64 size, quint64 offset, quint64 length, Completion done);
+    // Accepts stored bytes. Large checksum spans finish asynchronously; state.complete
+    // becomes true only after verification and a successful durable checkpoint.
     void write(QString key, quint64 size, quint64 offset, QByteArray bytes, Completion done);
     // Bounded session-only bytes share FileCache's RAM tier, never SQL coverage.
     void           cacheVolatile(QString key, quint64 size, quint64 offset, QByteArray bytes, Completion done);
