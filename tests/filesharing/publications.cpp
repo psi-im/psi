@@ -992,10 +992,17 @@ private slots:
         auto video = mediaOf("video", { "https://example.org/movie.webm" });
         video.file.setMediaType("video/webm");
         video.file.setName("movie.webm");
+        auto audio = mediaOf("audio", { "https://example.org/song.ogg" });
+        audio.file.setMediaType("audio/ogg");
+        audio.file.setName("song.ogg");
         auto other = mediaOf("other", { "https://example.org/archive.zip" });
         for (int i = 0; i < 5; ++i)
             QVERIFY(store(messageWith(alice, { referenceOf(image) })));
-        QVERIFY(store(messageWith(alice, { referenceOf(video), referenceOf(other) })));
+        QVERIFY(store(messageWith(alice, { referenceOf(video), referenceOf(audio), referenceOf(other) })));
+        // Audio indexed by older Psi builds had kind=Other. The gallery must
+        // still recover its playable kind from the archived MIME.
+        QSqlQuery legacy(history);
+        QVERIFY(legacy.exec("UPDATE message_media_resources SET kind=4 WHERE mime='audio/ogg'"));
         QVERIFY(!storedFile(image, true).isEmpty());
         QVERIFY(!storedFile(video, false).isEmpty());
         QSqlError error;
@@ -1004,17 +1011,23 @@ private slots:
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
         QCOMPARE(stats.complete, quint64(1));
         QCOMPARE(stats.partial, quint64(1));
-        QCOMPARE(stats.remote, quint64(1));
+        QCOMPARE(stats.remote, quint64(2));
         HistoryMediaRefs::Query q;
         q.older   = false;
         q.limit   = 20;
         auto page = HistoryMediaRefs::chatAssets(history, key, q, &error);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
-        QCOMPARE(page.size(), 3);
+        QCOMPARE(page.size(), 4);
         for (int i = 0; i < page.size(); ++i) {
             QCOMPARE(page[i].index, quint64(i + 1));
-            QCOMPARE(page[i].total, quint64(3));
+            QCOMPARE(page[i].total, quint64(4));
         }
+        q.filter = { HistoryMediaRefs::Video, MediaFilter::Remote };
+        page = HistoryMediaRefs::chatAssets(history, key, q, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().kind, int(HistoryMediaRefs::Video));
+        QCOMPARE(page.first().mime, QStringLiteral("audio/ogg"));
         q.filter = { HistoryMediaRefs::Image | HistoryMediaRefs::Video, 4 };
         page     = HistoryMediaRefs::chatAssets(history, key, q, &error);
         QVERIFY2(!error.isValid(), qPrintable(error.text()));
