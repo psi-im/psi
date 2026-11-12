@@ -195,6 +195,10 @@ FileDownload *FileSharingManager::download(FileSharingItem *item)
         },
         item);
     d->downloads.insert(item, download);
+    const auto urls = item->uris();
+    download->setSignaledRanges(std::any_of(urls.cbegin(), urls.cend(), [](const QString &url) {
+        return FileSourceSelector::type(url) == FileSourceSelector::Type::Jingle;
+    }));
     download->setLocalFileResolver([resource] { return resource ? resource->localFilePath() : QString(); });
     connect(download, &FileDownload::fullDownloadChanged, this, [resource](bool active) {
         if (!active)
