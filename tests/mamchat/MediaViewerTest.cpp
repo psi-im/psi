@@ -256,7 +256,7 @@ private slots:
 
     void videoPlayPauseUsesSpaceAndSurfaceClick()
     {
-        MediaViewer viewer(QImage());
+        MediaViewer viewer(QImage{});
         auto *source = new TestNavigationSource;
         viewer.setNavigationSource(source);
         viewer.show();
