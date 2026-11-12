@@ -65,6 +65,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QMimeData>
+#include <QMediaPlayer>
 #include <QTimer>
 #include <QUrl>
 #include <algorithm>
@@ -399,7 +400,7 @@ ITEMediaOpener::CancelOpen FileSharingDeviceOpener::openAsync(QUrl url, QObject 
     }
     return acc->psi()->fileSharingManager()->open(
         resource, receiver,
-        [guard, resource, url, done = std::move(done)](FileReader *reader, MediaChunkError error) mutable {
+        [guard, resource, receiver = QPointer<QObject>(receiver), url, done = std::move(done)](FileReader *reader, MediaChunkError error) mutable {
             if (!guard || !resource) {
                 if (reader)
                     reader->deleteLater();
@@ -418,8 +419,27 @@ ITEMediaOpener::CancelOpen FileSharingDeviceOpener::openAsync(QUrl url, QObject 
                 auto source = url;
                 auto input  = guard->open(source);
                 done(input, source, {});
-            } else
+            } else {
+                // FFmpeg may continue requesting more bytes while QMediaPlayer
+                // is paused. Suspend just this decoder's reader; explicit Save to
+                // and other viewers sharing the FileDownload remain independent.
+                if (auto player = qobject_cast<QMediaPlayer *>(receiver.data())) {
+                    const QPointer<FileReader> view(reader);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                    connect(player, &QMediaPlayer::playbackStateChanged, reader,
+                            [view](QMediaPlayer::PlaybackState state) {
+                                if (view)
+                                    view->setSuspended(state == QMediaPlayer::PausedState);
+                            });
+#else
+                    connect(player, &QMediaPlayer::stateChanged, reader, [view](QMediaPlayer::State state) {
+                        if (view)
+                            view->setSuspended(state == QMediaPlayer::PausedState);
+                    });
+#endif
+                }
                 done(reader, url, {});
+            }
         });
 }
 
