@@ -103,6 +103,7 @@ private:
     void    toggleFullscreen();
     void    togglePlayback();
     void    updateFullscreenUi();
+    void    updateVideoControlsOverlay();
     void    noteFullscreenActivity(bool force = false);
     void    hideIdleFullscreenControls();
     void    setControlsShown(QWidget *widget, bool visible, bool animated);
@@ -137,6 +138,7 @@ private:
     QTimer                         *fullscreenIdleTimer_ = nullptr;
     QPoint                          lastFullscreenCursorPos_;
     bool                            fullscreenControlsHidden_ = false;
+    bool                            videoControlsOverlay_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;
