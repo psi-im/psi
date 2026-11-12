@@ -58,6 +58,8 @@ public:
     QString getPlainText() const;
     void    setMediaOpener(FileSharingDeviceOpener *opener);
     void    setVideoOpenHandler(std::function<bool(const QUrl &, qint64, bool)>);
+    void    setVideoTransferHandler(
+        std::function<bool(const QUrl &, QWidget *, std::function<bool()>, bool)>);
 
 public slots:
     void scrollToBottom();
