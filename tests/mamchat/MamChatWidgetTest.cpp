@@ -976,6 +976,29 @@ private slots:
         QVERIFY(foundImage);
     }
 
+    void undecodableImageOnlyRoomMessageKeepsFileLink()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = true;
+        // An already cached image with an unresolvable path must not
+        // collapse the whole message into a zero-sized QTextImageFormat.
+        opener.items.insert(QStringLiteral("bad-image"), &image);
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setHistoryLoading(true);
+        room.appendMessage(message(QStringLiteral("bad-photo"),
+                                   QStringLiteral("<share id=\"bad-image\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *body = room.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(!body->isHidden());
+        QVERIFY(body->toPlainText().contains(QStringLiteral("test.7z")));
+    }
+
     void nonDownloadedRoomImageCanBePreviewedWithoutMam()
     {
         FileSharingDeviceOpener opener;
