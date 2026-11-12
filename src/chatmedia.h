@@ -43,6 +43,9 @@ public:
     // Callbacks run on this object's thread; deleting it cancels delivery.
     void requestPage(Cursor cursor, bool older, int limit, PageDone done);
     void requestEntry(const QString &sourceId, PageDone done);
+    // Probe whether a clicked item exists in history even when the user has
+    // excluded its kind/storage class from the active filter.
+    void requestEntryUnfiltered(const QString &sourceId, PageDone done);
     void requestAdjacent(const QString &sourceId, bool older, PageDone done);
     void requestAdjacent(const Entry &, bool older, PageDone done);
     // Message provenance is queried only when a consumer explicitly asks.

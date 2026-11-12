@@ -63,6 +63,9 @@ public:
     void stopHistoryFill();
     bool historyExhausted() const { return historyExhausted_; }
     int  messageCount() const { return items_.size(); }
+    // File items from the loaded message model, including non-materialized rows.
+    // Used only for a group chat whose MAM/EDB media index has no matching item.
+    QList<QPointer<FileSharingItem>> loadedMediaItems() const;
     // Resolve an XEP-0461 reference against cached room messages. Returns
     // false for unknown or ambiguous references, including old room id values.
     bool replyReferencesLocalMessage(const ChatReply &reply) const;

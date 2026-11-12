@@ -1090,6 +1090,57 @@ private slots:
         QCOMPARE(stats.total(), quint64(1));
     }
 
+    void unfilteredClickedMediaLookupDoesNotChangeSavedGalleryFilter()
+    {
+        MediaFilter requested;
+        bool completed = false;
+        ChatMedia browser(
+            [&requested](ChatMedia::Query query, QObject *receiver, ChatMedia::LinksDone done) {
+                requested = query.filter;
+                QTimer::singleShot(0, receiver, [done] { done({}, true); });
+            },
+            [](ChatMedia::Filter, QObject *receiver, ChatMedia::StatisticsDone done) {
+                QTimer::singleShot(0, receiver, [done] { done({}, true); });
+            });
+        const MediaFilter saved { MediaFilter::Images, MediaFilter::Complete };
+        browser.setFilter(saved);
+        browser.requestEntryUnfiltered(QStringLiteral("sha-256:missing"),
+                                       [&completed](ChatMedia::Page, bool ok) { completed = ok; });
+        QTRY_VERIFY(completed);
+        QCOMPARE(requested.types, int(MediaFilter::Images | MediaFilter::Videos | MediaFilter::Files));
+        QCOMPARE(requested.availability, int(MediaFilter::Complete | MediaFilter::Partial | MediaFilter::Remote));
+        QVERIFY(browser.filter() == saved);
+    }
+
+    void publicRoomMediaUsesGroupChatHistoryScope()
+    {
+        migrateHistory();
+        QSqlQuery sql(history);
+        QVERIFY(sql.exec("INSERT INTO contacts VALUES(3,'corporate',3,'room@conference.example.org',-1)"));
+        QVERIFY(sql.exec("INSERT INTO contacts VALUES(4,'corporate',3,'another@conference.example.org',-1)"));
+        auto image = mediaOf("room-photo", { "https://example.org/room.png" });
+        image.file.setName("room.png");
+        image.file.setMediaType("image/png");
+        QVERIFY(store(messageWith(Jid("room@conference.example.org/alice"), { referenceOf(image) }), 3));
+        QVERIFY(store(messageWith(Jid("another@conference.example.org/bob"), { referenceOf(image) }), 4));
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        HistoryArchive::Key room { corporate, QStringLiteral("room@conference.example.org"),
+                                   QStringLiteral("room@conference.example.org"), true };
+        HistoryMediaRefs::Query query;
+        query.filter = { HistoryMediaRefs::Image, MediaFilter::Remote };
+        const auto page = HistoryMediaRefs::chatAssets(history, room, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().total, quint64(1));
+        QCOMPARE(page.first().kind, int(HistoryMediaRefs::Image));
+        QCOMPARE(HistoryMediaRefs::chatAssetStatistics(history, room, query.filter, &error).total(), quint64(1));
+        room.peer = QStringLiteral("another@conference.example.org");
+        QCOMPARE(HistoryMediaRefs::chatAssets(history, room, query, &error).size(), 1);
+        room.peer = QStringLiteral("not-the-room@conference.example.org");
+        QVERIFY(HistoryMediaRefs::chatAssets(history, room, query, &error).isEmpty());
+    }
+
     void privateRoomConversationKeepsFullJidAndContactKind()
     {
         migrateHistory();

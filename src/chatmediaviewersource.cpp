@@ -12,6 +12,8 @@
 #include "widgets/MamChatWidget.h"
 #include <QCoreApplication>
 #include <QFileInfo>
+#include <QMimeDatabase>
+#include <QSet>
 #include <QFutureWatcher>
 #include <QTimer>
 #include <QThreadPool>
@@ -86,8 +88,10 @@ MediaChunkAbort decodeFile(QString path, QObject *receiver, ImageDone done)
 
 ChatMediaViewerSource::ChatMediaViewerSource(FileSharingManager *manager, PsiAccount *account,
                                              const HistoryArchive::Key &key, QString source, QImage preview,
-                                             QString path, qint64 position) :
-    manager_(manager), account_(account), source_(std::move(source)), initialPosition_(position)
+                                             QString path, qint64 position,
+                                             QList<QPointer<FileSharingItem>> loadedFiles) :
+    manager_(manager), account_(account), loadedFiles_(std::move(loadedFiles)),
+    source_(std::move(source)), initialPosition_(position)
 {
     view_.key   = "initial";
     view_.image = std::move(preview);
@@ -153,6 +157,10 @@ void ChatMediaViewerSource::setFilter(MediaFilter filter)
 }
 void ChatMediaViewerSource::refresh()
 {
+    if (liveMode_) {
+        refreshLive();
+        return;
+    }
     if (!browser_ || !account_)
         return;
     if (view_.navigating) {
@@ -203,16 +211,141 @@ void ChatMediaViewerSource::refresh()
                 });
             });
         } else {
-            guard->browser_->requestStatistics([guard, epoch](ChatMedia::Statistics stats, bool ok) {
-                if (!guard || guard->queryEpoch_ != epoch)
-                    return;
-                guard->view_.index = 0;
-                guard->view_.total = ok ? stats.total() : 0;
-                guard->publish();
-            });
+            guard->prepareLiveFallback(epoch);
         }
     });
 }
+
+void ChatMediaViewerSource::prepareLiveFallback(quint64 epoch)
+{
+    if (!browser_)
+        return;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    browser_->requestEntryUnfiltered(source_, [guard, epoch](ChatMedia::Page page, bool ok) {
+        if (!guard || guard->queryEpoch_ != epoch)
+            return;
+        if (!ok) {
+            guard->view_.error = tr("Cannot read chat media");
+            guard->publish();
+            return;
+        }
+        if (!page.entries.isEmpty() && !guard->initialFilterAdjusted_) {
+            const auto &opened = page.entries.first();
+            const auto old = guard->browser_->filter();
+            const MediaFilter adjusted { old.types | opened.type,
+                                         old.availability | (1 << int(opened.storage.availability)) };
+            guard->initialFilterAdjusted_ = true;
+            if (!(adjusted == old)) {
+                emit guard->filterAdjustmentRequested(adjusted);
+                return;
+            }
+        }
+        guard->useLiveFallback();
+    });
+}
+
+void ChatMediaViewerSource::useLiveFallback()
+{
+    if (!loadedFiles_.isEmpty()) {
+        liveMode_ = true;
+        refreshLive();
+        return;
+    }
+    if (!browser_)
+        return;
+    const auto epoch = queryEpoch_;
+    const QPointer<ChatMediaViewerSource> guard(this);
+    browser_->requestStatistics([guard, epoch](ChatMedia::Statistics stats, bool ok) {
+        if (!guard || guard->queryEpoch_ != epoch)
+            return;
+        guard->view_.index = 0;
+        guard->view_.total = ok ? stats.total() : 0;
+        if (!guard->view_.total)
+            guard->view_.error = tr("This media is not in locally indexed chat history");
+        guard->publish();
+    });
+}
+
+void ChatMediaViewerSource::refreshLive()
+{
+    if (!account_)
+        return;
+    const auto filter = browser_ ? browser_->filter() : MediaFilter {};
+    liveFiltered_.clear();
+    LiveItem opened;
+    bool foundOpened = false;
+    QSet<QString> seen;
+    for (const auto &file : std::as_const(loadedFiles_)) {
+        if (!file || file->sums().isEmpty() || file->account() != account_)
+            continue;
+        LiveItem item;
+        item.file = file;
+        item.sourceId = file->sums().constFirst().toString();
+        if (item.sourceId.isEmpty() || seen.contains(item.sourceId))
+            continue;
+        seen.insert(item.sourceId);
+        item.name = file->displayName();
+        item.mime = file->mimeType().toLower();
+        if (item.mime.isEmpty() || item.mime == QLatin1String("application/octet-stream"))
+            item.mime = QMimeDatabase().mimeTypeForFile(item.name, QMimeDatabase::MatchExtension).name();
+        item.type = item.mime.startsWith(QLatin1String("image/")) ? HistoryMediaRefs::Image
+            : item.mime.startsWith(QLatin1String("video/")) || item.mime.startsWith(QLatin1String("audio/"))
+                ? HistoryMediaRefs::Video : HistoryMediaRefs::Other;
+        item.availability = file->isCached() ? MediaFilter::Complete : MediaFilter::Remote;
+        if (item.sourceId == source_) {
+            opened = item;
+            foundOpened = true;
+        }
+        if ((filter.types & item.type) && (filter.availability & item.availability))
+            liveFiltered_.append(std::move(item));
+    }
+    if (foundOpened && !initialFilterAdjusted_) {
+        initialFilterAdjusted_ = true;
+        const MediaFilter adjusted { filter.types | opened.type, filter.availability | opened.availability };
+        if (!(adjusted == filter)) {
+            emit filterAdjustmentRequested(adjusted);
+            return;
+        }
+    }
+    int at = -1;
+    for (int i = 0; i < liveFiltered_.size(); ++i)
+        if (liveFiltered_.at(i).sourceId == source_) {
+            at = i;
+            break;
+        }
+    if (at >= 0 && (!entry_ || entry_->sourceId != source_)) {
+        selectLive(at);
+        return;
+    }
+    view_.index = at >= 0 ? quint64(at + 1) : 0;
+    view_.total = quint64(liveFiltered_.size());
+    if (at < 0 && !foundOpened)
+        view_.error = tr("This file is no longer in the loaded chat messages");
+    else
+        view_.error.clear();
+    publish();
+}
+
+void ChatMediaViewerSource::selectLive(int index)
+{
+    if (index < 0 || index >= liveFiltered_.size())
+        return;
+    const auto &item = liveFiltered_.at(index);
+    if (!item.file)
+        return;
+    ChatMedia::Entry entry;
+    entry.cursor.assetId = index + 1; // In-memory position only; never passed to SQL.
+    entry.sourceId = item.sourceId;
+    entry.name = item.name;
+    entry.mime = item.mime;
+    entry.type = item.type;
+    entry.storage.availability = item.availability == MediaFilter::Complete
+        ? ChatMedia::Availability::Complete : ChatMedia::Availability::Remote;
+    entry.index = quint64(index + 1);
+    entry.total = quint64(liveFiltered_.size());
+    select(entry, item.file.data());
+}
+
 bool ChatMediaViewerSource::enqueueAdjacent(int direction)
 {
     if (!navigationActive_)
@@ -225,6 +358,23 @@ bool ChatMediaViewerSource::enqueueAdjacent(int direction)
 
 void ChatMediaViewerSource::adjacent(int direction)
 {
+    if (liveMode_) {
+        if (liveFiltered_.isEmpty() || !direction)
+            return;
+        int previous = -1;
+        for (int i = 0; i < liveFiltered_.size(); ++i)
+            if (liveFiltered_.at(i).sourceId == source_) {
+                previous = i;
+                break;
+            }
+        const int first = previous < 0 ? (direction < 0 ? int(liveFiltered_.size()) : -1) : previous;
+        const int target = qBound(0, first + direction, int(liveFiltered_.size()) - 1);
+        if (target != previous)
+            selectLive(target);
+        else
+            publish();
+        return;
+    }
     if (!browser_ || !account_ || !direction) {
         view_.navigating = false;
         publish();
@@ -359,7 +509,7 @@ void ChatMediaViewerSource::choose(ChatMedia::Page page, bool ok, int direction,
     direction_ = direction;
     select(page.entries.first());
 }
-void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
+void ChatMediaViewerSource::select(const ChatMedia::Entry &entry, FileSharingItem *directItem)
 {
     const bool initial = !entry_;
     auto       preview = initial ? view_.image : QImage();
@@ -373,7 +523,8 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
     view_.index    = entry.index;
     view_.total    = entry.total;
     view_.image    = preview;
-    item_          = manager_ && account_ ? manager_->chatMediaItem(entry, account_) : nullptr;
+    item_          = directItem ? directItem
+                                : (manager_ && account_ ? manager_->chatMediaItem(entry, account_) : nullptr);
     if (!item_) {
         fail({ MediaChunkError::Unavailable, tr("Media source unavailable") });
         return;
@@ -483,7 +634,10 @@ void ChatMediaViewerSource::fail(MediaChunkError error)
     view_.state = State::Failed;
     view_.error = error.message();
     publish();
-    if (error.code() != MediaChunkError::Unavailable || ++skips_ >= 8 || !browser_)
+    // In-memory MUC entries have no archived cursor or announcement. An
+    // unavailable live image remains selectable for retry; never send its
+    // synthetic list index into an SQL adjacent-media query.
+    if (liveMode_ || error.code() != MediaChunkError::Unavailable || ++skips_ >= 8 || !browser_)
         return;
     const QPointer<ChatMediaViewerSource> guard(this);
     const auto                            query = ++queryEpoch_;
@@ -494,14 +648,24 @@ void ChatMediaViewerSource::fail(MediaChunkError error)
 }
 void ChatMediaViewerSource::retry()
 {
-    if (entry_) {
-        if (account_ && item_)
-            account_->fileSharingDeviceOpener()->retry(
-                QUrl(QStringLiteral("share:%1").arg(item_->sums().first().toString())));
-        skips_ = 0;
-        select(*entry_);
-    } else
+    if (!entry_) {
         refresh();
+        return;
+    }
+    if (account_ && item_ && !item_->sums().isEmpty())
+        account_->fileSharingDeviceOpener()->retry(
+            QUrl(QStringLiteral("share:%1").arg(item_->sums().constFirst().toString())));
+    skips_ = 0;
+    if (liveMode_) {
+        for (int i = 0; i < liveFiltered_.size(); ++i)
+            if (liveFiltered_.at(i).sourceId == source_) {
+                selectLive(i); // Keep the real FileSharingItem, not a synthetic announcement.
+                return;
+            }
+        refreshLive();
+        return;
+    }
+    select(*entry_);
 }
 bool ChatMediaViewerSource::saveAs(QWidget *parent)
 {
@@ -516,11 +680,15 @@ void ChatMediaViewerSource::install(MamChatWidget *chat, PsiAccount *account, co
     if (!chat || !account || !account->psi())
         return;
     const QPointer<PsiAccount>         acc(account);
+    const QPointer<MamChatWidget>      currentChat(chat);
     const QPointer<FileSharingManager> manager(account->psi()->fileSharingManager());
-    chat->setMediaOpenHandler([acc, manager, key](const QImage &image, const QString &path, const QString &source,
-                                                  qint64 position, bool fullscreen) {
+    chat->setMediaOpenHandler([acc, manager, key, currentChat](const QImage &image, const QString &path,
+                                                                const QString &source, qint64 position,
+                                                                bool fullscreen) {
+        auto loaded = key.room && currentChat ? currentChat->loadedMediaItems()
+                                              : QList<QPointer<FileSharingItem>> {};
         auto viewer = acc && manager && !source.isEmpty()
-            ? new ChatMediaViewerSource(manager, acc, key, source, image, path, position)
+            ? new ChatMediaViewerSource(manager, acc, key, source, image, path, position, std::move(loaded))
             : nullptr;
         MediaViewer::showImage(image, path, viewer, fullscreen);
     });

@@ -1797,6 +1797,23 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
     return added;
 }
 
+QList<QPointer<FileSharingItem>> MamChatWidget::loadedMediaItems() const
+{
+    QList<QPointer<FileSharingItem>> files;
+    QSet<FileSharingItem *> seen;
+    for (const auto &row : items_) {
+        if (row.message.type() != MessageView::Message || isRetracted(row))
+            continue;
+        for (auto *item : row.message.references()) {
+            if (!item || seen.contains(item))
+                continue;
+            seen.insert(item);
+            files.append(QPointer<FileSharingItem>(item));
+        }
+    }
+    return files;
+}
+
 void MamChatWidget::setMediaOpener(FileSharingDeviceOpener *opener)
 {
     if (mediaOpener_ == opener)
@@ -2552,12 +2569,33 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             auto *controls = new QHBoxLayout;
             controls->setContentsMargins(0, 0, 0, 0);
             controls->setSpacing(5);
-            auto *fileIcon = new QLabel(footer);
+            const QUrl source = file.url;
             QIcon icon = QIcon::fromTheme(QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).iconName());
             if (icon.isNull())
                 icon = QFileIconProvider().icon(QFileIconProvider::File);
-            fileIcon->setPixmap(icon.pixmap(QSize(32, 32)));
-            controls->addWidget(fileIcon);
+            // A remotely shared image may deliberately forbid automatic download
+            // (XEP-0447 disposition=attachment). Let the user request a preview
+            // explicitly, including in rooms with no MAM/SQL media index.
+            if (mime.startsWith(QLatin1String("image/")) && mediaOpenHandler_
+                && source.scheme() == QLatin1String("share")) {
+                auto *previewButton = new QToolButton(footer);
+                previewButton->setObjectName(QStringLiteral("mamFileImagePreview"));
+                previewButton->setIcon(icon);
+                previewButton->setIconSize(QSize(28, 28));
+                previewButton->setFixedSize(32, 32);
+                previewButton->setAutoRaise(true);
+                previewButton->setToolTip(tr("Preview image"));
+                controls->addWidget(previewButton);
+                connect(previewButton, &QToolButton::clicked, this,
+                        [self = QPointer<MamChatWidget>(this), item = file.item, source] {
+                    if (self && item)
+                        self->openMediaViewer({}, item->displayName(), source.path());
+                });
+            } else {
+                auto *fileIcon = new QLabel(footer);
+                fileIcon->setPixmap(icon.pixmap(QSize(32, 32)));
+                controls->addWidget(fileIcon);
+            }
             auto button = [this, footer, controls](QStyle::StandardPixmap iconType, const QString &tooltip) {
                 auto *b = new QToolButton(footer);
                 b->setIcon(style()->standardIcon(iconType));
@@ -2603,7 +2641,6 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             status->setVisible(!saved.isEmpty());
             reveal->setEnabled(!saved.isEmpty());
             copy->setEnabled(!saved.isEmpty());
-            const QUrl source = file.url;
             const QString accountId = file.account;
             const QPointer<FileSharingItem> item = file.item;
             const QPointer<MamChatWidget> self(this);

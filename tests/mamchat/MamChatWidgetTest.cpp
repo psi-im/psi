@@ -918,6 +918,116 @@ private slots:
         delete menu;
     }
 
+    void loadedRoomMediaIncludesNonMaterializedMessagesWithoutDuplicates()
+    {
+        FileSharingItem picture(QStringLiteral("image/png"));
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.setHistoryLoading(true);
+        auto first = message(QStringLiteral("photo"), QStringLiteral("Image"), 1);
+        first.addReference(&picture);
+        room.appendMessage(first);
+        auto second = message(QStringLiteral("audio"), QStringLiteral("Audio"), 2);
+        second.addReference(&picture); // Repeated share is one gallery item.
+        second.addReference(&audio);
+        room.appendMessage(second);
+        const auto items = room.loadedMediaItems();
+        QCOMPARE(items.size(), 2);
+        QCOMPARE(items.at(0).data(), &picture);
+        QCOMPARE(items.at(1).data(), &audio);
+        room.clearMessages();
+        QVERIFY(room.loadedMediaItems().isEmpty());
+    }
+
+    void imageOnlyRoomMessageRendersWithoutMam()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = true;
+        image.preview_ = QImage(120, 80, QImage::Format_RGB32);
+        image.preview_.fill(Qt::blue);
+        opener.items.insert(QStringLiteral("sole-image"), &image);
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setHistoryLoading(true);
+        // No caption, no MAM and no other rendered text. The sole share must
+        // not be hidden or reduced to an empty message.
+        room.appendMessage(message(QStringLiteral("image-only"),
+                                   QStringLiteral("<share id=\"sole-image\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *body = room.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(!body->isHidden());
+        bool foundImage = false;
+        for (QTextBlock block = body->document()->begin(); block.isValid(); block = block.next()) {
+            for (auto it = block.begin(); !it.atEnd(); ++it) {
+                if (it.fragment().charFormat().isImageFormat()) {
+                    const auto fmt = it.fragment().charFormat().toImageFormat();
+                    QCOMPARE(fmt.width(), qreal(120));
+                    QCOMPARE(fmt.height(), qreal(80));
+                    foundImage = true;
+                }
+            }
+        }
+        QVERIFY(foundImage);
+    }
+
+    void undecodableImageOnlyRoomMessageKeepsFileLink()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = true;
+        // An already cached image with an unresolvable path must not
+        // collapse the whole message into a zero-sized QTextImageFormat.
+        opener.items.insert(QStringLiteral("bad-image"), &image);
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setHistoryLoading(true);
+        room.appendMessage(message(QStringLiteral("bad-photo"),
+                                   QStringLiteral("<share id=\"bad-image\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *body = room.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(!body->isHidden());
+        QVERIFY(body->toPlainText().contains(QStringLiteral("test.7z")));
+    }
+
+    void nonDownloadedRoomImageCanBePreviewedWithoutMam()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = false;
+        image.downloadsItself_ = false;
+        opener.items.insert(QStringLiteral("room-image"), &image);
+        QString openedId;
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setMediaOpenHandler([&openedId](const QImage &preview, const QString &, const QString &sourceId,
+                                               qint64, bool) {
+            QVERIFY(preview.isNull());
+            openedId = sourceId;
+        });
+        room.setHistoryLoading(true);
+        room.appendMessage(message(QStringLiteral("photo"),
+                                   QStringLiteral("<share id=\"room-image\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *preview = room.itemWidget(0)->findChild<QToolButton *>(QStringLiteral("mamFileImagePreview"));
+        QVERIFY(preview);
+        QVERIFY(preview->isVisible());
+        QTest::mouseClick(preview, Qt::LeftButton);
+        QCOMPARE(openedId, QStringLiteral("room-image"));
+    }
+
     void imageContextMenuCopiesOnlyHttpLinks_data()
     {
         QTest::addColumn<QString>("source");

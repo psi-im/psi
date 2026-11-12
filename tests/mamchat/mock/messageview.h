@@ -7,8 +7,11 @@
 // PsiAccount, PsiOptions and the full application while compiling the actual
 // MamChatWidget.cpp, LongListWidget.cpp and their real Qt rows.
 #include <QDateTime>
+#include <QList>
 #include <QSet>
 #include <QString>
+
+class FileSharingItem;
 
 class MessageView {
 public:
@@ -45,6 +48,8 @@ public:
     Type           type() const { return type_; }
     const QString &messageId() const { return id_; }
     void           setMessageId(const QString &id) { id_ = id; }
+    void           addReference(FileSharingItem *item) { references_.append(item); }
+    const QList<FileSharingItem *> &references() const { return references_; }
     void           setMarkable(bool value = true) { markable_ = value; }
     bool           isMarkable() const { return markable_; }
     bool           stylingDisabled() const { return stylingDisabled_; }
@@ -112,6 +117,7 @@ public:
     void             setUserText(const QString &text) { userText_ = text; }
 
 private:
+    QList<FileSharingItem *> references_;
     ChatReply reply_;
     QString replyBody_;
     bool hasReplyFallback_ = false;

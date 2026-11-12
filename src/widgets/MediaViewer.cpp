@@ -380,6 +380,27 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
             filter->setChecked(type.isValid() ? (selected.types & type.toInt()) != 0
                                              : (selected.availability & availability.toInt()) != 0);
         }
+        connect(source, &MediaNavigationSource::filterAdjustmentRequested, this,
+                [this, source](MediaFilter filter) {
+                    if (navigationSource_ != source)
+                        return;
+                    bool changed = false;
+                    for (auto *button : controls_->findChildren<QToolButton *>()) {
+                        const auto type = button->property("typeBit");
+                        const auto availability = button->property("availabilityBit");
+                        if (!type.isValid() && !availability.isValid())
+                            continue;
+                        const bool requested = type.isValid() ? bool(filter.types & type.toInt())
+                                                             : bool(filter.availability & availability.toInt());
+                        if (button->isChecked() == requested)
+                            continue;
+                        const QSignalBlocker blocker(button);
+                        button->setChecked(requested);
+                        changed = true;
+                    }
+                    if (changed)
+                        applyFilter(false);
+                });
         connect(source, &MediaNavigationSource::changed, this, &MediaViewer::applyView);
         connect(source, &QObject::destroyed, this, [this] { navigationPending_ = false; });
         setMinimumSize(680, 360);

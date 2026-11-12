@@ -201,45 +201,55 @@ span.emojis {
                           img = vimg.value<QImage>();
                       } else {
                           img = item->preview(QSize(640, 480));
-                          document()->addResource(QTextDocument::ImageResource, url, img);
+                          if (!img.isNull())
+                              document()->addResource(QTextDocument::ImageResource, url, img);
                       }
 
-                      fmt.setWidth(img.width());
-                      fmt.setHeight(img.height());
-
-                      return { fmt, "" };
+                      if (!img.isNull()) {
+                          fmt.setWidth(img.width());
+                          fmt.setHeight(img.height());
+                          return { fmt, "" };
+                      }
+                      // An item may be cached but its image cannot be decoded.
+                      // Never turn an attachment-only message into an invisible
+                      // zero-sized image; keep the source label accessible.
                   }
 
-                  // otherwise we have to download it
-                  connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
-                      if (!item->isCached())
-                          return; // failed; the link stays until a download succeeds
-                      item->disconnect(this);
-                      document()->addResource(QTextDocument::ImageResource, url, item->preview(QSize(640, 480)));
-                      auto        prevCur = textCursor();
-                      QTextCursor cur(document());
-                      cur.setPosition(insertAfter);
-
-                      cur = PsiRichText::findMarker(cur, anchorName + "/start");
-                      if (cur.isNull()) {
-                          cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
-                          if (cur.isNull())
+                  if (!item->isCached()) {
+                      // Only uncached images need an automatic download.
+                      connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
+                          if (!item->isCached())
+                              return; // failed; the link stays until a download succeeds
+                          item->disconnect(this);
+                          const QImage image = item->preview(QSize(640, 480));
+                          if (image.isNull())
+                              return; // Preserve the visible filename/link on decode failure.
+                          document()->addResource(QTextDocument::ImageResource, url, image);
+                          auto        prevCur = textCursor();
+                          QTextCursor cur(document());
+                          cur.setPosition(insertAfter);
+    
+                          cur = PsiRichText::findMarker(cur, anchorName + "/start");
+                          if (cur.isNull()) {
+                              cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
+                              if (cur.isNull())
+                                  return;
+                          }
+                          auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
+                          if (curEnd.isNull())
                               return;
-                      }
-                      auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
-                      if (curEnd.isNull())
-                          return;
-
-                      bool doScroll = atBottom();
-                      cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
-                      // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
-                      cur.removeSelectedText();
-                      cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
-                      if (doScroll)
-                          QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
-                      setTextCursor(prevCur);
-                  });
-                  item->autoDownload(autoLimit);
+    
+                          bool doScroll = atBottom();
+                          cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
+                          // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
+                          cur.removeSelectedText();
+                          cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
+                          if (doScroll)
+                              QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
+                          setTextCursor(prevCur);
+                      });
+                      item->autoDownload(autoLimit);
+                  }
 
                   QString sizeStr;
                   if (item->fileSize()) {
