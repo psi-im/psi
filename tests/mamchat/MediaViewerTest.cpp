@@ -259,6 +259,61 @@ private slots:
         QCOMPARE(effect->opacity(), qreal(1));
     }
 
+    void borrowedPlayerReturnsToChatOnNavigationAndClose()
+    {
+        QWidget inlineHost;
+        inlineHost.resize(320, 200);
+        inlineHost.show();
+        auto *player = new QWidget(&inlineHost);
+        QPointer<QWidget> retained(player);
+        int restored = 0;
+        {
+            MediaViewer viewer(QImage{});
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            viewer.show();
+
+            auto loan = [&](const QString &name) {
+                MediaNavigationSource::View video;
+                video.key = name;
+                video.name = QStringLiteral("video.mp4");
+                video.revision = 1;
+                video.state = MediaNavigationSource::State::Ready;
+                video.video = [player](QWidget *parent, std::function<void()>) {
+                    player->setParent(parent);
+                    return player;
+                };
+                video.videoReturn = [&](QWidget *widget) {
+                    QCOMPARE(widget, player);
+                    ++restored;
+                    widget->setParent(&inlineHost);
+                    widget->show();
+                    return true;
+                };
+                emit source->changed(video);
+            };
+
+            loan(QStringLiteral("first"));
+            QCOMPARE(player->parentWidget(), &viewer);
+            MediaNavigationSource::View image;
+            image.key = QStringLiteral("photo");
+            image.revision = 1;
+            image.name = QStringLiteral("photo.png");
+            image.state = MediaNavigationSource::State::Ready;
+            image.image = QImage(20, 20, QImage::Format_RGB32);
+            emit source->changed(image);
+            QCOMPARE(restored, 1);
+            QCOMPARE(player->parentWidget(), &inlineHost);
+            QVERIFY(retained);
+            loan(QStringLiteral("second"));
+            QCOMPARE(player->parentWidget(), &viewer);
+            QCOMPARE(restored, 1);
+        }
+        QCOMPARE(restored, 2);
+        QCOMPARE(player->parentWidget(), &inlineHost);
+        QVERIFY(retained);
+    }
+
     void videoPlayPauseUsesSpaceAndSurfaceClick()
     {
         MediaViewer viewer(QImage{});
