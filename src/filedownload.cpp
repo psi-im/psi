@@ -61,7 +61,7 @@ quint64 FileDownload::quantum(bool background) const
     // quantum down to 16 KiB, causing hundreds of sequential round trips.
     // Use a modest first read for playback startup, then amortize signaling.
     if (signaledRanges_)
-        return background || initialDemandMade_ ? 1024 * 1024 : 256 * 1024;
+        return background || initialDemandMade_ ? signaledQuantum_ : 256 * 1024;
     if (!bytesPerMs_)
         return 64 * 1024;
     const double targetMs = background ? 400 : 150;
@@ -73,6 +73,29 @@ quint64 FileDownload::quantum(bool background) const
     return result;
 }
 
+void FileDownload::noteSignaledFetch(quint64 offset, quint64 length)
+{
+    if (!signaledRanges_ || !cache_)
+        return;
+    if (lastSignaledRange_) {
+        const auto &previous = *lastSignaledRange_;
+        // Only adjacent, fully stored ranges indicate sequential progress.
+        // This is an operation-duration heuristic, not a bandwidth estimate.
+        if (previous.start + previous.length == offset && previous.length >= 256 * 1024
+            && cache_->availableLength(source_, size_, previous.start, previous.length) == previous.length) {
+            const auto elapsed = previous.elapsed.elapsed();
+            if (elapsed <= 8000)
+                signaledQuantum_ = std::min<quint64>(signaledQuantum_ * 2, MediaChunkMaxSize);
+            else if (elapsed >= 20000)
+                signaledQuantum_ = std::max<quint64>(signaledQuantum_ / 2, 256 * 1024);
+        }
+    }
+    lastSignaledRange_ = RangeTiming { offset, length, {} };
+    lastSignaledRange_->elapsed.start();
+}
+
+void FileDownload::resetRangeTiming() { lastSignaledRange_.reset(); }
+
 std::function<MediaChunkAbort(quint64, quint64, FileDownload::Completion)> FileDownload::provider()
 {
     const QPointer<FileDownload> guard(this);
@@ -81,6 +104,7 @@ std::function<MediaChunkAbort(quint64, quint64, FileDownload::Completion)> FileD
             done({}, { MediaChunkError::Cancelled, QStringLiteral("File download closed") });
             return {};
         }
+        guard->noteSignaledFetch(offset, length);
         auto timer = std::make_shared<QElapsedTimer>();
         timer->start();
         auto complete = queuedMediaChunkCompletion(
