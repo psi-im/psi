@@ -22,6 +22,8 @@ public:
     bool                  open(OpenMode mode = ReadOnly) override;
     void                  close() override;
     void                  abort();
+    // Pause network demand without aborting the seekable device or its decoder.
+    void                  setSuspended(bool suspended);
     bool                  isSequential() const override { return false; }
     qint64                size() const override;
     bool                  seek(qint64 position) override;
