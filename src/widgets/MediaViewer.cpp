@@ -757,7 +757,8 @@ void MediaViewer::applyFilter(bool persist)
 void MediaViewer::applyView(const MediaNavigationSource::View &view)
 {
     navigationPending_ = view.navigating;
-    if (currentKey_ != view.key) {
+    const bool mediaChanged = currentKey_ != view.key;
+    if (mediaChanged) {
         if (video_) {
             delete video_.data();
             videoControls_ = nullptr;
@@ -818,7 +819,7 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
         }
     }
     controls_->raise();
-    if (isFullScreen())
+    if (isFullScreen() && mediaChanged)
         noteFullscreenActivity(true);
     for (const auto name : { "mediaCopy", "mediaRotate" })
         if (auto button = controls_->findChild<QToolButton *>(name))
