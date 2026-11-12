@@ -6,6 +6,8 @@
 #include <iris/jingle-ft.h>
 #include <iris/jingle-session.h>
 #include <iris/jingle-transport.h>
+#include <iris/xmpp_caps.h>
+#include <iris/xmpp_client.h>
 #include <iris/xmpp_jid.h>
 #include <utility>
 
@@ -171,6 +173,31 @@ public:
                     transport->releaseIfUnused();
                 // Let normal transport selection choose a supported alternative.
             }
+        } else if (manager->client()->capsManager()->features(peer->jid).isEmpty()) {
+            // A player starting in the disk cache may not need a Jingle session
+            // until the first seek. In a MUC, the occupant can be online while
+            // its entity capabilities are still unresolved. NSTransportsList
+            // otherwise permanently discards every candidate because
+            // checkPeerCaps() returns false, and no session-initiate is sent.
+            // This request has an explicit Jingle file source: offer our best
+            // locally available file transport, letting the peer accept or
+            // reject it instead of silently deadlocking the media reader.
+            const auto transports = manager->availableTransports(
+                J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
+            bool selected = false;
+            for (auto it = transports.crbegin(); it != transports.crend(); ++it) {
+                auto transport = session->newOutgoingTransport(*it);
+                if (transport && app->setTransport(transport)) {
+                    qInfo("Jingle media peer caps unavailable; offering transport %s to %s",
+                          qPrintable(*it), qPrintable(peer->jid.full()));
+                    selected = true;
+                    break;
+                }
+                if (transport)
+                    transport->releaseIfUnused();
+            }
+            if (!selected)
+                qWarning("Jingle media has no usable local file transport for %s", qPrintable(peer->jid.full()));
         }
         QObject::connect(app, &FT::Application::payloadVerified, q, [this, part] {
             part->verified = true;
