@@ -187,6 +187,36 @@ private slots:
         QCOMPARE(reader.read(15), pattern(size - 50, 15));
         QCOMPARE(failures.size(), 0);
     }
+    void jingleSignaledRangesAvoidTinyRequests()
+    {
+        QTemporaryDir   directory;
+        MediaChunkCache cache(directory.path());
+        const quint64   size = 3 * 1024 * 1024;
+        QList<QPair<quint64, quint64>> fetched;
+        FileDownload download(&cache, "video", size, "account",
+                              [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
+                                  MediaChunkCompletion done) -> MediaChunkAbort {
+                                  QVERIFY(!whole());
+                                  fetched.append({ offset, length });
+                                  done(pattern(offset, length), {});
+                                  return {};
+                              });
+        download.setSignaledRanges(true);
+        FileReader reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QCOMPARE(reader.read(1), pattern(0, 1));
+        QCOMPARE(fetched.size(), 1);
+        QCOMPARE(fetched.first(), (QPair<quint64, quint64> { 0, 256 * 1024 }));
+        QVERIFY(reader.seek(256 * 1024));
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QCOMPARE(reader.read(1), pattern(256 * 1024, 1));
+        QCOMPARE(fetched.size(), 2);
+        QCOMPARE(fetched.last(), (QPair<quint64, quint64> { 256 * 1024, 768 * 1024 }));
+    }
+
     void unavailableDiskUsesSharedMemoryWithoutClaimingCompletion()
     {
         QTemporaryDir directory;
