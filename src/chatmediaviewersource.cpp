@@ -634,7 +634,10 @@ void ChatMediaViewerSource::fail(MediaChunkError error)
     view_.state = State::Failed;
     view_.error = error.message();
     publish();
-    if (error.code() != MediaChunkError::Unavailable || ++skips_ >= 8 || !browser_)
+    // In-memory MUC entries have no archived cursor or announcement. An
+    // unavailable live image remains selectable for retry; never send its
+    // synthetic list index into an SQL adjacent-media query.
+    if (liveMode_ || error.code() != MediaChunkError::Unavailable || ++skips_ >= 8 || !browser_)
         return;
     const QPointer<ChatMediaViewerSource> guard(this);
     const auto                            query = ++queryEpoch_;
@@ -645,14 +648,24 @@ void ChatMediaViewerSource::fail(MediaChunkError error)
 }
 void ChatMediaViewerSource::retry()
 {
-    if (entry_) {
-        if (account_ && item_)
-            account_->fileSharingDeviceOpener()->retry(
-                QUrl(QStringLiteral("share:%1").arg(item_->sums().first().toString())));
-        skips_ = 0;
-        select(*entry_);
-    } else
+    if (!entry_) {
         refresh();
+        return;
+    }
+    if (account_ && item_ && !item_->sums().isEmpty())
+        account_->fileSharingDeviceOpener()->retry(
+            QUrl(QStringLiteral("share:%1").arg(item_->sums().constFirst().toString())));
+    skips_ = 0;
+    if (liveMode_) {
+        for (int i = 0; i < liveFiltered_.size(); ++i)
+            if (liveFiltered_.at(i).sourceId == source_) {
+                selectLive(i); // Keep the real FileSharingItem, not a synthetic announcement.
+                return;
+            }
+        refreshLive();
+        return;
+    }
+    select(*entry_);
 }
 bool ChatMediaViewerSource::saveAs(QWidget *parent)
 {
