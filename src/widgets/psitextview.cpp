@@ -218,35 +218,35 @@ span.emojis {
                   if (!item->isCached()) {
                       // Only uncached images need an automatic download.
                       connect(item, &FileSharingItem::downloadFinished, this, [this, anchorName, url, item, insertAfter]() {
-                      if (!item->isCached())
-                          return; // failed; the link stays until a download succeeds
-                      item->disconnect(this);
-                      const QImage image = item->preview(QSize(640, 480));
-                      if (image.isNull())
-                          return; // Preserve the visible filename/link on decode failure.
-                      document()->addResource(QTextDocument::ImageResource, url, image);
-                      auto        prevCur = textCursor();
-                      QTextCursor cur(document());
-                      cur.setPosition(insertAfter);
-
-                      cur = PsiRichText::findMarker(cur, anchorName + "/start");
-                      if (cur.isNull()) {
-                          cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
-                          if (cur.isNull())
+                          if (!item->isCached())
+                              return; // failed; the link stays until a download succeeds
+                          item->disconnect(this);
+                          const QImage image = item->preview(QSize(640, 480));
+                          if (image.isNull())
+                              return; // Preserve the visible filename/link on decode failure.
+                          document()->addResource(QTextDocument::ImageResource, url, image);
+                          auto        prevCur = textCursor();
+                          QTextCursor cur(document());
+                          cur.setPosition(insertAfter);
+    
+                          cur = PsiRichText::findMarker(cur, anchorName + "/start");
+                          if (cur.isNull()) {
+                              cur = PsiRichText::findMarker(QTextCursor(document()), anchorName + "/start");
+                              if (cur.isNull())
+                                  return;
+                          }
+                          auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
+                          if (curEnd.isNull())
                               return;
-                      }
-                      auto curEnd = PsiRichText::findMarker(cur, anchorName + "/end");
-                      if (curEnd.isNull())
-                          return;
-
-                      bool doScroll = atBottom();
-                      cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
-                      // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
-                      cur.removeSelectedText();
-                      cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
-                      if (doScroll)
-                          QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
-                      setTextCursor(prevCur);
+    
+                          bool doScroll = atBottom();
+                          cur.setPosition(curEnd.position() + 1, QTextCursor::KeepAnchor);
+                          // qDebug() << "DEBUG SELECTED:" << cur.selectedText();
+                          cur.removeSelectedText();
+                          cur.insertHtml(QString("<img src=\"%1\"/>").arg(anchorName));
+                          if (doScroll)
+                              QTimer::singleShot(0, this, &PsiTextView::scrollToBottom);
+                          setTextCursor(prevCur);
                       });
                       item->autoDownload(autoLimit);
                   }
