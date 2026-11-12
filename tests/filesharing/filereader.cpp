@@ -241,8 +241,11 @@ private slots:
                               [&](quint64, quint64, FileDownload::FullDownloadAllowed,
                                   MediaChunkCompletion done) -> MediaChunkAbort {
                                   ++starts;
-                                  responses.append(std::move(done));
-                                  return [&] { ++aborts; };
+                                  responses.append(done);
+                                  return [done = std::move(done), &aborts] {
+                                      ++aborts;
+                                      done({}, { MediaChunkError::Cancelled, QStringLiteral("Cancelled by reader") });
+                                  };
                               });
         FileReader reader(&download);
         QVERIFY(reader.open());
