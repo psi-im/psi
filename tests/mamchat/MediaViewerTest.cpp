@@ -362,6 +362,8 @@ private slots:
 
         QTest::keyClick(&viewer, Qt::Key_F11);
         QTRY_VERIFY(viewer.isFullScreen());
+        QVERIFY(viewer.screen());
+        QTRY_COMPARE(viewer.size(), viewer.screen()->geometry().size());
         QVERIFY(top->isVisible() && bottom->isVisible());
         QVERIFY(idle->isActive());
         // Fullscreen: controls are layered above the player rather than
