@@ -56,6 +56,12 @@ MediaFileState FileDownload::state() const
 
 quint64 FileDownload::quantum(bool background) const
 {
+    // Jingle BUNDLE reuses the ICE/DTLS connection, not the per-range IQ exchange.
+    // Measuring wall-clock bytes/ms includes that exchange and drove the adaptive
+    // quantum down to 16 KiB, causing hundreds of sequential round trips.
+    // Use a modest first read for playback startup, then amortize signaling.
+    if (signaledRanges_)
+        return background || initialDemandMade_ ? 1024 * 1024 : 256 * 1024;
     if (!bytesPerMs_)
         return 64 * 1024;
     const double targetMs = background ? 400 : 150;
@@ -108,6 +114,8 @@ quint64 FileDownload::read(quint64 offset, quint64 length, Completion done)
     setPlayhead(offset);
     const QPointer<FileDownload> guard(this);
     auto                         ticket = std::make_shared<quint64>(0);
+    const auto                   quantumSize = quantum(false);
+    initialDemandMade_ = true;
     *ticket                             = cache_->read(
         source_, size_, offset, length, lane_, provider(),
         [guard, ticket, done = std::move(done)](QByteArray bytes, MediaChunkError error) {
@@ -117,7 +125,7 @@ quint64 FileDownload::read(quint64 offset, quint64 length, Completion done)
             }
             done(std::move(bytes), std::move(error));
         },
-        true, quantum(false));
+        true, quantumSize);
     if (*ticket)
         reads_.insert(*ticket);
     schedule();
