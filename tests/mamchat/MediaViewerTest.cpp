@@ -228,6 +228,10 @@ private slots:
 
         QTest::keyClick(&viewer, Qt::Key_F);
         QTRY_VERIFY(viewer.isFullScreen());
+        // Offscreen QPA delivers the final fullscreen resize asynchronously;
+        // capture geometry only after the window has reached screen size.
+        QVERIFY(viewer.screen());
+        QTRY_COMPARE(viewer.size(), viewer.screen()->geometry().size());
         QVERIFY(top->isVisible());
         QVERIFY(idle->isActive());
         const QRectF shown = viewer.displayedImageRect();
