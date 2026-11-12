@@ -329,6 +329,66 @@ private slots:
         QVERIFY(item->sums().contains(sha256));
     }
 
+    void duplicateHashesDoNotCorruptStartupCache()
+    {
+        const QByteArray bytes("duplicate generations");
+        const auto       hash = hashOf(bytes);
+        QString          expiredPath;
+        {
+            auto  cache = open();
+            auto *item  = cache->append(hash, bytes, { { QStringLiteral("generation"), 0 } }, 60);
+            QVERIFY(item);
+            expiredPath = item->filePath();
+            cache->sync();
+        }
+
+        const auto now = QDateTime::currentMSecsSinceEpoch();
+        QSqlQuery  query(FileDatabase::connection());
+        query.prepare("UPDATE files SET created=? WHERE partition=?");
+        query.addBindValue(now - 2 * 60 * 60 * 1000);
+        query.addBindValue(partitionName);
+        QVERIFY(query.exec());
+
+        // Simulate an old or damaged registry with overlapping hashes. The
+        // schema allows this because hashes are only unique per file_id.
+        for (int generation = 1; generation <= 2; ++generation) {
+            const QByteArray id(16, char(generation));
+            const auto       name = QStringLiteral("duplicate-%1.bin").arg(generation);
+            QFile            file(dir->filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            QCOMPARE(file.write(bytes), qint64(bytes.size()));
+            file.close();
+
+            query.prepare("INSERT INTO files(id,partition,size,created,max_age,metadata,path,placement) "
+                          "VALUES(?,?,?,?,?,?,?,0)");
+            query.addBindValue(id);
+            query.addBindValue(partitionName);
+            query.addBindValue(qlonglong(bytes.size()));
+            query.addBindValue(now - (3 - generation) * 60 * 1000);
+            query.addBindValue(qlonglong(3600));
+            query.addBindValue(
+                FileDatabase::encodeMetadata({ { QStringLiteral("generation"), generation } }));
+            query.addBindValue(name);
+            QVERIFY(query.exec());
+
+            query.prepare("INSERT INTO file_hashes(file_id,position,algorithm,digest) VALUES(?,0,?,?)");
+            query.addBindValue(id);
+            query.addBindValue(hash.stringType());
+            query.addBindValue(hash.data());
+            QVERIFY(query.exec());
+        }
+
+        auto  cache = open();
+        auto *item  = cache->get(hash);
+        QVERIFY(item);
+        QCOMPARE(item->metadata().value(QStringLiteral("generation")).toInt(), 2);
+        QCOMPARE(cache->getData(hash), bytes);
+        QCOMPARE(recordCount(), 1);
+        QVERIFY(!QFileInfo::exists(expiredPath));
+        QVERIFY(!QFileInfo::exists(dir->filePath("duplicate-1.bin")));
+        QVERIFY(QFileInfo::exists(dir->filePath("duplicate-2.bin")));
+    }
+
     void appendingAgainKeepsOneRecord()
     {
         const QByteArray bytes("appended twice");
