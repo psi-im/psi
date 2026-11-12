@@ -41,6 +41,10 @@ public:
         State                                                      state      = State::Ready;
         bool                                                       navigating = false;
         std::function<QWidget *(QWidget *, std::function<void()>)> video;
+        // A borrowed inline player is returned to its chat instead of being
+        // deleted when this viewer closes or navigates to another resource.
+        // Return false if the original anchor no longer exists.
+        std::function<bool(QWidget *)> videoReturn;
     };
     using QObject::QObject;
     virtual void start() { }
@@ -69,6 +73,7 @@ public:
 
     explicit MediaViewer(const QImage &image, QWidget *parent = nullptr);
     MediaViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
+    ~MediaViewer() override;
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
     static void setSavePathPersistence(PathLoader loader, PathSaver saver);
@@ -101,11 +106,14 @@ private:
     void    setupControls();
     void    applyFilter(bool persist = false);
     void    toggleFullscreen();
+    void    togglePlayback();
     void    updateFullscreenUi();
+    void    updateVideoControlsOverlay();
+    void    releaseVideo();
     void    noteFullscreenActivity(bool force = false);
-    void    hideIdleVideoControls();
-    void    setVideoControlsShown(QWidget *widget, bool visible, bool animated);
-    void    trackVideoWidget(QWidget *widget);
+    void    hideIdleFullscreenControls();
+    void    setControlsShown(QWidget *widget, bool visible, bool animated);
+    void    trackActivityWidget(QWidget *widget);
     QRect   contentRect() const;
     qreal   autoFitScale() const;
     bool    canPan() const;
@@ -133,9 +141,12 @@ private:
     QProgressBar                   *loading_ = nullptr;
     QPointer<QWidget>               video_;
     QPointer<QWidget>               videoControls_;
-    QTimer                         *videoIdleTimer_ = nullptr;
-    QPoint                          lastVideoCursorPos_;
-    bool                            videoControlsHidden_ = false;
+    std::function<bool(QWidget *)>   videoReturn_;
+    QTimer                         *fullscreenIdleTimer_ = nullptr;
+    QPoint                          lastFullscreenCursorPos_;
+    bool                            fullscreenControlsHidden_ = false;
+    bool                            videoControlsOverlay_ = false;
+    bool                            playbackSurfacePressed_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;

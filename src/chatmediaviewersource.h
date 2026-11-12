@@ -26,6 +26,7 @@ public:
     void        retry() override;
     bool        saveAs(QWidget *) override;
     static void install(MamChatWidget *, PsiAccount *, const HistoryArchive::Key &);
+    void setBorrowedPlayer(QString sourceId, QWidget *player, std::function<bool()> restore);
 
 private:
     struct LiveItem {
@@ -56,6 +57,7 @@ private:
     bool                             liveMode_ = false, initialFilterAdjusted_ = false;
     View                            view_;
     QString                         source_;
+    QString                         borrowedSourceId_;
     MediaChunkAbort                 opening_, decoding_;
     QMetaObject::Connection         integrity_;
     quint64                         queryEpoch_ = 0, contentEpoch_ = 0;

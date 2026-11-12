@@ -4,10 +4,12 @@
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
 #include <QToolButton>
+#include <QSlider>
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QLabel>
 #include <QProgressBar>
+#include <QScreen>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QWheelEvent>
@@ -212,6 +214,230 @@ private slots:
         QTRY_VERIFY(!viewer.isFullScreen());
         QVERIFY(viewer.isVisible());
     }
+    void fullscreenPhotoAutoHidesToolbarWithoutMovingImage()
+    {
+        QImage image(240, 140, QImage::Format_RGB32);
+        image.fill(Qt::blue);
+        MediaViewer viewer(image);
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        auto *top = viewer.findChild<QWidget *>(QStringLiteral("mediaViewerControls"));
+        auto *idle = viewer.findChild<QTimer *>(QStringLiteral("mediaFullscreenIdleTimer"));
+        QVERIFY(top && idle);
+        QVERIFY(top->isVisible());
+
+        QTest::keyClick(&viewer, Qt::Key_F);
+        QTRY_VERIFY(viewer.isFullScreen());
+        // Offscreen QPA delivers the final fullscreen resize asynchronously;
+        // capture geometry only after the window has reached screen size.
+        QVERIFY(viewer.screen());
+        QTRY_COMPARE(viewer.size(), viewer.screen()->geometry().size());
+        QVERIFY(top->isVisible());
+        QVERIFY(idle->isActive());
+        const QRectF shown = viewer.displayedImageRect();
+
+        QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
+        QTRY_VERIFY(!top->isVisible());
+        QCOMPARE(viewer.displayedImageRect(), shown);
+        auto *effect = qobject_cast<QGraphicsOpacityEffect *>(top->graphicsEffect());
+        QVERIFY(effect);
+        QCOMPARE(effect->opacity(), qreal(0));
+
+        const QPoint point(40, qMax(50, viewer.height() / 2));
+        QMouseEvent movement(QEvent::MouseMove, QPointF(point), QPointF(viewer.mapToGlobal(point)),
+                             Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&viewer, &movement);
+        QVERIFY(top->isVisible());
+        QVERIFY(idle->isActive());
+        QCOMPARE(viewer.displayedImageRect(), shown);
+
+        QTest::keyClick(&viewer, Qt::Key_F);
+        QTRY_VERIFY(!viewer.isFullScreen());
+        QVERIFY(top->isVisible());
+        QVERIFY(!idle->isActive());
+        QCOMPARE(effect->opacity(), qreal(1));
+    }
+
+    void borrowedPlayerReturnsToChatOnNavigationAndClose()
+    {
+        QWidget inlineHost;
+        inlineHost.resize(320, 200);
+        inlineHost.show();
+        auto *player = new QWidget(&inlineHost);
+        QPointer<QWidget> retained(player);
+        int restored = 0;
+        {
+            MediaViewer viewer(QImage{});
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            viewer.show();
+
+            auto loan = [&](const QString &name) {
+                MediaNavigationSource::View video;
+                video.key = name;
+                video.name = QStringLiteral("video.mp4");
+                video.revision = 1;
+                video.state = MediaNavigationSource::State::Ready;
+                video.video = [player](QWidget *parent, std::function<void()>) {
+                    player->setParent(parent);
+                    return player;
+                };
+                video.videoReturn = [&](QWidget *widget) {
+                    if (widget != player)
+                        return false;
+                    ++restored;
+                    widget->setParent(&inlineHost);
+                    widget->show();
+                    return true;
+                };
+                emit source->changed(video);
+            };
+
+            loan(QStringLiteral("first"));
+            QCOMPARE(player->parentWidget(), &viewer);
+            MediaNavigationSource::View image;
+            image.key = QStringLiteral("photo");
+            image.revision = 1;
+            image.name = QStringLiteral("photo.png");
+            image.state = MediaNavigationSource::State::Ready;
+            image.image = QImage(20, 20, QImage::Format_RGB32);
+            emit source->changed(image);
+            QCOMPARE(restored, 1);
+            QCOMPARE(player->parentWidget(), &inlineHost);
+            QVERIFY(retained);
+            loan(QStringLiteral("second"));
+            QCOMPARE(player->parentWidget(), &viewer);
+            QCOMPARE(restored, 1);
+        }
+        QCOMPARE(restored, 2);
+        QCOMPARE(player->parentWidget(), &inlineHost);
+        QVERIFY(retained);
+    }
+
+    void borrowedPlayerSurvivesIndexRefreshAndIsDeletedIfChatIsGone()
+    {
+        MediaViewer viewer(QImage{});
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+
+        QPointer<QWidget> borrowed;
+        int created = 0;
+        int returned = 0;
+        MediaNavigationSource::View initial;
+        initial.key = QStringLiteral("borrowed:clip");
+        initial.revision = 1;
+        initial.name = QStringLiteral("clip.mp4");
+        initial.video = [&](QWidget *parent, std::function<void()>) {
+            ++created;
+            borrowed = new QWidget(parent);
+            return borrowed.data();
+        };
+        initial.videoReturn = [&](QWidget *) {
+            ++returned;
+            return false; // The chat/message was deleted while viewing.
+        };
+        emit source->changed(initial);
+        QVERIFY(borrowed);
+        QCOMPARE(created, 1);
+
+        // Resolving the initial SQL/gallery index must not create a second
+        // decoder for the same resource or change its playback state.
+        MediaNavigationSource::View indexed = initial;
+        indexed.revision = 2;
+        indexed.index = 2;
+        indexed.total = 6;
+        indexed.video = [&](QWidget *parent, std::function<void()>) {
+            ++created;
+            return new QWidget(parent);
+        };
+        emit source->changed(indexed);
+        QCOMPARE(created, 1);
+        QVERIFY(borrowed);
+
+        MediaNavigationSource::View next;
+        next.key = QStringLiteral("next-image");
+        next.name = QStringLiteral("photo.png");
+        next.revision = 1;
+        next.image = QImage(20, 20, QImage::Format_RGB32);
+        emit source->changed(next);
+        QCOMPARE(returned, 1);
+        QVERIFY(borrowed.isNull());
+    }
+
+    void videoPlayPauseUsesSpaceAndSurfaceClick()
+    {
+        MediaViewer viewer(QImage{});
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        int toggles = 0;
+
+        MediaNavigationSource::View view;
+        view.key = QStringLiteral("video");
+        view.name = QStringLiteral("video.mp4");
+        view.revision = 1;
+        view.state = MediaNavigationSource::State::Ready;
+        view.video = [&toggles](QWidget *parent, std::function<void()>) {
+            auto *player = new QWidget(parent);
+            auto *layout = new QVBoxLayout(player);
+            layout->setContentsMargins(0, 0, 0, 0);
+            auto *surface = new QWidget(player);
+            surface->setObjectName(QStringLiteral("testPlaybackSurface"));
+            layout->addWidget(surface, 1);
+            auto *bottom = new QWidget(player);
+            bottom->setObjectName(QStringLiteral("qite-video-controls"));
+            auto *bottomLayout = new QVBoxLayout(bottom);
+            auto *play = new QToolButton(bottom);
+            play->setObjectName(QStringLiteral("qite-video-play"));
+            bottomLayout->addWidget(play);
+            auto *seek = new QSlider(Qt::Horizontal, bottom);
+            seek->setObjectName(QStringLiteral("testSeekSlider"));
+            seek->setRange(0, 100);
+            bottomLayout->addWidget(seek);
+            layout->addWidget(bottom);
+            QObject::connect(play, &QToolButton::clicked, play, [&toggles] { ++toggles; });
+            return player;
+        };
+        emit source->changed(view);
+        auto *surface = viewer.findChild<QWidget *>(QStringLiteral("testPlaybackSurface"));
+        auto *play = viewer.findChild<QToolButton *>(QStringLiteral("qite-video-play"));
+        auto *seek = viewer.findChild<QSlider *>(QStringLiteral("testSeekSlider"));
+        QVERIFY(surface && play && seek);
+
+        QTest::keyClick(&viewer, Qt::Key_Space);
+        QCOMPARE(toggles, 1);
+        QTest::keyClick(surface, Qt::Key_Space);
+        QCOMPARE(toggles, 2);
+        QTest::mouseClick(surface, Qt::LeftButton);
+        QCOMPARE(toggles, 3);
+        // Native controls must not trigger two playback toggles.
+        QTest::mouseClick(play, Qt::LeftButton);
+        QCOMPARE(toggles, 4);
+        // A seek bar click must not propagate into a pause, even if the
+        // slider leaves a mouse release for its parent to handle.
+        QTest::mouseClick(seek, Qt::LeftButton);
+        QCOMPARE(toggles, 4);
+        QWidget *player = seek->parentWidget()->parentWidget();
+        QVERIFY(player);
+        const QPoint controlPoint = player->mapFromGlobal(seek->mapToGlobal(seek->rect().center()));
+        QTest::mouseClick(player, Qt::LeftButton, Qt::NoModifier, controlPoint);
+        QCOMPARE(toggles, 4);
+        QTest::mouseClick(&viewer, Qt::LeftButton);
+        QCOMPARE(toggles, 5);
+        // Only the player has a Space playback action, never still images.
+        MediaNavigationSource::View still;
+        still.key = QStringLiteral("still");
+        still.name = QStringLiteral("still.png");
+        still.revision = 1;
+        emit source->changed(still);
+        QTest::keyClick(&viewer, Qt::Key_Space);
+        QCOMPARE(toggles, 5);
+    }
+
     void fullscreenVideoAutoHidesBothControlBars()
     {
         QImage image(80, 60, QImage::Format_RGB32);
@@ -234,6 +460,7 @@ private slots:
             auto *layout = new QVBoxLayout(player);
             layout->setContentsMargins(0, 0, 0, 0);
             auto *surface = new QWidget(player);
+            surface->setObjectName(QStringLiteral("testVideoSurface"));
             layout->addWidget(surface, 1);
             auto *bottom = new QWidget(player);
             bottom->setObjectName(QStringLiteral("qite-video-controls"));
@@ -244,16 +471,31 @@ private slots:
         emit source->changed(view);
         auto *top = viewer.findChild<QWidget *>("mediaViewerControls");
         auto *bottom = viewer.findChild<QWidget *>("qite-video-controls");
-        auto *idle = viewer.findChild<QTimer *>("mediaVideoIdleTimer");
+        auto *idle = viewer.findChild<QTimer *>("mediaFullscreenIdleTimer");
         QVERIFY(top && bottom && idle);
         auto *player = bottom->parentWidget();
         QVERIFY(player);
+        auto *surface = player->findChild<QWidget *>(QStringLiteral("testVideoSurface"));
+        QVERIFY(surface);
+        QVERIFY(player->layout());
+        QTRY_VERIFY(surface->height() < player->height()); // Normal window: in layout.
+        QVERIFY(player->layout()->indexOf(bottom) >= 0);
         QVERIFY(top->isVisible() && bottom->isVisible());
 
         QTest::keyClick(&viewer, Qt::Key_F11);
         QTRY_VERIFY(viewer.isFullScreen());
+        QVERIFY(viewer.screen());
+        QTRY_COMPARE(viewer.size(), viewer.screen()->geometry().size());
         QVERIFY(top->isVisible() && bottom->isVisible());
         QVERIFY(idle->isActive());
+        // Fullscreen: controls are layered above the player rather than
+        // consuming height from its QVBoxLayout.
+        QTRY_COMPARE(player->layout()->indexOf(bottom), -1);
+        QTRY_COMPARE(surface->geometry(), player->rect());
+        const QRect fullSurface = surface->geometry();
+        QTRY_VERIFY(bottom->geometry().bottom() <= player->height());
+        QVERIFY(bottom->geometry().top() >= 0);
+        QVERIFY(bottom->geometry().width() > 0);
         // Exercise the timeout deterministically; no dependence on real sleep.
         QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
         auto *topEffect = qobject_cast<QGraphicsOpacityEffect *>(top->graphicsEffect());
@@ -263,6 +505,7 @@ private slots:
         QTRY_VERIFY(!bottom->isVisible());
         QCOMPARE(topEffect->opacity(), qreal(0));
         QCOMPARE(bottomEffect->opacity(), qreal(0));
+        QCOMPARE(surface->geometry(), fullSurface); // Fading must not resize playback.
         const QPoint local(25, 25);
         QMouseEvent movement(QEvent::MouseMove, QPointF(local), QPointF(player->mapToGlobal(local)),
                              Qt::NoButton, Qt::NoButton, Qt::NoModifier);
@@ -278,6 +521,8 @@ private slots:
 
         QTest::keyClick(&viewer, Qt::Key_Escape);
         QTRY_VERIFY(!viewer.isFullScreen());
+        QTRY_VERIFY(player->layout()->indexOf(bottom) >= 0);
+        QTRY_VERIFY(surface->height() < player->height()); // Restored normal layout.
         QVERIFY(top->isVisible());
         QVERIFY(bottom->isVisible());
         QCOMPARE(topEffect->opacity(), qreal(1));

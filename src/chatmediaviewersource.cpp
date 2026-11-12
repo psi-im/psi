@@ -127,6 +127,28 @@ ChatMediaViewerSource::ChatMediaViewerSource(FileSharingManager *manager, PsiAcc
         });
 }
 ChatMediaViewerSource::~ChatMediaViewerSource() { cancelContent(); }
+
+void ChatMediaViewerSource::setBorrowedPlayer(QString sourceId, QWidget *player,
+                                              std::function<bool()> restore)
+{
+    borrowedSourceId_ = std::move(sourceId);
+    // The SQL index can answer asynchronously, or may not exist for this MUC.
+    // Show the already-running decoder immediately; never wait for a query
+    // before reparenting it into the viewer.
+    view_.key = QStringLiteral("borrowed:") + borrowedSourceId_;
+    view_.name = player ? player->windowTitle() : QString();
+    view_.state = State::Ready;
+    const QPointer<QWidget> widget(player);
+    view_.video = [widget](QWidget *parent, std::function<void()>) -> QWidget * {
+        if (!widget)
+            return nullptr;
+        widget->setParent(parent);
+        return widget;
+    };
+    view_.videoReturn = [restore = std::move(restore)](QWidget *) {
+        return restore && restore();
+    };
+}
 void ChatMediaViewerSource::cancelContent()
 {
     ++contentEpoch_;
@@ -517,7 +539,8 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry, FileSharingIte
     entry_         = entry;
     source_        = entry.sourceId;
     view_          = {};
-    view_.key      = QString::number(contentEpoch_);
+    view_.key      = entry.sourceId == borrowedSourceId_
+        ? QStringLiteral("borrowed:") + borrowedSourceId_ : QString::number(contentEpoch_);
     view_.revision = 1;
     view_.name     = entry.name;
     view_.index    = entry.index;
@@ -692,4 +715,16 @@ void ChatMediaViewerSource::install(MamChatWidget *chat, PsiAccount *account, co
             : nullptr;
         MediaViewer::showImage(image, path, viewer, fullscreen);
     });
+    chat->setMediaPlayerTransferHandler(
+        [acc, manager, key, currentChat](const QUrl &url, QWidget *player,
+                                         std::function<bool()> restore, bool fullscreen) {
+            if (!acc || !manager || !currentChat || !player || url.scheme() != QLatin1String("share")
+                || url.path().isEmpty())
+                return false;
+            auto loaded = key.room ? currentChat->loadedMediaItems() : QList<QPointer<FileSharingItem>> {};
+            auto *viewer = new ChatMediaViewerSource(manager, acc, key, url.path(), {}, {}, 0, std::move(loaded));
+            viewer->setBorrowedPlayer(url.path(), player, std::move(restore));
+            MediaViewer::showImage({}, {}, viewer, fullscreen);
+            return true;
+        });
 }
