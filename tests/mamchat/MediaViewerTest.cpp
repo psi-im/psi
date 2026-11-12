@@ -369,7 +369,7 @@ private slots:
         QTRY_COMPARE(player->layout()->indexOf(bottom), -1);
         QTRY_COMPARE(surface->geometry(), player->rect());
         const QRect fullSurface = surface->geometry();
-        QVERIFY(bottom->geometry().bottom() <= player->height());
+        QTRY_VERIFY(bottom->geometry().bottom() <= player->height());
         QVERIFY(bottom->geometry().top() >= 0);
         QVERIFY(bottom->geometry().width() > 0);
         // Exercise the timeout deterministically; no dependence on real sleep.
