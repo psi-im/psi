@@ -212,6 +212,105 @@ private slots:
         QTRY_VERIFY(!viewer.isFullScreen());
         QVERIFY(viewer.isVisible());
     }
+    void fullscreenPhotoAutoHidesToolbarWithoutMovingImage()
+    {
+        QImage image(240, 140, QImage::Format_RGB32);
+        image.fill(Qt::blue);
+        MediaViewer viewer(image);
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        auto *top = viewer.findChild<QWidget *>(QStringLiteral("mediaViewerControls"));
+        auto *idle = viewer.findChild<QTimer *>(QStringLiteral("mediaFullscreenIdleTimer"));
+        QVERIFY(top && idle);
+        QVERIFY(top->isVisible());
+
+        QTest::keyClick(&viewer, Qt::Key_F);
+        QTRY_VERIFY(viewer.isFullScreen());
+        QVERIFY(top->isVisible());
+        QVERIFY(idle->isActive());
+        const QRectF shown = viewer.displayedImageRect();
+
+        QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
+        QTRY_VERIFY(!top->isVisible());
+        QCOMPARE(viewer.displayedImageRect(), shown);
+        auto *effect = qobject_cast<QGraphicsOpacityEffect *>(top->graphicsEffect());
+        QVERIFY(effect);
+        QCOMPARE(effect->opacity(), qreal(0));
+
+        const QPoint point(40, qMax(50, viewer.height() / 2));
+        QMouseEvent movement(QEvent::MouseMove, QPointF(point), QPointF(viewer.mapToGlobal(point)),
+                             Qt::NoButton, Qt::NoButton, Qt::NoModifier);
+        QApplication::sendEvent(&viewer, &movement);
+        QVERIFY(top->isVisible());
+        QVERIFY(idle->isActive());
+        QCOMPARE(viewer.displayedImageRect(), shown);
+
+        QTest::keyClick(&viewer, Qt::Key_F);
+        QTRY_VERIFY(!viewer.isFullScreen());
+        QVERIFY(top->isVisible());
+        QVERIFY(!idle->isActive());
+        QCOMPARE(effect->opacity(), qreal(1));
+    }
+
+    void videoPlayPauseUsesSpaceAndSurfaceClick()
+    {
+        MediaViewer viewer(QImage());
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+        QCoreApplication::processEvents();
+        int toggles = 0;
+
+        MediaNavigationSource::View view;
+        view.key = QStringLiteral("video");
+        view.name = QStringLiteral("video.mp4");
+        view.revision = 1;
+        view.state = MediaNavigationSource::State::Ready;
+        view.video = [&toggles](QWidget *parent, std::function<void()>) {
+            auto *player = new QWidget(parent);
+            auto *layout = new QVBoxLayout(player);
+            layout->setContentsMargins(0, 0, 0, 0);
+            auto *surface = new QWidget(player);
+            surface->setObjectName(QStringLiteral("testPlaybackSurface"));
+            layout->addWidget(surface, 1);
+            auto *bottom = new QWidget(player);
+            bottom->setObjectName(QStringLiteral("qite-video-controls"));
+            auto *bottomLayout = new QVBoxLayout(bottom);
+            auto *play = new QToolButton(bottom);
+            play->setObjectName(QStringLiteral("qite-video-play"));
+            bottomLayout->addWidget(play);
+            layout->addWidget(bottom);
+            QObject::connect(play, &QToolButton::clicked, play, [&toggles] { ++toggles; });
+            return player;
+        };
+        emit source->changed(view);
+        auto *surface = viewer.findChild<QWidget *>(QStringLiteral("testPlaybackSurface"));
+        auto *play = viewer.findChild<QToolButton *>(QStringLiteral("qite-video-play"));
+        QVERIFY(surface && play);
+
+        QTest::keyClick(&viewer, Qt::Key_Space);
+        QCOMPARE(toggles, 1);
+        QTest::keyClick(surface, Qt::Key_Space);
+        QCOMPARE(toggles, 2);
+        QTest::mouseClick(surface, Qt::LeftButton);
+        QCOMPARE(toggles, 3);
+        // Native controls must not trigger two playback toggles.
+        QTest::mouseClick(play, Qt::LeftButton);
+        QCOMPARE(toggles, 4);
+        QTest::mouseClick(&viewer, Qt::LeftButton);
+        QCOMPARE(toggles, 5);
+        // Only the player has a Space playback action, never still images.
+        MediaNavigationSource::View still;
+        still.key = QStringLiteral("still");
+        still.name = QStringLiteral("still.png");
+        still.revision = 1;
+        emit source->changed(still);
+        QTest::keyClick(&viewer, Qt::Key_Space);
+        QCOMPARE(toggles, 5);
+    }
+
     void fullscreenVideoAutoHidesBothControlBars()
     {
         QImage image(80, 60, QImage::Format_RGB32);
@@ -244,7 +343,7 @@ private slots:
         emit source->changed(view);
         auto *top = viewer.findChild<QWidget *>("mediaViewerControls");
         auto *bottom = viewer.findChild<QWidget *>("qite-video-controls");
-        auto *idle = viewer.findChild<QTimer *>("mediaVideoIdleTimer");
+        auto *idle = viewer.findChild<QTimer *>("mediaFullscreenIdleTimer");
         QVERIFY(top && bottom && idle);
         auto *player = bottom->parentWidget();
         QVERIFY(player);
