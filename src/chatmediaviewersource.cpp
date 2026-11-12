@@ -384,8 +384,9 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry)
         const QUrl                              url(QStringLiteral("share:%1").arg(item_->sums().first().toString()));
         const QPointer<FileSharingDeviceOpener> opener(account_->fileSharingDeviceOpener());
         const auto                              position = std::exchange(initialPosition_, 0);
-        view_.video = [url, opener, position](QWidget *parent, std::function<void()> fullscreen) {
-            return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position)
+        const bool                              audio = entry.mime.startsWith(QLatin1String("audio/"));
+        view_.video = [url, opener, position, audio](QWidget *parent, std::function<void()> fullscreen) {
+            return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position, audio)
                           : nullptr;
         };
         view_.state = State::Ready;
