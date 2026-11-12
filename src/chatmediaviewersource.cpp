@@ -126,7 +126,22 @@ ChatMediaViewerSource::ChatMediaViewerSource(FileSharingManager *manager, PsiAcc
             publish();
         });
 }
-ChatMediaViewerSource::~ChatMediaViewerSource() { cancelContent(); }
+ChatMediaViewerSource::~ChatMediaViewerSource()
+{
+    cancelContent();
+    // A request can finish without selecting its video (e.g. SQL misses an
+    // uncached chat message). Do not leave its inline player loaned forever.
+    if (borrowedRestore_)
+        borrowedRestore_();
+}
+
+void ChatMediaViewerSource::setBorrowedPlayer(QString sourceId, QWidget *player,
+                                              std::function<bool()> restore)
+{
+    borrowedSourceId_ = std::move(sourceId);
+    borrowedPlayer_ = player;
+    borrowedRestore_ = std::move(restore);
+}
 void ChatMediaViewerSource::cancelContent()
 {
     ++contentEpoch_;
@@ -536,10 +551,26 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry, FileSharingIte
         const QPointer<FileSharingDeviceOpener> opener(account_->fileSharingDeviceOpener());
         const auto                              position = std::exchange(initialPosition_, 0);
         const bool                              audio = entry.mime.startsWith(QLatin1String("audio/"));
-        view_.video = [url, opener, position, audio](QWidget *parent, std::function<void()> fullscreen) {
-            return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position, audio)
-                          : nullptr;
-        };
+        if (borrowedPlayer_ && entry.sourceId == borrowedSourceId_) {
+            const QPointer<QWidget> widget = borrowedPlayer_;
+            auto restore = std::move(borrowedRestore_);
+            borrowedPlayer_ = nullptr;
+            borrowedSourceId_.clear();
+            view_.video = [widget](QWidget *parent, std::function<void()>) -> QWidget * {
+                if (!widget)
+                    return nullptr;
+                widget->setParent(parent);
+                return widget;
+            };
+            view_.videoReturn = [restore = std::move(restore)](QWidget *) {
+                return restore && restore();
+            };
+        } else {
+            view_.video = [url, opener, position, audio](QWidget *parent, std::function<void()> fullscreen) {
+                return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position, audio)
+                              : nullptr;
+            };
+        }
         view_.state = State::Ready;
         publish();
         return;
@@ -692,4 +723,16 @@ void ChatMediaViewerSource::install(MamChatWidget *chat, PsiAccount *account, co
             : nullptr;
         MediaViewer::showImage(image, path, viewer, fullscreen);
     });
+    chat->setMediaPlayerTransferHandler(
+        [acc, manager, key, currentChat](const QUrl &url, QWidget *player,
+                                         std::function<bool()> restore, bool fullscreen) {
+            if (!acc || !manager || !currentChat || !player || url.scheme() != QLatin1String("share")
+                || url.path().isEmpty())
+                return false;
+            auto loaded = key.room ? currentChat->loadedMediaItems() : QList<QPointer<FileSharingItem>> {};
+            auto *viewer = new ChatMediaViewerSource(manager, acc, key, url.path(), {}, {}, 0, std::move(loaded));
+            viewer->setBorrowedPlayer(url.path(), player, std::move(restore));
+            MediaViewer::showImage({}, {}, viewer, fullscreen);
+            return true;
+        });
 }
