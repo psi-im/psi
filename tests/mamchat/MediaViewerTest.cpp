@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
 #include <QToolButton>
+#include <QSlider>
 #include <QVBoxLayout>
 #include <QTimer>
 #include <QLabel>
@@ -393,6 +394,10 @@ private slots:
             auto *play = new QToolButton(bottom);
             play->setObjectName(QStringLiteral("qite-video-play"));
             bottomLayout->addWidget(play);
+            auto *seek = new QSlider(Qt::Horizontal, bottom);
+            seek->setObjectName(QStringLiteral("testSeekSlider"));
+            seek->setRange(0, 100);
+            bottomLayout->addWidget(seek);
             layout->addWidget(bottom);
             QObject::connect(play, &QToolButton::clicked, play, [&toggles] { ++toggles; });
             return player;
@@ -400,7 +405,8 @@ private slots:
         emit source->changed(view);
         auto *surface = viewer.findChild<QWidget *>(QStringLiteral("testPlaybackSurface"));
         auto *play = viewer.findChild<QToolButton *>(QStringLiteral("qite-video-play"));
-        QVERIFY(surface && play);
+        auto *seek = viewer.findChild<QSlider *>(QStringLiteral("testSeekSlider"));
+        QVERIFY(surface && play && seek);
 
         QTest::keyClick(&viewer, Qt::Key_Space);
         QCOMPARE(toggles, 1);
@@ -410,6 +416,15 @@ private slots:
         QCOMPARE(toggles, 3);
         // Native controls must not trigger two playback toggles.
         QTest::mouseClick(play, Qt::LeftButton);
+        QCOMPARE(toggles, 4);
+        // A seek bar click must not propagate into a pause, even if the
+        // slider leaves a mouse release for its parent to handle.
+        QTest::mouseClick(seek, Qt::LeftButton);
+        QCOMPARE(toggles, 4);
+        QWidget *player = seek->parentWidget()->parentWidget();
+        QVERIFY(player);
+        const QPoint controlPoint = player->mapFromGlobal(seek->mapToGlobal(seek->rect().center()));
+        QTest::mouseClick(player, Qt::LeftButton, Qt::NoModifier, controlPoint);
         QCOMPARE(toggles, 4);
         QTest::mouseClick(&viewer, Qt::LeftButton);
         QCOMPARE(toggles, 5);
