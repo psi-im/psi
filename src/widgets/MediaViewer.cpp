@@ -21,6 +21,7 @@
 #include <QImageWriter>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QLayout>
 #include <QMenu>
 #include <QMessageBox>
 #include <QMouseEvent>
@@ -357,6 +358,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     if (video_)
         delete video_.data();
     videoControls_ = nullptr;
+    videoControlsOverlay_ = false;
     fullscreenControlsHidden_ = false;
     if (fullscreenIdleTimer_)
         fullscreenIdleTimer_->stop();
@@ -566,6 +568,36 @@ void MediaViewer::togglePlayback()
     }
 }
 
+void MediaViewer::updateVideoControlsOverlay()
+{
+    if (!video_ || !videoControls_)
+        return;
+    auto *layout = video_->layout();
+    if (!layout)
+        return;
+
+    const bool overlay = isFullScreen();
+    if (overlay != videoControlsOverlay_) {
+        if (overlay) {
+            // qite's normal vertical layout reserves space for its controls.
+            // Only fullscreen uses an overlay so video and audio artwork can
+            // occupy the entire player while the controls fade in/out.
+            layout->removeWidget(videoControls_);
+        } else {
+            layout->addWidget(videoControls_);
+        }
+        videoControlsOverlay_ = overlay;
+        layout->activate();
+    }
+    if (overlay) {
+        constexpr int inset = 12;
+        const int height = videoControls_->sizeHint().height();
+        videoControls_->setGeometry(inset, qMax(0, video_->height() - height - inset),
+                                   qMax(0, video_->width() - inset * 2), height);
+        videoControls_->raise();
+    }
+}
+
 void MediaViewer::trackActivityWidget(QWidget *widget)
 {
     if (!widget)
@@ -658,6 +690,7 @@ void MediaViewer::updateFullscreenUi()
 {
     if (!controls_ || !fullscreenIdleTimer_)
         return;
+    updateVideoControlsOverlay();
     auto *button = controls_->findChild<QToolButton *>(QStringLiteral("mediaFullscreen"));
     if (button) {
         const bool full = isFullScreen();
@@ -690,6 +723,8 @@ void MediaViewer::updateFullscreenUi()
 
 bool MediaViewer::eventFilter(QObject *object, QEvent *event)
 {
+    if (object == video_ && event->type() == QEvent::Resize && videoControlsOverlay_)
+        updateVideoControlsOverlay();
     if (isFullScreen()) {
         if (event->type() == QEvent::MouseMove) {
             auto *move = static_cast<QMouseEvent *>(event);
@@ -762,6 +797,7 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
         if (video_) {
             delete video_.data();
             videoControls_ = nullptr;
+            videoControlsOverlay_ = false;
             if (fullscreenIdleTimer_)
                 fullscreenIdleTimer_->stop();
             fullscreenControlsHidden_ = false;
@@ -1124,8 +1160,11 @@ void MediaViewer::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (controls_)
         controls_->setGeometry(0, 0, width(), controls_->sizeHint().height());
-    if (video_)
+    if (video_) {
         video_->setGeometry(contentRect());
+        if (videoControlsOverlay_)
+            updateVideoControlsOverlay();
+    }
     resetTemporaryZoom();
 }
 
