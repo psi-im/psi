@@ -283,11 +283,13 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
 
 QIcon FileSharingItem::thumbnail(const QSize &size) const
 {
-    if (_fileType == FileType::RemoteFile)
+    const auto *cached = cache();
+    if (_fileType == FileType::RemoteFile && !cached)
         return QIcon();
 
     QImage image;
-    if (_mimeType.startsWith(QLatin1String("image")) && image.load(_fileName)) {
+    const QString path = cached ? cached->filePath() : _fileName;
+    if (_mimeType.startsWith(QLatin1String("image")) && image.load(path)) {
         auto   img = image.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         QImage back(64, 64, QImage::Format_ARGB32_Premultiplied);
         back.fill(Qt::transparent);
@@ -297,13 +299,17 @@ QIcon FileSharingItem::thumbnail(const QSize &size) const
         painter.drawImage(imgRect, img);
         return QIcon(QPixmap::fromImage(std::move(back)));
     }
-    return QFileIconProvider().icon(QFileInfo(_fileName));
+    return QFileIconProvider().icon(QFileInfo(path));
 }
 
 QImage FileSharingItem::preview(const QSize &maxSize) const
 {
     QImage image;
-    if (image.load(_fileName)) {
+    // A file may enter the verified cache after this item was constructed
+    // (notably when the media viewer downloads it). Its original _fileName
+    // still names the remote announcement, not the downloaded payload.
+    const auto *cached = cache();
+    if (image.load(cached ? cached->filePath() : _fileName)) {
         auto s = image.size().boundedTo(maxSize);
         return image.scaled(s, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
