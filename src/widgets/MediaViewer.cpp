@@ -53,6 +53,11 @@ QPoint globalMousePoint(const QMouseEvent *event) { return event->globalPosition
 QPoint globalMousePoint(const QMouseEvent *event) { return event->globalPos(); }
 #endif
 
+bool insideVisibleWidget(const QWidget *widget, const QPoint &global)
+{
+    return widget && widget->isVisible() && widget->rect().contains(widget->mapFromGlobal(global));
+}
+
 constexpr int   Margin   = 16;
 constexpr qreal ZoomStep = 1.2;
 
@@ -569,6 +574,7 @@ void MediaViewer::togglePlayback()
 
 void MediaViewer::releaseVideo()
 {
+    playbackSurfacePressed_ = false;
     QWidget *old = video_.data();
     if (!old) {
         videoReturn_ = {};
@@ -758,21 +764,35 @@ bool MediaViewer::eventFilter(QObject *object, QEvent *event)
             noteFullscreenActivity(true);
         }
     }
-    // Only the playback surface handles click/Space as play/pause.
-    // Do not hijack the seek slider, playback controls, or viewer toolbar.
+    // Accept playback clicks only when both press and release originated on
+    // the actual video surface. In particular, a QSlider groove click may
+    // leave its release unaccepted, which Qt then propagates to the player.
+    // The propagated release must not pause playback after a seek.
     if (video_) {
         auto *widget = qobject_cast<QWidget *>(object);
         const bool onSurface = widget && (widget == video_ || video_->isAncestorOf(widget))
             && !(videoControls_ && (widget == videoControls_ || videoControls_->isAncestorOf(widget)));
-        if (onSurface && event->type() == QEvent::MouseButtonRelease) {
+        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
             auto *mouse = static_cast<QMouseEvent *>(event);
-            if (mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier) {
-                togglePlayback();
-                return true;
+            if (mouse->button() == Qt::LeftButton) {
+                const QPoint global = globalMousePoint(mouse);
+                const bool onControls = insideVisibleWidget(videoControls_, global)
+                    || insideVisibleWidget(controls_, global);
+                const bool valid = onSurface && !onControls && mouse->modifiers() == Qt::NoModifier;
+                if (event->type() == QEvent::MouseButtonPress) {
+                    playbackSurfacePressed_ = valid;
+                } else {
+                    const bool pressed = std::exchange(playbackSurfacePressed_, false);
+                    if (pressed && valid) {
+                        togglePlayback();
+                        return true;
+                    }
+                }
             }
         } else if (onSurface && event->type() == QEvent::KeyPress) {
             auto *key = static_cast<QKeyEvent *>(event);
-            if (key->key() == Qt::Key_Space && (key->modifiers() & ~Qt::KeypadModifier) == Qt::NoModifier) {
+            if (key->key() == Qt::Key_Space && (key->modifiers() & ~Qt::KeypadModifier) == Qt::NoModifier
+                && !(videoControls_ && videoControls_->isAncestorOf(QApplication::focusWidget()))) {
                 if (!key->isAutoRepeat())
                     togglePlayback();
                 return true;
@@ -1036,6 +1056,11 @@ void MediaViewer::paintEvent(QPaintEvent *)
 
 void MediaViewer::mousePressEvent(QMouseEvent *event)
 {
+    if (event->button() == Qt::LeftButton)
+        playbackSurfacePressed_ = video_ && video_->geometry().contains(event->pos())
+            && !insideVisibleWidget(videoControls_, globalMousePoint(event))
+            && !insideVisibleWidget(controls_, globalMousePoint(event))
+            && event->modifiers() == Qt::NoModifier;
     if (event->button() == Qt::LeftButton && canPan() && displayedImageRect().contains(event->pos())) {
         dragging_         = true;
         lastDragPosition_ = event->pos();
@@ -1074,10 +1099,16 @@ void MediaViewer::mouseReleaseEvent(QMouseEvent *event)
         event->accept();
         return;
     }
-    if (video_ && event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier) {
-        togglePlayback();
-        event->accept();
-        return;
+    if (event->button() == Qt::LeftButton) {
+        const bool pressed = std::exchange(playbackSurfacePressed_, false);
+        if (pressed && video_ && video_->geometry().contains(event->pos())
+            && !insideVisibleWidget(videoControls_, globalMousePoint(event))
+            && !insideVisibleWidget(controls_, globalMousePoint(event))
+            && event->modifiers() == Qt::NoModifier) {
+            togglePlayback();
+            event->accept();
+            return;
+        }
     }
     QWidget::mouseReleaseEvent(event);
 }
