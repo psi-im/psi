@@ -126,14 +126,7 @@ ChatMediaViewerSource::ChatMediaViewerSource(FileSharingManager *manager, PsiAcc
             publish();
         });
 }
-ChatMediaViewerSource::~ChatMediaViewerSource()
-{
-    cancelContent();
-    // A request can finish without selecting its video (e.g. SQL misses an
-    // uncached chat message). Do not leave its inline player loaned forever.
-    if (borrowedRestore_)
-        borrowedRestore_();
-}
+ChatMediaViewerSource::~ChatMediaViewerSource() { cancelContent(); }
 
 void ChatMediaViewerSource::setBorrowedPlayer(QString sourceId, QWidget *player,
                                               std::function<bool()> restore)
@@ -566,26 +559,10 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry, FileSharingIte
         const QPointer<FileSharingDeviceOpener> opener(account_->fileSharingDeviceOpener());
         const auto                              position = std::exchange(initialPosition_, 0);
         const bool                              audio = entry.mime.startsWith(QLatin1String("audio/"));
-        if (borrowedPlayer_ && entry.sourceId == borrowedSourceId_) {
-            const QPointer<QWidget> widget = borrowedPlayer_;
-            auto restore = std::move(borrowedRestore_);
-            borrowedPlayer_ = nullptr;
-            borrowedSourceId_.clear();
-            view_.video = [widget](QWidget *parent, std::function<void()>) -> QWidget * {
-                if (!widget)
-                    return nullptr;
-                widget->setParent(parent);
-                return widget;
-            };
-            view_.videoReturn = [restore = std::move(restore)](QWidget *) {
-                return restore && restore();
-            };
-        } else {
-            view_.video = [url, opener, position, audio](QWidget *parent, std::function<void()> fullscreen) {
-                return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position, audio)
-                              : nullptr;
-            };
-        }
+        view_.video = [url, opener, position, audio](QWidget *parent, std::function<void()> fullscreen) {
+            return opener ? ITEVideoController::createPlayer(url, opener, parent, std::move(fullscreen), position, audio)
+                          : nullptr;
+        };
         view_.state = State::Ready;
         publish();
         return;
