@@ -1,7 +1,6 @@
 #include "filesharingjinglesession.h"
 #include <QTimer>
 #include <iris/jingle-ft.h>
-#include <iris/jingle-ibb.h>
 #include <iris/xmpp_client.h>
 #include <iris/xmpp_caps.h>
 #define private public
@@ -113,7 +112,7 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
         cancel.append(pool.request(bob.jid, rangeFile, &consumers[i], [&, i](FT::Application *a) {
             check(a, "request setup failed");
             if (unavailablePeerCaps)
-                check(a->transport() && a->transport()->pad()->ns() == J::IBB::NS,
+                check(a->transport() && a->transport()->pad()->ns() == QLatin1String("urn:xmpp:jingle:transports:ibb:1"),
                       "missing-capabilities request must use safe IBB fallback");
             requestParts.append(a);
             auto *session = a->pad()->session();
