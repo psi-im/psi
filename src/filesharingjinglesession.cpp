@@ -34,7 +34,11 @@ public:
     QPointer<J::Manager>                  manager;
     QHash<QString, std::shared_ptr<Peer>> peers;
     bool                                  scheduled = false;
-    static constexpr int                  IdleBundleGraceMs = 3000;
+    // Iris's Jingle FT finalize/receipt deadline is 30 seconds. Allow a
+    // delayed next media range to reuse BUNDLE (including slow decode or
+    // cached reads), but release the previous receipt well before that
+    // protocol deadline so the sender cannot time out waiting for it.
+    static constexpr int                  IdleBundleGraceMs = 20000;
 
     void schedule()
     {
