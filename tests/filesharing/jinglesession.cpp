@@ -1,4 +1,5 @@
 #include "filesharingjinglesession.h"
+#include <QTimer>
 #include <iris/jingle-ft.h>
 #include <iris/xmpp_client.h>
 #define private public
@@ -9,7 +10,7 @@
 
 namespace FT = J::FileTransfer;
 
-static void queuedRanges(bool grouping, bool cancelLast = false)
+static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false)
 {
     TcpPortReserver reserver;
     Endpoint        alice(QStringLiteral("alice")), bob(QStringLiteral("bob"));
@@ -97,7 +98,8 @@ static void queuedRanges(bool grouping, bool cancelLast = false)
     QObject                consumers[3];
     QByteArray             received[3];
     QList<MediaChunkAbort> cancel;
-    for (int i = 0; i < 3; ++i) {
+    std::function<void(int)> requestRange;
+    requestRange = [&](int i) {
         auto rangeFile = file;
         rangeFile.setRange(FT::Range(quint64(i * 8192), 8192));
         cancel.append(pool.request(bob.jid, rangeFile, &consumers[i], [&, i](FT::Application *a) {
@@ -131,9 +133,16 @@ static void queuedRanges(bool grouping, bool cancelLast = false)
             QObject::connect(a, &FT::Application::payloadVerified, &consumers[i], [&, i, a] {
                 ++verified;
                 cancel[i](); // Release the consumer, preserving the queued handover.
+                if (lateArrival && i < 2)
+                    QTimer::singleShot(100, &consumers[i], [&, i] { requestRange(i + 1); });
             });
         }));
-    }
+    };
+    if (lateArrival)
+        requestRange(0);
+    else
+        for (int i = 0; i < 3; ++i)
+            requestRange(i);
     if (!cancelLast) {
         check(pumpUntil(alice, bob, [&] { return verified == 2 && receipts == 2 && bool(releaseLast); }),
               "last range did not hold the session open");
@@ -170,7 +179,7 @@ static void queuedRanges(bool grouping, bool cancelLast = false)
                           return false;
                   return true;
               },
-              1000),
+              grouping && !cancelLast ? 5000 : 1000),
           "completed/cancelled ranges left a Jingle session alive");
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     for (const auto &s : sourceSessions)
@@ -209,6 +218,7 @@ int main(int argc, char **argv)
         return 77;
     }
     queuedRanges(true);
+    queuedRanges(true, false, true); // A player requests each range only after the previous one completes.
     queuedRanges(false);
     queuedRanges(true, true);
     deletionDuringSetup();
