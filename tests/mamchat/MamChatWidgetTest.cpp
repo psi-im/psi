@@ -959,7 +959,7 @@ private slots:
         });
         room.setHistoryLoading(true);
         room.appendMessage(message(QStringLiteral("photo"),
-                                   QStringLiteral("<share id=\\\"room-image\\\"/>")));
+                                   QStringLiteral("<share id=\"room-image\"/>")));
         room.show();
         QTRY_VERIFY(room.itemWidget(0));
         auto *preview = room.itemWidget(0)->findChild<QToolButton *>(QStringLiteral("mamFileImagePreview"));
