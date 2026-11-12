@@ -659,6 +659,11 @@ void PsiTextView::setVideoOpenHandler(std::function<bool(const QUrl &, qint64, b
 {
     d->videoCtrl->setWindowHandler(std::move(handler));
 }
+void PsiTextView::setVideoTransferHandler(
+    std::function<bool(const QUrl &, QWidget *, std::function<bool()>, bool)> handler)
+{
+    d->videoCtrl->setPlayerTransferHandler(std::move(handler));
+}
 
 void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
