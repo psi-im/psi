@@ -191,7 +191,7 @@ private slots:
     {
         QTemporaryDir   directory;
         MediaChunkCache cache(directory.path());
-        const quint64   size = 3 * 1024 * 1024;
+        const quint64   size = 6 * 1024 * 1024;
         QList<QPair<quint64, quint64>> fetched;
         bool unexpectedWhole = false;
         FileDownload download(&cache, "video", size, "account",
@@ -216,7 +216,50 @@ private slots:
         QCOMPARE(reader.read(1), pattern(256 * 1024, 1));
         QCOMPARE(fetched.size(), 2);
         QCOMPARE(fetched.last(), (QPair<quint64, quint64> { 256 * 1024, 768 * 1024 }));
+        QVERIFY(reader.seek(1024 * 1024));
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QCOMPARE(reader.read(1), pattern(1024 * 1024, 1));
+        QCOMPARE(fetched.size(), 3);
+        QCOMPARE(fetched.last(), (QPair<quint64, quint64> { 1024 * 1024, 1024 * 1024 }));
+        QVERIFY(reader.seek(2 * 1024 * 1024));
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QCOMPARE(reader.read(1), pattern(2 * 1024 * 1024, 1));
+        QCOMPARE(fetched.size(), 4);
+        QCOMPARE(fetched.last(), (QPair<quint64, quint64> { 2 * 1024 * 1024, 2 * 1024 * 1024 }));
         QVERIFY(!unexpectedWhole);
+    }
+
+    void pauseCancelsOnlyTheReadersNetworkDemand()
+    {
+        QTemporaryDir   directory;
+        MediaChunkCache cache(directory.path());
+        QList<MediaChunkCompletion> responses;
+        int starts = 0, aborts = 0;
+        FileDownload download(&cache, "paused", 1024 * 1024, "account",
+                              [&](quint64, quint64, FileDownload::FullDownloadAllowed,
+                                  MediaChunkCompletion done) -> MediaChunkAbort {
+                                  ++starts;
+                                  responses.append(std::move(done));
+                                  return [&] { ++aborts; };
+                              });
+        FileReader reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.read(16).isEmpty());
+        QTRY_COMPARE(starts, 1);
+        reader.setSuspended(true);
+        QTRY_COMPARE(aborts, 1);
+        QCOMPARE(reader.errorCode(), MediaChunkError::None);
+        QVERIFY(reader.read(16).isEmpty());
+        QTest::qWait(30);
+        QCOMPARE(starts, 1);
+        reader.setSuspended(false);
+        QTRY_COMPARE(starts, 2);
+        responses.last()(pattern(0, 64 * 1024), {});
+        QTRY_VERIFY(reader.bytesAvailable() >= 16);
+        QCOMPARE(reader.read(16), pattern(0, 16));
+        QCOMPARE(reader.errorCode(), MediaChunkError::None);
     }
 
     void unavailableDiskUsesSharedMemoryWithoutClaimingCompletion()
