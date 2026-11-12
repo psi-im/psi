@@ -940,6 +940,42 @@ private slots:
         QVERIFY(room.loadedMediaItems().isEmpty());
     }
 
+    void imageOnlyRoomMessageRendersWithoutMam()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = true;
+        image.preview_ = QImage(120, 80, QImage::Format_RGB32);
+        image.preview_.fill(Qt::blue);
+        opener.items.insert(QStringLiteral("sole-image"), &image);
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setHistoryLoading(true);
+        // No caption, no MAM and no other rendered text. The sole share must
+        // not be hidden or reduced to an empty message.
+        room.appendMessage(message(QStringLiteral("image-only"),
+                                   QStringLiteral("<share id=\"sole-image\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *body = room.itemWidget(0)->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+        QVERIFY(body);
+        QVERIFY(!body->isHidden());
+        bool foundImage = false;
+        for (QTextBlock block = body->document()->begin(); block.isValid(); block = block.next()) {
+            for (auto it = block.begin(); !it.atEnd(); ++it) {
+                if (it.fragment().charFormat().isImageFormat()) {
+                    const auto fmt = it.fragment().charFormat().toImageFormat();
+                    QCOMPARE(fmt.width(), qreal(120));
+                    QCOMPARE(fmt.height(), qreal(80));
+                    foundImage = true;
+                }
+            }
+        }
+        QVERIFY(foundImage);
+    }
+
     void nonDownloadedRoomImageCanBePreviewedWithoutMam()
     {
         FileSharingDeviceOpener opener;
