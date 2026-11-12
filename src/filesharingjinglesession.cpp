@@ -176,13 +176,23 @@ public:
             part->verified = true;
             schedule();
         });
-        QObject::connect(app, &J::Application::stateChanged, q, [this, part, previous](J::State state) {
-            if (state == J::State::Active) {
-                // Active is emitted during answer processing. Wait for that
-                // processing to commit before releasing the old receipt.
-                QTimer::singleShot(0, q, [this, part, previous] {
-                    part->accepted = true;
-                    schedule();
+        QObject::connect(app, &J::Application::stateChanged, q, [this, peer, part, previous](J::State state) {
+            if (state == J::State::Connecting || state == J::State::Active) {
+                // A BUNDLE extension is committed when content-accept finishes,
+                // before its new SCTP data channel becomes connected. The old
+                // range may still be holding its receipt, and waiting for the
+                // successor's Active state can deadlock the handover.
+                // Defer until after the acceptance stack has committed the
+                // negotiated group before releasing that receipt.
+                QTimer::singleShot(0, q, [this, peer, part, previous] {
+                    if (!part->app || part->app->state() >= J::State::Finishing)
+                        return;
+                    if (previous && !grouped(part, peer->session))
+                        return; // The BUNDLE extension has not committed.
+                    if (!part->accepted) {
+                        part->accepted = true;
+                        schedule();
+                    }
                     close(previous);
                 });
             } else if (state == J::State::Finished) {
