@@ -13,6 +13,7 @@
 #include <QCoreApplication>
 #include <QFileInfo>
 #include <QMimeDatabase>
+#include <QSet>
 #include <QFutureWatcher>
 #include <QTimer>
 #include <QThreadPool>
@@ -273,12 +274,16 @@ void ChatMediaViewerSource::refreshLive()
     liveFiltered_.clear();
     LiveItem opened;
     bool foundOpened = false;
+    QSet<QString> seen;
     for (const auto &file : std::as_const(loadedFiles_)) {
         if (!file || file->sums().isEmpty() || file->account() != account_)
             continue;
         LiveItem item;
         item.file = file;
         item.sourceId = file->sums().constFirst().toString();
+        if (item.sourceId.isEmpty() || seen.contains(item.sourceId))
+            continue;
+        seen.insert(item.sourceId);
         item.name = file->displayName();
         item.mime = file->mimeType().toLower();
         if (item.mime.isEmpty() || item.mime == QLatin1String("application/octet-stream"))
