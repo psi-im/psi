@@ -940,6 +940,35 @@ private slots:
         QVERIFY(room.loadedMediaItems().isEmpty());
     }
 
+    void nonDownloadedRoomImageCanBePreviewedWithoutMam()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem image(QStringLiteral("image/png"));
+        image.cached_ = false;
+        image.downloadsItself_ = false;
+        opener.items.insert(QStringLiteral("room-image"), &image);
+        QString openedId;
+        MamChatWidget room;
+        room.resize(550, 350);
+        room.setGroupChat(true);
+        room.setMediaOpener(&opener);
+        room.setMediaOpenHandler([&openedId](const QImage &preview, const QString &, const QString &sourceId,
+                                               qint64, bool) {
+            QVERIFY(preview.isNull());
+            openedId = sourceId;
+        });
+        room.setHistoryLoading(true);
+        room.appendMessage(message(QStringLiteral("photo"),
+                                   QStringLiteral("<share id=\\\"room-image\\\"/>")));
+        room.show();
+        QTRY_VERIFY(room.itemWidget(0));
+        auto *preview = room.itemWidget(0)->findChild<QToolButton *>(QStringLiteral("mamFileImagePreview"));
+        QVERIFY(preview);
+        QVERIFY(preview->isVisible());
+        QTest::mouseClick(preview, Qt::LeftButton);
+        QCOMPARE(openedId, QStringLiteral("room-image"));
+    }
+
     void imageContextMenuCopiesOnlyHttpLinks_data()
     {
         QTest::addColumn<QString>("source");
