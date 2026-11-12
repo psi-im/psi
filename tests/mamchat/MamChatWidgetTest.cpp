@@ -918,6 +918,28 @@ private slots:
         delete menu;
     }
 
+    void loadedRoomMediaIncludesNonMaterializedMessagesWithoutDuplicates()
+    {
+        FileSharingItem picture(QStringLiteral("image/png"));
+        FileSharingItem audio(QStringLiteral("audio/ogg"));
+        MamChatWidget room;
+        room.setGroupChat(true);
+        room.setHistoryLoading(true);
+        auto first = message(QStringLiteral("photo"), QStringLiteral("Image"), 1);
+        first.addReference(&picture);
+        room.appendMessage(first);
+        auto second = message(QStringLiteral("audio"), QStringLiteral("Audio"), 2);
+        second.addReference(&picture); // Repeated share is one gallery item.
+        second.addReference(&audio);
+        room.appendMessage(second);
+        const auto items = room.loadedMediaItems();
+        QCOMPARE(items.size(), 2);
+        QCOMPARE(items.at(0).data(), &picture);
+        QCOMPARE(items.at(1).data(), &audio);
+        room.clearMessages();
+        QVERIFY(room.loadedMediaItems().isEmpty());
+    }
+
     void imageContextMenuCopiesOnlyHttpLinks_data()
     {
         QTest::addColumn<QString>("source");
