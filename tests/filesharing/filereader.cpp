@@ -193,10 +193,11 @@ private slots:
         MediaChunkCache cache(directory.path());
         const quint64   size = 3 * 1024 * 1024;
         QList<QPair<quint64, quint64>> fetched;
+        bool unexpectedWhole = false;
         FileDownload download(&cache, "video", size, "account",
                               [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
                                   MediaChunkCompletion done) -> MediaChunkAbort {
-                                  QVERIFY(!whole());
+                                  unexpectedWhole |= whole();
                                   fetched.append({ offset, length });
                                   done(pattern(offset, length), {});
                                   return {};
@@ -215,6 +216,7 @@ private slots:
         QCOMPARE(reader.read(1), pattern(256 * 1024, 1));
         QCOMPARE(fetched.size(), 2);
         QCOMPARE(fetched.last(), (QPair<quint64, quint64> { 256 * 1024, 768 * 1024 }));
+        QVERIFY(!unexpectedWhole);
     }
 
     void unavailableDiskUsesSharedMemoryWithoutClaimingCompletion()
