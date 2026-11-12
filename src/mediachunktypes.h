@@ -12,7 +12,7 @@
 // Control flow uses the code; message is diagnostic text only.
 class MediaChunkError {
 public:
-    enum Code { None, Failed, Cancelled, RangeUnsupported, IntegrityError, StorageUnavailable };
+    enum Code { None, Failed, Cancelled, RangeUnsupported, IntegrityError, StorageUnavailable, Unavailable };
     MediaChunkError() = default;
     MediaChunkError(QString message) : code_(message.isEmpty() ? None : Failed), message_(std::move(message)) { }
     MediaChunkError(Code code, QString message) : code_(code), message_(std::move(message)) { }

@@ -55,9 +55,9 @@
 #include "mainwin.h"
 #include "mucjoindlg.h"
 #include "networkaccessmanager.h"
-#include "widgets/ImageViewer.h"
 #include "options/opt_toolbars.h"
 #include "options/optionsdlg.h"
+#include "widgets/MediaViewer.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
@@ -765,13 +765,26 @@ bool PsiCon::init()
     // init spellchecker
     optionChanged("options.ui.spell-check.langs");
 
-    ImageViewer::setSizePersistence(
+    MediaViewer::setSizePersistence(
         [] { return PsiOptions::instance()->getOption("options.ui.save.image-viewer-size").toSize(); },
         [](const QSize &size) { PsiOptions::instance()->setOption("options.ui.save.image-viewer-size", size); });
-    ImageViewer::setSavePathPersistence(
+    MediaViewer::setSavePathPersistence(
         [] { return PsiOptions::instance()->getOption("options.ui.save.image-viewer-save-path").toString(); },
-        [](const QString &path) {
-            PsiOptions::instance()->setOption("options.ui.save.image-viewer-save-path", path);
+        [](const QString &path) { PsiOptions::instance()->setOption("options.ui.save.image-viewer-save-path", path); });
+    MediaViewer::setFilterPersistence(
+        [] {
+            auto *options = PsiOptions::instance();
+            return MediaFilter {
+                options->getOption("options.ui.save.media-viewer-types",
+                                   int(MediaFilter::Images | MediaFilter::Videos)).toInt(),
+                options->getOption("options.ui.save.media-viewer-availability",
+                                   int(MediaFilter::Complete | MediaFilter::Partial)).toInt()
+            };
+        },
+        [](MediaFilter filter) {
+            auto *options = PsiOptions::instance();
+            options->setOption("options.ui.save.media-viewer-types", filter.types);
+            options->setOption("options.ui.save.media-viewer-availability", filter.availability);
         });
 
     // try autologin if needed

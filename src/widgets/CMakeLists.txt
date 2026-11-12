@@ -20,7 +20,7 @@ set(SOURCES
     MessagePreview.cpp
     LinkButton.cpp
     MamChatWidget.cpp
-    ImageViewer.cpp
+    MediaViewer.cpp
     MamHistorySource.cpp
     LongListWidgetLayout.cpp
     busywidget.cpp
@@ -62,7 +62,7 @@ set(HEADERS
     MessagePreview.h
     LinkButton.h
     MamChatWidget.h
-    ImageViewer.h
+    MediaViewer.h
     MamHistorySource.h
     actionlineedit.h
     busywidget.h

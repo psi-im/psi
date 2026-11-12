@@ -19,7 +19,7 @@
 #endif
 
 namespace {
-const int SchemaVersion = 6;
+const int SchemaVersion = 7;
 
 // What each schema version adds to the one before it.
 const QList<QStringList> &schemaUpgrades()
@@ -69,7 +69,9 @@ const QList<QStringList> &schemaUpgrades()
           "ALTER TABLE files ADD COLUMN scope_account TEXT",
           "CREATE INDEX file_checksums_digest ON file_checksums(algorithm,digest,file_id) WHERE offset=0" },
         { "DROP INDEX file_hashes_key",
-          "CREATE INDEX file_hashes_key ON file_hashes(CAST(algorithm || '+' || lower(hex(digest)) AS TEXT))" }
+          "CREATE INDEX file_hashes_key ON file_hashes(CAST(algorithm || '+' || lower(hex(digest)) AS TEXT))" },
+        { "CREATE INDEX IF NOT EXISTS url_content_hash ON url_content(account,content_hash)" }
+        // The media type column and metadata backfill are handled together below.
     };
     return upgrades;
 }
@@ -99,6 +101,33 @@ bool prepare(QSqlDatabase &db)
     for (int upgrade = version; upgrade < SchemaVersion; ++upgrade) {
         for (const auto &statement : schemaUpgrades().at(upgrade)) {
             if (!query.exec(statement)) {
+                db.rollback();
+                return false;
+            }
+        }
+        if (upgrade == 6) {
+            if (!query.exec("SELECT media_type FROM files LIMIT 0")
+                && !query.exec("ALTER TABLE files ADD COLUMN media_type TEXT NOT NULL DEFAULT ''")) {
+                db.rollback();
+                return false;
+            }
+            query.finish();
+            QSqlQuery rows(db), update(db);
+            if (!rows.exec("SELECT id,metadata FROM files")) {
+                db.rollback();
+                return false;
+            }
+            update.prepare("UPDATE files SET media_type=COALESCE(:mime,'') WHERE id=:id");
+            while (rows.next()) {
+                update.bindValue(":id", rows.value(0));
+                update.bindValue(":mime",
+                                 FileDatabase::decodeMetadata(rows.value(1).toByteArray()).value("type").toString());
+                if (!update.exec()) {
+                    db.rollback();
+                    return false;
+                }
+            }
+            if (rows.lastError().isValid()) {
                 db.rollback();
                 return false;
             }

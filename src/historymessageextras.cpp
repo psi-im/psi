@@ -4,9 +4,11 @@
 #include "iris/xmpp_reference.h"
 #include "oobmediapolicy.h"
 #include <QCryptographicHash>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMimeDatabase>
 #include <algorithm>
 
 namespace {
@@ -190,6 +192,8 @@ QList<MessageFileShares::FileShare> HistoryMessageExtras::indexedFiles(const XMP
             file.reference.setRange(at, end);
         legacy.append(file);
     }
+    if (legacy.isEmpty() && AesGcmUrl::parse(QUrl(message.body().trimmed())))
+        return MessageFileShares::collect(message).files;
     return legacy;
 }
 
@@ -223,7 +227,14 @@ QJsonArray HistoryMessageExtras::mediaRefs(const XMPP::Message &message, int ver
             hashes.append(QJsonObject { { "algorithm", hash.stringType() },
                                         { "digest", QString::fromLatin1(hash.data().toHex()) },
                                         { "id", hash.toString() } });
-        QJsonObject resource { { "hashes", hashes } };
+        const auto name = media.file.name().isEmpty() ? QFileInfo(file.url().path()).fileName() : media.file.name();
+        auto       mime = media.file.mediaType().toLower();
+        if (mime.isEmpty() || mime == QLatin1String("application/octet-stream"))
+            mime = QMimeDatabase().mimeTypeForFile(name, QMimeDatabase::MatchExtension).name();
+        const int kind = mime.startsWith(QLatin1String("image/")) ? 1
+            : mime.startsWith(QLatin1String("video/")) || mime.startsWith(QLatin1String("audio/")) ? 2
+                                                                                                    : 4;
+        QJsonObject resource { { "hashes", hashes }, { "name", name }, { "mime", mime }, { "kind", kind } };
         if (const auto size = media.file.size())
             resource.insert("size", QString::number(*size));
         if (!file.hasContentHashes())
@@ -269,7 +280,7 @@ QString HistoryMessageExtras::encode(const XMPP::Message &message)
         extra.insert("psi:media-refs",
                      QJsonObject { { "version", mediaRefsVersion }, { "items", mediaRefs(message) } });
         if (extra.contains("psi:media-refs"))
-            extra.insert("psi:media-resources", 1);
+            extra.insert("psi:media-resources", 2);
     }
     if (message.reply().isValid())
         extra.insert(QStringLiteral("urn:xmpp:reply:0"),

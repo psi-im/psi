@@ -3,8 +3,11 @@
 #include "filedatabase.h"
 #include "filedownload.h"
 #include "mediachunkcache.h"
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QFile>
+#include <QImage>
+#include <QImageReader>
 #include <QSemaphore>
 #include <QSignalSpy>
 #include <QSqlQuery>
@@ -51,6 +54,78 @@ struct WaitingConsumer {
 class FileReaderTest : public QObject {
     Q_OBJECT
 private slots:
+    void fullGoalReusesReadyLocalFileWithoutFetchingOrCopyingRanges()
+    {
+        QTemporaryDir directory;
+        QFile         file(directory.filePath("already-downloaded"));
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write(pattern(0, 1000)), qint64(1000));
+        file.close();
+        MediaChunkCache cache(directory.path());
+        int             fetches = 0, finished = 0;
+        FileDownload    download(
+            &cache, "movie", 1000, "account",
+            [&](quint64, quint64, FileDownload::FullDownloadAllowed, MediaChunkCompletion) -> MediaChunkAbort {
+                ++fetches;
+                return {};
+            });
+        download.setLocalFileResolver([&] { return file.fileName(); });
+        QVERIFY(download.downloadAll([&](const QString &path, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            QCOMPARE(path, file.fileName());
+            ++finished;
+        }));
+        QTRY_COMPARE(finished, 1);
+        QCOMPARE(fetches, 0);
+        QVERIFY(download.state().complete);
+        QVERIFY(cache.cachedRanges("movie", 1000).isEmpty());
+    }
+
+    void codecsCanProbeAndDecodeFromPartialStorage_data()
+    {
+        QTest::addColumn<QByteArray>("format");
+        QTest::newRow("png") << QByteArray("PNG");
+        QTest::newRow("jpeg") << QByteArray("JPEG");
+    }
+    void codecsCanProbeAndDecodeFromPartialStorage()
+    {
+        QFETCH(QByteArray, format);
+        QImage image(128, 96, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        QByteArray encoded;
+        QBuffer    output(&encoded);
+        QVERIFY(output.open(QIODevice::WriteOnly));
+        if (!image.save(&output, format.constData()))
+            QSKIP("Image codec is unavailable");
+        QTemporaryDir   directory;
+        MediaChunkCache cache(directory.path(), nullptr, 64);
+        int             fetches        = 0;
+        bool            wholeRequested = false;
+        FileDownload    download(&cache, "image", quint64(encoded.size()), "account",
+                                 [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
+                                  MediaChunkCompletion done) -> MediaChunkAbort {
+                                  wholeRequested |= whole();
+                                  ++fetches;
+                                  done(encoded.mid(int(offset), int(length)), {});
+                                  return {};
+                              });
+        FileReader      reader(&download);
+        QVERIFY(reader.open());
+        WaitingConsumer   consumer(reader);
+        std::atomic<bool> finished { false };
+        QImage            decoded;
+        consumer.worker = std::thread([&] {
+            QImageReader decoder(&reader);
+            decoder.setAutoTransform(true);
+            decoded = decoder.read();
+            finished.store(true);
+        });
+        QTRY_VERIFY_WITH_TIMEOUT(finished.load(), 10000);
+        QCOMPARE(decoded.size(), image.size());
+        QVERIFY(fetches > 0);
+        QVERIFY(!wholeRequested);
+    }
+
     void localSeekPeekAndWindow()
     {
         QTemporaryDir directory;

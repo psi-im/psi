@@ -18,6 +18,7 @@
  */
 
 #include "filesharingmanager.h"
+#include "filesourceselector.h"
 
 #include "applicationinfo.h"
 #include "edbsqlite.h"
@@ -67,6 +68,7 @@
 #include <QTimer>
 #include <QUrl>
 #include <algorithm>
+#include <utility>
 
 static QString legacyDir()
 {
@@ -193,6 +195,7 @@ FileDownload *FileSharingManager::download(FileSharingItem *item)
         },
         item);
     d->downloads.insert(item, download);
+    download->setLocalFileResolver([resource] { return resource ? resource->localFilePath() : QString(); });
     connect(download, &FileDownload::fullDownloadChanged, this, [resource](bool active) {
         if (!active)
             FileSharingChunkSource::cancelFullDownloadFallback(resource);
@@ -223,6 +226,113 @@ FileReader *FileSharingManager::reader(FileSharingItem *item, QObject *parent, q
     }
     auto source = download(item);
     return source ? new FileReader(source, offset, length, parent) : nullptr;
+}
+
+MediaChunkAbort FileSharingManager::open(FileSharingItem *item, QObject *owner, OpenDone done, quint64 maximumBytes)
+{
+    if (!owner || !done)
+        return {};
+    struct Pending {
+        bool            finished = false;
+        MediaChunkAbort abort;
+        OpenDone        done;
+    };
+    auto pending                               = std::make_shared<Pending>();
+    pending->done                              = std::move(done);
+    auto                               request = new QObject(owner);
+    const QPointer<QObject>            guard(request);
+    const QPointer<FileSharingItem>    resource(item);
+    const QPointer<FileSharingManager> manager(this);
+    auto                               finish = [pending, guard](FileReader *reader, MediaChunkError error) {
+        if (!guard || pending->finished) {
+            if (reader)
+                reader->deleteLater();
+            return;
+        }
+        pending->finished    = true;
+        const auto completed = std::exchange(pending->done, {});
+        guard->deleteLater();
+        completed(reader, std::move(error));
+    };
+    connect(request, &QObject::destroyed, this, [pending] {
+        pending->finished = true;
+        if (pending->abort)
+            pending->abort();
+    });
+    connect(this, &QObject::destroyed, request,
+            [finish] { finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("File manager closed") }); });
+    if (item)
+        connect(item, &QObject::destroyed, request, [finish] {
+            finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("Media source disappeared") });
+        });
+    QTimer::singleShot(0, request, [manager, resource, owner, guard, pending, finish, maximumBytes] {
+        if (pending->finished)
+            return;
+        if (!manager || !resource || !resource->account()) {
+            finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("Media source unavailable") });
+            return;
+        }
+        if (maximumBytes && resource->fileSize() && *resource->fileSize() > maximumBytes) {
+            finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("Media exceeds the requested size limit") });
+            return;
+        }
+        if (!resource->isUrlOnly()) {
+            resource->_uris += manager->knownSources(resource->account(), resource->sums());
+            resource->_uris.removeDuplicates();
+        }
+        const auto uris               = FileSourceSelector::prioritized(resource->uris());
+        const auto local              = resource->localFilePath();
+        const bool authenticatedWhole = !uris.isEmpty()
+            && std::all_of(uris.cbegin(), uris.cend(),
+                           [](const QString &uri) { return bool(AesGcmUrl::parse(QUrl(uri))); });
+        if (!local.isEmpty() || (!resource->isUrlOnly() && resource->fileSize() && !authenticatedWhole)) {
+            auto reader = manager->reader(resource, owner);
+            if (reader && reader->open()) {
+                finish(reader, {});
+                return;
+            }
+            if (reader)
+                reader->deleteLater();
+        }
+        if (uris.isEmpty()) {
+            finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("No usable download source") });
+            return;
+        }
+        pending->abort = FileSharingChunkSource::openWhole(
+            resource, guard, maximumBytes,
+            [manager, resource, owner, finish, maximumBytes](QString path, MediaChunkError error) {
+                if (!error.isEmpty()) {
+                    finish(nullptr, std::move(error));
+                    return;
+                }
+                if (!manager || !resource || path.isEmpty()) {
+                    finish(nullptr, { MediaChunkError::Unavailable, QStringLiteral("Media source unavailable") });
+                    return;
+                }
+                auto reader = manager->reader(resource, owner);
+                if (!reader || !reader->open()) {
+                    const auto error = reader ? reader->errorString() : QStringLiteral("Cannot open downloaded media");
+                    if (reader)
+                        reader->deleteLater();
+                    finish(nullptr, error);
+                    return;
+                }
+                if (maximumBytes && quint64(reader->size()) > maximumBytes) {
+                    reader->deleteLater();
+                    finish(nullptr,
+                           { MediaChunkError::Unavailable, QStringLiteral("Media exceeds the requested size limit") });
+                    return;
+                }
+                finish(reader, {});
+            });
+    });
+    return [pending, finish] {
+        if (pending->finished)
+            return;
+        finish(nullptr, { MediaChunkError::Cancelled, QStringLiteral("Content open cancelled") });
+        if (pending->abort)
+            pending->abort();
+    };
 }
 
 QString FileSharingManager::cacheDir()
@@ -272,6 +382,41 @@ FileCacheItem *FileSharingManager::trackExternal(const QList<XMPP::Hash> &sums, 
     if (obsoleteRangePayload(file.absoluteFilePath()))
         return nullptr;
     return d->cache->trackExternal(sums, file, metadata, maxAge);
+}
+
+ITEMediaOpener::CancelOpen FileSharingDeviceOpener::openAsync(QUrl url, QObject *receiver, OpenDone done)
+{
+    const QPointer<FileSharingDeviceOpener> guard(this);
+    const QPointer<FileSharingItem>         resource(acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc));
+    if (resource && resource->isUrlOnly() && !resource->isCached() && !AesGcmUrl::parse(resource->simpleSource())) {
+        // Keep streaming address-only HTTP through the existing backend URL
+        // adapter. Bounded image reads use open(); AES must authenticate first.
+        return ITEMediaOpener::openAsync(url, receiver, std::move(done));
+    }
+    return acc->psi()->fileSharingManager()->open(
+        resource, receiver,
+        [guard, resource, url, done = std::move(done)](FileReader *reader, MediaChunkError error) mutable {
+            if (!guard || !resource) {
+                if (reader)
+                    reader->deleteLater();
+                done(nullptr, url, QStringLiteral("Media source unavailable"));
+                return;
+            }
+            if (!error.isEmpty()) {
+                done(nullptr, url, error.message());
+                return;
+            }
+            if (!MediaPlaybackPolicy::deviceStreaming() && !resource->isCached()) {
+                // Keep the existing GStreamer compatibility adapter over the
+                // same scheduler; authenticated URL sources are already local.
+                reader->abort();
+                reader->deleteLater();
+                auto source = url;
+                auto input  = guard->open(source);
+                done(input, source, {});
+            } else
+                done(reader, url, {});
+        });
 }
 
 std::optional<Hash> FileSharingManager::contentForUrl(const QString &account, const Hash &urlIdentity) const
@@ -459,15 +604,20 @@ ChatMedia *FileSharingManager::chatMedia(PsiAccount *account, const HistoryArchi
         return nullptr;
     const QPointer<EDBSqLite> history(d->history);
     const auto filesPath = FileDatabase::path();
-    auto browser = new ChatMedia(
-        [history, key, filesPath](ChatMedia::Cursor cursor, bool older, int limit, QObject *receiver, ChatMedia::LinksDone done) {
-            if (history) history->requestChatMediaLinks(key, cursor, older, limit, receiver, std::move(done), filesPath);
-            else QTimer::singleShot(0, receiver, [done] { done({}, false); });
+    auto                      browser   = new ChatMedia(
+        [history, key, filesPath](ChatMedia::Query query, QObject *receiver, ChatMedia::LinksDone done) {
+            if (history)
+                history->requestChatMediaLinks(key, query, receiver, std::move(done), filesPath);
+            else
+                QTimer::singleShot(0, receiver, [done] { done({}, false); });
         },
-        [history, key, filesPath](QObject *receiver, ChatMedia::StatisticsDone done) {
-            if (history) history->requestChatMediaStatistics(key, filesPath, receiver, std::move(done));
-            else QTimer::singleShot(0, receiver, [done] { done({}, false); });
-        }, parent);
+        [history, key, filesPath](ChatMedia::Filter filter, QObject *receiver, ChatMedia::StatisticsDone done) {
+            if (history)
+                history->requestChatMediaStatistics(key, filesPath, receiver, std::move(done), filter);
+            else
+                QTimer::singleShot(0, receiver, [done] { done({}, false); });
+        },
+        parent);
     connect(this, &FileSharingManager::chatMediaChanged, browser, &ChatMedia::invalidate);
     const auto close = [browser] { delete browser; };
     connect(account, &QObject::destroyed, browser, close);
@@ -810,7 +960,7 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
         cache = acc->psi()->fileSharingManager()->mediaChunkCache();
     const auto size   = item->fileSize();
     const auto hash   = item->sums().value(0);
-    const auto source = item->account() ? item->account()->id() + QChar(0) + hash.toString() : QString();
+    const auto source = FileSharingChunkSource::identity(item);
     auto       update = [item, cache, state, source, size] {
         ITEMediaState::Ranges ranges;
         if (item->isCached()) {
@@ -866,25 +1016,20 @@ bool FileSharingDeviceOpener::saveTo(const QUrl &url, const QString &path, const
             return true;
         }
     }
-    auto       download = local.isEmpty() ? item->download() : nullptr;
-    QIODevice *input    = download ? static_cast<QIODevice *>(download) : manager->reader(item, nullptr);
-    if (!input) {
-        const QString error = QObject::tr("No download source");
-        state->setDownload(false, -1, error);
-        if (completed)
-            completed({}, error);
-        return false;
-    }
-    const auto size = local.isEmpty() ? std::optional<quint64>(item->fileSize())
-                                      : std::optional<quint64>(quint64(QFileInfo(local).size()));
-    save = new FileSharingMediaSave(input, size, download != nullptr, path, state, item, completed, progress);
+    const QPointer<FileSharingManager> storage(manager);
+    save = new FileSharingMediaSave(
+        [storage, item](QObject *owner, FileSharingMediaSave::OpenReady ready) -> MediaChunkAbort {
+            if (!storage || !item) {
+                QTimer::singleShot(0, owner,
+                                   [ready] { ready(nullptr, 0, QStringLiteral("Media source unavailable")); });
+                return {};
+            }
+            return storage->open(item, owner, [ready = std::move(ready)](FileReader *reader, MediaChunkError error) {
+                ready(reader, reader ? quint64(reader->size()) : 0, error.message());
+            });
+        },
+        path, state, item, completed, progress);
     save->setObjectName(QStringLiteral("psi-sims-save"));
-    if (download) {
-        QObject::connect(download, &FileShareDownloader::transferCompleted, save, &FileSharingMediaSave::validated);
-        QObject::connect(download, &FileShareDownloader::disconnected, save, &FileSharingMediaSave::sourceClosed);
-        QObject::connect(download, &FileShareDownloader::failed, save,
-                         [save, download] { save->fail(download->errorString()); });
-    }
     return true;
 }
 

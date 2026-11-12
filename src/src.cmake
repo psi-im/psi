@@ -74,6 +74,9 @@ list(APPEND HEADERS
     historysqlreadworker.h
     fileidentity.h
     chatmedia.h
+    mediafilter.h
+    aesgcmurl.h
+    chatmediaviewersource.h
     historymediaqueries.h
     historyeventfactory.h
     aboutdlg.h
@@ -155,7 +158,7 @@ list(APPEND HEADERS
     mediachunkcache.h
     mediachunkscheduler.h
     filesharingitem.h
-    filesharinghashjob.h
+    filesharingfilejob.h
     filesharingmanager.h
     oobmediapolicy.h
     mediadownloadpolicy.h
@@ -419,6 +422,7 @@ list(APPEND SOURCES
     filesharingcatalog.cpp
     filesharingpublicationsync.cpp
     chatmedia.cpp
+    chatmediaviewersource.cpp
     historymediaqueries.cpp
     historymediarefs.cpp
     edbsqlite.cpp
@@ -445,7 +449,7 @@ list(APPEND SOURCES
     filereader.h
     mediachunkscheduler.cpp
     filesharingitem.cpp
-    filesharinghashjob.cpp
+    filesharingfilejob.cpp
     filesharingpublication.cpp
     accountincomingmessage.cpp
     filesharingmanager.cpp

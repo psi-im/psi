@@ -39,7 +39,20 @@ FileDownload::FileDownload(MediaChunkCache *cache, QString source, quint64 size,
 }
 FileDownload::~FileDownload() { shutdown(); }
 
-MediaFileState FileDownload::state() const { return cache_ ? cache_->fileState(source_, size_) : MediaFileState(); }
+MediaFileState FileDownload::state() const
+{
+    auto       result = cache_ ? cache_->fileState(source_, size_) : MediaFileState();
+    const auto local  = localFile_ ? localFile_() : QString();
+    if (!local.isEmpty()) {
+        result.size     = size_;
+        result.path     = local;
+        result.complete = true;
+        result.ranges   = { { 0, size_ } };
+        result.error.clear();
+        result.completionError.clear();
+    }
+    return result;
+}
 
 quint64 FileDownload::quantum(bool background) const
 {
@@ -83,6 +96,11 @@ void FileDownload::setPlayhead(quint64 offset)
     schedule();
 }
 
+quint64 FileDownload::readBuffered(quint64 offset, quint64 length, Completion done)
+{
+    const auto resident = cache_ ? cache_->availableLength(source_, size_, offset, 64 * 1024) : 0;
+    return read(offset, std::max(length, resident), std::move(done));
+}
 quint64 FileDownload::read(quint64 offset, quint64 length, Completion done)
 {
     if (!cache_ || stopped_ || !fetch_)
@@ -172,6 +190,13 @@ void FileDownload::pump()
         finish(QStringLiteral("File storage closed"));
         return;
     }
+    if (localFile_) {
+        const auto path = localFile_();
+        if (!path.isEmpty()) {
+            finish({}, path);
+            return;
+        }
+    }
     const auto current = state();
     if (!current.error.isEmpty()) {
         finish({ MediaChunkError::IntegrityError, current.error });
@@ -251,7 +276,7 @@ void FileDownload::pump()
         pending_.insert(start, { ticket, length });
     }
 }
-void FileDownload::finish(MediaChunkError error)
+void FileDownload::finish(MediaChunkError error, QString localPath)
 {
     const auto pending = std::exchange(pending_, {});
     const auto goals   = std::exchange(goals_, {});
@@ -260,11 +285,14 @@ void FileDownload::finish(MediaChunkError error)
             cache_->cancel(p.ticket);
     if (std::exchange(goalPinned_, false))
         pin(false);
-    const auto path = error.isEmpty() ? state().path : QString();
+    const auto path = error.isEmpty() ? (localPath.isEmpty() ? state().path : localPath) : QString();
     if (!goals.isEmpty())
         emit fullDownloadChanged(false);
-    for (const auto &goal : goals)
+    for (const auto &goal : goals) {
+        if (error.isEmpty() && goal.progress)
+            goal.progress(1);
         goal.done(path, error);
+    }
 }
 void FileDownload::shutdown()
 {

@@ -23,6 +23,7 @@
 #include "iris/jingle-ft.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_reference.h"
+#include "mediachunktypes.h"
 
 #include <QDateTime>
 #include <QObject>
@@ -81,6 +82,7 @@ public:
     FileCacheItem           *cache(bool reborn = false) const;
     inline bool              isCached() const { return cache() != nullptr; }
     PsiAccount              *account() const;
+    MediaChunkError          downloadError() const { return _downloadError; }
     inline const QStringList log() const { return _log; }
 
     XMPP::Reference toReference() const;
@@ -153,5 +155,6 @@ private:
     XMPP::Jingle::FileTransfer::File _receivedMetadata;
     mutable QString                  _rangeSource; // Stable storage identity, independent of announcement hash order.
     mutable bool                     _rangeConfigured = false;
+    MediaChunkError                  _downloadError;
     QPointer<FileSharingChunkSource> _chunkSource; // owned QObject child
 };

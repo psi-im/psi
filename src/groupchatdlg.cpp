@@ -25,6 +25,7 @@
 #include "avatars.h"
 #include "avcall/avcall.h"
 #include "bookmarkmanager.h"
+#include "chatmediaviewersource.h"
 #include "chatviewcommon.h"
 #include "coloropt.h"
 #include "eventdb.h"
@@ -979,6 +980,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     // Qt 5 leaves the replacement explicitly hidden after reparenting.
     nativeTimeline_->show();
     configureNativeChat(nativeTimeline_, account(), true);
+    ChatMediaViewerSource::install(nativeTimeline_, account(),
+                                   { account()->id(), account()->jid().bare(), jid().bare(), true });
     // AvatarCache owns both decoded pixmaps and negative PHOTO lookups.
     // The chat supplies only the sender identity; never memoize a QPixmap
     // (including a null one) inside the timeline.

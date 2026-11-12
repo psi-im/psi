@@ -546,8 +546,7 @@ void EDBSqLite::requestMediaLinks(qint64 position, int limit, QObject *receiver,
     QTimer::singleShot(0, this, SLOT(performRequests()));
 }
 
-void EDBSqLite::requestChatMediaLinks(const HistoryArchive::Key &chat, HistoryMediaRefs::Cursor cursor, bool older,
-                                      int limit, QObject *receiver,
+void EDBSqLite::requestChatMediaLinks(const HistoryArchive::Key &chat, HistoryMediaRefs::Query query, QObject *receiver,
                                       std::function<void(QList<HistoryMediaRefs::Link>, bool)> finished,
                                       const QString                                           &fileDatabasePath)
 {
@@ -558,9 +557,7 @@ void EDBSqLite::requestChatMediaLinks(const HistoryArchive::Key &chat, HistoryMe
     r->type             = item_query_req::Type_chatMediaLinks;
     r->archiveKey       = chat;
     r->fileDatabasePath = fileDatabasePath;
-    r->mediaCursor      = cursor;
-    r->dir              = older ? 1 : 0;
-    r->len              = limit;
+    r->mediaQuery       = std::move(query);
     pendingMediaLinks_.insert(r->id, { receiver, std::move(finished) });
     rlist.append(r);
     QTimer::singleShot(0, this, SLOT(performRequests()));
@@ -568,13 +565,15 @@ void EDBSqLite::requestChatMediaLinks(const HistoryArchive::Key &chat, HistoryMe
 
 void EDBSqLite::requestChatMediaStatistics(const HistoryArchive::Key &chat, const QString &fileDatabasePath,
                                            QObject                                                *receiver,
-                                           std::function<void(HistoryMediaRefs::Statistics, bool)> finished)
+                                           std::function<void(HistoryMediaRefs::Statistics, bool)> finished,
+                                           HistoryMediaRefs::Filter                                filter)
 {
     if (!receiver)
         return;
     auto *r             = new item_query_req;
     r->id               = genUniqueId();
     r->type             = item_query_req::Type_chatMediaStatistics;
+    r->mediaQuery.filter = filter;
     r->archiveKey       = chat;
     r->fileDatabasePath = fileDatabasePath;
     pendingMediaStatistics_.insert(r->id, { receiver, std::move(finished) });
@@ -1024,7 +1023,7 @@ void EDBSqLite::performRequests()
         read.limit = r->len;
         read.before = r->localBefore;
         read.archiveKey = r->archiveKey;
-        read.mediaCursor = r->mediaCursor;
+        read.mediaQuery       = r->mediaQuery;
         read.fileDatabasePath = r->fileDatabasePath;
         read.cursor = r->archiveCursor;
         read.archiveIndex = r->archiveIndex;

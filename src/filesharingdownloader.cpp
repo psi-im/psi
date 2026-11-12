@@ -18,6 +18,8 @@
  */
 
 #include "filesharingdownloader.h"
+#include "aesgcmurl.h"
+#include "filesharingfilejob.h"
 #include "filesharingjinglesession.h"
 #include "filesharingmanager.h"
 #include "filesourceselector.h"
@@ -38,9 +40,10 @@
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QPointer>
+#include <QTemporaryFile>
 #include <QTimer>
-#include <QUuid>
 #include <QUrlQuery>
+#include <QUuid>
 #include <QVariant>
 
 class AbstractFileShareDownloader : public QObject {
@@ -92,6 +95,7 @@ public:
     virtual bool                         isConnected() const                                              = 0;
     virtual std::optional<std::uint64_t> fileSize() const                                                 = 0;
     virtual void                         close() { }
+    virtual void                         setMaximumSize(std::optional<quint64>) { }
 
     inline const QString &lastError() const { return _lastError; }
     void                  setRequestRange(const FileShareDownloader::Range &range) { _requestRange = range; }
@@ -99,6 +103,8 @@ public:
     const std::optional<FileShareDownloader::Range> &responseRange() const { return _responseRange; }
 
 signals:
+    void activity();
+    void verificationStarted();
     void metaDataChanged();
     void readyRead();
     void disconnected();
@@ -287,6 +293,31 @@ class NAMFileShareDownloader : public AbstractFileShareDownloader {
     Q_OBJECT
 
     QPointer<QNetworkReply> reply;
+    std::optional<AesGcmUrl>        encrypted;
+    std::unique_ptr<QTemporaryFile> ciphertext;
+    std::unique_ptr<QFile>          plaintext;
+    bool                            aborted = false;
+    std::optional<quint64>          maximum;
+
+    bool collectEncrypted()
+    {
+        char data[64 * 1024];
+        while (reply && reply->bytesAvailable() > 0) {
+            const auto count = reply->read(data, sizeof(data));
+            if (count > 0 && maximum && quint64(ciphertext->size()) + quint64(count) > 16
+                && quint64(ciphertext->size()) + quint64(count) - 16 > *maximum) {
+                namFailed(tr("Media exceeds the requested size limit"));
+                return false;
+            }
+            if (count < 0 || (count > 0 && ciphertext->write(data, count) != count)) {
+                namFailed(tr("Cannot store encrypted media"));
+                return false;
+            }
+            if (!count)
+                break;
+        }
+        return true;
+    }
 
     void namFailed(const QString &err = QString())
     {
@@ -297,10 +328,21 @@ class NAMFileShareDownloader : public AbstractFileShareDownloader {
 
 public:
     using AbstractFileShareDownloader::AbstractFileShareDownloader;
+    void setMaximumSize(std::optional<quint64> value) override { maximum = value; }
     void start()
     {
-        QNetworkRequest req = QNetworkRequest(QUrl(sourceUri));
-        if (_requestRange) {
+        encrypted = AesGcmUrl::parse(QUrl(sourceUri));
+        if (encrypted) {
+            ciphertext
+                = std::make_unique<QTemporaryFile>(QDir::tempPath() + QStringLiteral("/psi-media-cipher-XXXXXX"));
+            if (!ciphertext->open()) {
+                downloadError(tr("Cannot store encrypted media"));
+                return;
+            }
+        }
+        QNetworkRequest req = QNetworkRequest(encrypted ? encrypted->transport : QUrl(sourceUri));
+        req.setRawHeader("Accept-Encoding", "identity");
+        if (_requestRange && !encrypted) {
             QString range
                 = QString("bytes=%1-%2")
                       .arg(QString::number(_requestRange->start),
@@ -314,8 +356,8 @@ public:
         req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
 #endif
         reply = acc->psi()->networkAccessManager()->get(req);
-        if (_requestRange)
-            reply->setReadBufferSize(4 * 1024 * 1024);
+        connect(reply, &QNetworkReply::downloadProgress, this, [this](qint64, qint64) { emit activity(); });
+        reply->setReadBufferSize(encrypted ? 256 * 1024 : 4 * 1024 * 1024);
         connect(reply, &QNetworkReply::metaDataChanged, this, [this]() {
             int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (status == 206) { // partial content
@@ -352,7 +394,7 @@ public:
                     bool ok;
                     auto size = clHeader.toULongLong(&ok);
                     if (ok) {
-                        _totalSize = size;
+                        _totalSize = encrypted && size >= 16 ? size - 16 : size;
                     } else {
                         namFailed(QLatin1String("Failed to parse Cotent-Length: ") + clHeader.toString());
                         return;
@@ -363,7 +405,12 @@ public:
             emit metaDataChanged();
         });
 
-        connect(reply, &QNetworkReply::readyRead, this, &NAMFileShareDownloader::readyRead);
+        connect(reply, &QNetworkReply::readyRead, this, [this] {
+            if (encrypted)
+                collectEncrypted();
+            else
+                emit readyRead();
+        });
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
         connect(reply, &QNetworkReply::errorOccurred,
 #else
@@ -374,6 +421,50 @@ public:
             qDebug("FSD reply is finished. error code=%d. bytes available=%lld", reply->error(),
                    reply->bytesAvailable());
             if (reply->error() == QNetworkReply::NoError) {
+                if (encrypted) {
+                    if (!collectEncrypted())
+                        return;
+                    emit       verificationStarted();
+                    const auto path = ciphertext->fileName();
+                    ciphertext->close();
+                    ciphertext->setAutoRemove(false);
+                    ciphertext.reset();
+                    FileSharingFileJob::decryptTemporaryFile(
+                        path, encrypted->key, encrypted->iv, this, [this](const QString &path, MediaChunkError error) {
+                            if (aborted)
+                                return;
+                            if (!error.isEmpty()) {
+                                if (error.code() == MediaChunkError::IntegrityError)
+                                    emit integrityFailure();
+                                downloadError(error.message());
+                                return;
+                            }
+                            // Keep the authenticated file alive after the worker's callback.
+                            auto retained = std::make_unique<QTemporaryFile>(
+                                QDir::tempPath() + QStringLiteral("/psi-media-ready-XXXXXX"));
+                            if (!retained->open()) {
+                                downloadError(retained->errorString());
+                                return;
+                            }
+                            const auto target = retained->fileName();
+                            retained.reset();
+                            if (!QFile::rename(path, target)) {
+                                downloadError(tr("Cannot retain authenticated media"));
+                                return;
+                            }
+                            plaintext = std::make_unique<QFile>(target);
+                            if (!plaintext->open(QIODevice::ReadOnly)) {
+                                QFile::remove(target);
+                                downloadError(plaintext->errorString());
+                                return;
+                            }
+                            _totalSize = quint64(plaintext->size());
+                            emit readyRead();
+                            emit success();
+                            emit disconnected();
+                        });
+                    return;
+                }
                 emit success();
                 emit disconnected();
             } else
@@ -381,14 +472,29 @@ public:
         });
     }
 
-    qint64 bytesAvailable() const { return reply ? reply->bytesAvailable() : 0; }
+    ~NAMFileShareDownloader() override
+    {
+        if (plaintext) {
+            const auto path = plaintext->fileName();
+            plaintext.reset();
+            QFile::remove(path);
+        }
+    }
+    qint64 bytesAvailable() const
+    {
+        return encrypted ? (plaintext ? plaintext->bytesAvailable() : 0) : (reply ? reply->bytesAvailable() : 0);
+    }
 
-    qint64 read(char *data, qint64 maxSize) { return reply ? reply->read(data, maxSize) : 0; }
+    qint64 read(char *data, qint64 maxSize)
+    {
+        return encrypted ? (plaintext ? plaintext->read(data, maxSize) : 0) : (reply ? reply->read(data, maxSize) : 0);
+    }
 
     void abort(bool isFailure, const QString &reason)
     {
         Q_UNUSED(isFailure)
         Q_UNUSED(reason)
+        aborted = true;
         if (reply) {
             reply->disconnect(this);
             reply->deleteLater();
@@ -535,14 +641,12 @@ public:
 
     void checkCacheReady()
     {
-        // A hashless HTTP OOB source may use chunked transfer encoding and
+        // An HTTP source may use chunked transfer encoding and
         // therefore have no Content-Length. It becomes complete only after
         // the transport reports success and disconnects normally.
-        const bool unknownLengthComplete = sums.isEmpty() && !requestRange
-            && !bytesLeft.has_value() && success && tmpFile
+        const bool unknownLengthComplete = !requestRange && !bytesLeft.has_value() && success && tmpFile
             && (!downloader || downloader->bytesAvailable() == 0);
-        const bool knownLengthComplete = bytesLeft.has_value() && !*bytesLeft
-            && (!sums.isEmpty() || success);
+        const bool knownLengthComplete = bytesLeft.has_value() && !*bytesLeft && success;
         if (knownLengthComplete || unknownLengthComplete) {
             if (tmpFile) {
                 tmpFile->close();
@@ -643,7 +747,7 @@ public:
                     finishWithError(tmpFile->errorString());
                     return;
                 }
-            } else if (sums.isEmpty() && !requestRange && !responseRange) {
+            } else if (!requestRange && !responseRange) {
                 // HTTP without Content-Length. Accumulate to a unique
                 // temporary file; it is promoted only after normal EOF.
                 auto partDir = QDir(acc->psi()->fileSharingManager()->cacheDir() + "/partial");
@@ -660,6 +764,9 @@ public:
         });
 
         connect(downloader, &AbstractFileShareDownloader::readyRead, q, &FileShareDownloader::readyRead);
+        connect(downloader, &AbstractFileShareDownloader::activity, q, &FileShareDownloader::activity);
+        connect(downloader, &AbstractFileShareDownloader::verificationStarted, q,
+                &FileShareDownloader::verificationStarted);
         connect(downloader, &AbstractFileShareDownloader::fileMetadataReceived, q,
                 &FileShareDownloader::fileMetadataReceived);
         connect(downloader, &AbstractFileShareDownloader::success, q, [this] {
@@ -672,6 +779,7 @@ public:
             emit q->disconnected();
         });
 
+        downloader->setMaximumSize(maximumSize);
         downloader->start();
     }
 };
@@ -754,7 +862,7 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
 
     if (d->bytesLeft) {
         if (!*d->bytesLeft)
-            return -1;
+            return 0;
         maxSize = qint64(std::min<quint64>(quint64(maxSize), *d->bytesLeft));
     }
     qint64 bytesRead = d->downloader->read(data, maxSize);
@@ -797,7 +905,18 @@ qint64 FileShareDownloader::bytesAvailable() const
 
 void FileShareDownloader::setSelfDelete(bool enable) { d->selfDelete = enable; }
 
-void FileShareDownloader::setMaximumSize(quint64 bytes) { d->maximumSize = bytes; }
+void FileShareDownloader::setMaximumSize(std::optional<quint64> bytes)
+{
+    d->maximumSize = bytes;
+    if (d->downloader)
+        d->downloader->setMaximumSize(bytes);
+    if (bytes && ((d->actualSize && *d->actualSize > *bytes) || d->bytesReceived > *bytes) && !d->failureSignalled) {
+        const QPointer<FileShareDownloader> guard(this);
+        d->finishWithError(tr("Media exceeds the requested size limit"));
+        if (guard && d->downloader)
+            d->downloader->abort();
+    }
+}
 
 void FileShareDownloader::preferSource(const QString &uri)
 {

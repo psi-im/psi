@@ -47,6 +47,25 @@ class MessageFileSharesTest : public QObject {
     }
 
 private slots:
+    void standaloneEncryptedUrlKeepsDecryptionMaterialAndUsesNormalFilePath()
+    {
+        const QString address = "aesgcm://files.example.org/photo.png#" + QString(88, 'a');
+        Message       incoming;
+        incoming.setBody(address);
+        QVERIFY(MessageFileShares::hasFileShares(incoming));
+        const auto result = MessageFileShares::collect(incoming);
+        QCOMPARE(result.files.size(), 1);
+        QCOMPARE(result.files.first().url(), QUrl(address));
+        QCOMPARE(MessageFileShares::forDisplay(incoming).files.size(), 1);
+        incoming.urlAdd(Url(address));
+        QCOMPARE(MessageFileShares::collect(incoming).files.size(), 1);
+        // Preserve the established ordinal of a protocol attachment.
+        incoming.setReferences({ share("https://example.org/other") });
+        QCOMPARE(MessageFileShares::collect(incoming).files.size(), 2);
+        incoming.urlsClear();
+        QCOMPARE(MessageFileShares::collect(incoming).files.size(), 1);
+    }
+
     void simsSourceIsNotAttachedTwice()
     {
         Message incoming;

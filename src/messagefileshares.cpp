@@ -191,6 +191,17 @@ Result collect(const XMPP::Message &message)
         }
         result.files.append({ XMPP::Reference(XMPP::Reference::Data, url.url()), url.desc(), false, true });
     }
+    // XEP-0454's legacy OMEMO format carries a standalone encrypted URL in
+    // the body, without an unencrypted OOB element. Existing protocol slots
+    // keep their ordinal: synthesize this fallback only without other files.
+    if (result.files.isEmpty()) {
+        const auto body = message.body().trimmed();
+        if (AesGcmUrl::parse(QUrl(body))) {
+            const auto url = OobMediaPolicy::normalizedHttpSource(body);
+            result.files.append(
+                { XMPP::Reference(XMPP::Reference::Data, url.toString(QUrl::FullyEncoded)), {}, false, true });
+        }
+    }
     // Compatibility copies with only weak/no common hashes still must not
     // automatically fetch the very HTTP source declared manual by SFS.
     for (auto &file : result.files)

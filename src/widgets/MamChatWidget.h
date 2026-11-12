@@ -19,6 +19,7 @@
 #include <QVector>
 
 class FileSharingDeviceOpener;
+class FileSharingItem;
 class ChatMessageText;
 class QTemporaryDir;
 class QFrame;
@@ -91,6 +92,8 @@ public:
     void           refreshNicknameColors();
     void           refreshAvatars();
     void           setMediaOpener(FileSharingDeviceOpener *opener);
+    using MediaOpenHandler = std::function<void(const QImage &, const QString &, const QString &, qint64, bool)>;
+    void           setMediaOpenHandler(MediaOpenHandler handler) { mediaOpenHandler_ = std::move(handler); }
     void           setInformationalColor(const QColor &color);
     void           setQuoteColor(const QColor &color);
     static QString displayTime(const QDateTime &when, const QDateTime &now = QDateTime::currentDateTime());
@@ -281,6 +284,8 @@ private:
     bool                                          groupChat_   = false;
     ChatTimestamp::Mode                           timestampMode_ = ChatTimestamp::Mode::Relative;
     FileSharingDeviceOpener                      *mediaOpener_ = nullptr;
+    MediaOpenHandler                              mediaOpenHandler_;
+    void openMediaViewer(const QImage &image, const QString &name, const QString &sourceId);
     // Keep opened temporary attachments on disk for the lifetime of this chat.
     QList<std::shared_ptr<QTemporaryDir>>         openedTemporaryFiles_;
     std::function<QPixmap(const MessageView &)>   avatarResolver_;

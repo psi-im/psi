@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
+#include "aesgcmurl.h"
 #include <QList>
 #include <QSet>
 #include <QStringList>
@@ -12,6 +13,11 @@ namespace OobMediaPolicy {
 inline QUrl normalizedHttpSource(const QString &source)
 {
     const QUrl url = QUrl::fromEncoded(source.toUtf8(), QUrl::StrictMode);
+    if (const auto encrypted = AesGcmUrl::parse(url)) {
+        auto normalized = url;
+        normalized.setFragment(QString::fromLatin1((encrypted->iv + encrypted->key).toHex()));
+        return normalized;
+    }
     if (!url.isValid() || url.host().isEmpty()
         || (url.scheme() != QLatin1String("https") && url.scheme() != QLatin1String("http")))
         return {};

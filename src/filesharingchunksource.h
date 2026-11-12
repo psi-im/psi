@@ -9,6 +9,7 @@
 class PsiAccount;
 class FileSharingItem;
 class MediaChunkCache;
+class FileShareDownloader;
 namespace XMPP::Jingle::FileTransfer {
 class File;
 }
@@ -23,6 +24,8 @@ public:
     static MediaChunkCache *configure(const FileSharingItem *item);
     static void             addChecksums(const FileSharingItem *item, const XMPP::Jingle::FileTransfer::File &file);
     static QString          localFile(const FileSharingItem *item);
+    using PathDone = std::function<void(QString, MediaChunkError)>;
+    static MediaChunkAbort  openWhole(FileSharingItem *, QObject *receiver, quint64 maximumBytes, PathDone);
     static void             cancelFullDownloadFallback(FileSharingItem *item);
     static MediaChunkAbort  fetch(FileSharingItem *item, quint64 offset, quint64 length, MediaChunkCompletion done,
                                   QObject *owner, std::function<bool()> allowWhole = {});
@@ -33,6 +36,8 @@ private:
     static MediaChunkAbort sequential(FileSharingItem *item, const QString &source, quint64 offset, quint64 length,
                                       MediaChunkCompletion done);
     class SequentialDownload;
+    class WholeDownload;
     FileSourceSelector           selector_;
     QPointer<SequentialDownload> sequential_;
+    QPointer<WholeDownload>      whole_;
 };

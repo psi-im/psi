@@ -81,8 +81,7 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
     // A reader must observe all earlier appends in the same worker queue.
     // Complete their transaction and notify write handles before reading.
     flushPendingAppends();
-    if ((request.type == HistoryReadRequest::ChatMediaLinks && !request.fileDatabasePath.isEmpty())
-        || request.type == HistoryReadRequest::ChatMediaStatistics) {
+    if (request.type == HistoryReadRequest::ChatMediaLinks || request.type == HistoryReadRequest::ChatMediaStatistics) {
         QSqlError attachError;
         if (!HistoryMediaRefs::attachFileDatabase(db_, request.fileDatabasePath, &attachError)) {
             qWarning() << "[history-media] Cannot read file registry:" << attachError.text();
@@ -112,13 +111,13 @@ void HistorySqlReadWorker::read(HistoryReadRequest request)
     if (request.type == HistoryReadRequest::MediaLinks || request.type == HistoryReadRequest::ChatMediaLinks) {
         result.mediaLinks = request.type == HistoryReadRequest::MediaLinks
             ? HistoryMediaRefs::linksAfter(db_, request.before, request.limit, &error)
-            : HistoryMediaRefs::chatLinks(db_, request.archiveKey, request.mediaCursor, request.direction != 0,
-                                          request.limit, &error, !request.fileDatabasePath.isEmpty());
+            : HistoryMediaRefs::chatAssets(db_, request.archiveKey, request.mediaQuery, &error);
         finish();
         return;
     }
     if (request.type == HistoryReadRequest::ChatMediaStatistics) {
-        result.mediaStatistics = HistoryMediaRefs::chatStatistics(db_, request.archiveKey, &error);
+        result.mediaStatistics
+            = HistoryMediaRefs::chatAssetStatistics(db_, request.archiveKey, request.mediaQuery.filter, &error);
         finish();
         return;
     }

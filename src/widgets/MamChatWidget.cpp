@@ -1,20 +1,20 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
-#include "OverlayScrollBarManager.h"
-#include "ImageViewer.h"
-#include "ChatMessageText.h"
 #include "ChatMessageBody.h"
+#include "ChatMessageText.h"
+#include "MamHistoryLog.h"
+#include "MamMessageIdentity.h"
+#include "MediaViewer.h"
 #include "MessagePreview.h"
+#include "OverlayScrollBarManager.h"
 #include "filesharingmanager.h"
 #include "fileutil.h"
+#include "iconset.h"
+#include "psirichtext.h"
 #include "textutil.h"
 #include "urlobject.h"
 #include <QContextMenuEvent>
 #include <QCursor>
-#include "MamHistoryLog.h"
-#include "MamMessageIdentity.h"
-#include "iconset.h"
-#include "psirichtext.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -2339,6 +2339,15 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     auto *body = row->body->text();
     body->setObjectName(QStringLiteral("mamBody"));
     body->setMediaOpener(mediaOpener_);
+    if (mediaOpenHandler_) {
+        const QPointer<MamChatWidget> guard(this);
+        body->setVideoOpenHandler([guard](const QUrl &source, qint64 position, bool fullscreen) {
+            if (!guard || !guard->mediaOpenHandler_ || source.scheme() != QLatin1String("share"))
+                return false;
+            guard->mediaOpenHandler_({}, {}, source.path(), position, fullscreen);
+            return true;
+        });
+    }
     const bool retracted = isRetracted(items_.at(index));
     QString    richText  = richMessage(items_.at(index));
     // The legacy text log: icon, time and nickname at the start of the text,
@@ -3713,8 +3722,8 @@ static QString httpImageLink(const QTextImageFormat &format, const QString &mess
 }
 
 struct FullImage {
-    QImage  image;
-    QString fileName;
+    QImage           image;
+    QString          fileName;
 };
 
 static FullImage fullImage(const QTextImageFormat &format, const QString &messageHtml,
@@ -3750,9 +3759,12 @@ static FullImage fullImage(const QTextImageFormat &format, const QString &messag
     return result;
 }
 
-static void openImageViewer(const FullImage &full)
+void MamChatWidget::openMediaViewer(const QImage &image, const QString &name, const QString &sourceId)
 {
-    ImageViewer::showImage(full.image, full.fileName);
+    if (mediaOpenHandler_)
+        mediaOpenHandler_(image, name, sourceId, 0, false);
+    else
+        MediaViewer::showImage(image, name);
 }
 
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
@@ -3873,8 +3885,11 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
                             [image = full.image] { QApplication::clipboard()->setImage(image); });
                     auto *viewImage = menu->addAction(tr("View image"));
                     viewImage->setObjectName(QStringLiteral("mamViewImage"));
-                    connect(viewImage, &QAction::triggered, this,
-                            [full] { openImageViewer(full); });
+                    connect(viewImage, &QAction::triggered, this, [this, full, name = format->name()] {
+                        const QUrl source(name);
+                        openMediaViewer(full.image, full.fileName,
+                                        source.scheme() == QLatin1String("share") ? source.path() : QString());
+                    });
                 }
                 if (!link.isEmpty()) {
                     auto *copyImageLink = menu->addAction(tr("Copy image link"));
@@ -4350,7 +4365,9 @@ bool MamChatWidget::eventFilter(QObject *target, QEvent *event)
                                                                          : message.formattedText();
                         const FullImage full = fullImage(*format, html, body, mediaOpener_);
                         if (!full.image.isNull()) {
-                            openImageViewer(full);
+                            const QUrl source(format->name());
+                            openMediaViewer(full.image, full.fileName,
+                                            source.scheme() == QLatin1String("share") ? source.path() : QString());
                             mouse->accept();
                             return true;
                         }
