@@ -2365,6 +2365,14 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             return true;
         });
     }
+    if (mediaPlayerTransferHandler_) {
+        const QPointer<MamChatWidget> guard(this);
+        body->setVideoTransferHandler(
+            [guard](const QUrl &source, QWidget *player, std::function<bool()> restore, bool fullscreen) {
+                return guard && guard->mediaPlayerTransferHandler_ && source.scheme() == QLatin1String("share")
+                    && guard->mediaPlayerTransferHandler_(source, player, std::move(restore), fullscreen);
+            });
+    }
     const bool retracted = isRetracted(items_.at(index));
     QString    richText  = richMessage(items_.at(index));
     // The legacy text log: icon, time and nickname at the start of the text,
