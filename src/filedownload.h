@@ -23,6 +23,8 @@ public:
                  QObject *parent = nullptr);
     ~FileDownload() override;
     void           setLocalFileResolver(std::function<QString()> resolver) { localFile_ = std::move(resolver); }
+    // Jingle ranges have an IQ negotiation per request, even with a shared BUNDLE transport.
+    void           setSignaledRanges(bool enabled) { signaledRanges_ = enabled; }
     quint64        size() const { return size_; }
     void           setPlayhead(quint64 offset);
     quint64        read(quint64 offset, quint64 length, Completion done);
@@ -62,5 +64,6 @@ private:
     QMap<quint64, Pending>                                       pending_;
     QSet<quint64>                                                reads_;
     bool   scheduled_ = false, stopped_ = false, checkpointing_ = false, goalPinned_ = false;
+    bool   signaledRanges_ = false, initialDemandMade_ = false;
     double bytesPerMs_ = 0;
 };
