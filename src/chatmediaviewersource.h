@@ -16,7 +16,8 @@ class MamChatWidget;
 class ChatMediaViewerSource final : public MediaNavigationSource {
 public:
     ChatMediaViewerSource(FileSharingManager *, PsiAccount *, const HistoryArchive::Key &, QString source,
-                          QImage preview = {}, QString path = {}, qint64 videoPosition = 0);
+                          QImage preview = {}, QString path = {}, qint64 videoPosition = 0,
+                          QList<QPointer<FileSharingItem>> loadedFiles = {});
     ~ChatMediaViewerSource() override;
     void        start() override;
     void        adjacent(int direction) override;
@@ -27,11 +28,21 @@ public:
     static void install(MamChatWidget *, PsiAccount *, const HistoryArchive::Key &);
 
 private:
+    struct LiveItem {
+        QPointer<FileSharingItem> file;
+        QString sourceId, name, mime;
+        int type = HistoryMediaRefs::Other;
+        int availability = MediaFilter::Remote;
+    };
     void                            refresh();
+    void                            refreshLive();
+    void                            selectLive(int index);
+    void                            prepareLiveFallback(quint64 epoch);
+    void                            useLiveFallback();
     void                            requestNavigationPage(int steps, const ChatMedia::Entry &anchor, quint64 epoch);
     void                            completeNavigation(std::optional<ChatMedia::Entry> candidate, quint64 epoch, bool ok);
     void                            choose(ChatMedia::Page, bool ok, int direction, bool replace);
-    void                            select(const ChatMedia::Entry &);
+    void                            select(const ChatMedia::Entry &, FileSharingItem *directItem = nullptr);
     void                            cancelContent();
     void                            fail(MediaChunkError);
     void                            publish();
@@ -40,6 +51,9 @@ private:
     QPointer<ChatMedia>             browser_;
     QPointer<FileSharingItem>       item_;
     std::optional<ChatMedia::Entry> entry_;
+    QList<QPointer<FileSharingItem>> loadedFiles_;
+    QList<LiveItem>                  liveFiltered_;
+    bool                             liveMode_ = false, initialFilterAdjusted_ = false;
     View                            view_;
     QString                         source_;
     MediaChunkAbort                 opening_, decoding_;
