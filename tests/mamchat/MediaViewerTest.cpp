@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QLabel>
 #include <QProgressBar>
+#include <QScreen>
 #include <QMouseEvent>
 #include <QMoveEvent>
 #include <QWheelEvent>
