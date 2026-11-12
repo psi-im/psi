@@ -144,7 +144,9 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
                 ++verified;
                 cancel[i](); // Release the consumer, preserving the queued handover.
                 if (lateArrival && i < 2)
-                    QTimer::singleShot(100, &consumers[i], [&, i] { requestRange(i + 1); });
+                    // Previously the 3-second idle receipt release closed the physical session
+                    // before playback requested the next missing range.
+                    QTimer::singleShot(4200, &consumers[i], [&, i] { requestRange(i + 1); });
             });
         }));
     };
@@ -189,7 +191,7 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
                           return false;
                   return true;
               },
-              grouping && !cancelLast ? 5000 : 1000),
+              grouping && !cancelLast ? 25000 : 1000),
           "completed/cancelled ranges left a Jingle session alive");
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     for (const auto &s : sourceSessions)
@@ -228,7 +230,7 @@ int main(int argc, char **argv)
         return 77;
     }
     queuedRanges(true);
-    queuedRanges(true, false, true); // A player requests each range only after the previous one completes.
+    queuedRanges(true, false, true); // >3s gaps must retain the same BUNDLE association.
     queuedRanges(false);
     // First player demand after cached playback may precede MUC occupant caps.
     // An explicit Jingle source must still produce session-initiate.
