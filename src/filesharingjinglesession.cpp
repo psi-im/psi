@@ -4,7 +4,6 @@
 #include <QTimer>
 #include <algorithm>
 #include <iris/jingle-ft.h>
-#include <iris/jingle-ibb.h>
 #include <iris/jingle-session.h>
 #include <iris/jingle-transport.h>
 #include <iris/xmpp_caps.h>
@@ -187,8 +186,11 @@ public:
             // the normal selector can prefer ICE for subsequent ranges.
             const auto transports = manager->availableTransports(
                 J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
-            if (transports.contains(J::IBB::NS)) {
-                auto transport = session->newOutgoingTransport(J::IBB::NS);
+            // Jingle IBB's namespace is stable; its implementation header is
+            // private to Iris and is not installed in the external SDK.
+            const auto ibbNs = QStringLiteral("urn:xmpp:jingle:transports:ibb:1");
+            if (transports.contains(ibbNs)) {
+                auto transport = session->newOutgoingTransport(ibbNs);
                 if (transport && app->setTransport(transport)) {
                     qInfo("Jingle media peer caps unavailable; offering safe IBB fallback to %s",
                           qPrintable(peer->jid.full()));
