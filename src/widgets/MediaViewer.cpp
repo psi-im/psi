@@ -324,6 +324,8 @@ MediaViewer::MediaViewer(const QImage &image, const QString &fileName, QWidget *
         connect(app, &QCoreApplication::aboutToQuit, this, &MediaViewer::saveWindowSize);
 }
 
+MediaViewer::~MediaViewer() { releaseVideo(); }
+
 qreal MediaViewer::autoFitScale() const
 {
     if (image_.isNull())
@@ -355,10 +357,7 @@ void MediaViewer::setNavigationSource(MediaNavigationSource *source)
     navigationSource_ = source;
     currentKey_.clear();
     currentRevision_ = 0;
-    if (video_)
-        delete video_.data();
-    videoControls_ = nullptr;
-    videoControlsOverlay_ = false;
+    releaseVideo();
     fullscreenControlsHidden_ = false;
     if (fullscreenIdleTimer_)
         fullscreenIdleTimer_->stop();
@@ -566,6 +565,32 @@ void MediaViewer::togglePlayback()
             if (play->isEnabled())
                 play->click();
     }
+}
+
+void MediaViewer::releaseVideo()
+{
+    QWidget *old = video_.data();
+    if (!old) {
+        videoReturn_ = {};
+        videoControls_ = nullptr;
+        videoControlsOverlay_ = false;
+        return;
+    }
+    // Fullscreen removes qite's controls from its layout. Restore that layout
+    // and opacity before returning the player to the original chat row.
+    if (videoControlsOverlay_ && videoControls_ && old->layout())
+        old->layout()->addWidget(videoControls_);
+    if (videoControls_)
+        setControlsShown(videoControls_, true, false);
+    old->removeEventFilter(this);
+    for (auto *child : old->findChildren<QWidget *>())
+        child->removeEventFilter(this);
+    auto restore = std::move(videoReturn_);
+    video_ = nullptr;
+    videoControls_ = nullptr;
+    videoControlsOverlay_ = false;
+    if (!restore || !restore(old))
+        delete old;
 }
 
 void MediaViewer::updateVideoControlsOverlay()
@@ -791,9 +816,7 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
     const bool mediaChanged = currentKey_ != view.key;
     if (mediaChanged) {
         if (video_) {
-            delete video_.data();
-            videoControls_ = nullptr;
-            videoControlsOverlay_ = false;
+            releaseVideo();
             if (fullscreenIdleTimer_)
                 fullscreenIdleTimer_->stop();
             fullscreenControlsHidden_ = false;
@@ -836,6 +859,7 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
                 guard->toggleFullscreen();
         });
         if (video_) {
+            videoReturn_ = view.videoReturn;
             videoControls_ = video_->findChild<QWidget *>(QStringLiteral("qite-video-controls"));
             trackActivityWidget(video_);
             video_->setGeometry(contentRect());
@@ -1138,6 +1162,7 @@ void MediaViewer::resetTemporaryZoom()
 
 void MediaViewer::closeEvent(QCloseEvent *event)
 {
+    releaseVideo();
     saveWindowSize();
     if (currentMediaViewer() == this)
         currentMediaViewer() = nullptr;
