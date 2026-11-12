@@ -315,6 +315,57 @@ private slots:
         QVERIFY(retained);
     }
 
+    void borrowedPlayerSurvivesIndexRefreshAndIsDeletedIfChatIsGone()
+    {
+        MediaViewer viewer(QImage{});
+        auto *source = new TestNavigationSource;
+        viewer.setNavigationSource(source);
+        viewer.show();
+
+        QPointer<QWidget> borrowed;
+        int created = 0;
+        int returned = 0;
+        MediaNavigationSource::View initial;
+        initial.key = QStringLiteral("borrowed:clip");
+        initial.revision = 1;
+        initial.name = QStringLiteral("clip.mp4");
+        initial.video = [&](QWidget *parent, std::function<void()>) {
+            ++created;
+            borrowed = new QWidget(parent);
+            return borrowed.data();
+        };
+        initial.videoReturn = [&](QWidget *) {
+            ++returned;
+            return false; // The chat/message was deleted while viewing.
+        };
+        emit source->changed(initial);
+        QVERIFY(borrowed);
+        QCOMPARE(created, 1);
+
+        // Resolving the initial SQL/gallery index must not create a second
+        // decoder for the same resource or change its playback state.
+        MediaNavigationSource::View indexed = initial;
+        indexed.revision = 2;
+        indexed.index = 2;
+        indexed.total = 6;
+        indexed.video = [&](QWidget *parent, std::function<void()>) {
+            ++created;
+            return new QWidget(parent);
+        };
+        emit source->changed(indexed);
+        QCOMPARE(created, 1);
+        QVERIFY(borrowed);
+
+        MediaNavigationSource::View next;
+        next.key = QStringLiteral("next-image");
+        next.name = QStringLiteral("photo.png");
+        next.revision = 1;
+        next.image = QImage(20, 20, QImage::Format_RGB32);
+        emit source->changed(next);
+        QCOMPARE(returned, 1);
+        QVERIFY(borrowed.isNull());
+    }
+
     void videoPlayPauseUsesSpaceAndSurfaceClick()
     {
         MediaViewer viewer(QImage{});
