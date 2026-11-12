@@ -139,8 +139,22 @@ void ChatMediaViewerSource::setBorrowedPlayer(QString sourceId, QWidget *player,
                                               std::function<bool()> restore)
 {
     borrowedSourceId_ = std::move(sourceId);
-    borrowedPlayer_ = player;
-    borrowedRestore_ = std::move(restore);
+    // The SQL index can answer asynchronously, or may not exist for this MUC.
+    // Show the already-running decoder immediately; never wait for a query
+    // before reparenting it into the viewer.
+    view_.key = QStringLiteral("borrowed:") + borrowedSourceId_;
+    view_.name = player ? player->windowTitle() : QString();
+    view_.state = State::Ready;
+    const QPointer<QWidget> widget(player);
+    view_.video = [widget](QWidget *parent, std::function<void()>) -> QWidget * {
+        if (!widget)
+            return nullptr;
+        widget->setParent(parent);
+        return widget;
+    };
+    view_.videoReturn = [restore = std::move(restore)](QWidget *) {
+        return restore && restore();
+    };
 }
 void ChatMediaViewerSource::cancelContent()
 {
@@ -532,7 +546,8 @@ void ChatMediaViewerSource::select(const ChatMedia::Entry &entry, FileSharingIte
     entry_         = entry;
     source_        = entry.sourceId;
     view_          = {};
-    view_.key      = QString::number(contentEpoch_);
+    view_.key      = entry.sourceId == borrowedSourceId_
+        ? QStringLiteral("borrowed:") + borrowedSourceId_ : QString::number(contentEpoch_);
     view_.revision = 1;
     view_.name     = entry.name;
     view_.index    = entry.index;
