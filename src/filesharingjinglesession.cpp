@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <algorithm>
 #include <iris/jingle-ft.h>
+#include <iris/jingle-ibb.h>
 #include <iris/jingle-session.h>
 #include <iris/jingle-transport.h>
 #include <iris/xmpp_caps.h>
@@ -179,25 +180,27 @@ public:
             // its entity capabilities are still unresolved. NSTransportsList
             // otherwise permanently discards every candidate because
             // checkPeerCaps() returns false, and no session-initiate is sent.
-            // This request has an explicit Jingle file source: offer our best
-            // locally available file transport, letting the peer accept or
-            // reject it instead of silently deadlocking the media reader.
+            // We can safely offer IBB without advertised DTLS support. ICE/SCTP
+            // must NOT be offered blindly here: Iris enables outgoing DTLS
+            // only when the peer's fingerprint capability is known, and SCTP
+            // cannot operate without DTLS. Once verified peer caps arrive,
+            // the normal selector can prefer ICE for subsequent ranges.
             const auto transports = manager->availableTransports(
                 J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
-            bool selected = false;
-            for (auto it = transports.crbegin(); it != transports.crend(); ++it) {
-                auto transport = session->newOutgoingTransport(*it);
+            if (transports.contains(J::IBB::NS)) {
+                auto transport = session->newOutgoingTransport(J::IBB::NS);
                 if (transport && app->setTransport(transport)) {
-                    qInfo("Jingle media peer caps unavailable; offering transport %s to %s",
-                          qPrintable(*it), qPrintable(peer->jid.full()));
-                    selected = true;
-                    break;
+                    qInfo("Jingle media peer caps unavailable; offering safe IBB fallback to %s",
+                          qPrintable(peer->jid.full()));
+                } else {
+                    if (transport)
+                        transport->releaseIfUnused();
+                    qWarning("Jingle media could not prepare IBB fallback for %s", qPrintable(peer->jid.full()));
                 }
-                if (transport)
-                    transport->releaseIfUnused();
+            } else {
+                qWarning("Jingle media has unknown peer caps and no safe IBB fallback for %s",
+                         qPrintable(peer->jid.full()));
             }
-            if (!selected)
-                qWarning("Jingle media has no usable local file transport for %s", qPrintable(peer->jid.full()));
         }
         QObject::connect(app, &FT::Application::payloadVerified, q, [this, part] {
             part->verified = true;
