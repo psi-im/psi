@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 #include "mediachunktypes.h"
+#include <QElapsedTimer>
 #include <QHash>
 #include <QMap>
 #include <QObject>
 #include <QPointer>
 #include <QSet>
+#include <optional>
 
 class MediaChunkCache;
 
@@ -23,8 +25,12 @@ public:
                  QObject *parent = nullptr);
     ~FileDownload() override;
     void           setLocalFileResolver(std::function<QString()> resolver) { localFile_ = std::move(resolver); }
+    // Jingle ranges have an IQ negotiation per request, even with a shared BUNDLE transport.
+    void           setSignaledRanges(bool enabled) { signaledRanges_ = enabled; }
     quint64        size() const { return size_; }
     void           setPlayhead(quint64 offset);
+    // Discard stale timing when the player pauses or seeks away.
+    void           resetRangeTiming();
     quint64        read(quint64 offset, quint64 length, Completion done);
     // A reader may keep extra bytes already resident on disk or in RAM.
     // Enlarging its local buffer never creates additional network demand.
@@ -52,6 +58,7 @@ private:
     void                                                         pump();
     void finish(MediaChunkError error = {}, QString localPath = {});
     quint64                                                      quantum(bool background) const;
+    void                                                         noteSignaledFetch(quint64 offset, quint64 length);
     std::function<MediaChunkAbort(quint64, quint64, Completion)> provider();
     QPointer<MediaChunkCache>                                    cache_;
     QString                                                      source_, lane_;
@@ -62,5 +69,12 @@ private:
     QMap<quint64, Pending>                                       pending_;
     QSet<quint64>                                                reads_;
     bool   scheduled_ = false, stopped_ = false, checkpointing_ = false, goalPinned_ = false;
+    bool   signaledRanges_ = false, initialDemandMade_ = false;
+    quint64 signaledQuantum_ = 1024 * 1024;
+    struct RangeTiming {
+        quint64 start = 0, length = 0;
+        QElapsedTimer elapsed;
+    };
+    std::optional<RangeTiming> lastSignaledRange_;
     double bytesPerMs_ = 0;
 };

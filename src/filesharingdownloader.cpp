@@ -232,7 +232,7 @@ public:
                 emit disconnected();
                 return;
             }
-            downloadError(tr("Jingle download failed: %s").arg(r.text()));
+            downloadError(tr("Jingle download failed: %1").arg(r.text()));
         });
     }
 

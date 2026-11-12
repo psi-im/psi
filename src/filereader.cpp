@@ -24,7 +24,7 @@ public:
     QByteArray             buffer;
     quint64                bufferStart = 0;
     bool                   local = false, opened = false, aborted = false, failed = false;
-    bool                   blockingDemand = false;
+    bool                   blockingDemand = false, suspended = false;
     MediaChunkError::Code  error = MediaChunkError::None;
     // The following scheduling fields are used only on the owner thread.
     bool                   scheduled = false, pinned = false;
@@ -130,6 +130,29 @@ void FileReader::abort()
         release();
     else
         QMetaObject::invokeMethod(this, [this] { release(); }, Qt::QueuedConnection);
+}
+
+void FileReader::setSuspended(bool suspended)
+{
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, [this, suspended] { setSuspended(suspended); }, Qt::QueuedConnection);
+        return;
+    }
+    {
+        QMutexLocker lock(&d->mutex);
+        if (d->suspended == suspended || d->aborted)
+            return;
+        d->suspended = suspended;
+        // Invalidate callbacks for the cancelled request, not the decoder.
+        ++d->epoch;
+        d->changed.wakeAll();
+    }
+    if (suspended) {
+        cancelPending();
+        if (d->download)
+            d->download->resetRangeTiming();
+    } else
+        schedule();
 }
 
 void FileReader::cancelPending()
@@ -264,7 +287,7 @@ void FileReader::schedule()
             if (scheduledEpoch != d->epoch)
                 return;
             d->scheduled = false;
-            if (d->aborted || d->failed || !d->opened || d->local || !d->wantedLength)
+            if (d->aborted || d->failed || d->suspended || !d->opened || d->local || !d->wantedLength)
                 return;
             position  = d->wanted;
             requested = d->wantedLength;

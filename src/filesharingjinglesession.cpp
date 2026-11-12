@@ -20,6 +20,7 @@ public:
         Ready                     ready;
         QPointer<FT::Application> app;
         bool                      cancelled = false, verified = false, accepted = false, closing = false;
+        bool                      retireScheduled = false, retireNow = false;
     };
     struct Peer {
         XMPP::Jid                       jid;
@@ -31,6 +32,7 @@ public:
     QPointer<J::Manager>                  manager;
     QHash<QString, std::shared_ptr<Peer>> peers;
     bool                                  scheduled = false;
+    static constexpr int                  IdleBundleGraceMs = 3000;
 
     void schedule()
     {
@@ -99,6 +101,20 @@ public:
             }
             if (!current->accepted || !current->verified)
                 return;
+            if (peer->queue.isEmpty() && grouped(current, peer->session)) {
+                // The media reader enqueues its next range only after the previous
+                // one has been stored. Keep a verified BUNDLE transport briefly
+                // so a later range can use content-add instead of another ICE/DTLS setup.
+                if (!current->retireScheduled) {
+                    current->retireScheduled = true;
+                    QTimer::singleShot(IdleBundleGraceMs, q, [this, current] {
+                        current->retireNow = true;
+                        schedule();
+                    });
+                }
+                if (!current->retireNow)
+                    return;
+            }
             if (peer->queue.isEmpty() || !grouped(current, peer->session)) {
                 close(current);
                 return;
