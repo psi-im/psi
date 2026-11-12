@@ -101,11 +101,12 @@ private:
     void    setupControls();
     void    applyFilter(bool persist = false);
     void    toggleFullscreen();
+    void    togglePlayback();
     void    updateFullscreenUi();
     void    noteFullscreenActivity(bool force = false);
-    void    hideIdleVideoControls();
-    void    setVideoControlsShown(QWidget *widget, bool visible, bool animated);
-    void    trackVideoWidget(QWidget *widget);
+    void    hideIdleFullscreenControls();
+    void    setControlsShown(QWidget *widget, bool visible, bool animated);
+    void    trackActivityWidget(QWidget *widget);
     QRect   contentRect() const;
     qreal   autoFitScale() const;
     bool    canPan() const;
@@ -133,9 +134,9 @@ private:
     QProgressBar                   *loading_ = nullptr;
     QPointer<QWidget>               video_;
     QPointer<QWidget>               videoControls_;
-    QTimer                         *videoIdleTimer_ = nullptr;
-    QPoint                          lastVideoCursorPos_;
-    bool                            videoControlsHidden_ = false;
+    QTimer                         *fullscreenIdleTimer_ = nullptr;
+    QPoint                          lastFullscreenCursorPos_;
+    bool                            fullscreenControlsHidden_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;
