@@ -2,6 +2,7 @@
 #include <QTimer>
 #include <iris/jingle-ft.h>
 #include <iris/xmpp_client.h>
+#include <iris/xmpp_caps.h>
 #define private public
 #include <iris/jingle-ice.h>
 #undef private
@@ -10,7 +11,8 @@
 
 namespace FT = J::FileTransfer;
 
-static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false)
+static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false,
+                         bool unavailablePeerCaps = false)
 {
     TcpPortReserver reserver;
     Endpoint        alice(QStringLiteral("alice")), bob(QStringLiteral("bob"));
@@ -21,8 +23,13 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
     auto features = alice.client.jingleManager()->discoFeatures();
     if (!grouping)
         features.removeAll(QStringLiteral("urn:ietf:rfc:5888"));
-    setPeerFeatures(alice.client, bob.jid, features);
-    setPeerFeatures(bob.client, alice.jid, features);
+    if (!unavailablePeerCaps) {
+        setPeerFeatures(alice.client, bob.jid, features);
+        setPeerFeatures(bob.client, alice.jid, features);
+    } else {
+        check(alice.client.capsManager()->features(bob.jid).isEmpty(),
+              "test peer caps unexpectedly known before first media range");
+    }
 
     const QByteArray payload = QByteArray(8192, 'a') + QByteArray(8192, 'b') + QByteArray(8192, 'c');
     FT::File         file;
@@ -220,6 +227,9 @@ int main(int argc, char **argv)
     queuedRanges(true);
     queuedRanges(true, false, true); // A player requests each range only after the previous one completes.
     queuedRanges(false);
+    // First player demand after cached playback may precede MUC occupant caps.
+    // An explicit Jingle source must still produce session-initiate.
+    queuedRanges(false, false, false, true);
     queuedRanges(true, true);
     deletionDuringSetup();
     qInfo("Jingle media queue and BUNDLE handover passed");
