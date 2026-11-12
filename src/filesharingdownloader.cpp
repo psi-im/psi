@@ -38,6 +38,7 @@
 #include <QByteArray>
 #include <QDir>
 #include <QFileInfo>
+#include <QLoggingCategory>
 #include <QNetworkReply>
 #include <QPointer>
 #include <QTemporaryFile>
@@ -45,6 +46,8 @@
 #include <QUrlQuery>
 #include <QUuid>
 #include <QVariant>
+
+Q_LOGGING_CATEGORY(mediaSourceLog, "psi.media.source", QtWarningMsg)
 
 class AbstractFileShareDownloader : public QObject {
     Q_OBJECT
@@ -648,6 +651,7 @@ public:
             && (!downloader || downloader->bytesAvailable() == 0);
         const bool knownLengthComplete = bytesLeft.has_value() && !*bytesLeft && success;
         if (knownLengthComplete || unknownLengthComplete) {
+            qCDebug(mediaSourceLog) << "source completed" << q << "received" << bytesReceived;
             if (tmpFile) {
                 tmpFile->close();
                 tmpFile.reset();
@@ -677,6 +681,9 @@ public:
         }
         QString uri  = uris.takeLast();
         auto    type = FileSourceSelector::type(uri);
+        // Sources may contain credentials, signed query strings or AES keys.
+        qCDebug(mediaSourceLog) << "source selected" << q << "source"
+                                << QUrl(uri).adjusted(QUrl::RemoveUserInfo | QUrl::RemoveQuery | QUrl::RemoveFragment);
         switch (type) {
         case FileSourceSelector::Type::HTTP:
         case FileSourceSelector::Type::FTP:
@@ -711,6 +718,11 @@ public:
             metaReady     = true;
             responseRange = downloader->responseRange();
             actualSize    = downloader->fileSize();
+            qCDebug(mediaSourceLog) << "source metadata" << q << "size"
+                                    << (actualSize ? QString::number(*actualSize) : QStringLiteral("unknown"))
+                                    << "ranged" << bool(responseRange) << "offset"
+                                    << (responseRange ? responseRange->start : 0) << "length"
+                                    << (responseRange ? responseRange->size : 0);
             if (maximumSize && actualSize && *actualSize > *maximumSize) {
                 // Fail first, so the aborted source reports nothing of its own.
                 finishWithError(FileShareDownloader::tr("The file is larger than the automatic download limit"));
@@ -827,6 +839,8 @@ bool FileShareDownloader::open(QIODevice::OpenMode mode)
 void FileShareDownloader::abort()
 {
     if (d->downloader) {
+        qCDebug(mediaSourceLog) << "source abort" << this << "received" << d->bytesReceived << "completed"
+                                << d->finished;
         d->downloader->abort();
     }
 }
@@ -868,6 +882,8 @@ qint64 FileShareDownloader::readData(char *data, qint64 maxSize)
     qint64 bytesRead = d->downloader->read(data, maxSize);
     if (bytesRead <= 0)
         return bytesRead;
+    if (!d->bytesReceived)
+        qCDebug(mediaSourceLog) << "source first data" << this << "bytes" << bytesRead;
     if (d->tmpFile && d->tmpFile->write(data, bytesRead) != bytesRead) {
         // file engine tries to write everything unless it's a system error
         d->downloader->abort();

@@ -116,7 +116,7 @@ void ChatMedia::requestMessages(Cursor resource, qint64 afterEvent, int limit, M
             links.removeLast();
         for (const auto &link : links)
             page.entries.append({ link.eventId,
-                                  link.undated ? QDateTime() : QDateTime::fromMSecsSinceEpoch(link.timestamp, Qt::UTC),
+                                  link.undated ? QDateTime() : QDateTime::fromMSecsSinceEpoch(link.timestamp).toUTC(),
                                   link.body, link.direction == 1 });
         if (!page.entries.isEmpty())
             page.next = page.entries.last().eventId;

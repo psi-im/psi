@@ -96,6 +96,16 @@ earlier.
 
 ## Validation
 
+For transfer diagnostics, set `QT_LOGGING_RULES="psi.media.*.debug=true"` before
+starting Psi. Source logs identify the selected transport and response metadata;
+range logs record the requested offset/length, first payload, elapsed time and
+completion. Failures include received bytes and whether metadata and transport
+success were observed. Source URLs omit credentials, query strings and fragments.
+The logs do not dump file payloads. The bundled Iris option
+`IRIS_DTLS_PACKET_DEBUG=ON` additionally traces incoming and outgoing DTLS datagram
+sizes, allowing a stalled handshake to be distinguished from a stalled file
+transfer. ICE connectivity checks alone do not prove that DTLS data is flowing.
+
 The regressions cover demand-only tail reads, seek/peek and independent cursors,
 stale completions, blocking decoder reads and abort, download order and paused
 playback, independent waiter cancellation, foreground admission, early

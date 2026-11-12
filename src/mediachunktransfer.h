@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mediachunktypes.h"
+#include <QElapsedTimer>
 #include <QIODevice>
 #include <QTimer>
 #include <optional>
@@ -31,5 +32,6 @@ private:
     MediaChunkCompletion done_;
     MediaChunkAbort      stop_;
     QTimer               timer_;
+    QElapsedTimer        elapsed_;
     bool metadata_ = false, completed_ = false, reading_ = false, finished_ = false, disconnected_ = false;
 };

@@ -2,6 +2,7 @@
 #include <QTimer>
 #include <iris/jingle-ft.h>
 #include <iris/xmpp_client.h>
+#include <iris/xmpp_caps.h>
 #define private public
 #include <iris/jingle-ice.h>
 #undef private
@@ -10,7 +11,8 @@
 
 namespace FT = J::FileTransfer;
 
-static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false)
+static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false,
+                         bool unavailablePeerCaps = false)
 {
     TcpPortReserver reserver;
     Endpoint        alice(QStringLiteral("alice")), bob(QStringLiteral("bob"));
@@ -21,8 +23,13 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
     auto features = alice.client.jingleManager()->discoFeatures();
     if (!grouping)
         features.removeAll(QStringLiteral("urn:ietf:rfc:5888"));
-    setPeerFeatures(alice.client, bob.jid, features);
-    setPeerFeatures(bob.client, alice.jid, features);
+    if (!unavailablePeerCaps) {
+        setPeerFeatures(alice.client, bob.jid, features);
+        setPeerFeatures(bob.client, alice.jid, features);
+    } else {
+        check(alice.client.capsManager()->features(bob.jid).isEmpty(),
+              "test peer caps unexpectedly known before first media range");
+    }
 
     const QByteArray payload = QByteArray(8192, 'a') + QByteArray(8192, 'b') + QByteArray(8192, 'c');
     FT::File         file;
@@ -104,6 +111,9 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
         rangeFile.setRange(FT::Range(quint64(i * 8192), 8192));
         cancel.append(pool.request(bob.jid, rangeFile, &consumers[i], [&, i](FT::Application *a) {
             check(a, "request setup failed");
+            if (unavailablePeerCaps)
+                check(a->transport() && a->transport()->pad()->ns() == QLatin1String("urn:xmpp:jingle:transports:ibb:1"),
+                      "missing-capabilities request must use safe IBB fallback");
             requestParts.append(a);
             auto *session = a->pad()->session();
             if (!requestSessions.contains(session))
@@ -134,7 +144,9 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
                 ++verified;
                 cancel[i](); // Release the consumer, preserving the queued handover.
                 if (lateArrival && i < 2)
-                    QTimer::singleShot(100, &consumers[i], [&, i] { requestRange(i + 1); });
+                    // Previously the 3-second idle receipt release closed the physical session
+                    // before playback requested the next missing range.
+                    QTimer::singleShot(4200, &consumers[i], [&, i] { requestRange(i + 1); });
             });
         }));
     };
@@ -161,7 +173,8 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
     }
     const int completed = cancelLast ? 2 : 3;
     check(pumpUntil(alice, bob,
-                    [&] { return verified == completed && receipts == completed && (!cancelLast || removals == 1); }),
+                    [&] { return verified == completed && receipts == completed && (!cancelLast || removals == 1); },
+                    grouping && !cancelLast ? 25000 : 15000),
           "queued ranges did not finish");
     for (int i = 0; i < completed; ++i)
         check(received[i] == payload.mid(i * 8192, 8192), "range payload or offset corrupted");
@@ -179,7 +192,7 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
                           return false;
                   return true;
               },
-              grouping && !cancelLast ? 5000 : 1000),
+              grouping && !cancelLast ? 25000 : 1000),
           "completed/cancelled ranges left a Jingle session alive");
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
     for (const auto &s : sourceSessions)
@@ -218,8 +231,11 @@ int main(int argc, char **argv)
         return 77;
     }
     queuedRanges(true);
-    queuedRanges(true, false, true); // A player requests each range only after the previous one completes.
+    queuedRanges(true, false, true); // >3s gaps must retain the same BUNDLE association.
     queuedRanges(false);
+    // First player demand after cached playback may precede MUC occupant caps.
+    // An explicit Jingle source must still produce session-initiate.
+    queuedRanges(false, false, false, true);
     queuedRanges(true, true);
     deletionDuringSetup();
     qInfo("Jingle media queue and BUNDLE handover passed");

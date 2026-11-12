@@ -1,14 +1,20 @@
 #include "mediachunktransfer.h"
+#include <QLoggingCategory>
 #include <QPointer>
 #include <algorithm>
 #include <utility>
+
+Q_LOGGING_CATEGORY(mediaTransferLog, "psi.media.transfer", QtWarningMsg)
 
 MediaChunkTransfer::MediaChunkTransfer(QIODevice *device, quint64 size, quint64 offset, quint64 length,
                                        MediaChunkCompletion done, MediaChunkAbort stop, QObject *parent) :
     QObject(parent), device_(device), size_(size), offset_(offset), length_(length), done_(std::move(done)),
     stop_(std::move(stop))
 {
+    elapsed_.start();
     device_->setParent(this);
+    qCDebug(mediaTransferLog) << "request" << this << "device" << device_ << "offset" << offset_ << "length" << length_
+                              << "file-size" << size_;
     timer_.setSingleShot(true);
     timer_.setInterval(60000);
     connect(&timer_, &QTimer::timeout, this, [this] { failed(QStringLiteral("Media chunk transfer stalled")); });
@@ -18,6 +24,9 @@ MediaChunkTransfer::MediaChunkTransfer(QIODevice *device, quint64 size, quint64 
 
 MediaChunkTransfer::~MediaChunkTransfer()
 {
+    if (!finished_)
+        qCDebug(mediaTransferLog) << "destroyed pending request" << this << "received" << bytes_.size() << "elapsed-ms"
+                                  << elapsed_.elapsed() << "metadata" << metadata_;
     if (device_)
         device_->disconnect(this);
     if (stop_)
@@ -46,6 +55,7 @@ void MediaChunkTransfer::metadata(std::optional<quint64> size, std::optional<Ran
         return;
     }
     metadata_ = true;
+    qCDebug(mediaTransferLog) << "metadata accepted" << this << "elapsed-ms" << elapsed_.elapsed();
     timer_.start();
     pump();
 }
@@ -81,6 +91,9 @@ void MediaChunkTransfer::pump()
         const auto bytes = device_->read(qint64(std::min<quint64>(65536, length_ - quint64(bytes_.size()))));
         if (bytes.isEmpty())
             break;
+        if (bytes_.isEmpty())
+            qCDebug(mediaTransferLog) << "first data" << this << "bytes" << bytes.size() << "elapsed-ms"
+                                      << elapsed_.elapsed();
         bytes_ += bytes;
         timer_.start();
     }
@@ -100,6 +113,14 @@ void MediaChunkTransfer::finish(MediaChunkError error)
         return;
     finished_ = true;
     timer_.stop();
+    if (!error.isEmpty() && error.code() != MediaChunkError::Cancelled)
+        qCWarning(mediaTransferLog) << "request failed" << this << "device" << device_ << "offset" << offset_
+                                    << "length" << length_ << "received" << bytes_.size() << "elapsed-ms"
+                                    << elapsed_.elapsed() << "metadata" << metadata_ << "transport-completed"
+                                    << completed_ << "disconnected" << disconnected_ << "error" << error.message();
+    else
+        qCDebug(mediaTransferLog) << (error.isEmpty() ? "request completed" : "request cancelled") << this << "received"
+                                  << bytes_.size() << "elapsed-ms" << elapsed_.elapsed();
     // Never destroy a QIODevice within its readData()/signal stack.
     QTimer::singleShot(0, this, [this, error] {
         const QPointer<MediaChunkTransfer> guard(this);

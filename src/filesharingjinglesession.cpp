@@ -6,6 +6,8 @@
 #include <iris/jingle-ft.h>
 #include <iris/jingle-session.h>
 #include <iris/jingle-transport.h>
+#include <iris/xmpp_caps.h>
+#include <iris/xmpp_client.h>
 #include <iris/xmpp_jid.h>
 #include <utility>
 
@@ -32,7 +34,11 @@ public:
     QPointer<J::Manager>                  manager;
     QHash<QString, std::shared_ptr<Peer>> peers;
     bool                                  scheduled = false;
-    static constexpr int                  IdleBundleGraceMs = 3000;
+    // Iris's Jingle FT finalize/receipt deadline is 30 seconds. Allow a
+    // delayed next media range to reuse BUNDLE (including slow decode or
+    // cached reads), but release the previous receipt well before that
+    // protocol deadline so the sender cannot time out waiting for it.
+    static constexpr int                  IdleBundleGraceMs = 20000;
 
     void schedule()
     {
@@ -171,18 +177,58 @@ public:
                     transport->releaseIfUnused();
                 // Let normal transport selection choose a supported alternative.
             }
+        } else if (manager->client()->capsManager()->features(peer->jid).isEmpty()) {
+            // A player starting in the disk cache may not need a Jingle session
+            // until the first seek. In a MUC, the occupant can be online while
+            // its entity capabilities are still unresolved. NSTransportsList
+            // otherwise permanently discards every candidate because
+            // checkPeerCaps() returns false, and no session-initiate is sent.
+            // We can safely offer IBB without advertised DTLS support. ICE/SCTP
+            // must NOT be offered blindly here: Iris enables outgoing DTLS
+            // only when the peer's fingerprint capability is known, and SCTP
+            // cannot operate without DTLS. Once verified peer caps arrive,
+            // the normal selector can prefer ICE for subsequent ranges.
+            const auto transports = manager->availableTransports(
+                J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
+            // Jingle IBB's namespace is stable; its implementation header is
+            // private to Iris and is not installed in the external SDK.
+            const auto ibbNs = QStringLiteral("urn:xmpp:jingle:transports:ibb:1");
+            if (transports.contains(ibbNs)) {
+                auto transport = session->newOutgoingTransport(ibbNs);
+                if (transport && app->setTransport(transport)) {
+                    qInfo("Jingle media peer caps unavailable; offering safe IBB fallback to %s",
+                          qPrintable(peer->jid.full()));
+                } else {
+                    if (transport)
+                        transport->releaseIfUnused();
+                    qWarning("Jingle media could not prepare IBB fallback for %s", qPrintable(peer->jid.full()));
+                }
+            } else {
+                qWarning("Jingle media has unknown peer caps and no safe IBB fallback for %s",
+                         qPrintable(peer->jid.full()));
+            }
         }
         QObject::connect(app, &FT::Application::payloadVerified, q, [this, part] {
             part->verified = true;
             schedule();
         });
-        QObject::connect(app, &J::Application::stateChanged, q, [this, part, previous](J::State state) {
-            if (state == J::State::Active) {
-                // Active is emitted during answer processing. Wait for that
-                // processing to commit before releasing the old receipt.
-                QTimer::singleShot(0, q, [this, part, previous] {
-                    part->accepted = true;
-                    schedule();
+        QObject::connect(app, &J::Application::stateChanged, q, [this, peer, part, previous](J::State state) {
+            if (state == J::State::Connecting || state == J::State::Active) {
+                // A BUNDLE extension is committed when content-accept finishes,
+                // before its new SCTP data channel becomes connected. The old
+                // range may still be holding its receipt, and waiting for the
+                // successor's Active state can deadlock the handover.
+                // Defer until after the acceptance stack has committed the
+                // negotiated group before releasing that receipt.
+                QTimer::singleShot(0, q, [this, peer, part, previous] {
+                    if (!part->app || part->app->state() >= J::State::Finishing)
+                        return;
+                    if (previous && !grouped(part, peer->session))
+                        return; // The BUNDLE extension has not committed.
+                    if (!part->accepted) {
+                        part->accepted = true;
+                        schedule();
+                    }
                     close(previous);
                 });
             } else if (state == J::State::Finished) {
