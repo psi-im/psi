@@ -1800,17 +1800,14 @@ int MamChatWidget::prependArchivePage(const QList<QPair<QString, MessageView>> &
 QList<QPointer<FileSharingItem>> MamChatWidget::loadedMediaItems() const
 {
     QList<QPointer<FileSharingItem>> files;
-    QSet<QString> seen;
+    QSet<FileSharingItem *> seen;
     for (const auto &row : items_) {
         if (row.message.type() != MessageView::Message || isRetracted(row))
             continue;
         for (auto *item : row.message.references()) {
-            if (!item || item->sums().isEmpty())
+            if (!item || seen.contains(item))
                 continue;
-            const QString id = item->sums().constFirst().toString();
-            if (id.isEmpty() || seen.contains(id))
-                continue;
-            seen.insert(id);
+            seen.insert(item);
             files.append(QPointer<FileSharingItem>(item));
         }
     }
