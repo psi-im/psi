@@ -41,6 +41,10 @@ public:
         State                                                      state      = State::Ready;
         bool                                                       navigating = false;
         std::function<QWidget *(QWidget *, std::function<void()>)> video;
+        // A borrowed inline player is returned to its chat instead of being
+        // deleted when this viewer closes or navigates to another resource.
+        // Return false if the original anchor no longer exists.
+        std::function<bool(QWidget *)> videoReturn;
     };
     using QObject::QObject;
     virtual void start() { }
@@ -69,6 +73,7 @@ public:
 
     explicit MediaViewer(const QImage &image, QWidget *parent = nullptr);
     MediaViewer(const QImage &image, const QString &fileName, QWidget *parent = nullptr);
+    ~MediaViewer() override;
 
     static void setSizePersistence(SizeLoader loader, SizeSaver saver);
     static void setSavePathPersistence(PathLoader loader, PathSaver saver);
@@ -104,6 +109,7 @@ private:
     void    togglePlayback();
     void    updateFullscreenUi();
     void    updateVideoControlsOverlay();
+    void    releaseVideo();
     void    noteFullscreenActivity(bool force = false);
     void    hideIdleFullscreenControls();
     void    setControlsShown(QWidget *widget, bool visible, bool animated);
@@ -135,6 +141,7 @@ private:
     QProgressBar                   *loading_ = nullptr;
     QPointer<QWidget>               video_;
     QPointer<QWidget>               videoControls_;
+    std::function<bool(QWidget *)>   videoReturn_;
     QTimer                         *fullscreenIdleTimer_ = nullptr;
     QPoint                          lastFullscreenCursorPos_;
     bool                            fullscreenControlsHidden_ = false;
