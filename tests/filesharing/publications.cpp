@@ -1090,6 +1090,28 @@ private slots:
         QCOMPARE(stats.total(), quint64(1));
     }
 
+    void unfilteredClickedMediaLookupDoesNotChangeSavedGalleryFilter()
+    {
+        MediaFilter requested;
+        bool completed = false;
+        ChatMedia browser(
+            [&requested](ChatMedia::Query query, QObject *receiver, ChatMedia::LinksDone done) {
+                requested = query.filter;
+                QTimer::singleShot(0, receiver, [done] { done({}, true); });
+            },
+            [](ChatMedia::Filter, QObject *receiver, ChatMedia::StatisticsDone done) {
+                QTimer::singleShot(0, receiver, [done] { done({}, true); });
+            });
+        const MediaFilter saved { MediaFilter::Images, MediaFilter::Complete };
+        browser.setFilter(saved);
+        browser.requestEntryUnfiltered(QStringLiteral("sha-256:missing"),
+                                       [&completed](ChatMedia::Page, bool ok) { completed = ok; });
+        QTRY_VERIFY(completed);
+        QCOMPARE(requested.types, int(MediaFilter::Images | MediaFilter::Videos | MediaFilter::Files));
+        QCOMPARE(requested.availability, int(MediaFilter::Complete | MediaFilter::Partial | MediaFilter::Remote));
+        QVERIFY(browser.filter() == saved);
+    }
+
     void publicRoomMediaUsesGroupChatHistoryScope()
     {
         migrateHistory();

@@ -113,6 +113,36 @@ private slots:
         MediaViewer::setFilterPersistence({}, {});
     }
 
+    void openedRemoteMediaIsIncludedOnlyForThisViewer()
+    {
+        const MediaFilter saved { MediaFilter::Images, MediaFilter::Complete };
+        MediaFilter persisted = saved;
+        MediaViewer::setFilterPersistence([&persisted] { return persisted; },
+                                          [&persisted](MediaFilter value) { persisted = value; });
+        QImage image(80, 60, QImage::Format_RGB32);
+        image.fill(Qt::red);
+        {
+            MediaViewer viewer(image);
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            QCOMPARE(source->filter.availability, int(MediaFilter::Complete));
+            emit source->filterAdjustmentRequested(
+                { MediaFilter::Images, MediaFilter::Complete | MediaFilter::Remote });
+            const auto *remote = viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter1_1"));
+            QVERIFY(remote);
+            QVERIFY(remote->isChecked());
+            QCOMPARE(source->filter.availability, int(MediaFilter::Complete | MediaFilter::Remote));
+            QCOMPARE(persisted.availability, int(MediaFilter::Complete));
+        }
+        {
+            MediaViewer viewer(image);
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            QVERIFY(!viewer.findChild<QToolButton *>(QStringLiteral("mediaFilter1_1"))->isChecked());
+        }
+        MediaViewer::setFilterPersistence({}, {});
+    }
+
     void filtersAndPositionShareTheSourceSelection()
     {
         QImage image(80, 60, QImage::Format_RGB32);
