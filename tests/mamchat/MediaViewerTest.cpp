@@ -338,6 +338,7 @@ private slots:
             auto *layout = new QVBoxLayout(player);
             layout->setContentsMargins(0, 0, 0, 0);
             auto *surface = new QWidget(player);
+            surface->setObjectName(QStringLiteral("testVideoSurface"));
             layout->addWidget(surface, 1);
             auto *bottom = new QWidget(player);
             bottom->setObjectName(QStringLiteral("qite-video-controls"));
@@ -352,12 +353,25 @@ private slots:
         QVERIFY(top && bottom && idle);
         auto *player = bottom->parentWidget();
         QVERIFY(player);
+        auto *surface = player->findChild<QWidget *>(QStringLiteral("testVideoSurface"));
+        QVERIFY(surface);
+        QVERIFY(player->layout());
+        QTRY_VERIFY(surface->height() < player->height()); // Normal window: in layout.
+        QVERIFY(player->layout()->indexOf(bottom) >= 0);
         QVERIFY(top->isVisible() && bottom->isVisible());
 
         QTest::keyClick(&viewer, Qt::Key_F11);
         QTRY_VERIFY(viewer.isFullScreen());
         QVERIFY(top->isVisible() && bottom->isVisible());
         QVERIFY(idle->isActive());
+        // Fullscreen: controls are layered above the player rather than
+        // consuming height from its QVBoxLayout.
+        QTRY_COMPARE(player->layout()->indexOf(bottom), -1);
+        QTRY_COMPARE(surface->geometry(), player->rect());
+        const QRect fullSurface = surface->geometry();
+        QVERIFY(bottom->geometry().bottom() <= player->height());
+        QVERIFY(bottom->geometry().top() >= 0);
+        QVERIFY(bottom->geometry().width() > 0);
         // Exercise the timeout deterministically; no dependence on real sleep.
         QVERIFY(QMetaObject::invokeMethod(idle, "timeout", Qt::DirectConnection));
         auto *topEffect = qobject_cast<QGraphicsOpacityEffect *>(top->graphicsEffect());
@@ -367,6 +381,7 @@ private slots:
         QTRY_VERIFY(!bottom->isVisible());
         QCOMPARE(topEffect->opacity(), qreal(0));
         QCOMPARE(bottomEffect->opacity(), qreal(0));
+        QCOMPARE(surface->geometry(), fullSurface); // Fading must not resize playback.
         const QPoint local(25, 25);
         QMouseEvent movement(QEvent::MouseMove, QPointF(local), QPointF(player->mapToGlobal(local)),
                              Qt::NoButton, Qt::NoButton, Qt::NoModifier);
@@ -382,6 +397,8 @@ private slots:
 
         QTest::keyClick(&viewer, Qt::Key_Escape);
         QTRY_VERIFY(!viewer.isFullScreen());
+        QTRY_VERIFY(player->layout()->indexOf(bottom) >= 0);
+        QTRY_VERIFY(surface->height() < player->height()); // Restored normal layout.
         QVERIFY(top->isVisible());
         QVERIFY(bottom->isVisible());
         QCOMPARE(topEffect->opacity(), qreal(1));
