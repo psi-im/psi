@@ -704,14 +704,6 @@ void MediaViewer::updateFullscreenUi()
         button->setIcon(QIcon::fromTheme(full ? QStringLiteral("view-restore") : QStringLiteral("view-fullscreen"),
                                          fullscreenArrowsIcon(palette(), full)));
     }
-    if (video_) {
-        if (auto *videoFullscreen = video_->findChild<QToolButton *>(QStringLiteral("qite-video-fullscreen-button"))) {
-            const bool full = isFullScreen();
-            videoFullscreen->setIcon(
-                QIcon::fromTheme(full ? QStringLiteral("view-restore") : QStringLiteral("view-fullscreen"),
-                                 fullscreenArrowsIcon(palette(), full)));
-        }
-    }
     if (isFullScreen()) {
         noteFullscreenActivity(true);
         return;
@@ -845,13 +837,6 @@ void MediaViewer::applyView(const MediaNavigationSource::View &view)
         });
         if (video_) {
             videoControls_ = video_->findChild<QWidget *>(QStringLiteral("qite-video-controls"));
-            if (auto *videoFullscreen = video_->findChild<QToolButton *>(QStringLiteral("qite-video-fullscreen-button"))) {
-                // qite updates its own icon after invoking the host's fullscreen
-                // callback; our later connection reapplies the themed arrows.
-                connect(videoFullscreen, &QToolButton::clicked, this, [this] {
-                    updateFullscreenUi();
-                });
-            }
             trackActivityWidget(video_);
             video_->setGeometry(contentRect());
             video_->show();
