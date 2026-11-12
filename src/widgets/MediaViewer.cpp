@@ -591,9 +591,13 @@ void MediaViewer::updateVideoControlsOverlay()
     }
     if (overlay) {
         constexpr int inset = 12;
-        const int height = videoControls_->sizeHint().height();
-        videoControls_->setGeometry(inset, qMax(0, video_->height() - height - inset),
-                                   qMax(0, video_->width() - inset * 2), height);
+        // Plain QWidget test surfaces can report an invalid sizeHint() even
+        // when they have a fixed height. Respect their minimumHeight(), too.
+        const int height = qMin(video_->height(),
+                                qMax(videoControls_->sizeHint().height(), videoControls_->minimumHeight()));
+        const int x = qMin(inset, video_->width() / 2);
+        const int y = qMax(0, video_->height() - height - inset);
+        videoControls_->setGeometry(x, y, qMax(0, video_->width() - 2 * x), qMax(0, height));
         videoControls_->raise();
     }
 }
