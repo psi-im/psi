@@ -284,7 +284,8 @@ private slots:
                     return player;
                 };
                 video.videoReturn = [&](QWidget *widget) {
-                    QCOMPARE(widget, player);
+                    if (widget != player)
+                        return false;
                     ++restored;
                     widget->setParent(&inlineHost);
                     widget->show();
