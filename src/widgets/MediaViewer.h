@@ -146,6 +146,7 @@ private:
     QPoint                          lastFullscreenCursorPos_;
     bool                            fullscreenControlsHidden_ = false;
     bool                            videoControlsOverlay_ = false;
+    bool                            playbackSurfacePressed_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;
