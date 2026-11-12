@@ -121,6 +121,7 @@ public:
     }
 
     void setFileState(int state) { fileState_ = state; }
+    void setCategorySymbol(int kind) { categorySymbol_ = kind; }
 
 protected:
     void paintEvent(QPaintEvent *) override
@@ -182,6 +183,35 @@ protected:
                 draw(true);
             }
             painter.restore();
+        } else if (categorySymbol_ != 0) {
+            // MIME-type icons from some themes already contain translucent
+            // artwork. Draw these two category symbols with the same solid,
+            // palette-aware stroke as the file availability pictograms.
+            painter.save();
+            painter.translate((width() - 20) / 2.0, (height() - 20) / 2.0);
+            painter.scale(20.0 / 24.0, 20.0 / 24.0);
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QPen(palette().color(QPalette::ButtonText), 1.7,
+                                Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            if (categorySymbol_ == 1) {
+                painter.drawRoundedRect(QRectF(3, 5, 18, 14), 1.8, 1.8);
+                painter.drawEllipse(QRectF(15, 7.5, 2.8, 2.8));
+                QPainterPath hills;
+                hills.moveTo(5.5, 16.5);
+                hills.lineTo(10.5, 11.5);
+                hills.lineTo(13.5, 14.5);
+                hills.lineTo(16, 12.5);
+                hills.lineTo(19, 16.5);
+                painter.drawPath(hills);
+            } else {
+                painter.drawRoundedRect(QRectF(3, 4, 18, 16), 1.4, 1.4);
+                painter.drawRect(QRectF(8.5, 5.8, 7, 12.4));
+                for (int y : { 7, 12, 17 }) {
+                    painter.drawPoint(QPointF(5.5, y));
+                    painter.drawPoint(QPointF(18.5, y));
+                }
+            }
+            painter.restore();
         } else {
             const QPixmap pixmap = icon().pixmap(iconSize(),
                 isEnabled() ? QIcon::Normal : QIcon::Disabled,
@@ -198,6 +228,7 @@ protected:
 
 private:
     int fileState_ = -1;
+    int categorySymbol_ = 0;
 };
 
 QIcon rotateClockwiseIcon(const QPalette &palette)
@@ -396,8 +427,11 @@ void MediaViewer::setupControls()
         button->setChecked(checkedByDefault);
         if (group == 1)
             button->setFileState(bit);
-        else
+        else {
             button->setIcon(themedIcon(icons, style(), fallback));
+            if (bit == 1 || bit == 2)
+                button->setCategorySymbol(bit);
+        }
         button->setToolTip(label);
         button->setAccessibleName(label);
         row->addWidget(button);
