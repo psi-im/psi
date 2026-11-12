@@ -38,6 +38,22 @@ void ChatMedia::requestEntry(const QString &sourceId, PageDone done)
     }
     request(q, std::move(done));
 }
+void ChatMedia::requestEntryUnfiltered(const QString &sourceId, PageDone done)
+{
+    if (sourceId.isEmpty()) {
+        QTimer::singleShot(0, this, [done] {
+            if (done)
+                done({}, false);
+        });
+        return;
+    }
+    Query q;
+    q.source = sourceId;
+    q.limit = 1;
+    q.filter = { 7, 7 };
+    request(q, std::move(done));
+}
+
 void ChatMedia::setFilter(Filter filter)
 {
     filter.types &= 7;

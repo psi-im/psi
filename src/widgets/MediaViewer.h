@@ -52,6 +52,9 @@ public:
     virtual bool saveAs(QWidget *) { return false; }
 signals:
     void changed(const MediaNavigationSource::View &);
+    // Include the media opened explicitly from chat, without overwriting
+    // the user's persisted default gallery filter.
+    void filterAdjustmentRequested(MediaFilter);
 };
 
 class MediaViewer final : public QWidget {
