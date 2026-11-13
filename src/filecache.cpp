@@ -191,7 +191,8 @@ void FileCache::load()
         hashes[query.value(0).toByteArray()].append(hash);
     }
     query.prepare(QStringLiteral(
-        "SELECT id,size,created,max_age,metadata,path,placement,external_mtime FROM files WHERE partition=:partition"));
+        "SELECT id,size,created,max_age,metadata,path,placement,external_mtime FROM files "
+        "WHERE partition=:partition ORDER BY created,id"));
     query.bindValue(QStringLiteral(":partition"), _partition);
     if (!query.exec())
         qWarning() << "Cannot read file records:" << query.lastError().text();
@@ -236,8 +237,6 @@ void FileCache::load()
             }
         }
         item->_flags |= (FileCacheItem::OnDisk | FileCacheItem::Registered);
-        for (const auto &sum : sums)
-            _items.insert(sum, item);
         items.append(item);
     }
     query.finish();
@@ -257,9 +256,36 @@ void FileCache::load()
             _syncTimer->start(5000);
         }
     }
-    for (auto *item : std::as_const(items))
-        if (item->isExpired())
-            remove(item->id());
+    // The database does not enforce unique hashes across different file records.
+    // An expired record must never delete a newer generation through a hash
+    // lookup: doing so leaves a dangling pointer in "items" (use-after-free).
+    // Process oldest first and keep the newest non-expired generation for
+    // overlapping hashes, including aliases.
+    for (auto *item : std::as_const(items)) {
+        if (item->isExpired()) {
+            removeItem(item, false);
+            continue;
+        }
+        QSet<FileCacheItem *> previousItems;
+        for (const auto &sum : item->sums()) {
+            if (auto *previous = _items.value(sum))
+                previousItems.insert(previous);
+        }
+        bool retired = true;
+        for (auto *previous : std::as_const(previousItems)) {
+            const QPointer<FileCacheItem> guard(previous);
+            removeItem(previous, false);
+            if (guard)
+                retired = false;
+        }
+        if (!retired) {
+            // A failed retirement must not silently replace the indexed record.
+            delete item;
+            continue;
+        }
+        for (const auto &sum : item->sums())
+            _items.insert(sum, item);
+    }
 }
 
 void FileCache::importLegacy(const QString &legacyDir)
