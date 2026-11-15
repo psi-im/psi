@@ -1799,6 +1799,23 @@ private slots:
             copyPath->trigger();
             QCOMPARE(QApplication::clipboard()->text(), saved);
         }
+
+        // Jingle-only shares have no transferable direct URL. They must not
+        // expose the internal share: lookup key as a Copy file link action.
+        FileSharingItem jingleOnly(QStringLiteral("application/x-7z-compressed"));
+        jingleOnly.source_ = {};
+        opener.items.insert(QStringLiteral("jingle"), &jingleOnly);
+        chat.appendMessage(message(QStringLiteral("jingle"), QStringLiteral("<share id=\\\"jingle\\\"/>"), 1));
+        QTRY_VERIFY(chat.itemWidget(1));
+        auto *jingleCard = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(jingleCard);
+        auto *jingleTitle = jingleCard->findChild<QLabel *>(QStringLiteral("previewTitle"));
+        QVERIFY(jingleTitle);
+        auto menu = openMenu(jingleTitle);
+        QVERIFY(menu);
+        QVERIFY(action(menu.get(), QStringLiteral("mamCopyMessage")));
+        QVERIFY(!action(menu.get(), QStringLiteral("mamCopyFileLink")));
+        QVERIFY(!action(menu.get(), QStringLiteral("mamCopyFilePath")));
     }
 
     void themeStylesEveryPieceOfMessageText()
