@@ -1805,7 +1805,7 @@ private slots:
         FileSharingItem jingleOnly(QStringLiteral("application/x-7z-compressed"));
         jingleOnly.source_ = {};
         opener.items.insert(QStringLiteral("jingle"), &jingleOnly);
-        chat.appendMessage(message(QStringLiteral("jingle"), QStringLiteral("<share id=\\\"jingle\\\"/>"), 1));
+        chat.appendMessage(message(QStringLiteral("jingle"), QStringLiteral("<share id=\"jingle\"/>"), 1));
         QTRY_VERIFY(chat.itemWidget(1));
         auto *jingleCard = chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
         QVERIFY(jingleCard);
