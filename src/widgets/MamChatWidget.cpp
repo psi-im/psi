@@ -16,6 +16,7 @@
 #include <QContextMenuEvent>
 #include <QCursor>
 
+#include <QAction>
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
@@ -2615,9 +2616,34 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             auto *download = button(QStyle::SP_DialogSaveButton, tr("Download file"));
             auto *open = button(QStyle::SP_DialogOpenButton, tr("Open file"));
             auto *reveal = button(QStyle::SP_DirOpenIcon, tr("Show in file manager"));
-            auto *copy = button(QStyle::SP_FileDialogDetailedView, tr("Copy file path"));
-            // An HTTP(S) source opens in the browser without downloading here.
+            // Keep file-specific copy commands in the card's context menu,
+            // alongside the usual message actions. A share: URL is only an
+            // internal lookup key, not something another client can open.
+            const QPointer<FileSharingItem> item = file.item;
             const QUrl web = file.item->simpleSource();
+            if (web.isValid() && !web.isEmpty()) {
+                auto *copyLink = new QAction(tr("Copy file link"), preview);
+                copyLink->setObjectName(QStringLiteral("mamCopyFileLink"));
+                preview->addAction(copyLink);
+                connect(copyLink, &QAction::triggered, preview, [item] {
+                    if (!item)
+                        return;
+                    const QUrl link = item->simpleSource();
+                    if (link.isValid() && !link.isEmpty())
+                        QApplication::clipboard()->setText(link.toString(QUrl::FullyEncoded));
+                });
+            }
+            auto *copyPath = new QAction(tr("Copy file path"), preview);
+            copyPath->setObjectName(QStringLiteral("mamCopyFilePath"));
+            preview->addAction(copyPath);
+            connect(copyPath, &QAction::triggered, preview, [item] {
+                if (!item)
+                    return;
+                const QString path = item->property("_psiSavedFilePath").toString();
+                if (QFileInfo(path).isFile())
+                    QApplication::clipboard()->setText(path);
+            });
+            // An HTTP(S) source opens in the browser without downloading here.
             if (web.scheme() == QLatin1String("http") || web.scheme() == QLatin1String("https")) {
                 auto *browser = button(QStyle::SP_DirLinkIcon, tr("Open in browser"));
                 browser->setIcon(QIcon::fromTheme(QStringLiteral("internet-web-browser"), browser->icon()));
@@ -2648,13 +2674,13 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             status->setText(saved);
             status->setVisible(!saved.isEmpty());
             reveal->setEnabled(!saved.isEmpty());
-            copy->setEnabled(!saved.isEmpty());
+            copyPath->setEnabled(!saved.isEmpty());
             const QString accountId = file.account;
-            const QPointer<FileSharingItem> item = file.item;
             const QPointer<MamChatWidget> self(this);
             const QPointer<QLabel> statusGuard(status);
             const QPointer<QToolButton> downloadGuard(download), openGuard(open), revealGuard(reveal),
-                copyGuard(copy), cancelGuard(cancel);
+                cancelGuard(cancel);
+            const QPointer<QAction> copyPathGuard(copyPath);
             const QString rowKey = items_.at(index).key;
             const auto rowChanged = [self, rowKey] {
                 if (!self)
@@ -2665,7 +2691,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                     self->itemsChanged(logical, logical);
                 }
             };
-            const auto finished = [item, statusGuard, downloadGuard, openGuard, revealGuard, copyGuard,
+            const auto finished = [item, statusGuard, downloadGuard, openGuard, revealGuard, copyPathGuard,
                                    cancelGuard, rowChanged](const QString &path, const QString &error,
                                                              bool permanent) {
                 if (!item)
@@ -2680,7 +2706,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 if (downloadGuard) downloadGuard->setEnabled(true);
                 if (openGuard) openGuard->setEnabled(true);
                 if (revealGuard) revealGuard->setEnabled(havePath);
-                if (copyGuard) copyGuard->setEnabled(havePath);
+                if (copyPathGuard) copyPathGuard->setEnabled(havePath);
                 if (cancelGuard) cancelGuard->hide();
                 rowChanged();
             };
@@ -2755,13 +2781,6 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                 const QString path = item->property("_psiSavedFilePath").toString();
                 if (QFileInfo(path).isFile())
                     FileUtil::openFolder(path);
-            });
-            connect(copy, &QToolButton::clicked, this, [item] {
-                if (!item)
-                    return;
-                const QString path = item->property("_psiSavedFilePath").toString();
-                if (QFileInfo(path).isFile())
-                    QApplication::clipboard()->setText(path);
             });
             bodyPart->column()->addWidget(preview);
             preview->installEventFilter(this);
@@ -3913,6 +3932,22 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
             emit forwardMessageRequested(message.messageId(), message.userId(), plainMessage(items_.at(at)));
         }
     });
+    // A file card may contain labels, a status line, or control buttons. Walk
+    // up from the clicked child so right-clicking any part gets the same pair
+    // of file actions, without changing the message's ordinary context menu.
+    for (auto *child = target; child && child != row; child = child->parentWidget()) {
+        if (child->objectName() != QLatin1String("mamFilePreview"))
+            continue;
+        QList<QAction *> fileActions;
+        for (auto *action : child->actions())
+            if (action->isEnabled() && action->isVisible())
+                fileActions.append(action);
+        if (!fileActions.isEmpty()) {
+            menu->addSeparator();
+            menu->addActions(fileActions);
+        }
+        break;
+    }
     if (body && (target == body || target == body->viewport())) {
         const QPoint point = body->viewport()->mapFromGlobal(globalPosition);
         const auto format = body->imageAt(point);
