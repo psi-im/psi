@@ -24,6 +24,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QFile>
 #include <QFrame>
 #include <QGraphicsOpacityEffect>
 #include <QLabel>
@@ -1713,6 +1714,91 @@ private slots:
         // The share is out of the text, so nothing keeps that from being split.
         QVERIFY(chat.itemWidget(1)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview")));
         QCOMPARE(chat.itemWidget(1)->findChildren<CodeBlockWidget *>().size(), 1);
+    }
+
+    void fileCardContextMenuCopiesRemoteLinkAndSavedPath()
+    {
+        FileSharingDeviceOpener opener;
+        FileSharingItem archive(QStringLiteral("application/x-7z-compressed"));
+        const QUrl originalLink(QStringLiteral("https://example.org/archive.7z?token=one%2Ftwo#decrypt-key"));
+        archive.source_ = originalLink;
+        opener.items.insert(QStringLiteral("archive"), &archive);
+
+        MamChatWidget chat;
+        chat.resize(620, 520);
+        chat.setHistoryLoading(true);
+        chat.setMediaOpener(&opener);
+        chat.appendMessage(message(QStringLiteral("file"), QStringLiteral("<share id=\\"archive\\"/>")));
+        chat.show();
+        QTRY_VERIFY(chat.itemWidget(0));
+        auto *card = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(card);
+        auto *title = card->findChild<QLabel *>(QStringLiteral("previewTitle"));
+        QVERIFY(title);
+
+        const auto action = [](QMenu *menu, const QString &name) -> QAction * {
+            for (auto *entry : menu->actions())
+                if (entry->objectName() == name)
+                    return entry;
+            return nullptr;
+        };
+        const auto openMenu = [&](QWidget *target) {
+            QContextMenuEvent event(QContextMenuEvent::Mouse, QPoint(3, 3),
+                                    target->mapToGlobal(QPoint(3, 3)));
+            QApplication::sendEvent(target, &event);
+            return std::unique_ptr<QMenu>(chat.findChild<QMenu *>(QStringLiteral("mamMessageContextMenu")));
+        };
+
+        // Right-click on the file name gets a direct URL, never the internal
+        // share: address. No local path is offered before Save As.
+        {
+            auto menu = openMenu(title);
+            QVERIFY(menu);
+            QVERIFY(action(menu.get(), QStringLiteral("mamCopyMessage")));
+            auto *copyLink = action(menu.get(), QStringLiteral("mamCopyFileLink"));
+            QVERIFY(copyLink);
+            QVERIFY(!action(menu.get(), QStringLiteral("mamCopyFilePath")));
+            QApplication::clipboard()->clear();
+            copyLink->trigger();
+            QCOMPARE(QApplication::clipboard()->text(), originalLink.toString(QUrl::FullyEncoded));
+        }
+        for (auto *button : card->findChildren<QToolButton *>())
+            QVERIFY(button->toolTip() != QStringLiteral("Copy file path"));
+
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString saved = dir.filePath(QStringLiteral("archive.7z"));
+        QFile file(saved);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write("saved bytes"), qint64(11));
+        file.close();
+        QToolButton *download = nullptr;
+        for (auto *button : card->findChildren<QToolButton *>())
+            if (button->toolTip() == QStringLiteral("Download file"))
+                download = button;
+        QVERIFY(download);
+        download->click();
+        QVERIFY(bool(opener.saveAsFinished));
+        opener.saveAsFinished(saved, {});
+
+        // Save As makes Copy file path available in the same materialized row,
+        // including from a context click on a control rather than the title.
+        card = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
+        QVERIFY(card);
+        auto *status = card->findChild<QLabel *>(QStringLiteral("mamFileStatus"));
+        QVERIFY(status);
+        QCOMPARE(status->text(), saved);
+        {
+            auto menu = openMenu(status);
+            QVERIFY(menu);
+            auto *copyLink = action(menu.get(), QStringLiteral("mamCopyFileLink"));
+            auto *copyPath = action(menu.get(), QStringLiteral("mamCopyFilePath"));
+            QVERIFY(copyLink);
+            QVERIFY(copyPath);
+            QCOMPARE(menu->actions().indexOf(copyPath), menu->actions().indexOf(copyLink) + 1);
+            copyPath->trigger();
+            QCOMPARE(QApplication::clipboard()->text(), saved);
+        }
     }
 
     void themeStylesEveryPieceOfMessageText()
