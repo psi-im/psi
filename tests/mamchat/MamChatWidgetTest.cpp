@@ -1728,7 +1728,7 @@ private slots:
         chat.resize(620, 520);
         chat.setHistoryLoading(true);
         chat.setMediaOpener(&opener);
-        chat.appendMessage(message(QStringLiteral("file"), QStringLiteral("<share id=\\"archive\\"/>")));
+        chat.appendMessage(message(QStringLiteral("file"), QStringLiteral("<share id=\"archive\"/>")));
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
         auto *card = chat.itemWidget(0)->findChild<MessagePreview *>(QStringLiteral("mamFilePreview"));
