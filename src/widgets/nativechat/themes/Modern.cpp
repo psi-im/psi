@@ -18,6 +18,7 @@ public:
         options.avatarSize = avatarSize_;
         options.directionColors = true;
         options.boldAuthor = true;
+        options.emoteAsMessage = true;
         options.boldBody = info.alert;
         options.timePointDelta = -1.0;
         options.timeAlpha = 188;
@@ -31,7 +32,7 @@ public:
             const bool light = canvas.row()->palette().color(QPalette::Base).lightness() > 128;
             canvas.setBodyTextColor(light ? QColor(185, 35, 45) : QColor(255, 120, 125));
         }
-        if (info.kind == NativeChatMessageInfo::Message) {
+        if (info.kind == NativeChatMessageInfo::Message || info.emote) {
             if (auto *avatar = canvas.take(NativeChatMessageCanvas::Avatar))
                 outer->addWidget(avatar, 0, Qt::AlignTop);
         }
@@ -41,7 +42,7 @@ public:
         auto *column = new QVBoxLayout(content);
         column->setContentsMargins(0, 0, 0, 0);
         column->setSpacing(3);
-        if (info.kind == NativeChatMessageInfo::Message)
+        if (info.kind == NativeChatMessageInfo::Message || info.emote)
             column->addWidget(NativeChatThemeLayout::messageHeader(canvas, content), 0, Qt::AlignTop);
         column->addWidget(canvas.take(NativeChatMessageCanvas::Body), 0, Qt::AlignTop);
     }
