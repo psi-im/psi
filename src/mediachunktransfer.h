@@ -14,13 +14,16 @@ public:
         quint64 offset, length;
     };
     MediaChunkTransfer(QIODevice *device, quint64 size, quint64 offset, quint64 length, MediaChunkCompletion done,
-                       MediaChunkAbort stop, QObject *parent = nullptr);
+                       MediaChunkAbort stop, QObject *parent = nullptr, int negotiationIdleMs = 120000,
+                       int payloadIdleMs = 60000);
     ~MediaChunkTransfer() override;
     void metadata(std::optional<quint64> size, std::optional<Range> range);
     void succeeded();
     void failed(QString message);
     void integrityFailed(QString message);
     void disconnected();
+    // A transport-replace or candidate update advances setup, not payload delivery.
+    void negotiationActivity();
     void cancel();
 
 private:
@@ -33,5 +36,6 @@ private:
     MediaChunkAbort      stop_;
     QTimer               timer_;
     QElapsedTimer        elapsed_;
+    int                  payloadIdleMs_;
     bool metadata_ = false, completed_ = false, reading_ = false, finished_ = false, disconnected_ = false;
 };
