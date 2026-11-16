@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "widgets/EmojiSupport.h"
+#include <QFont>
+#include <QTextCharFormat>
 #include <QtTest/QtTest>
 
 class EmojiSupportTest : public QObject {
