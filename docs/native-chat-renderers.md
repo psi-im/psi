@@ -67,7 +67,7 @@ public:
   (enabled by Bubble). For `/me`, the `emoteAsMessage` option allows a
   renderer to request normal timestamp/avatar slots and left-aligned message
   prose without a duplicate nickname (used by Bubble and Modern). Classic
-  retains inline `/me` notices.
+  keeps `/me` inline, with the normal message timestamp and text colour.
   Its `timeFormat`
   overrides the theme's `timestampFormat` for a message; empty delegates to
   the theme and then the user's preference. The format uses Qt date/time
