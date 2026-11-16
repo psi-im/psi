@@ -3,6 +3,8 @@ find_package(Qt${QT_DEFAULT_MAJOR_VERSION} REQUIRED COMPONENTS Test)
 add_executable(psirichtext_test
     main.cpp
     ../../psirichtext.cpp
+    ../../EmojiSupport.cpp
+    ../../emojiregistry.cpp
 )
 target_compile_definitions(psirichtext_test PRIVATE WIDGET_PLUGIN)
 target_include_directories(psirichtext_test PRIVATE
