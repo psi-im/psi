@@ -357,8 +357,20 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     // exists only while the slot is expanded.
     quickLayout->setContentsMargins(0, 0, 1, 0);
     quickLayout->setSpacing(1);
+    // Use the same platform emoji font as the emoji picker. Older Qt versions
+    // do not reliably choose a color emoji font for plain QPushButton text.
+    QFont emojiFont = quickReactions_->font();
+#if defined(Q_OS_WIN)
+    emojiFont.setFamily(QStringLiteral("Segoe UI Emoji"));
+#elif defined(Q_OS_MACOS)
+    emojiFont.setFamily(QStringLiteral("Apple Color Emoji"));
+#else
+    emojiFont.setFamily(QStringLiteral("Noto Color Emoji"));
+#endif
+    emojiFont.setPixelSize(18);
     for (const auto &value : { QString::fromUtf8("👍"), QString::fromUtf8("🔥"), QString::fromUtf8("❤️") }) {
         auto *button = makeActionButton(quickReactions_, QStringLiteral("mamQuickReaction"), value);
+        button->setFont(emojiFont);
         button->setText(value);
         quickLayout->addWidget(button);
         connect(button, &QPushButton::clicked, this, [this, value] {

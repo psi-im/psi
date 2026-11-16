@@ -100,10 +100,7 @@ jobs:
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-python
             mingw-w64-x86_64-qt5-base
-            mingw-w64-x86_64-qt5-multimedia
             mingw-w64-x86_64-qt5-svg
-            mingw-w64-x86_64-qt5-tools
-            mingw-w64-x86_64-qt5-winextras
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-minizip
             mingw-w64-x86_64-openssl
@@ -114,6 +111,10 @@ jobs:
       # MSYS2 stopped building libsrtp for the deprecated MINGW64 environment
       # (2.8.1 exists only for UCRT64/CLANG64). Its last MINGW64 build is still
       # published and signed; pin it until this profile migrates to UCRT64.
+      - name: Install archived MINGW64 Qt5 packages
+        shell: msys2 {0}
+        run: bash .github/scripts/install-msys2-mingw64-qt5.sh
+
       - name: Install last MINGW64 libsrtp build
         shell: msys2 {0}
         run: >-

@@ -117,15 +117,16 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-qt5-base
-            mingw-w64-x86_64-qt5-multimedia
             mingw-w64-x86_64-qt5-svg
-            mingw-w64-x86_64-qt5-tools
-            mingw-w64-x86_64-qt5-winextras
             mingw-w64-x86_64-hunspell
             mingw-w64-x86_64-openssl
             mingw-w64-x86_64-usrsctp
             mingw-w64-x86_64-libomemo-c
             mingw-w64-x86_64-libotr
+
+      - name: Install archived MINGW64 Qt5 packages
+        shell: msys2 {0}
+        run: bash .github/scripts/install-msys2-mingw64-qt5.sh
 
       - name: Verify explicit Windows 7 target baseline
         shell: msys2 {0}
