@@ -21,6 +21,7 @@
 
 #include "actionlineedit.h"
 #include "emojiregistry.h"
+#include "EmojiSupport.h"
 #include "iconaction.h"
 #include "iconset.h"
 // #include "qdebug.h"
@@ -367,13 +368,7 @@ void IconSelect::updateGrid()
 
     // make emoji font
     auto font = qApp->font();
-#if defined(Q_OS_WIN)
-    font.setFamily("Segoe UI Emoji");
-#elif defined(Q_OS_MACOS)
-    font.setFamily("Apple Color Emoji");
-#else
-    font.setFamily("Noto Color Emoji");
-#endif
+    EmojiSupport::applyLegacyFamily(font);
     font.setPixelSize(std::round(iconSize.height()));
 
     List toRender;
