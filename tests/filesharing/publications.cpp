@@ -936,6 +936,46 @@ private slots:
         QVERIFY(indexed);
     }
 
+    void completedRangesAreSharedAcrossAccountsWithoutSharingPartialBytes()
+    {
+        migrateHistory();
+        auto video = mediaOf("downloaded-video", { "https://example.org/movie.mp4" });
+        video.file.setMediaType("video/mp4");
+        video.file.setHashes({ Hash::from(Hash::Sha1, "downloaded-video") });
+        QVERIFY(store(messageWith(alice, { referenceOf(video) })));
+        QVERIFY(store(messageWith(alice, { referenceOf(video) }), 2));
+        const auto id = storedFile(video, false, corporate, *video.file.size());
+        QVERIFY(!id.isEmpty());
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        auto other = key;
+        other.account = personal;
+        QCOMPARE(HistoryMediaRefs::chatAssetStatistics(history, other, {}, &error).remote, quint64(1));
+        QSqlQuery files(FileDatabase::connection());
+        files.prepare("UPDATE files SET complete=1 WHERE id=:id");
+        files.bindValue(":id", id);
+        QVERIFY(files.exec());
+        // Coverage alone does not authorize reuse of a checksum from another account.
+        QCOMPARE(HistoryMediaRefs::chatAssetStatistics(history, other, {}, &error).remote, quint64(1));
+        files.prepare("UPDATE file_checksums SET verified=1 WHERE file_id=:id");
+        files.bindValue(":id", id);
+        QVERIFY(files.exec());
+        const MediaFilter downloaded { MediaFilter::Videos, MediaFilter::Complete };
+        for (const auto &chat : { key, other }) {
+            const auto stats = HistoryMediaRefs::chatAssetStatistics(history, chat, downloaded, &error);
+            QVERIFY2(!error.isValid(), qPrintable(error.text()));
+            QCOMPARE(stats.complete, quint64(1));
+            HistoryMediaRefs::Query request;
+            request.filter = downloaded;
+            const auto page = HistoryMediaRefs::chatAssets(history, chat, request, &error);
+            QVERIFY2(!error.isValid(), qPrintable(error.text()));
+            QCOMPARE(page.size(), 1);
+            QCOMPARE(page.first().storage.availability, ChatMedia::Availability::Complete);
+            QCOMPARE(page.first().storage.downloadedBytes, quint64(*video.file.size()));
+        }
+        QVERIFY(!catalog->isServed(personal, video.file.computedHashes()));
+    }
+
     void resourceMigrationPreservesPublicationIdsAndScanPositions()
     {
         migrateHistory();

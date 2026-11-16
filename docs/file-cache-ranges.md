@@ -21,11 +21,18 @@ Both use the same metadata encoding, schema and commit-before-unlink helpers in
 `FileDatabase`. The worker opens and removes its own SQL connection on its own
 thread; it receives the database path before the thread starts.
 
-The complete-item API can retain a non-owning, stamped view of a completed range
-payload for legacy callers. That view does not own or charge its bytes again.
+The complete-item API resolves verified whole-file checksums of completed range
+payloads across the profile, including before the worker's startup snapshots
+arrive. It retains a non-owning, stamped view for legacy callers. That view does
+not own or charge its bytes again, and access rechecks the range generation's
+completion and integrity state. Partial payloads remain account-scoped.
 `FileSharingManager` checks range availability before using such a path, including
 when restoring a serving publication. Publication authorization still belongs to
 the catalog.
+
+Saving media to another directory exports a separate copy. It leaves the cached
+range payload and its ownership intact; the destination does not replace the
+cache's path.
 
 ## Checkpoint order
 

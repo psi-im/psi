@@ -44,6 +44,9 @@ public:
     quint64 availableLength(const QString &key, quint64 size, quint64 offset, quint64 maximum) const;
     bool    containsCached(const QString &key, quint64 size, quint64 offset, quint64 length) const;
     bool    isCompleteFile(const QString &path) const;
+    // Hold a range payload opened through the complete cache. The returned
+    // callback releases its pin; ordinary external paths return no callback.
+    MediaChunkAbort pinCompleteFile(const QString &path);
     void    setDiskLimit(quint64 limit);
     // Force a checkpoint, for pause/close and before publishing a payload path.
     void checkpoint(Completion done = {});
@@ -61,6 +64,7 @@ private:
     quint64 beginMutation(const QString &key, Completion done, quint64 offset = 0,
                           quint64 length = std::numeric_limits<quint64>::max());
     void    dispatchRead(quint64 id, const QString &key, quint64 size, quint64 offset, quint64 length);
+    QPair<QString, quint64> fileForPath(const QString &path) const;
     class Private;
     std::unique_ptr<Private> d;
 };

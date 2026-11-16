@@ -3,6 +3,7 @@
 #include "filecache.h"
 #include "applicationinfo.h"
 #include "filedatabase.h"
+#include "fileidentity.h"
 #include "fileutil.h"
 #include "mediachunkstore.h"
 #include "optionstree.h"
@@ -145,6 +146,62 @@ private slots:
         QVERIFY(query.exec("SELECT count(*) FROM files WHERE resource_key IS NOT NULL AND partition='test:ranges'"));
         QVERIFY(query.next());
         QCOMPARE(query.value(0).toInt(), 1);
+    }
+
+    void completedRangesAreVisibleThroughTheSharedCache_data()
+    {
+        QTest::addColumn<int>("algorithm");
+        QTest::newRow("legacy-sha1-video") << int(Hash::Sha1);
+        QTest::newRow("sha256-video") << int(Hash::Sha256);
+    }
+    void completedRangesAreVisibleThroughTheSharedCache()
+    {
+        QFETCH(int, algorithm);
+        auto             cache = open();
+        const QByteArray bytes("downloaded-video");
+        const auto       hash = Hash::from(Hash::Type(algorithm), bytes);
+        const auto       alias = hashOf(bytes);
+        const auto       key  = FileIdentity::rangeKey("first-account", hash.toString(), bytes.size());
+        auto             ranges = cache->rangeStore();
+        int              completed = 0;
+        auto             done = [&](QByteArray, MediaChunkError error) {
+            QVERIFY2(error.isEmpty(), qPrintable(error.message()));
+            ++completed;
+        };
+        QList<MediaFileChecksum> checksums { { 0, quint64(bytes.size()), hash.stringType(), hash.data() } };
+        if (!(alias == hash))
+            checksums.append({ 0, quint64(bytes.size()), alias.stringType(), alias.data() });
+        ranges->configure(key, bytes.size(), checksums,
+                          { { "account", "first-account" }, { "type", "video/mp4" }, { "name", "movie.mp4" } });
+        ranges->write(key, bytes.size(), 0, bytes.left(4), done);
+        QTRY_COMPARE(completed, 1);
+        QVERIFY(!cache->get(hash)); // Partial bytes still belong to the downloading account.
+        ranges->write(key, bytes.size(), 4, bytes.mid(4), done);
+        QTRY_COMPARE(completed, 2);
+        QTRY_VERIFY(ranges->state(key).complete);
+        const auto payload = ranges->state(key).path;
+        auto       shared  = cache->get(hash);
+        QVERIFY(shared);
+        QVERIFY(shared->isExternal()); // A view, not a second payload or an ownership transfer.
+        QCOMPARE(cache->get(alias), shared);
+        QCOMPARE(shared->filePath(), payload);
+        QCOMPARE(shared->data(), bytes);
+        QCOMPARE(shared->metadata().value("name").toString(), QString("movie.mp4"));
+        QCOMPARE(shared->metadata().value("type").toString(), QString("video/mp4"));
+        QCOMPARE(QDir(dir->path() + "/ranges").entryList({ "*.data" }, QDir::Files).size(), 1);
+        cache->remove(hash); // Leave only the range record, as in profiles created before this fix.
+        QVERIFY(QFileInfo::exists(payload));
+        cache.reset();
+        cache = open();
+        // The first lookup after restart cannot depend on queued worker snapshots.
+        shared = cache->get(hash);
+        QVERIFY(shared);
+        QCOMPARE(shared->filePath(), payload);
+        QCOMPARE(shared->data(), bytes);
+        ranges = cache->rangeStore();
+        ranges->invalidate(key, bytes.size(), 0, bytes.size(), "Integrity failure");
+        QVERIFY(!cache->get(hash)); // The old non-owning view cannot bypass invalidation.
+        QVERIFY(QFileInfo::exists(payload));
     }
     void completeAndRangeReadsShareOneMemoryBudget()
     {

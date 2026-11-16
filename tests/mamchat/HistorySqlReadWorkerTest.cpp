@@ -58,7 +58,8 @@ struct HistoryDatabase {
                  { "CREATE TABLE files(id BLOB PRIMARY KEY,partition TEXT,resource_key TEXT,scope_account TEXT,"
                    "complete INTEGER,error TEXT,size INTEGER,media_type TEXT,created INTEGER,max_age INTEGER)",
                    "CREATE TABLE file_hashes(file_id BLOB,algorithm TEXT,digest BLOB)",
-                   "CREATE TABLE file_checksums(file_id BLOB,algorithm TEXT,digest BLOB,offset INTEGER,length INTEGER)",
+                   "CREATE TABLE file_checksums(file_id BLOB,algorithm TEXT,digest BLOB,offset INTEGER,length INTEGER,"
+                   "verified INTEGER NOT NULL DEFAULT 0)",
                    "CREATE TABLE file_ranges(file_id BLOB,offset INTEGER,length INTEGER)",
                    "CREATE TABLE url_content(account TEXT,url_key TEXT,content_hash TEXT)" })
                 if (!f.exec(QLatin1String(sql)))

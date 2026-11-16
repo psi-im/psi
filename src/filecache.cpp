@@ -584,7 +584,8 @@ FileCacheItem *FileCache::get(const XMPP::Hash &id, bool reborn)
             if (!file.isFile() || file.isSymLink() || !file.isReadable() || file.size() != qint64(item->size())
                 || (item->isExternal()
                     && (!item->_externalModified
-                        || file.lastModified().toMSecsSinceEpoch() != *item->_externalModified))) {
+                        || file.lastModified().toMSecsSinceEpoch() != *item->_externalModified))
+                || (item->memoryKey() != item->_recordId && !rangeStore()->isCompleteFile(item->filePath()))) {
                 removeItem(item, true);
                 return nullptr;
             }
@@ -599,6 +600,52 @@ FileCacheItem *FileCache::get(const XMPP::Hash &id, bool reborn)
             return item;
         }
         remove(id);
+    }
+    return completeRange(id);
+}
+
+FileCacheItem *FileCache::completeRange(const XMPP::Hash &id)
+{
+    // Playback fills the range backend, not the legacy complete-item map.
+    // Once verified, its bytes belong to the same profile-wide content cache.
+    // Keep a stamped, non-owning view so legacy readers neither copy the
+    // payload nor charge its disk usage a second time.
+    const auto db = FileDatabase::connection();
+    if (!db.isOpen())
+        return nullptr;
+    QSqlQuery candidates(db);
+    candidates.prepare("SELECT f.id,f.resource_key,f.size,f.metadata FROM file_checksums h "
+                       "JOIN files f ON f.id=h.file_id WHERE f.partition=:partition "
+                       "AND h.algorithm=:algorithm AND h.digest=:digest AND h.offset=0 AND h.length=f.size "
+                       "AND h.verified=1 AND f.complete=1 AND f.error=''");
+    candidates.bindValue(":partition", _partition + QStringLiteral(":ranges"));
+    candidates.bindValue(":algorithm", id.stringType());
+    candidates.bindValue(":digest", id.data());
+    if (!candidates.exec())
+        return nullptr;
+    while (candidates.next()) {
+        const auto path = rangeStore()->localFile(candidates.value(1).toString(), candidates.value(2).toULongLong());
+        if (path.isEmpty())
+            continue;
+        QList<XMPP::Hash> sums { id };
+        QSqlQuery        hashes(db);
+        hashes.prepare("SELECT algorithm,digest FROM file_checksums WHERE file_id=:id "
+                       "AND offset=0 AND length=:size AND verified=1");
+        hashes.bindValue(":id", candidates.value(0));
+        hashes.bindValue(":size", candidates.value(2));
+        if (!hashes.exec())
+            continue;
+        while (hashes.next()) {
+            XMPP::Hash hash { QStringView(hashes.value(0).toString()) };
+            hash.setData(hashes.value(1).toByteArray());
+            if (hash.isValid() && !(hash == id) && !_items.contains(hash))
+                sums.append(hash);
+        }
+        if (hashes.lastError().isValid())
+            continue;
+        auto metadata = FileDatabase::decodeMetadata(candidates.value(3).toByteArray());
+        metadata.remove(QStringLiteral("account"));
+        return trackExternal(sums, QFileInfo(path), metadata, Forever);
     }
     return nullptr;
 }
