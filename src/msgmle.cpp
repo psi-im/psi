@@ -27,12 +27,14 @@
 #include "spellchecker/spellchecker.h"
 #include "spellchecker/spellhighlighter.h"
 #include "textutil.h"
+#include "widgets/EmojiSupport.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
 #include <QApplication>
 #include <QClipboard>
 #include <QEvent>
+#include <QFontInfo>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLayout>
@@ -43,6 +45,7 @@
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QStyle>
+#include <QTextBlock>
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
@@ -162,6 +165,54 @@ private:
 //----------------------------------------------------------------------------
 // ChatEdit
 //----------------------------------------------------------------------------
+
+// QSyntaxHighlighter applies display-only formats, leaving QTextDocument text,
+// undo/redo and serialized XHTML free of presentation-only emoji font changes.
+class ChatEditHighlighter final : public SpellHighlighter {
+public:
+    explicit ChatEditHighlighter(QTextDocument *document) : SpellHighlighter(document) { }
+
+    void setSpellingEnabled(bool enabled)
+    {
+        if (spellingEnabled_ == enabled)
+            return;
+        spellingEnabled_ = enabled;
+        rehighlight();
+    }
+
+    void highlightBlock(const QString &text) override
+    {
+        if (spellingEnabled_)
+            SpellHighlighter::highlightBlock(text);
+
+        const QFont base = document()->defaultFont();
+        QTextCharFormat emojiFormat;
+        if (base.pointSizeF() > 0)
+            emojiFormat.setFontPointSize(base.pointSizeF() * 1.3);
+        else if (base.pixelSize() > 0)
+            emojiFormat.setProperty(QTextFormat::FontPixelSize, qRound(base.pixelSize() * 1.3));
+        else
+            emojiFormat.setFontPointSize(QFontInfo(base).pointSizeF() * 1.3);
+        EmojiSupport::applyLegacyFamily(emojiFormat);
+
+        // Match complete sequences (including skin tones and ZWJ), not
+        // individual code points. Only the current paragraph is scanned.
+        int from = 0;
+        while (from < text.size()) {
+            const auto [value, at] = EmojiRegistry::instance().findEmoji(text, from);
+            if (at < 0)
+                break;
+            const int length = value.size();
+            if (length > 0)
+                setFormat(at, length, emojiFormat);
+            from = at + qMax(1, length);
+        }
+    }
+
+private:
+    bool spellingEnabled_ = false;
+};
+
 ChatEdit::ChatEdit(QWidget *parent) :
     QTextEdit(parent), layout_(nullptr), recButton_(nullptr), overlay_(nullptr), timeout_(TIMEOUT)
 {
@@ -244,6 +295,8 @@ void ChatEdit::setFont(const QFont &f)
 {
     QTextEdit::setFont(f);
     controller_->setFont(f);
+    if (spellhighlighter_)
+        spellhighlighter_->rehighlight();
 }
 
 QMenu *ChatEdit::createStandardContextMenu(const QPoint &position)
@@ -260,16 +313,12 @@ bool ChatEdit::checkSpellingGloballyEnabled()
 
 void ChatEdit::setCheckSpelling(bool b)
 {
-    document()->blockSignals(true);
     check_spelling_ = b;
-    if (check_spelling_) {
-        if (!spellhighlighter_)
-            spellhighlighter_ = new SpellHighlighter(this);
-    } else {
-        delete spellhighlighter_;
-        spellhighlighter_ = nullptr;
-    }
-    document()->blockSignals(false);
+    // Emoji formatting is always active; spelling can be switched off without
+    // destroying the highlighter or losing the emoji formatting.
+    if (!spellhighlighter_)
+        spellhighlighter_ = new ChatEditHighlighter(document());
+    static_cast<ChatEditHighlighter *>(spellhighlighter_)->setSpellingEnabled(b);
 }
 
 bool ChatEdit::focusNextPrevChild(bool next) { return QWidget::focusNextPrevChild(next); }
@@ -317,6 +366,24 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
     }
 #endif
     else {
+        if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier && e->text() == QLatin1String(" ")
+            && !textCursor().hasSelection()) {
+            QTextCursor cursor = textCursor();
+            const int   pos    = cursor.position();
+            const auto  block  = cursor.block();
+            const QString prefix = block.text().left(pos - block.position());
+            const auto [length, emoji] = EmojiSupport::completedClassicSmiley(QStringView(prefix));
+            if (length > 0) {
+                cursor.beginEditBlock();
+                cursor.setPosition(pos - length);
+                cursor.setPosition(pos, QTextCursor::KeepAnchor);
+                cursor.insertText(emoji + QLatin1Char(' '));
+                cursor.endEditBlock();
+                setTextCursor(cursor);
+                e->accept();
+                return;
+            }
+        }
         QTextEdit::keyPressEvent(e);
     }
 }
