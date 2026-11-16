@@ -54,6 +54,7 @@ struct NativeChatPartOptions {
                                  // optionally containing {relative}. Empty:
                                  // theme format, then the global preference.
     bool    noticeHoverTime = false; // Show an HH:mm clock on hovered notices.
+    bool    emoteAsMessage  = false; // Lay out /me like a message (without a duplicate author).
     QString authorSuffix;        // Appended to the nickname, e.g. ":".
     bool    boldAuthor     = true;
     bool    boldBody       = false; // Bold message prose, including text after code blocks.
