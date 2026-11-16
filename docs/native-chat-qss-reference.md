@@ -111,7 +111,7 @@ The same `MessagePreview` widget is used for a reply to another message and for 
 | `#mamBubbleUnreadDivider` | Wrapper below a bubble for the unread line | Bubble only |
 | `QLabel#mamNoticeHoverTimestamp` | Hover-only `HH:mm` beside join/part notices (also `/me` in custom notice-style renderers) | Bubble or an opt-in renderer; clock visibility is animated, not styled by `:hover` |
 
-Notice/subject messages are centred tailless `#mamBubble[tone="notice"]` in Bubble. `/me` is a different case: it uses incoming/outgoing bubble alignment and tone with `[tailSide="none"]`, an avatar and a normal timestamp, but no separate author label. Modern `/me` rows likewise use regular message indentation with no duplicated author. In Classic, informational events remain inline and left-aligned; notices do not expose separate QLabel author/time slots.
+Notice/subject messages are centred tailless `#mamBubble[tone="notice"]` in Bubble. `/me` is a different case: it uses incoming/outgoing bubble alignment and tone with `[tailSide="none"]`, an avatar and a normal timestamp, but no separate author label. Modern `/me` rows likewise use regular message indentation with no duplicated author. In Classic, `/me` displays the same inline time and ordinary text colour as regular messages, without a second nick; other informational events remain left-aligned inline. Notices do not expose separate QLabel author/time slots.
 
 ### Bubble-only surfaces
 
