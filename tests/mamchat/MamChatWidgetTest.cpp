@@ -2938,16 +2938,26 @@ private slots:
             }
 
             auto *emoteRow = chat.itemWidget(1);
-            QCOMPARE(bool(emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp"))), bubble);
+            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamNoticeHoverTimestamp")));
             QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAuthor")));
-            QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+            if (themeId == QLatin1String("classic")) {
+                QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+                QVERIFY(!emoteRow->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
+            } else {
+                QVERIFY(emoteRow->findChild<QLabel *>(QStringLiteral("mamAvatar")));
+                QVERIFY(emoteRow->findChild<QLabel *>(QStringLiteral("mamTimestamp")));
+                auto *emoteBody = emoteRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                QVERIFY(emoteBody);
+                QCOMPARE(int(emoteBody->document()->begin().blockFormat().alignment()), int(Qt::AlignLeft));
+            }
             auto *alertRow = chat.itemWidget(2);
             QCOMPARE(alertRow->property("alert").toBool(), true);
             if (themeId == QLatin1String("bubble")) {
                 auto *emoteBubble = emoteRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
                 auto *alertBubble = alertRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
                 QVERIFY(emoteBubble && alertBubble);
-                QCOMPARE(emoteBubble->property("tone").toString(), QStringLiteral("notice"));
+                QCOMPARE(emoteBubble->property("tone").toString(), QStringLiteral("incoming"));
+                QCOMPARE(emoteBubble->property("tailSide").toString(), QStringLiteral("none"));
                 QCOMPARE(alertBubble->property("tone").toString(), QStringLiteral("alert"));
             } else {
                 auto *body = alertRow->findChild<ChatMessageText *>();
@@ -2968,6 +2978,76 @@ private slots:
                 changed.setPointSizeF(qMax(8.0, changed.pointSizeF() + 1.0));
                 chat.setFont(changed);
                 QTRY_VERIFY(body->font().bold());
+            }
+        }
+    }
+
+    void emoteMessageLayoutRespectsDirectionInBubbleAndModern()
+    {
+        for (const QString &themeId : { QStringLiteral("bubble"), QStringLiteral("modern"),
+                                        QStringLiteral("classic") }) {
+            MamChatWidget chat;
+            chat.resize(800, 630);
+            chat.setHistoryLoading(true);
+            chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            auto ownMessage = message(QStringLiteral("mine"), QStringLiteral("hello"), 0, true);
+            auto ownAction = message(QStringLiteral("mine-action"), QStringLiteral("greets"), 1, true);
+            ownAction.setEmote();
+            auto incomingMessage = message(QStringLiteral("remote"), QStringLiteral("hi"), 2);
+            auto incomingAction = message(QStringLiteral("remote-action"), QStringLiteral("waves"), 3);
+            incomingAction.setEmote();
+            chat.appendMessage(ownMessage);
+            chat.appendMessage(ownAction);
+            chat.appendMessage(incomingMessage);
+            chat.appendMessage(incomingAction);
+            chat.show();
+            QTRY_VERIFY(chat.itemWidget(0) && chat.itemWidget(1) && chat.itemWidget(2) && chat.itemWidget(3));
+
+            auto *ownRow = chat.itemWidget(0);
+            auto *ownEmote = chat.itemWidget(1);
+            auto *remoteRow = chat.itemWidget(2);
+            auto *remoteEmote = chat.itemWidget(3);
+            for (auto *row : { ownEmote, remoteEmote }) {
+                QVERIFY(!row->findChild<QLabel *>(QStringLiteral("mamAuthor")));
+                auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+                QVERIFY(body);
+                QCOMPARE(int(body->document()->begin().blockFormat().alignment()), int(Qt::AlignLeft));
+                QCOMPARE(row->property("_psiMamInformational").toBool(),
+                         themeId == QLatin1String("classic"));
+                QCOMPARE(bool(row->findChild<QLabel *>(QStringLiteral("mamAvatar"))),
+                         themeId != QLatin1String("classic"));
+                QCOMPARE(bool(row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))),
+                         themeId != QLatin1String("classic"));
+            }
+            auto *ownBody = ownEmote->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            auto *remoteBody = remoteEmote->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
+            QCOMPARE(ownBody->toPlainText(), QStringLiteral("*Me greets"));
+            QCOMPARE(remoteBody->toPlainText(), QStringLiteral("*Peer waves"));
+
+            if (themeId == QLatin1String("bubble")) {
+                auto *ownBubble = ownRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *ownActionBubble = ownEmote->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *remoteBubble = remoteRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                auto *remoteActionBubble = remoteEmote->findChild<QWidget *>(QStringLiteral("mamBubble"));
+                QVERIFY(ownBubble && ownActionBubble && remoteBubble && remoteActionBubble);
+                QCOMPARE(ownBubble->property("tailSide").toString(), QStringLiteral("right"));
+                QCOMPARE(remoteBubble->property("tailSide").toString(), QStringLiteral("left"));
+                QCOMPARE(ownActionBubble->property("tailSide").toString(), QStringLiteral("none"));
+                QCOMPARE(remoteActionBubble->property("tailSide").toString(), QStringLiteral("none"));
+                QCOMPARE(ownActionBubble->property("tone").toString(), QStringLiteral("own"));
+                QCOMPARE(remoteActionBubble->property("tone").toString(), QStringLiteral("incoming"));
+                QTRY_VERIFY(ownActionBubble->mapTo(ownEmote, QPoint()).x()
+                            > remoteActionBubble->mapTo(remoteEmote, QPoint()).x());
+            } else if (themeId == QLatin1String("modern")) {
+                QCOMPARE(ownBody->mapTo(ownEmote, QPoint()).x(),
+                         ownRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                             ->mapTo(ownRow, QPoint()).x());
+                QCOMPARE(remoteBody->mapTo(remoteEmote, QPoint()).x(),
+                         remoteRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                             ->mapTo(remoteRow, QPoint()).x());
+            } else {
+                QVERIFY(!ownEmote->findChild<QWidget *>(QStringLiteral("mamBubble")));
+                QVERIFY(!remoteEmote->findChild<QWidget *>(QStringLiteral("mamBubble")));
             }
         }
     }
