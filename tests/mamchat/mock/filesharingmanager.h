@@ -57,9 +57,11 @@ public:
     FileSharingItem *sharedItem(const QString &id) { return items.value(id); }
     using SaveCallback = std::function<void(const QString &, const QString &)>;
     using ProgressCallback = std::function<void(qreal)>;
-    bool             saveAs(const QUrl &, QWidget *, const SaveCallback & = {}, const ProgressCallback & = {})
+    SaveCallback saveAsFinished;
+    bool             saveAs(const QUrl &, QWidget *, const SaveCallback &finished = {}, const ProgressCallback & = {})
     {
         ++saves;
+        saveAsFinished = finished;
         return true;
     }
     bool             saveTo(const QUrl &, const QString &, const SaveCallback & = {}, const ProgressCallback & = {})
