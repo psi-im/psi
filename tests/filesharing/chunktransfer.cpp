@@ -177,6 +177,54 @@ private slots:
         QTRY_COMPARE(deliveries, 1);
     }
 
+    void setupSurvivesMultipleTransportFallbacks()
+    {
+        auto input = new QBuffer;
+        input->setData("data");
+        input->open(QIODevice::ReadOnly);
+        int deliveries = 0, stops = 0;
+        auto transfer = new MediaChunkTransfer(
+            input, 4, 0, 4,
+            [&](QByteArray bytes, MediaChunkError error) {
+                QVERIFY(error.isEmpty());
+                QCOMPARE(bytes, QByteArray("data"));
+                ++deliveries;
+            },
+            [&] { ++stops; }, nullptr, 300, 60);
+        // Two 200 ms negotiation stages must not be constrained by the 60 ms
+        // payload watchdog or by a 300 ms absolute time since the request.
+        QTest::qWait(200);
+        transfer->negotiationActivity(); // ICE -> ICE-UDP
+        QTest::qWait(200);
+        QCOMPARE(deliveries, 0);
+        transfer->negotiationActivity(); // ICE-UDP -> S5B
+        transfer->metadata(4, std::nullopt);
+        transfer->succeeded();
+        QTRY_COMPARE(deliveries, 1);
+        QCOMPARE(stops, 1);
+    }
+
+    void signalingCannotHidePayloadStall()
+    {
+        auto input = new QBuffer;
+        input->open(QIODevice::ReadOnly);
+        int deliveries = 0, stops = 0;
+        auto transfer = new MediaChunkTransfer(
+            input, 4, 0, 4,
+            [&](QByteArray bytes, MediaChunkError error) {
+                QVERIFY(bytes.isEmpty());
+                QCOMPARE(error.code(), MediaChunkError::Failed);
+                QCOMPARE(error.message(), QStringLiteral("Media chunk transfer stalled"));
+                ++deliveries;
+            },
+            [&] { ++stops; }, nullptr, 300, 80);
+        transfer->metadata(4, std::nullopt);
+        QTest::qWait(45);
+        transfer->negotiationActivity();
+        QTRY_COMPARE(deliveries, 1);
+        QCOMPARE(stops, 1);
+    }
+
     void ownerCanBeDeletedByCompletion()
     {
         auto owner = new QObject;
