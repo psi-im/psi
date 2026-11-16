@@ -14,7 +14,7 @@ public:
         quint64 offset, length;
     };
     MediaChunkTransfer(QIODevice *device, quint64 size, quint64 offset, quint64 length, MediaChunkCompletion done,
-                       MediaChunkAbort stop, QObject *parent = nullptr, int negotiationIdleMs = 120000,
+                       MediaChunkAbort stop, QObject *parent = nullptr, int negotiationIdleMs = 60000,
                        int payloadIdleMs = 60000);
     ~MediaChunkTransfer() override;
     void metadata(std::optional<quint64> size, std::optional<Range> range);
