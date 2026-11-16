@@ -2990,6 +2990,8 @@ private slots:
             chat.resize(800, 630);
             chat.setHistoryLoading(true);
             chat.setTheme(NativeChatThemes::instance()->theme(themeId));
+            // Make the informational colour visibly different from ordinary text.
+            chat.setInformationalColor(QColor(0, 170, 210));
             auto ownMessage = message(QStringLiteral("mine"), QStringLiteral("hello"), 0, true);
             auto ownAction = message(QStringLiteral("mine-action"), QStringLiteral("greets"), 1, true);
             ownAction.setEmote();
@@ -3012,8 +3014,7 @@ private slots:
                 auto *body = row->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
                 QVERIFY(body);
                 QCOMPARE(int(body->document()->begin().blockFormat().alignment()), int(Qt::AlignLeft));
-                QCOMPARE(row->property("_psiMamInformational").toBool(),
-                         themeId == QLatin1String("classic"));
+                QVERIFY(!row->property("_psiMamInformational").toBool());
                 QCOMPARE(bool(row->findChild<QLabel *>(QStringLiteral("mamAvatar"))),
                          themeId != QLatin1String("classic"));
                 QCOMPARE(bool(row->findChild<QLabel *>(QStringLiteral("mamTimestamp"))),
@@ -3021,8 +3022,10 @@ private slots:
             }
             auto *ownBody = ownEmote->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
             auto *remoteBody = remoteEmote->findChild<ChatMessageText *>(QStringLiteral("mamBody"));
-            QCOMPARE(ownBody->toPlainText(), QStringLiteral("*Me greets"));
-            QCOMPARE(remoteBody->toPlainText(), QStringLiteral("*Peer waves"));
+            if (themeId != QLatin1String("classic")) {
+                QCOMPARE(ownBody->toPlainText(), QStringLiteral("*Me greets"));
+                QCOMPARE(remoteBody->toPlainText(), QStringLiteral("*Peer waves"));
+            }
 
             if (themeId == QLatin1String("bubble")) {
                 auto *ownBubble = ownRow->findChild<QWidget *>(QStringLiteral("mamBubble"));
@@ -3048,6 +3051,20 @@ private slots:
             } else {
                 QVERIFY(!ownEmote->findChild<QWidget *>(QStringLiteral("mamBubble")));
                 QVERIFY(!remoteEmote->findChild<QWidget *>(QStringLiteral("mamBubble")));
+                const auto ownText = ownBody->toPlainText();
+                const auto remoteText = remoteBody->toPlainText();
+                const auto ownTime = ownAction.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"));
+                const auto remoteTime = incomingAction.dateTime().toLocalTime().toString(QStringLiteral("HH:mm:ss"));
+                QVERIFY(ownText.contains(QStringLiteral("[") + ownTime + QStringLiteral("] *Me greets")));
+                QVERIFY(remoteText.contains(QStringLiteral("[") + remoteTime + QStringLiteral("] *Peer waves")));
+                QCOMPARE(ownText.count(QStringLiteral("*Me")), 1);
+                QCOMPARE(remoteText.count(QStringLiteral("*Peer")), 1);
+                QCOMPARE(ownBody->palette().color(QPalette::Text),
+                         ownRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                             ->palette().color(QPalette::Text));
+                QCOMPARE(remoteBody->palette().color(QPalette::Text),
+                         remoteRow->findChild<ChatMessageText *>(QStringLiteral("mamBody"))
+                             ->palette().color(QPalette::Text));
             }
         }
     }
