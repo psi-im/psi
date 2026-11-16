@@ -38,6 +38,21 @@ private slots:
         QCOMPARE(EmojiSupport::description(QStringLiteral("¤")), QStringLiteral("U+A4"));
     }
 
+    void composerEmojiSizeIsOnePointThreeTimesBase()
+    {
+        QFont points(QStringLiteral("Sans Serif"));
+        points.setPointSizeF(10.0);
+        const auto fmt = EmojiSupport::editorFormat(points);
+        QCOMPARE(fmt.fontPointSize(), qreal(13.0));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+        QVERIFY(fmt.fontFamilies().toStringList().isEmpty());
+#endif
+        QFont pixels(QStringLiteral("Sans Serif"));
+        pixels.setPixelSize(20);
+        const auto px = EmojiSupport::editorFormat(pixels);
+        QCOMPARE(px.intProperty(QTextFormat::FontPixelSize), 26);
+    }
+
     void familyOverridesAreLimitedToOldQt()
     {
         QFont font(QStringLiteral("Sans Serif"), 11);
