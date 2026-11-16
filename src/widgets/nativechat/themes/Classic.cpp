@@ -14,6 +14,9 @@ public:
         NativeChatPartOptions options;
         options.avatarSize = 0;
         options.directionColors = true;
+        // /me keeps its inline *nick body, but uses regular message colours.
+        // Its timestamp is supplied by the shared in-text header builder.
+        options.emoteAsMessage = true;
         // Classic sets its fixed clock format in the theme definition.
         options.boldAuthor = false;
         options.boldBody = info.alert;
