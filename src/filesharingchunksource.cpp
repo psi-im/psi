@@ -515,8 +515,11 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
     };
     auto download = item->download(FileShareDownloader::Range { offset, length }, source);
     download->setJingleSessionPool(item->account()->psi()->fileSharingManager()->jingleMediaSessions(item->account()));
-    auto transfer = new MediaChunkTransfer(
-        download, *item->fileSize(), offset, length, std::move(complete), [download] { download->abort(); }, owner);
+    // Jingle may need several complete ICE PAC windows before S5B/IBB is tried.
+    // Keep the original setup deadline for other sources.
+    const int negotiationIdleMs = FileSourceSelector::type(source) == FileSourceSelector::Type::Jingle ? 120000 : 60000;
+    auto transfer = new MediaChunkTransfer(download, *item->fileSize(), offset, length, std::move(complete),
+                                           [download] { download->abort(); }, owner, negotiationIdleMs);
     auto checksumSpan = std::make_shared<QPair<quint64, quint64>>(offset, length);
     QObject::connect(download, &FileShareDownloader::fileMetadataReceived, item,
                      [item, checksumSpan](const XMPP::Jingle::FileTransfer::File &file) {
