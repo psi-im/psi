@@ -4,6 +4,7 @@
 
 #include "emojiregistry.h"
 #include <QFont>
+#include <QFontInfo>
 #include <QString>
 #include <QStringList>
 #include <QStringView>
@@ -42,6 +43,22 @@ inline void applyLegacyFamily(QTextCharFormat &format)
 #else
     Q_UNUSED(format);
 #endif
+}
+
+// An editor highlight should affect only the font size on Qt 6.9+.
+// A QTextCharFormat with just FontPointSize/FontPixelSize leaves the ordinary
+// text family unspecified so Qt's emoji segmenter can select the color font.
+inline QTextCharFormat editorFormat(const QFont &base)
+{
+    QTextCharFormat format;
+    if (base.pointSizeF() > 0)
+        format.setFontPointSize(base.pointSizeF() * 1.3);
+    else if (base.pixelSize() > 0)
+        format.setProperty(QTextFormat::FontPixelSize, qRound(base.pixelSize() * 1.3));
+    else
+        format.setFontPointSize(QFontInfo(base).pointSizeF() * 1.3);
+    applyLegacyFamily(format);
+    return format;
 }
 
 struct ClassicSmiley {
