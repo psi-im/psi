@@ -25,6 +25,7 @@ set(SOURCES
     LongListWidgetLayout.cpp
     busywidget.cpp
     emojiregistry.cpp
+    EmojiSupport.cpp
     eventnotifier.cpp
     fancylabel.cpp
     fancypopup.cpp
@@ -67,6 +68,7 @@ set(HEADERS
     actionlineedit.h
     busywidget.h
     emojiregistry.h
+    EmojiSupport.h
     emojidb.h
     eventnotifier.h
     fancylabel.h
