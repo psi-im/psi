@@ -310,12 +310,13 @@ public:
         options.timePointDelta = -1.0;
         options.timeAlpha      = 188;
         options.noticeHoverTime = true;
+        options.emoteAsMessage = true;
         return options;
     }
 
     void arrange(Canvas &canvas, const NativeChatMessageInfo &info) const override
     {
-        if (info.kind != NativeChatMessageInfo::Message) {
+        if (info.kind != NativeChatMessageInfo::Message && !info.emote) {
             // Notices and the subject: a centred bubble without a tail.
             auto *outer  = bubbleRowLayout(canvas);
             auto *bubble = new BubbleFrame(BubbleFrame::NoTail, BubbleFrame::Notice, canvas.row());
@@ -330,7 +331,10 @@ public:
         }
         auto *outer  = bubbleRowLayout(canvas);
         auto *avatar = canvas.take(Canvas::Avatar);
-        auto *bubble = new BubbleFrame(info.local ? BubbleFrame::Right : BubbleFrame::Left,
+        // /me uses the ordinary incoming/outgoing layout but needs no tail:
+        // the body already contains the actor's nickname.
+        auto *bubble = new BubbleFrame(info.emote ? BubbleFrame::NoTail
+                                                 : info.local ? BubbleFrame::Right : BubbleFrame::Left,
                                        info.alert ? BubbleFrame::Alert
                                                   : info.local ? BubbleFrame::Own : BubbleFrame::Incoming,
                                        canvas.row());

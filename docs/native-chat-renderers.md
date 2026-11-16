@@ -21,7 +21,7 @@ code, see [native-chat-themes.md](native-chat-themes.md).
 | `Body`      | `mamBodyPart`: reply preview, text (`mamBody`), file cards, reactions | every row |
 | `UnreadSeparator` | `QFrame#mamUnreadSeparator`, a theme-placeable unread boundary rule | only on the row immediately before unread messages |
 | `DateSeparator` | `QLabel#mamDateSeparator`, localized calendar date | before the first row of each local calendar day |
-| `NoticeTimestamp` | `QLabel#mamNoticeHoverTimestamp`, hover-only `HH:mm` | join/part and /me notices in themes enabling `noticeHoverTime` |
+| `NoticeTimestamp` | `QLabel#mamNoticeHoverTimestamp`, hover-only `HH:mm` | join/part and /me notices in themes enabling `noticeHoverTime` (except /me when `emoteAsMessage` is enabled) |
 
 Psi owns selection, hover highlighting and the hover actions toolbar, context
 menus, link and media handling, reply resolution, relative-time refresh,
@@ -63,8 +63,11 @@ public:
 ```
 
 - `partOptions()` is asked before the parts are built. A renderer can set
-  `noticeHoverTime = true` to show a fading clock on join/part and /me
-  notices (enabled by Bubble). Other themes do not get an extra label.
+  `noticeHoverTime = true` to show a fading clock on join/part notices
+  (enabled by Bubble). For `/me`, the `emoteAsMessage` option allows a
+  renderer to request normal timestamp/avatar slots and left-aligned message
+  prose without a duplicate nickname (used by Bubble and Modern). Classic
+  keeps `/me` inline, with the normal message timestamp and text colour.
   Its `timeFormat`
   overrides the theme's `timestampFormat` for a message; empty delegates to
   the theme and then the user's preference. The format uses Qt date/time

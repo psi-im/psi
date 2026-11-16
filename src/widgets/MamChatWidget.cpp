@@ -2183,13 +2183,14 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     row->setProperty("_psiMamDateBoundary", dateBoundary);
     row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     row->setFont(font());
-    row->setProperty("_psiMamInformational", mv.type() != MessageView::Message || mv.isEmote());
     row->setProperty("alert", mv.isAlert());
     // Only the timestamp owns the full date/time tooltip.
     row->installEventFilter(this);
     row->setStyleSheet(theme_.styleSheet);
     row->info               = messageInfo(index);
     row->options            = renderer_->partOptions(row->info);
+    row->setProperty("_psiMamInformational", mv.type() != MessageView::Message
+                         || (mv.isEmote() && !row->options.emoteAsMessage));
     // Per-message format overrides theme, which overrides global preference.
     if (row->options.timeFormat.isEmpty())
         row->options.timeFormat = theme_.timestampFormat;
@@ -2269,7 +2270,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     }
 
     if (row->options.noticeHoverTime
-        && (mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart || mv.isEmote())) {
+        && (mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart
+            || (mv.isEmote() && !row->options.emoteAsMessage))) {
         // Wall-clock time, independent of the ordinary relative time mode.
         auto *noticeTime = new QLabel(mv.dateTime().isValid()
                                          ? mv.dateTime().toLocalTime().toString(QStringLiteral("HH:mm"))
@@ -2287,14 +2289,16 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         fade->setEasingCurve(QEasingCurve::OutCubic);
         canvas.add(NativeChatMessageCanvas::NoticeTimestamp, noticeTime);
     }
-    if (message && !mv.isEmote() && !inText) {
-        auto *author = new QLabel(row->options.authorPrefix + nick + row->options.authorSuffix, row);
-        author->setObjectName(QStringLiteral("mamAuthor"));
-        author->setTextFormat(Qt::PlainText);
-        author->setTextInteractionFlags(Qt::TextSelectableByMouse);
-        author->setForegroundRole(QPalette::Text);
-        canvas.add(NativeChatMessageCanvas::Author, author);
-        author->installEventFilter(this);
+    if (message && (!mv.isEmote() || row->options.emoteAsMessage) && !inText) {
+        if (!mv.isEmote()) {
+            auto *author = new QLabel(row->options.authorPrefix + nick + row->options.authorSuffix, row);
+            author->setObjectName(QStringLiteral("mamAuthor"));
+            author->setTextFormat(Qt::PlainText);
+            author->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            author->setForegroundRole(QPalette::Text);
+            canvas.add(NativeChatMessageCanvas::Author, author);
+            author->installEventFilter(this);
+        }
         auto *time = new QLabel(timestampText(mv.dateTime(), row->options, QDateTime::currentDateTime(), timestampMode_), row);
         time->setObjectName(QStringLiteral("mamTimestamp"));
         time->setTextFormat(Qt::PlainText);
@@ -2343,7 +2347,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
             canvas.add(NativeChatMessageCanvas::Timestamp, time);
         }
     }
-    if (message && !mv.isEmote()) {
+    if (message && (!mv.isEmote() || row->options.emoteAsMessage)) {
         if (row->options.avatarSize > 0) {
             const int size   = qBound(8, row->options.avatarSize, 256);
             auto     *avatar = new QLabel(row);
@@ -2391,7 +2395,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // The legacy text log: icon, time and nickname at the start of the text,
     // so that wrapped lines start at the left edge.
     QHash<QString, QString> inlineIcons; // Resource URL -> iconset name.
-    if (inText && !mv.isEmote()) {
+    if (inText) {
         const int  iconSize = qMax(10, QFontInfo(font()).pixelSize());
         const auto icon     = [&](const QString &name, const QString &toolTip) {
             const QString url = QStringLiteral("psi-icon:") + name;
@@ -2435,7 +2439,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                           .arg(timeColor.name(QColor::HexArgb),
                                (QStringLiteral("[") + timestampText(mv.dateTime(), row->options, QDateTime::currentDateTime(), timestampMode_)
                                  + QStringLiteral("]")).toHtmlEscaped());
-            // An emote already starts with "*nick".
+            // The /me body already starts with "*nick": only the ordinary
+            // timestamp and optional message icon belong in this header.
             if (!mv.isEmote() || retracted) {
                 const QColor color = nickColor;
                 QString      label = (row->options.authorPrefix + nick + row->options.authorSuffix).toHtmlEscaped();
@@ -2872,7 +2877,9 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         cursor.select(QTextCursor::Document);
         QTextBlockFormat format;
         // The legacy text log keeps notices in the flow, after their icon.
-        format.setAlignment(mv.type() == MessageView::Subject || inText ? Qt::AlignLeft : Qt::AlignHCenter);
+        format.setAlignment(mv.type() == MessageView::Subject || inText
+                                || (mv.isEmote() && row->options.emoteAsMessage)
+                                ? Qt::AlignLeft : Qt::AlignHCenter);
         cursor.mergeBlockFormat(format);
     }
     // Psi styles its parts first, so that a renderer may refine them.
