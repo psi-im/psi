@@ -5,9 +5,11 @@
 #include "emojiregistry.h"
 #include <QFont>
 #include <QString>
+#include <QStringList>
 #include <QStringView>
 #include <QTextCharFormat>
 #include <QtGlobal>
+#include <utility>
 
 namespace EmojiSupport {
 
