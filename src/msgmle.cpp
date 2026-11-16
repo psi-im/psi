@@ -28,6 +28,7 @@
 #include "spellchecker/spellhighlighter.h"
 #include "textutil.h"
 #include "widgets/EmojiSupport.h"
+#include "widgets/emojiregistry.h"
 
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
