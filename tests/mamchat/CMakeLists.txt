@@ -92,6 +92,7 @@ set(NATIVE_CHAT_THEME_SOURCES
     ${PSI_WIDGETS}/nativechat/themes/Bubble.cpp
     ${PSI_WIDGETS}/nativechat/themes/ThemeLayoutHelpers.h)
 add_executable(mam_chat_widget_test MamChatWidgetTest.cpp
+    ${PSI_WIDGETS}/emojiregistry.cpp ${PSI_WIDGETS}/emojiregistry.h
     ${PSI_WIDGETS}/MamChatWidget.cpp ${PSI_WIDGETS}/MamChatWidget.h
     ${NATIVE_CHAT_THEME_SOURCES}
     ${PSI_WIDGETS}/MediaViewer.cpp ${PSI_WIDGETS}/MediaViewer.h
