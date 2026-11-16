@@ -1329,9 +1329,42 @@ bool MediaChunkStore::contains(const QString &key, quint64 offset, quint64 lengt
 }
 bool MediaChunkStore::isCompleteFile(const QString &path) const
 {
-    const auto state = d->states.value(d->paths.value(path));
-    return state.path == path && state.complete && state.error.isEmpty()
-        && !d->mutations.contains(d->paths.value(path));
+    const auto file = fileForPath(path);
+    return !file.first.isEmpty() && localFile(file.first, file.second) == path;
+}
+MediaChunkAbort MediaChunkStore::pinCompleteFile(const QString &path)
+{
+    const auto file = fileForPath(path);
+    if (file.first.isEmpty() || localFile(file.first, file.second) != path)
+        return {};
+    pin(file.first, true);
+    const QPointer<MediaChunkStore> guard(this);
+    return [guard, key = file.first] {
+        if (guard)
+            guard->pin(key, false);
+    };
+}
+QPair<QString, quint64> MediaChunkStore::fileForPath(const QString &path) const
+{
+    const auto key = d->paths.value(path);
+    if (!key.isEmpty())
+        return { key, d->states.value(key).size };
+    // Complete-cache views can be restored before the worker's initial
+    // snapshots arrive. Apply the same durable proof and mutation checks as
+    // localFile(), rather than treating a missing snapshot as a cache miss.
+    const QFileInfo file(path);
+    if (file.absolutePath() != QDir(d->directory).absolutePath())
+        return {};
+    const auto db = d->metadataDatabase();
+    if (!db.isOpen())
+        return {};
+    QSqlQuery query(db);
+    query.prepare("SELECT resource_key,size FROM files WHERE partition=:partition AND path=:path");
+    query.bindValue(":partition", d->partition);
+    query.bindValue(":path", file.fileName());
+    if (!query.exec() || !query.next())
+        return {};
+    return { query.value(0).toString(), query.value(1).toULongLong() };
 }
 void MediaChunkStore::setDiskLimit(quint64 limit)
 {

@@ -217,7 +217,12 @@ FileReader *FileSharingManager::reader(FileSharingItem *item, QObject *parent, q
         return nullptr;
     if (item->isCached()) {
         const auto path = item->localFilePath();
-        return path.isEmpty() ? nullptr : new FileReader(path, offset, length, parent);
+        if (path.isEmpty())
+            return nullptr;
+        auto reader = new FileReader(path, offset, length, parent);
+        if (auto release = d->cache->rangeStore()->pinCompleteFile(path))
+            connect(reader, &QObject::destroyed, this, std::move(release));
+        return reader;
     }
     FileSharingChunkSource::configure(item);
     const auto local = FileSharingChunkSource::localFile(item);
@@ -365,7 +370,7 @@ FileCacheItem *FileSharingManager::cacheItem(const XMPP::Hash &id, bool reborn, 
     if (obsoleteRangePayload(fileName)
         || (fileName.startsWith(cacheDir() + QStringLiteral("/ranges/"))
             && !mediaChunkCache()->isCompleteFile(fileName)))
-        return nullptr; // A restored payload is available only after worker verification.
+        return nullptr; // A range-backed view must still have a verified, unchanged payload.
     if (fileName.isEmpty() || !QFileInfo(fileName).isReadable()) {
         d->cache->remove(id);
         return nullptr;

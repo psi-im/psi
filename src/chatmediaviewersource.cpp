@@ -6,6 +6,7 @@
 #include "aesgcmurl.h"
 #include "filesharingitem.h"
 #include "filesharingmanager.h"
+#include "mediachunkcache.h"
 #include "psiaccount.h"
 #include "psicon.h"
 #include "qitevideo.h"
@@ -313,17 +314,22 @@ void ChatMediaViewerSource::refreshLive()
         item.type = item.mime.startsWith(QLatin1String("image/")) ? HistoryMediaRefs::Image
             : item.mime.startsWith(QLatin1String("video/")) || item.mime.startsWith(QLatin1String("audio/"))
                 ? HistoryMediaRefs::Video : HistoryMediaRefs::Other;
-        item.availability = file->isCached() ? MediaFilter::Complete : MediaFilter::Remote;
+        item.availability = !file->localFilePath().isEmpty() ? ChatMedia::Availability::Complete
+                                                          : ChatMedia::Availability::Remote;
+        if (item.availability == ChatMedia::Availability::Remote && !file->isUrlOnly() && file->fileSize() && manager_
+            && !manager_->mediaChunkCache()->cachedRanges(FileSharingChunkSource::identity(file), *file->fileSize())
+                    .isEmpty())
+            item.availability = ChatMedia::Availability::Partial;
         if (item.sourceId == source_) {
             opened = item;
             foundOpened = true;
         }
-        if ((filter.types & item.type) && (filter.availability & item.availability))
+        if ((filter.types & item.type) && (filter.availability & (1 << int(item.availability))))
             liveFiltered_.append(std::move(item));
     }
     if (foundOpened && !initialFilterAdjusted_) {
         initialFilterAdjusted_ = true;
-        const MediaFilter adjusted { filter.types | opened.type, filter.availability | opened.availability };
+        const MediaFilter adjusted { filter.types | opened.type, filter.availability | (1 << int(opened.availability)) };
         if (!(adjusted == filter)) {
             emit filterAdjustmentRequested(adjusted);
             return;
@@ -341,6 +347,11 @@ void ChatMediaViewerSource::refreshLive()
     }
     view_.index = at >= 0 ? quint64(at + 1) : 0;
     view_.total = quint64(liveFiltered_.size());
+    if (at >= 0 && entry_) {
+        const auto &item = liveFiltered_.at(at);
+        entry_->storage.availability = item.availability;
+        view_.path = item.availability == ChatMedia::Availability::Complete ? item.file->localFilePath() : QString();
+    }
     if (at < 0 && !foundOpened)
         view_.error = tr("This file is no longer in the loaded chat messages");
     else
@@ -361,8 +372,7 @@ void ChatMediaViewerSource::selectLive(int index)
     entry.name = item.name;
     entry.mime = item.mime;
     entry.type = item.type;
-    entry.storage.availability = item.availability == MediaFilter::Complete
-        ? ChatMedia::Availability::Complete : ChatMedia::Availability::Remote;
+    entry.storage.availability = item.availability;
     entry.index = quint64(index + 1);
     entry.total = quint64(liveFiltered_.size());
     select(entry, item.file.data());

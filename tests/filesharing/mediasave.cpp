@@ -125,6 +125,8 @@ private slots:
         QTRY_VERIFY(job.isNull());
         QCOMPARE(read(path), bytes);
         QVERIFY(download.state().complete);
+        QVERIFY(download.state().path != path);
+        QCOMPARE(read(download.state().path), bytes); // Export leaves the shared cached payload in place.
         QVERIFY(!state.downloading());
     }
     void cancellingGoalKeepsPlayerDemandAndExistingDestination()

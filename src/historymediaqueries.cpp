@@ -23,7 +23,8 @@ QString chatFilter()
                           "AND (root.event_id IS NULL OR root.root_id=e.id) AND (e.message_flags & :hidden)=0 ");
 }
 // All candidates are physical file records. Hash aliases remain alternatives,
-// not extra occurrences; account-scoped range keys prevent cross-account reuse.
+// not extra occurrences. Partial ranges stay account-scoped; verified complete
+// range payloads are shared just like files in the complete-cache partition.
 // The canonical hash expression is explicitly TEXT, matching the URL mapping
 // column and its expression index. Without that affinity SQLite may choose a
 // full cache-file loop instead of an indexed hash lookup.
@@ -51,7 +52,7 @@ QString storageCte(const QString &scope)
                "JOIN message_media_resources m ON m.publication_id=h.publication_id "
                "JOIN media_files.file_checksums fc ON fc.algorithm=h.algorithm AND fc.digest=h.digest AND fc.offset=0 "
                "JOIN media_files.files f ON f.id=fc.file_id AND f.partition='shares:ranges' AND "
-               "f.scope_account=:account "
+               "(f.scope_account=:account OR (f.complete=1 AND f.error='' AND fc.verified=1)) "
                "WHERE fc.length=f.size AND (m.size IS NULL OR m.size=f.size) "
                "UNION ALL "
                "SELECT m.publication_id,f.id,f.complete,f.error,f.size,f.media_type FROM scope s JOIN "

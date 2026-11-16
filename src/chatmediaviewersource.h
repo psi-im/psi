@@ -33,7 +33,7 @@ private:
         QPointer<FileSharingItem> file;
         QString sourceId, name, mime;
         int type = HistoryMediaRefs::Other;
-        int availability = MediaFilter::Remote;
+        ChatMedia::Availability availability = ChatMedia::Availability::Remote;
     };
     void                            refresh();
     void                            refreshLive();

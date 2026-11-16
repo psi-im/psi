@@ -216,6 +216,7 @@ private:
     bool toRegistry(FileCacheItem *);
     void load();
     bool replaceRecord(const QList<XMPP::Hash> &sums);
+    FileCacheItem *completeRange(const XMPP::Hash &id);
     void drainTrash();
 
 protected:

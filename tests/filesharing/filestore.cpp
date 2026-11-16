@@ -57,6 +57,37 @@ class FileStoreTest : public QObject {
                  QCryptographicHash::hash(bytes, QCryptographicHash::Sha256) };
     }
 private slots:
+    void completeViewsPinTheOriginalRangeGenerationAcrossRestart()
+    {
+        QTemporaryDir directory;
+        QString       path;
+        {
+            MediaChunkStore original(directory.path(), 1024);
+            int             finished = 0;
+            original.write(key, 8, 0, "complete", [&](QByteArray, MediaChunkError error) {
+                QVERIFY(error.isEmpty());
+                ++finished;
+            });
+            QTRY_COMPARE(finished, 1);
+            path = original.state(key).path;
+        }
+        MediaChunkStore restored(directory.path(), 1024);
+        auto            release = restored.pinCompleteFile(path);
+        QVERIFY(release); // Works before the restored snapshots reach this thread.
+        restored.setDiskLimit(8);
+        int finished = 0;
+        restored.write(QString(64, 'b'), 8, 0, "another!", [&](QByteArray, MediaChunkError error) {
+            QVERIFY(error.isEmpty());
+            ++finished;
+        });
+        QTRY_COMPARE(finished, 1);
+        QVERIFY(QFileInfo::exists(path));
+        QVERIFY(restored.isCompleteFile(path));
+        release();
+        QTRY_VERIFY(!QFileInfo::exists(path));
+        QVERIFY(!restored.isCompleteFile(path));
+    }
+
     void expiryKeepsActiveAndCompleteFilesAndCountsAllocatedBytes()
     {
         QTemporaryDir   directory;

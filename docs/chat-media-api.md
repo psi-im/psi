@@ -29,6 +29,10 @@ a filename extension supplies a fallback for address-only links. Partial means
 checkpointed ranges on disk, including a complete byte map awaiting verification.
 Complete means a registered verified copy. Remote means neither is registered.
 Volatile RAM bytes do not count as durable downloads.
+Verified complete range payloads are visible across accounts of the profile;
+partial ranges remain scoped to the account downloading them. The loaded-message
+fallback used by legacy MUCs applies these same availability states without
+requiring indexed history or MAM.
 
 `requestPage(cursor, older, limit, callback)` returns up to 200 entries. An empty
 cursor starts at the last resource when `older` is true, or the first otherwise.
