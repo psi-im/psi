@@ -170,7 +170,7 @@ private:
 // undo/redo and serialized XHTML free of presentation-only emoji font changes.
 class ChatEditHighlighter final : public SpellHighlighter {
 public:
-    explicit ChatEditHighlighter(QTextDocument *document) : SpellHighlighter(document) { }
+    explicit ChatEditHighlighter(ChatEdit *editor) : SpellHighlighter(editor->document()), editor_(editor) { }
 
     void setSpellingEnabled(bool enabled)
     {
@@ -185,7 +185,7 @@ public:
         if (spellingEnabled_)
             SpellHighlighter::highlightBlock(text);
 
-        const QFont base = document()->defaultFont();
+        const QFont base = editor_->font();
         QTextCharFormat emojiFormat;
         if (base.pointSizeF() > 0)
             emojiFormat.setFontPointSize(base.pointSizeF() * 1.3);
@@ -210,6 +210,7 @@ public:
     }
 
 private:
+    ChatEdit *editor_ = nullptr;
     bool spellingEnabled_ = false;
 };
 
@@ -317,7 +318,7 @@ void ChatEdit::setCheckSpelling(bool b)
     // Emoji formatting is always active; spelling can be switched off without
     // destroying the highlighter or losing the emoji formatting.
     if (!spellhighlighter_)
-        spellhighlighter_ = new ChatEditHighlighter(document());
+        spellhighlighter_ = new ChatEditHighlighter(this);
     static_cast<ChatEditHighlighter *>(spellhighlighter_)->setSpellingEnabled(b);
 }
 
