@@ -2395,7 +2395,7 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
     // The legacy text log: icon, time and nickname at the start of the text,
     // so that wrapped lines start at the left edge.
     QHash<QString, QString> inlineIcons; // Resource URL -> iconset name.
-    if (inText && !mv.isEmote()) {
+    if (inText) {
         const int  iconSize = qMax(10, QFontInfo(font()).pixelSize());
         const auto icon     = [&](const QString &name, const QString &toolTip) {
             const QString url = QStringLiteral("psi-icon:") + name;
@@ -2439,7 +2439,8 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
                           .arg(timeColor.name(QColor::HexArgb),
                                (QStringLiteral("[") + timestampText(mv.dateTime(), row->options, QDateTime::currentDateTime(), timestampMode_)
                                  + QStringLiteral("]")).toHtmlEscaped());
-            // An emote already starts with "*nick".
+            // The /me body already starts with "*nick": only the ordinary
+            // timestamp and optional message icon belong in this header.
             if (!mv.isEmote() || retracted) {
                 const QColor color = nickColor;
                 QString      label = (row->options.authorPrefix + nick + row->options.authorSuffix).toHtmlEscaped();
