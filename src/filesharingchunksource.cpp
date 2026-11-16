@@ -538,6 +538,7 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
             range = MediaChunkTransfer::Range { r->start, r->size };
         transfer->metadata(download->responseSize(), range);
     });
+    QObject::connect(download, &FileShareDownloader::activity, transfer, &MediaChunkTransfer::negotiationActivity);
     QObject::connect(download, &FileShareDownloader::transferCompleted, transfer, &MediaChunkTransfer::succeeded);
     QObject::connect(download, &FileShareDownloader::disconnected, transfer, &MediaChunkTransfer::disconnected);
     QObject::connect(download, &FileShareDownloader::failed, transfer, [transfer, download, resource, checksumSpan] {
