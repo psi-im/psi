@@ -1803,7 +1803,7 @@ private slots:
         // Jingle-only shares have no transferable direct URL. They must not
         // expose the internal share: lookup key as a Copy file link action.
         FileSharingItem jingleOnly(QStringLiteral("application/x-7z-compressed"));
-        jingleOnly.source_ = {};
+        jingleOnly.source_ = QUrl();
         opener.items.insert(QStringLiteral("jingle"), &jingleOnly);
         chat.appendMessage(message(QStringLiteral("jingle"), QStringLiteral("<share id=\"jingle\"/>"), 1));
         QTRY_VERIFY(chat.itemWidget(1));
