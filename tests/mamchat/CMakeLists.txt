@@ -70,6 +70,15 @@ target_link_libraries(mam_archive_peer_policy_test PRIVATE
     Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
 add_test(NAME mam_archive_peer_policy COMMAND mam_archive_peer_policy_test)
 
+# Standalone emoji presentation and conservative classic-emoticon matching.
+add_executable(mam_emoji_support_test EmojiSupportTest.cpp
+    ${PSI_WIDGETS}/emojiregistry.cpp ${PSI_WIDGETS}/emojiregistry.h
+    ${PSI_WIDGETS}/EmojiSupport.h)
+target_include_directories(mam_emoji_support_test PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../src)
+target_link_libraries(mam_emoji_support_test PRIVATE
+    Qt${QT_DEFAULT_MAJOR_VERSION}::Widgets Qt${QT_DEFAULT_MAJOR_VERSION}::Test)
+add_test(NAME mam_emoji_support COMMAND mam_emoji_support_test)
+
 # Actual MamChatWidget/LongListWidget implementation, backed by a small
 # MessageView test double so no PsiAccount or application singleton is needed.
 # PsiTextView, PsiRichText and qite are real, including media parsers/players.
