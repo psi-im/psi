@@ -93,9 +93,12 @@ layout automatically.
 
 ### Join/part hover time
 
-Bubble shows a hover-only `HH:mm` next to join/part and `/me` notices.
-Classic and Modern keep their existing presentation. Declarative themes can
-opt in with `"noticeTimestamp"` in their JSON `layoutSpec`.
+Bubble shows a hover-only `HH:mm` next to join/part notices. In Bubble and
+Modern, `/me` uses normal incoming/outgoing message geometry with the avatar
+and timestamp, but without a duplicate nickname header; Bubble drops the tail
+while retaining the corresponding message tone. Classic keeps `/me` inline
+in its left-aligned text flow. Declarative themes can opt in to the hover-only
+notice clock with `"noticeTimestamp"` in their JSON `layoutSpec`.
 
 ### Date dividers
 
