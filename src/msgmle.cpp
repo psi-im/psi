@@ -34,7 +34,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QEvent>
-#include <QFontInfo>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLayout>
@@ -185,15 +184,7 @@ public:
         if (spellingEnabled_)
             SpellHighlighter::highlightBlock(text);
 
-        const QFont base = editor_->font();
-        QTextCharFormat emojiFormat;
-        if (base.pointSizeF() > 0)
-            emojiFormat.setFontPointSize(base.pointSizeF() * 1.3);
-        else if (base.pixelSize() > 0)
-            emojiFormat.setProperty(QTextFormat::FontPixelSize, qRound(base.pixelSize() * 1.3));
-        else
-            emojiFormat.setFontPointSize(QFontInfo(base).pointSizeF() * 1.3);
-        EmojiSupport::applyLegacyFamily(emojiFormat);
+        const QTextCharFormat emojiFormat = EmojiSupport::editorFormat(editor_->font());
 
         // Match complete sequences (including skin tones and ZWJ), not
         // individual code points. Only the current paragraph is scanned.
