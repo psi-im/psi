@@ -100,6 +100,41 @@ struct HistoryDatabase {
 class HistorySqlReadWorkerTest final : public QObject {
     Q_OBJECT
 private slots:
+    void mediaQueryPreparationKeepsTheOriginalSqlError_data()
+    {
+        QTest::addColumn<int>("projection");
+        QTest::newRow("page") << 0;
+        QTest::newRow("entry") << 1;
+        QTest::newRow("adjacent") << 2;
+        QTest::newRow("statistics") << 3;
+        QTest::newRow("links") << 4;
+        QTest::newRow("linked") << 5;
+    }
+    void mediaQueryPreparationKeepsTheOriginalSqlError()
+    {
+        QFETCH(int, projection);
+        HistoryDatabase fixture;
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(fixture.db, fixture.directory.filePath("files.db"), &error));
+        QSqlQuery damage(fixture.db);
+        QVERIFY(damage.exec("DROP TABLE message_media_refs"));
+        HistoryMediaRefs::Query request;
+        if (projection == 1 || projection == 2)
+            request.source = "sha-256+0123456789";
+        request.adjacent = projection == 2;
+        if (projection < 3)
+            QVERIFY(HistoryMediaRefs::chatAssets(fixture.db, fixture.key, request, &error).isEmpty());
+        else if (projection == 3)
+            QCOMPARE(HistoryMediaRefs::chatAssetStatistics(fixture.db, fixture.key, {}, &error).total(), quint64(0));
+        else if (projection == 4)
+            QVERIFY(HistoryMediaRefs::linksAfter(fixture.db, 0, 10, &error).isEmpty());
+        else
+            QVERIFY(!HistoryMediaRefs::linked(fixture.db, { "publication" }, &error));
+        QVERIFY(error.isValid());
+        QVERIFY2(error.databaseText().contains("message_media_refs"), qPrintable(error.text()));
+        QVERIFY(!error.nativeErrorCode().isEmpty());
+    }
+
     void readErrorsAreNotCacheMisses_data()
     {
         QTest::addColumn<int>("type");

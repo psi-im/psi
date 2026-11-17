@@ -8,6 +8,17 @@
 #include <QVariant>
 
 namespace {
+bool prepareQuery(QSqlQuery &query, const QString &sql, QSqlError *error)
+{
+    if (query.prepare(sql))
+        return true;
+    // Binding and exec() after a failed prepare can replace SQLite's useful
+    // schema/syntax error with the generic "Parameter count mismatch".
+    if (error)
+        *error = query.lastError();
+    return false;
+}
+
 QString occurrenceFrom()
 {
     return QStringLiteral("FROM contacts c JOIN events e ON e.contact_id=c.id "
@@ -202,7 +213,8 @@ QList<HistoryMediaRefs::Link> HistoryMediaRefs::chatAssets(QSqlDatabase db, cons
                              : QStringLiteral("ORDER BY a.asset ASC LIMIT :limit");
     }
     QSqlQuery q(db);
-    q.prepare(sql);
+    if (!prepareQuery(q, sql, error))
+        return {};
     bindAssets(q, chat, request.filter);
     q.bindValue(":limit", request.limit);
     if (request.messagesFor) {
@@ -246,9 +258,10 @@ HistoryMediaRefs::Statistics HistoryMediaRefs::chatAssetStatistics(QSqlDatabase 
                                                                    Filter filter, QSqlError *error)
 {
     QSqlQuery q(db);
-    q.prepare(assetCte()
-              + QStringLiteral("SELECT COALESCE(SUM(status=2),0),COALESCE(SUM(status=1),0),"
-                               "COALESCE(SUM(status=0),0) FROM filtered"));
+    if (!prepareQuery(q, assetCte()
+                         + QStringLiteral("SELECT COALESCE(SUM(status=2),0),COALESCE(SUM(status=1),0),"
+                                          "COALESCE(SUM(status=0),0) FROM filtered"), error))
+        return {};
     bindAssets(q, chat, filter);
     if (q.exec() && q.next())
         return { q.value(0).toULongLong(), q.value(1).toULongLong(), q.value(2).toULongLong(), false };
@@ -261,10 +274,11 @@ QList<HistoryMediaRefs::Link> HistoryMediaRefs::linksAfter(QSqlDatabase db, qint
                                                            QSqlError *error)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral(
+    if (!prepareQuery(query, QStringLiteral(
         "SELECT r.position,r.publication_id,r.ordinal,e.m_text,e.extra_data,e.direction,c.acc_id,c.jid "
         "FROM message_media_refs r JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
-        "WHERE r.position>:position ORDER BY r.position LIMIT :limit"));
+        "WHERE r.position>:position ORDER BY r.position LIMIT :limit"), error))
+        return {};
     query.bindValue(QStringLiteral(":position"), position);
     query.bindValue(QStringLiteral(":limit"), limit);
     QList<Link> links;
@@ -286,7 +300,8 @@ std::optional<QSet<QByteArray>> HistoryMediaRefs::linked(QSqlDatabase db, const 
                                                          QSqlError *error)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT 1 FROM message_media_refs WHERE publication_id=:id LIMIT 1"));
+    if (!prepareQuery(query, QStringLiteral("SELECT 1 FROM message_media_refs WHERE publication_id=:id LIMIT 1"), error))
+        return {};
     QSet<QByteArray> result;
     for (const auto &id : ids) {
         query.bindValue(QStringLiteral(":id"), id);
