@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "MamChatWidget.h"
 #include "ChatMessageBody.h"
+#include "EmojiSupport.h"
 #include "ChatMessageText.h"
 #include "MamHistoryLog.h"
 #include "MamMessageIdentity.h"
@@ -357,19 +358,13 @@ MamChatWidget::MamChatWidget(QWidget *parent) : Mattermost::LongListWidget(paren
     // exists only while the slot is expanded.
     quickLayout->setContentsMargins(0, 0, 1, 0);
     quickLayout->setSpacing(1);
-    // Use the same platform emoji font as the emoji picker. Older Qt versions
-    // do not reliably choose a color emoji font for plain QPushButton text.
+    // Qt 6.9+ selects emoji fonts itself; preserve that and set only the size.
     QFont emojiFont = quickReactions_->font();
-#if defined(Q_OS_WIN)
-    emojiFont.setFamily(QStringLiteral("Segoe UI Emoji"));
-#elif defined(Q_OS_MACOS)
-    emojiFont.setFamily(QStringLiteral("Apple Color Emoji"));
-#else
-    emojiFont.setFamily(QStringLiteral("Noto Color Emoji"));
-#endif
+    EmojiSupport::applyLegacyFamily(emojiFont);
     emojiFont.setPixelSize(18);
     for (const auto &value : { QString::fromUtf8("👍"), QString::fromUtf8("🔥"), QString::fromUtf8("❤️") }) {
-        auto *button = makeActionButton(quickReactions_, QStringLiteral("mamQuickReaction"), value);
+        auto *button = makeActionButton(quickReactions_, QStringLiteral("mamQuickReaction"),
+                                        EmojiSupport::description(value));
         button->setFont(emojiFont);
         button->setText(value);
         quickLayout->addWidget(button);
@@ -2824,6 +2819,11 @@ QWidget *MamChatWidget::createItemWidget(int logicalIndex)
         for (auto it = counts.cbegin(); it != counts.cend(); ++it) {
             auto *chip = new QPushButton(it.key() + QStringLiteral(" %1").arg(it.value().size()), chips);
             chip->setObjectName(QStringLiteral("mamReactionChip"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+            QFont chipFont = chip->font();
+            EmojiSupport::applyLegacyFamily(chipFont);
+            chip->setFont(chipFont);
+#endif
             // MatterLeast's ReactionChipStyle: neutral translucent background,
             // compact font-relative height, small radius and whole-chip target.
             chip->setFixedHeight(qMax(22, fontMetrics().height() + 6));

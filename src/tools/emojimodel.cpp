@@ -1,6 +1,7 @@
 #include "emojimodel.h"
 
 #include "widgets/emojiregistry.h"
+#include "widgets/EmojiSupport.h"
 
 #include <unordered_map>
 
@@ -159,13 +160,7 @@ public:
                 font.setPixelSize(font.pixelSize() * 2.5);
             else
                 font.setPointSize(font.pointSize() * 2.5);
-#if defined(Q_OS_WIN)
-            font.setFamily("Segoe UI Emoji");
-#elif defined(Q_OS_MAC)
-            font.setFamily("Apple Color Emoji");
-#else
-            font.setFamily("Noto Color Emoji");
-#endif
+            EmojiSupport::applyLegacyFamily(font);
             for (auto const &emoji : emojis) {
                 IconSelectButton *b = new IconSelectButton(this);
                 b->setFont(font);

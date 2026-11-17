@@ -7,6 +7,7 @@
 #include "qitevideo.h"
 #include "widgets/ChatMessageBody.h"
 #include "widgets/ChatMessageText.h"
+#include "widgets/EmojiSupport.h"
 #include "widgets/CodeBlockWidget.h"
 #include "widgets/LinkButton.h"
 #include "widgets/MediaViewer.h"
@@ -3166,7 +3167,12 @@ private slots:
         chat.show();
         QTRY_VERIFY(chat.itemWidget(0));
         QCOMPARE(chat.messageCount(), 1);
-        QCOMPARE(chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip").size(), 2);
+        const auto chips = chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip");
+        QCOMPARE(chips.size(), 2);
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+        for (auto *chip : chips)
+            QCOMPARE(chip->font().family(), EmojiSupport::platformFamily());
+#endif
         reaction.setReactions({ QString::fromUtf8("❤️") });
         chat.appendMessage(reaction);
         QTRY_COMPARE(chat.itemWidget(0)->findChildren<QPushButton *>("mamReactionChip").size(), 1);
@@ -3195,6 +3201,15 @@ private slots:
         QApplication::sendEvent(chat.itemWidget(0), &enter);
         auto *bar = chat.findChild<QFrame *>("mamMessageActions");
         QTRY_VERIFY(bar->isVisible());
+        const auto quick = bar->findChildren<QPushButton *>(QStringLiteral("mamQuickReaction"));
+        QCOMPARE(quick.size(), 3);
+        QCOMPARE(quick.at(0)->toolTip(), QStringLiteral("thumbs up"));
+        QCOMPARE(quick.at(1)->toolTip(), QStringLiteral("fire"));
+        QCOMPARE(quick.at(2)->toolTip(), QStringLiteral("red heart"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+        for (auto *button : quick)
+            QCOMPARE(button->font().family(), EmojiSupport::platformFamily());
+#endif
         QSignalSpy chooser(&chat, &MamChatWidget::emojiChooserRequested);
         auto      *choose = bar->findChild<QPushButton *>("mamChooseReaction");
         QTest::mouseClick(choose, Qt::LeftButton);

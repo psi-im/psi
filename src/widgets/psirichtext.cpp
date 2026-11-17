@@ -18,6 +18,7 @@
  */
 
 #include "psirichtext.h"
+#include "EmojiSupport.h"
 #include "common.h"
 #include <optional>
 
@@ -630,7 +631,6 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
 {
     QString            result;
     QStringView        work(text);
-    static QStringList emojiFontFamilies = { "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji" };
 
     int start = -1;
     forever
@@ -713,7 +713,7 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
                                                  std::move(minWidth), std::move(minHeight), std::move(maxWidth),
                                                  std::move(maxHeight), std::move(valign), std::move(fontSize));
                 if (iconType == QLatin1String("smiley") && iconName.isEmpty()) {
-                    format->setFontFamilies(emojiFontFamilies);
+                    EmojiSupport::applyLegacyFamily(*format);
                 }
                 queue->enqueue(format);
                 result += QChar::ObjectReplacementCharacter;
