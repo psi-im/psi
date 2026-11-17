@@ -7,17 +7,23 @@
 Q_LOGGING_CATEGORY(mediaTransferLog, "psi.media.transfer", QtWarningMsg)
 
 MediaChunkTransfer::MediaChunkTransfer(QIODevice *device, quint64 size, quint64 offset, quint64 length,
-                                       MediaChunkCompletion done, MediaChunkAbort stop, QObject *parent) :
+                                       MediaChunkCompletion done, MediaChunkAbort stop, QObject *parent,
+                                       int negotiationIdleMs, int payloadIdleMs) :
     QObject(parent), device_(device), size_(size), offset_(offset), length_(length), done_(std::move(done)),
-    stop_(std::move(stop))
+    stop_(std::move(stop)), payloadIdleMs_(payloadIdleMs)
 {
     elapsed_.start();
     device_->setParent(this);
     qCDebug(mediaTransferLog) << "request" << this << "device" << device_ << "offset" << offset_ << "length" << length_
                               << "file-size" << size_;
     timer_.setSingleShot(true);
-    timer_.setInterval(60000);
-    connect(&timer_, &QTimer::timeout, this, [this] { failed(QStringLiteral("Media chunk transfer stalled")); });
+    // ICE PAC and transport fallback can outlast a single payload-stall interval.
+    // Setup is separately bounded and refreshed by negotiation activity.
+    timer_.setInterval(negotiationIdleMs);
+    connect(&timer_, &QTimer::timeout, this, [this] {
+        failed(metadata_ ? QStringLiteral("Media chunk transfer stalled")
+                         : QStringLiteral("Media source negotiation stalled"));
+    });
     connect(device_, &QIODevice::readyRead, this, [this] { pump(); });
     timer_.start();
 }
@@ -54,6 +60,8 @@ void MediaChunkTransfer::metadata(std::optional<quint64> size, std::optional<Ran
         failed(QStringLiteral("Unexpected media response range"));
         return;
     }
+    if (!metadata_)
+        timer_.setInterval(payloadIdleMs_);
     metadata_ = true;
     qCDebug(mediaTransferLog) << "metadata accepted" << this << "elapsed-ms" << elapsed_.elapsed();
     timer_.start();
@@ -72,6 +80,11 @@ void MediaChunkTransfer::failed(QString message)
 void MediaChunkTransfer::integrityFailed(QString message)
 {
     finish({ MediaChunkError::IntegrityError, std::move(message) });
+}
+void MediaChunkTransfer::negotiationActivity()
+{
+    if (!finished_ && !metadata_)
+        timer_.start();
 }
 void MediaChunkTransfer::cancel() { finish({ MediaChunkError::Cancelled, QStringLiteral("Media chunk cancelled") }); }
 void MediaChunkTransfer::disconnected()

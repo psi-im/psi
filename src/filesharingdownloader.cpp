@@ -204,6 +204,9 @@ public:
 
     void wireApplication()
     {
+        // Trickle candidates and transport-replace are negotiation progress.
+        // Keep the setup watchdog alive while Iris tries another transport.
+        connect(app, &Jingle::Application::updated, this, [this] { emit activity(); });
         connect(app, &Jingle::FileTransfer::Application::remoteChecksumReceived, this,
                 &JingleFileShareDownloader::fileMetadataReceived);
         connect(app, &Jingle::FileTransfer::Application::connectionReady, this, [this]() {
@@ -222,8 +225,10 @@ public:
         });
 
         connect(app, &Jingle::Application::stateChanged, this, [this](Jingle::State state) {
-            if (state != Jingle::State::Finished)
+            if (state != Jingle::State::Finished) {
+                emit activity();
                 return;
+            }
             auto r = app->lastReason();
             if (r.isValid() && r.condition() == Jingle::Reason::MediaError)
                 emit integrityFailure();
