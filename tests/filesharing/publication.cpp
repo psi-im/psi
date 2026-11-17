@@ -231,6 +231,42 @@ private slots:
         QCoreApplication::processEvents();
         QCOMPARE(finished.count(), 1);
     }
+    void waitsForHttpResponse_data()
+    {
+        QTest::addColumn<bool>("httpFails");
+        QTest::newRow("delayed-success") << false;
+        QTest::newRow("delayed-failure") << true;
+    }
+    void waitsForHttpResponse()
+    {
+        QFETCH(bool, httpFails);
+        PublicationFixture f;
+        QVERIFY(f.init());
+        FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
+        QSignalSpy             finished(&publication, &FileSharingPublication::finished);
+        publication.start({}, true);
+        announce(f);
+        uploadSlot(f);
+        const auto reply = f.nam.requests.last();
+
+        // Sending all bytes is not confirmation that the GET URL is ready.
+        // Keep the HTTP response pending past the initial-progress watchdog.
+        emit reply->uploadProgress(7, 7);
+        // Exercise a late readiness callback independently of DNS timing.
+        emit reply->encrypted();
+        QTest::qWait(5500);
+        QCOMPARE(finished.count(), 0);
+        QVERIFY(reply && !reply->isFinished());
+
+        reply->complete(httpFails ? 503 : 201,
+                        httpFails ? QNetworkReply::ServiceUnavailableError : QNetworkReply::NoError);
+        QTRY_COMPARE(finished.count(), 1);
+        QCOMPARE(publication.sources().contains("https://download.example.test/new/file.txt"), !httpFails);
+        QVERIFY(publication.sources().contains("xmpp:alice@example.test/device?jingle-ft"));
+        QCOMPARE(publication.sources().size(), httpFails ? 1 : 2);
+        QCoreApplication::processEvents();
+        QCOMPARE(finished.count(), 1);
+    }
     void cachedSources_data()
     {
         QTest::addColumn<int>("status");
@@ -415,6 +451,7 @@ private slots:
             fields.insert(field.attribute("var"), field.firstChildElement("value").text());
         QCOMPARE(fields.value("pubsub#access_model"), QString("whitelist"));
         QCOMPARE(fields.value("pubsub#deliver_notifications"), QString("0"));
+        QVERIFY(!fields.contains("pubsub#max_items"));
         QVERIFY(!completed);
         auto reply = [&](const QDomElement &request, const QString &condition) {
             QDomDocument doc;

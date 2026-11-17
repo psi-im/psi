@@ -65,7 +65,6 @@ bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::F
     const QString             node = QStringLiteral("urn:psi:shared-files:1");
     const XMPP::PubSubOptions options { { QStringLiteral("pubsub#access_model"), { QStringLiteral("whitelist") } },
                                         { QStringLiteral("pubsub#persist_items"), { QStringLiteral("1") } },
-                                        { QStringLiteral("pubsub#max_items"), { QStringLiteral("1000") } },
                                         { QStringLiteral("pubsub#deliver_notifications"), { QStringLiteral("0") } } };
     auto                     *create = client->pubSubManager()->createNode(client->jid().bare(), node, options);
     QObject::connect(
