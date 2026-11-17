@@ -22,6 +22,8 @@ struct HistoryDatabase {
     HistoryDatabase()
     {
         db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("history-read-errors"));
+        // Match the worker; SQLite builds need not enable URI filenames globally.
+        db.setConnectOptions(QStringLiteral("QSQLITE_OPEN_URI"));
         db.setDatabaseName(directory.filePath(QStringLiteral("history.db")));
         if (!directory.isValid() || !db.open())
             qFatal("Cannot open history fixture");
@@ -115,7 +117,8 @@ private slots:
         QFETCH(int, projection);
         HistoryDatabase fixture;
         QSqlError error;
-        QVERIFY(HistoryMediaRefs::attachFileDatabase(fixture.db, fixture.directory.filePath("files.db"), &error));
+        QVERIFY2(HistoryMediaRefs::attachFileDatabase(fixture.db, fixture.directory.filePath("files.db"), &error),
+                 qPrintable(error.text()));
         QSqlQuery damage(fixture.db);
         QVERIFY(damage.exec("DROP TABLE message_media_refs"));
         HistoryMediaRefs::Query request;
