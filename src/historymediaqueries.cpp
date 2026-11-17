@@ -8,6 +8,20 @@
 #include <QVariant>
 
 namespace {
+bool prepareQuery(QSqlQuery &query, const QString &sql, QSqlError *error)
+{
+    if (query.prepare(sql))
+        return true;
+    // Binding and exec() after a failed prepare can replace SQLite's useful
+    // schema/syntax error with the generic "Parameter count mismatch".
+    if (error) {
+        *error = query.lastError();
+        if (!error->isValid())
+            *error = QSqlError(QStringLiteral("Cannot prepare media history query"), {}, QSqlError::StatementError);
+    }
+    return false;
+}
+
 QString occurrenceFrom()
 {
     return QStringLiteral("FROM contacts c JOIN events e ON e.contact_id=c.id "
@@ -70,7 +84,12 @@ QString storageCte(const QString &scope)
                "WHEN EXISTS(SELECT 1 FROM media_files.file_ranges fr WHERE fr.file_id=x.id) THEN 1 ELSE 0 END) status,"
                "COALESCE(MAX(CASE WHEN x.complete=1 AND x.error='' THEN x.size END), "
                "MAX(COALESCE((SELECT SUM(fr.length) FROM media_files.file_ranges fr WHERE fr.file_id=x.id),0)),0) "
-               "bytes "
+               "bytes,MAX(CASE WHEN :source<>'' AND ("
+               "EXISTS(SELECT 1 FROM media_files.file_hashes fh WHERE fh.file_id=x.id AND "
+               "CAST(fh.algorithm||'+'||lower(hex(fh.digest)) AS TEXT)=:source) OR "
+               "EXISTS(SELECT 1 FROM media_files.file_checksums fc WHERE fc.file_id=x.id AND fc.offset=0 "
+               "AND fc.length=x.size AND CAST(fc.algorithm||'+'||lower(hex(fc.digest)) AS TEXT)=:source)) "
+               "THEN 1 ELSE 0 END) source_match "
                "FROM candidates x GROUP BY x.publication_id) ");
 }
 void bindChat(QSqlQuery &query, const HistoryArchive::Key &chat)
@@ -87,6 +106,8 @@ QString assetCte()
     // can teach us additional equivalences (including URL-to-content mappings).
     // Aggregate file memberships before joining, avoiding a quadratic join on
     // repeated announcements of a popular file.
+    // Carry source matches through these aggregates. Rejoining this projection
+    // for each hash/URL alternative exceeds SQLite 3.54's expanded cursor limit.
     return storageCte(QStringLiteral("SELECT r.publication_id ") + occurrenceFrom() + chatFilter())
         + QStringLiteral(
                ", known_types AS (SELECT publication_id,MIN(CASE WHEN media_type LIKE 'image/%' THEN media_type END) "
@@ -133,20 +154,28 @@ QString assetCte()
                "MIN(CASE WHEN m.kind=2 THEN m.publication_id END),MIN(m.publication_id)) representative, "
                "MAX(m.kind=1)*1+MAX(m.kind=2)*2 kind_mask, "
                "MAX(COALESCE(a.status,0)) status, "
+               "MAX(CASE WHEN :source<>'' AND EXISTS(SELECT 1 FROM media_asset_aliases h "
+               "WHERE h.account=:account AND h.asset_id=m.asset_id AND h.alias IN (:hash,:url)) "
+               "THEN 1 ELSE COALESCE(a.source_match,0) END) source_match, "
                "COALESCE(MAX(CASE WHEN a.status=2 THEN a.bytes END),MAX(a.bytes),0) bytes "
                "FROM members m JOIN canonical c ON c.asset_id=m.asset_id "
                "LEFT JOIN availability a ON a.publication_id=m.publication_id GROUP BY c.asset), "
-               "filtered AS (SELECT * FROM assets WHERE "
+               "located AS (SELECT *,MIN(CASE WHEN source_match=1 THEN asset END) OVER() source_asset FROM assets), "
+               "filtered AS (SELECT * FROM located WHERE "
                "(CASE WHEN (kind_mask&1)<>0 THEN 1 WHEN (kind_mask&2)<>0 THEN 2 ELSE 4 END & :types)<>0 "
                "AND ((1<<status)&:availability)<>0), "
                "ranked AS (SELECT *,ROW_NUMBER() OVER(ORDER BY asset) item_index,COUNT(*) OVER() total FROM "
                "filtered) ");
 }
-void bindAssets(QSqlQuery &q, const HistoryArchive::Key &chat, HistoryMediaRefs::Filter filter)
+void bindAssets(QSqlQuery &q, const HistoryArchive::Key &chat, HistoryMediaRefs::Filter filter,
+                const QString &source = {})
 {
     bindChat(q, chat);
     q.bindValue(":types", filter.types & 7);
     q.bindValue(":availability", filter.availability & 7);
+    q.bindValue(":source", source.isEmpty() ? QStringLiteral("") : source);
+    q.bindValue(":hash", QStringLiteral("h:") + source);
+    q.bindValue(":url", QStringLiteral("u:") + source);
 }
 }
 
@@ -160,17 +189,19 @@ QList<HistoryMediaRefs::Link> HistoryMediaRefs::chatAssets(QSqlDatabase db, cons
     }
     QString sql = assetCte();
     if (request.messagesFor) {
+        // Provenance consumes message fields only, not gallery ranks/storage.
+        // Joining ranked and canonical would expand the same membership tree twice.
         sql += QStringLiteral(
                    "SELECT r.position,r.publication_id,r.ordinal,e.direction,substr(p.m_text,1,256),'',c.acc_id,c.jid,"
-                   "e.history_date_ms,e.id,m.name,m.mime,m.kind,a.status,a.bytes,a.item_index,a.total,a.asset "
-                   "FROM ranked a JOIN canonical k ON k.asset=a.asset JOIN message_media_resources m ON "
+                   "e.history_date_ms,e.id,m.name,m.mime,m.kind,0,0,0,0,k.asset "
+                   "FROM canonical k JOIN message_media_resources m ON "
                    "m.asset_id=k.asset_id "
                    "JOIN message_media_refs r ON r.publication_id=m.publication_id ")
             + QStringLiteral("JOIN events p ON p.id=r.event_id JOIN contacts c ON c.id=p.contact_id ")
             + QStringLiteral("LEFT JOIN message_revisions rev ON rev.event_id=p.id "
                              "JOIN events e ON e.id=COALESCE(rev.root_id,p.id) "
                              "JOIN scope s ON s.publication_id=r.publication_id "
-                             "WHERE a.asset=:asset AND e.id>:before GROUP BY e.id ORDER BY e.id LIMIT :limit");
+                             "WHERE k.asset=:asset AND e.id>:before GROUP BY e.id ORDER BY e.id LIMIT :limit");
     } else {
         sql += QStringLiteral(
             "SELECT r.position,r.publication_id,r.ordinal,e.direction,e.m_text,e.extra_data,c.acc_id,c.jid,"
@@ -179,39 +210,25 @@ QList<HistoryMediaRefs::Link> HistoryMediaRefs::chatAssets(QSqlDatabase db, cons
             "JOIN members m ON m.publication_id=r.publication_id "
             "JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id ");
         if (!request.source.isEmpty()) {
-            const auto anchors = QStringLiteral(
-                "SELECT k.asset FROM media_asset_aliases h "
-                "JOIN canonical k ON k.asset_id=h.asset_id WHERE h.account=:account "
-                "AND h.alias IN (:hash,:url) UNION SELECT k.asset FROM candidates x "
-                "JOIN members m ON m.publication_id=x.publication_id "
-                "JOIN canonical k ON k.asset_id=m.asset_id JOIN media_files.file_hashes fh ON fh.file_id=x.id "
-                "WHERE CAST(fh.algorithm||'+'||lower(hex(fh.digest)) AS TEXT)=:source "
-                "UNION SELECT k.asset FROM candidates x JOIN members m ON m.publication_id=x.publication_id "
-                "JOIN canonical k ON k.asset_id=m.asset_id JOIN media_files.file_checksums fc ON fc.file_id=x.id "
-                "JOIN media_files.files f ON f.id=x.id WHERE fc.offset=0 AND fc.length=f.size "
-                "AND CAST(fc.algorithm||'+'||lower(hex(fc.digest)) AS TEXT)=:source");
             if (request.adjacent)
                 sql += QStringLiteral("WHERE a.asset") + (request.older ? QStringLiteral("<") : QStringLiteral(">"))
-                    + QStringLiteral("COALESCE((SELECT MIN(asset) FROM (") + anchors
-                    + QStringLiteral(")),NULLIF(:asset,0)) ");
+                    + QStringLiteral("COALESCE(a.source_asset,NULLIF(:asset,0)) ");
             else
-                sql += QStringLiteral("WHERE a.asset IN (") + anchors + QStringLiteral(") ");
+                sql += QStringLiteral("WHERE a.source_match=1 ");
         } else if (request.cursor.assetId)
             sql += request.older ? QStringLiteral("WHERE a.asset<:asset ") : QStringLiteral("WHERE a.asset>:asset ");
         sql += request.older ? QStringLiteral("ORDER BY a.asset DESC LIMIT :limit")
                              : QStringLiteral("ORDER BY a.asset ASC LIMIT :limit");
     }
     QSqlQuery q(db);
-    q.prepare(sql);
-    bindAssets(q, chat, request.filter);
+    if (!prepareQuery(q, sql, error))
+        return {};
+    bindAssets(q, chat, request.filter, request.source);
     q.bindValue(":limit", request.limit);
     if (request.messagesFor) {
         q.bindValue(":asset", request.messagesFor);
         q.bindValue(":before", request.afterEvent);
     } else if (!request.source.isEmpty()) {
-        q.bindValue(":hash", QStringLiteral("h:") + request.source);
-        q.bindValue(":url", QStringLiteral("u:") + request.source);
-        q.bindValue(":source", request.source);
         if (request.adjacent)
             q.bindValue(":asset", request.cursor.assetId);
     } else if (request.cursor.assetId)
@@ -246,9 +263,10 @@ HistoryMediaRefs::Statistics HistoryMediaRefs::chatAssetStatistics(QSqlDatabase 
                                                                    Filter filter, QSqlError *error)
 {
     QSqlQuery q(db);
-    q.prepare(assetCte()
-              + QStringLiteral("SELECT COALESCE(SUM(status=2),0),COALESCE(SUM(status=1),0),"
-                               "COALESCE(SUM(status=0),0) FROM filtered"));
+    if (!prepareQuery(q, assetCte()
+                         + QStringLiteral("SELECT COALESCE(SUM(status=2),0),COALESCE(SUM(status=1),0),"
+                                          "COALESCE(SUM(status=0),0) FROM filtered"), error))
+        return {};
     bindAssets(q, chat, filter);
     if (q.exec() && q.next())
         return { q.value(0).toULongLong(), q.value(1).toULongLong(), q.value(2).toULongLong(), false };
@@ -261,10 +279,11 @@ QList<HistoryMediaRefs::Link> HistoryMediaRefs::linksAfter(QSqlDatabase db, qint
                                                            QSqlError *error)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral(
+    if (!prepareQuery(query, QStringLiteral(
         "SELECT r.position,r.publication_id,r.ordinal,e.m_text,e.extra_data,e.direction,c.acc_id,c.jid "
         "FROM message_media_refs r JOIN events e ON e.id=r.event_id JOIN contacts c ON c.id=e.contact_id "
-        "WHERE r.position>:position ORDER BY r.position LIMIT :limit"));
+        "WHERE r.position>:position ORDER BY r.position LIMIT :limit"), error))
+        return {};
     query.bindValue(QStringLiteral(":position"), position);
     query.bindValue(QStringLiteral(":limit"), limit);
     QList<Link> links;
@@ -286,7 +305,8 @@ std::optional<QSet<QByteArray>> HistoryMediaRefs::linked(QSqlDatabase db, const 
                                                          QSqlError *error)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT 1 FROM message_media_refs WHERE publication_id=:id LIMIT 1"));
+    if (!prepareQuery(query, QStringLiteral("SELECT 1 FROM message_media_refs WHERE publication_id=:id LIMIT 1"), error))
+        return {};
     QSet<QByteArray> result;
     for (const auto &id : ids) {
         query.bindValue(QStringLiteral(":id"), id);

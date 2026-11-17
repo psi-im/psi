@@ -52,6 +52,14 @@ fallback if the last reference is deleted while the file is open. Entries expose
 `sourceId`, plus an opaque cursor and the announcement needed by the file layer.
 Consumers do not need to interpret protocol metadata to navigate.
 
+Source matches travel through the resource aggregation, and the navigation anchor
+is located before filtering. Entry and neighbor queries reuse this projection
+without expanding the canonical-resource CTE again for each hash or URL alias.
+This keeps source lookups within SQLite 3.54's expanded-cursor limit. Message
+provenance reads membership directly instead of repeating the gallery-ranking
+projection. The Ubuntu CI also runs media-query regressions with a checksum-pinned
+SQLite 3.54.1 library through `.github/scripts/test-sqlite-media-compat.sh`.
+
 `requestStatistics(callback)` returns `complete`, `partial`, `remote` and `total()`
 using one aggregate statement. It does not loop over pages, decode messages,
 create runtime items or scan the filesystem. Aggregate and page queries use the

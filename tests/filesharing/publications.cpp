@@ -316,6 +316,12 @@ private slots:
         profileDirectory = dir->path();
         catalog          = std::make_unique<FileSharingCatalog>();
         createHistory();
+        const auto expectedSqlite = qEnvironmentVariable("PSI_TEST_SQLITE_VERSION");
+        if (!expectedSqlite.isEmpty()) {
+            QSqlQuery version(history);
+            QVERIFY(version.exec("SELECT sqlite_version()") && version.next());
+            QCOMPARE(version.value(0).toString(), expectedSqlite);
+        }
     }
 
     void cleanup()
@@ -1021,6 +1027,83 @@ private slots:
         QVERIFY(!HistoryMediaRefs::link(history, next));
         QVERIFY(history.rollback());
         QCOMPARE(linkCount(), 1);
+    }
+
+    void clickedMediaAliasesKeepFilteredNeighbors_data()
+    {
+        QTest::addColumn<int>("sourceKind");
+        QTest::newRow("announced-hash") << 0;
+        QTest::newRow("cached-hash-alias") << 1;
+        QTest::newRow("url-identity") << 2;
+        QTest::newRow("range-checksum-alias") << 3;
+    }
+    void clickedMediaAliasesKeepFilteredNeighbors()
+    {
+        QFETCH(int, sourceKind);
+        migrateHistory();
+        auto first = mediaOf("first", { "https://example.org/first.png" });
+        auto middle = mediaOf("middle", { "https://example.org/middle.mp4" });
+        auto last = mediaOf("last", { "https://example.org/last.png" });
+        first.file.setMediaType("image/png");
+        middle.file.setMediaType("video/mp4");
+        last.file.setMediaType("image/png");
+        auto announced = middle;
+        announced.file.setHashes({ middle.file.computedHashes().first() });
+        for (const auto &media : { first, announced, last })
+            QVERIFY(store(messageWith(alice, { referenceOf(media) })));
+        QVERIFY(!storedFile(first, true).isEmpty());
+        QVERIFY(!storedFile(middle, sourceKind != 3, corporate, *middle.file.size()).isEmpty());
+        QVERIFY(!storedFile(last, true).isEmpty());
+        const QUrl url("https://example.org/opaque");
+        auto addressOnly = messageWith(alice, {});
+        addressOnly.urlAdd(Url(url.toString()));
+        QVERIFY(store(addressOnly));
+        const auto address = MessageFileShares::urlIdentity(url);
+        QVERIFY(catalog->rememberUrlContent(corporate, address, middle.file.computedHashes().first()));
+        QSqlError error;
+        QVERIFY(HistoryMediaRefs::attachFileDatabase(history, FileDatabase::path(), &error));
+        HistoryMediaRefs::Query query;
+        query.limit = 1;
+        query.source = sourceKind == 2 ? address.toString()
+                                      : middle.file.computedHashes().at(sourceKind == 0 ? 0 : 1).toString();
+        const auto opened = HistoryMediaRefs::chatAssets(history, key, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(opened.size(), 1);
+        QCOMPARE(opened.first().name, QString("middle"));
+        QCOMPARE(opened.first().index, quint64(2));
+        QCOMPARE(opened.first().total, quint64(3));
+        auto provenance = query;
+        provenance.source.clear();
+        provenance.messagesFor = opened.first().cursor.assetId;
+        provenance.limit = 20;
+        const auto messages = HistoryMediaRefs::chatAssets(history, key, provenance, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(messages.size(), 2); // The hashed announcement and its URL-only alias.
+        // The clicked video is excluded, but still anchors the image neighbors.
+        query.filter = { MediaFilter::Images, MediaFilter::Complete };
+        QVERIFY(HistoryMediaRefs::chatAssets(history, key, query, &error).isEmpty());
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        query.adjacent = true;
+        query.older = true;
+        auto page = HistoryMediaRefs::chatAssets(history, key, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().name, QString("first"));
+        QCOMPARE(page.first().index, quint64(1));
+        QCOMPARE(page.first().total, quint64(2));
+        query.older = false;
+        page = HistoryMediaRefs::chatAssets(history, key, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().name, QString("last"));
+        QCOMPARE(page.first().index, quint64(2));
+        QCOMPARE(page.first().total, quint64(2));
+        query.source = "sha-256+missing";
+        query.cursor = opened.first().cursor;
+        page = HistoryMediaRefs::chatAssets(history, key, query, &error);
+        QVERIFY2(!error.isValid(), qPrintable(error.text()));
+        QCOMPARE(page.size(), 1);
+        QCOMPARE(page.first().name, QString("last"));
     }
 
     void chatAssetsCountUniqueResourcesAndApplyBothFilters()
