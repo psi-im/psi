@@ -14,8 +14,11 @@ bool prepareQuery(QSqlQuery &query, const QString &sql, QSqlError *error)
         return true;
     // Binding and exec() after a failed prepare can replace SQLite's useful
     // schema/syntax error with the generic "Parameter count mismatch".
-    if (error)
+    if (error) {
         *error = query.lastError();
+        if (!error->isValid())
+            *error = QSqlError(QStringLiteral("Cannot prepare media history query"), {}, QSqlError::StatementError);
+    }
     return false;
 }
 

@@ -135,6 +135,28 @@ private slots:
         QVERIFY(!error.nativeErrorCode().isEmpty());
     }
 
+    void mediaQueryPreparationReportsClosedDatabase_data() { mediaQueryPreparationKeepsTheOriginalSqlError_data(); }
+    void mediaQueryPreparationReportsClosedDatabase()
+    {
+        QFETCH(int, projection);
+        HistoryDatabase fixture;
+        fixture.db.close();
+        QSqlError error;
+        HistoryMediaRefs::Query request;
+        if (projection == 1 || projection == 2)
+            request.source = "sha-256+0123456789";
+        request.adjacent = projection == 2;
+        if (projection < 3)
+            QVERIFY(HistoryMediaRefs::chatAssets(fixture.db, fixture.key, request, &error).isEmpty());
+        else if (projection == 3)
+            QCOMPARE(HistoryMediaRefs::chatAssetStatistics(fixture.db, fixture.key, {}, &error).total(), quint64(0));
+        else if (projection == 4)
+            QVERIFY(HistoryMediaRefs::linksAfter(fixture.db, 0, 10, &error).isEmpty());
+        else
+            QVERIFY(!HistoryMediaRefs::linked(fixture.db, { "publication" }, &error));
+        QVERIFY(error.isValid());
+    }
+
     void readErrorsAreNotCacheMisses_data()
     {
         QTest::addColumn<int>("type");
