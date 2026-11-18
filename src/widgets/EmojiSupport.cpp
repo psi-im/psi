@@ -5,6 +5,10 @@
 
 #include <QFont>
 #include <QFontInfo>
+#include <QTextBlock>
+#include <QTextCursor>
+#include <QTextDocument>
+#include <QTextEdit>
 #include <QStringList>
 #include <QTextCharFormat>
 #include <QtGlobal>
@@ -82,6 +86,68 @@ std::pair<int, QString> completedClassicSmiley(QStringView beforeCursor)
             return { alias.size(), QString::fromUtf8(entry.emoji) };
     }
     return { 0, QString() };
+}
+
+void ClassicSmileyConversion::clear()
+{
+    alias_.clear();
+    emoji_.clear();
+    endPosition_ = -1;
+}
+
+void ClassicSmileyConversion::replaceTyped(QTextEdit *editor, int previousPosition)
+{
+    if (!editor || previousPosition < 0)
+        return;
+
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.hasSelection() || cursor.position() != previousPosition + 1)
+        return;
+
+    // All aliases in classicSmileys are at most three characters long.
+    // Inspect those and one preceding boundary character, not the entire
+    // paragraph (which can be arbitrarily long).
+    const int from = qMax(cursor.block().position(), cursor.position() - 4);
+    QString suffix;
+    suffix.reserve(cursor.position() - from);
+    for (int i = from; i < cursor.position(); ++i)
+        suffix.append(editor->document()->characterAt(i));
+
+    const auto [length, emoji] = completedClassicSmiley(QStringView(suffix));
+    if (length == 0)
+        return;
+
+    alias_ = suffix.right(length);
+    emoji_ = emoji;
+
+    cursor.beginEditBlock();
+    cursor.setPosition(cursor.position() - length, QTextCursor::KeepAnchor);
+    cursor.insertText(emoji);
+    cursor.endEditBlock();
+    editor->setTextCursor(cursor);
+    endPosition_ = cursor.position();
+}
+
+bool ClassicSmileyConversion::restoreOnBackspace(QTextEdit *editor)
+{
+    if (!editor || endPosition_ < 0)
+        return false;
+
+    QTextCursor cursor = editor->textCursor();
+    if (cursor.hasSelection() || cursor.position() != endPosition_)
+        return false;
+
+    cursor.setPosition(endPosition_ - emoji_.size(), QTextCursor::KeepAnchor);
+    if (cursor.selectedText() != emoji_)
+        return false;
+
+    const QString alias = alias_;
+    clear();
+    cursor.beginEditBlock();
+    cursor.insertText(alias);
+    cursor.endEditBlock();
+    editor->setTextCursor(cursor);
+    return true;
 }
 
 QString description(const QString &emoji)

@@ -8,6 +8,7 @@
 
 class QFont;
 class QTextCharFormat;
+class QTextEdit;
 
 namespace EmojiSupport {
 
@@ -21,8 +22,22 @@ void applyLegacyFamily(QTextCharFormat &format);
 QTextCharFormat editorFormat(const QFont &base);
 
 // Recognize a complete classic smiley immediately before the cursor.
-// The caller only invokes this when a separating space is typed.
 std::pair<int, QString> completedClassicSmiley(QStringView beforeCursor);
+
+// The composer converts only one freshly typed character at a time. Keep the
+// latest substitution so Backspace can restore the original alias, without
+// adding hidden formatting to the document or scanning the whole message.
+class ClassicSmileyConversion {
+public:
+    void clear();
+    void replaceTyped(QTextEdit *editor, int previousPosition);
+    bool restoreOnBackspace(QTextEdit *editor);
+
+private:
+    QString alias_;
+    QString emoji_;
+    int     endPosition_ = -1;
+};
 
 // Unicode emoji description, with textual fallbacks if none is registered.
 QString description(const QString &emoji);

@@ -331,6 +331,12 @@ bool ChatEdit::event(QEvent *event)
 
 void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
+    if (e->key() == Qt::Key_Backspace && e->modifiers() == Qt::NoModifier
+        && classicSmileyConversion_.restoreOnBackspace(this)) {
+        e->accept();
+        return;
+    }
+    classicSmileyConversion_.clear();
     /*    if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
         e->ignore();
     else if(e->key() == Qt::Key_Return &&
@@ -359,25 +365,15 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
     }
 #endif
     else {
-        if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier && e->text() == QLatin1String(" ")
-            && !textCursor().hasSelection()) {
-            QTextCursor cursor = textCursor();
-            const int   pos    = cursor.position();
-            const auto  block  = cursor.block();
-            const QString prefix = block.text().left(pos - block.position());
-            const auto [length, emoji] = EmojiSupport::completedClassicSmiley(QStringView(prefix));
-            if (length > 0) {
-                cursor.beginEditBlock();
-                cursor.setPosition(pos - length);
-                cursor.setPosition(pos, QTextCursor::KeepAnchor);
-                cursor.insertText(emoji + QLatin1Char(' '));
-                cursor.endEditBlock();
-                setTextCursor(cursor);
-                e->accept();
-                return;
-            }
-        }
+        // Check only a single typed character, not pasted text, selection
+        // replacements or keyboard shortcuts. Shift is needed for ':', ')',
+        // etc. The helper examines at most four characters before the caret.
+        const bool typed = e->text().size() == 1 && !textCursor().hasSelection()
+            && !(e->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier));
+        const int position = typed ? textCursor().position() : -1;
         QTextEdit::keyPressEvent(e);
+        if (typed)
+            classicSmileyConversion_.replaceTyped(this, position);
     }
 }
 
