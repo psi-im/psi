@@ -1,4 +1,5 @@
 #include "psirichtext.h"
+#include "EmojiSupport.h"
 
 #include <QTextCursor>
 #include <QTextDocument>
@@ -31,6 +32,25 @@ private slots:
         QTextDocument doc;
         PsiRichText::setText(&doc, "Test <icon name=\"foo\" text=\"bar\">");
         QCOMPARE(countText(&doc, QString(QChar::ObjectReplacementCharacter)), 1);
+    }
+
+    void testSmileyToolTips()
+    {
+        QTextDocument doc;
+        PsiRichText::setText(&doc,
+                             "A <icon name=\"psi/smile\" text=\":-)\" type=\"smiley\"> "
+                             "<icon text=\"🙂\" type=\"smiley\"> "
+                             "<icon name=\"psi/star\" text=\"*\" type=\"symbol\">");
+        QList<QString> tips;
+        QTextCursor cursor(&doc);
+        while (!(cursor = doc.find(QString(QChar::ObjectReplacementCharacter), cursor)).isNull())
+            tips.append(cursor.charFormat().toolTip());
+
+        QCOMPARE(tips.size(), 3);
+        QCOMPARE(tips.at(0), QStringLiteral(":-)"));
+        QCOMPARE(tips.at(1), EmojiSupport::description(QStringLiteral("🙂")));
+        QVERIFY(!tips.at(1).isEmpty());
+        QVERIFY(tips.at(2).isEmpty());
     }
 
     void testInsertedRange()

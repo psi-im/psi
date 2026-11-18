@@ -712,8 +712,13 @@ static QString convertIconsToObjectReplacementCharacters(const QStringView &text
                 auto format = new TextIconFormat(iconName, iconText, std::move(width), std::move(height),
                                                  std::move(minWidth), std::move(minHeight), std::move(maxWidth),
                                                  std::move(maxHeight), std::move(valign), std::move(fontSize));
-                if (iconType == QLatin1String("smiley") && iconName.isEmpty()) {
-                    EmojiSupport::applyLegacyFamily(*format);
+                if (iconType == QLatin1String("smiley")) {
+                    // QTextEdit shows the tool tip of a character format on hover.
+                    // Keep the original alias for iconset smileys and use the
+                    // Unicode description for emoji rendered as text objects.
+                    format->setToolTip(iconName.isEmpty() ? EmojiSupport::description(iconText) : iconText);
+                    if (iconName.isEmpty())
+                        EmojiSupport::applyLegacyFamily(*format);
                 }
                 queue->enqueue(format);
                 result += QChar::ObjectReplacementCharacter;
