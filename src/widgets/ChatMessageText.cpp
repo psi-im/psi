@@ -6,6 +6,8 @@
 #include <QAbstractTextDocumentLayout>
 #include <QFontMetrics>
 #include <QImage>
+#include <QHelpEvent>
+#include <QToolTip>
 #include <QTextBlock>
 #include <QTextCursor>
 #include <QTextFragment>
@@ -354,28 +356,59 @@ QSize ChatMessageText::sizeHint() const
 }
 QSize ChatMessageText::minimumSizeHint() const { return QSize(0, fontMetrics().height()); }
 
-std::optional<QTextCharFormat> ChatMessageText::objectAt(const QPoint &point) const
+std::optional<ChatMessageText::InlineObjectHit> ChatMessageText::objectHitAt(const QPoint &point) const
 {
-    // A hit is an actual rendered object, not simply a nearby text cursor
-    // (QTextEdit can return the previous character at an object boundary).
-    // Its size comes from the handler the layout itself asks.
+    // QTextEdit's default tooltip lookup uses cursorForPosition(), which picks
+    // the nearest insertion position. That can be *before* a rendered icon, or
+    // on its neighbour, even when the pointer is directly over the icon.
+    // Use the actual rendered object rectangle instead.
     for (auto block = document()->begin(); block.isValid(); block = block.next()) {
         for (auto it = block.begin(); !it.atEnd(); ++it) {
-            const auto            fragment = it.fragment();
-            const QTextCharFormat format   = fragment.charFormat();
+            const QTextFragment fragment = it.fragment();
+            const QTextCharFormat format = fragment.charFormat();
             if (format.objectType() == QTextFormat::NoObject)
                 continue;
             auto *handler = document()->documentLayout()->handlerForObject(format.objectType());
             if (!handler)
                 continue;
-            QTextCursor cursor(document());
-            cursor.setPosition(fragment.position());
-            const QSizeF size = handler->intrinsicSize(document(), fragment.position(), format);
-            if (QRectF(cursorRect(cursor).topLeft(), size).contains(point))
-                return format;
+            const QString text = fragment.text();
+            for (int offset = 0; offset < text.size(); ++offset) {
+                if (text.at(offset) != QChar::ObjectReplacementCharacter)
+                    continue;
+                const int position = fragment.position() + offset;
+                QTextCursor cursor(document());
+                cursor.setPosition(position);
+                const QSizeF size = handler->intrinsicSize(document(), position, format);
+                const QRectF rect(cursorRect(cursor).topLeft(), size);
+                if (rect.contains(point))
+                    return InlineObjectHit { format, rect };
+            }
         }
     }
     return std::nullopt;
+}
+
+std::optional<QTextCharFormat> ChatMessageText::objectAt(const QPoint &point) const
+{
+    const auto hit = objectHitAt(point);
+    if (hit)
+        return hit->format;
+    return std::nullopt;
+}
+
+bool ChatMessageText::viewportEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTip) {
+        const auto *help = static_cast<QHelpEvent *>(event);
+        if (const auto hit = objectHitAt(help->pos()); hit && !hit->format.toolTip().isEmpty()) {
+            // Passing the exact icon rect also lets Qt dismiss the tooltip
+            // when the pointer leaves this icon for another part of the row.
+            QToolTip::showText(help->globalPos(), hit->format.toolTip(), viewport(), hit->rect.toAlignedRect());
+            event->accept();
+            return true;
+        }
+    }
+    return PsiTextView::viewportEvent(event); // Keep ordinary text/link tooltips.
 }
 
 std::optional<QTextImageFormat> ChatMessageText::imageAt(const QPoint &point) const
