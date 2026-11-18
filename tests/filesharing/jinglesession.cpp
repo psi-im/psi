@@ -12,7 +12,7 @@
 namespace FT = J::FileTransfer;
 
 static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArrival = false,
-                         bool unavailablePeerCaps = false, bool s5bAffinity = false)
+                         bool unavailablePeerCaps = false, const QString &learnedTransportNs = {})
 {
     TcpPortReserver reserver;
     Endpoint        alice(QStringLiteral("alice")), bob(QStringLiteral("bob"));
@@ -37,6 +37,7 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
     file.setSize(quint64(payload.size()));
     file.addHash(Hash::from(Hash::Sha256, payload));
     int                              sessions = 0, additions = 0, accepted = 0, receipts = 0, verified = 0;
+    const bool                       testAffinity = !learnedTransportNs.isEmpty();
     int                              removals = 0, transportReplaces = 0;
     QList<QPointer<J::Session>>      sourceSessions, requestSessions;
     QList<QPointer<FT::Application>> sourceParts, requestParts;
@@ -49,13 +50,13 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
             ++additions;
         if (from.jid == alice.jid && action == QLatin1String("content-remove"))
             ++removals;
-        if (s5bAffinity && from.jid == alice.jid && action == QLatin1String("transport-replace"))
+        if (testAffinity && from.jid == alice.jid && action == QLatin1String("transport-replace"))
             ++transportReplaces;
-        if (s5bAffinity && from.jid == alice.jid && action == QLatin1String("session-initiate")) {
+        if (testAffinity && from.jid == alice.jid && action == QLatin1String("session-initiate")) {
             const auto transport = jingle.firstChildElement(QStringLiteral("content"))
                                        .firstChildElement(QStringLiteral("transport"));
-            check(transport.namespaceURI() == QLatin1String("urn:xmpp:jingle:transports:s5b:1"),
-                  "session repeated ICE negotiation despite successful S5B");
+            check(transport.namespaceURI() == learnedTransportNs,
+                  "session did not offer the last successful transport");
         }
         if (from.jid == bob.jid && action == QLatin1String("content-accept"))
             ++accepted;
@@ -124,24 +125,24 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
                       "missing-capabilities request must use safe IBB fallback");
             requestParts.append(a);
             auto *session = a->pad()->session();
-            if (s5bAffinity) {
-                const auto ns = QStringLiteral("urn:xmpp:jingle:transports:s5b:1");
+            if (testAffinity) {
                 if (i == 0) {
-                    // Simulate the first range having discovered a working S5B
-                    // through normal fallback; subsequent ranges must learn it.
-                    auto transport = session->newOutgoingTransport(ns);
-                    check(transport && a->setTransport(transport), "cannot seed S5B media transport");
+                    // Force a non-default transport for the first range. Once
+                    // its payload is verified, the later ranges should inherit
+                    // the observed namespace, not any hard-coded fallback.
+                    auto transport = session->newOutgoingTransport(learnedTransportNs);
+                    check(transport && a->setTransport(transport), "cannot seed initial media transport");
                 } else {
-                    check(a->transport() && a->transport()->pad()->ns() == ns,
-                          "next range did not reuse the successful S5B transport choice");
+                    check(a->transport() && a->transport()->pad()->ns() == learnedTransportNs,
+                          "next range did not choose the previously successful transport");
                 }
             }
             if (!requestSessions.contains(session))
                 requestSessions.append(session);
             QObject::connect(a, &FT::Application::connectionReady, &consumers[i], [&, i, a] {
-                if (s5bAffinity)
-                    check(a->transport()->pad()->ns() == QLatin1String("urn:xmpp:jingle:transports:s5b:1"),
-                          "S5B range fell back unexpectedly");
+                if (testAffinity)
+                    check(a->transport()->pad()->ns() == learnedTransportNs,
+                          "preferred transport failed to establish a connection");
                 if (grouping) {
                     check(a->transport()->pad()->ns() == J::ICE::NS, "unexpected media transport");
                     auto *pad   = static_cast<J::ICE::Pad *>(a->transport()->pad());
@@ -203,8 +204,8 @@ static void queuedRanges(bool grouping, bool cancelLast = false, bool lateArriva
         check(received[i] == payload.mid(i * 8192, 8192), "range payload or offset corrupted");
     check(sessions == (grouping ? 1 : 3), "wrong number of physical Jingle sessions");
     check(additions == (grouping ? 2 : 0), "ranges did not reuse content-add");
-    if (s5bAffinity)
-        check(transportReplaces == 0, "repeated transport-replace despite successful S5B");
+    if (testAffinity)
+        check(transportReplaces == 0, "repeated transport-replace despite successful learned transport");
     check(!cancelledStarted, "cancelled queued request started");
     check(pumpUntil(
               alice, bob,
@@ -258,7 +259,9 @@ int main(int argc, char **argv)
     queuedRanges(true);
     queuedRanges(true, false, true); // >3s gaps must retain the same BUNDLE association.
     queuedRanges(false);
-    queuedRanges(false, false, false, false, true); // S5B success skips ICE for later ranges.
+    // IBB is not the default when ICE/DTLS/SCTP is available. Verify that
+    // a successful IBB transfer nevertheless becomes the next range's offer.
+    queuedRanges(false, false, false, false, QStringLiteral("urn:xmpp:jingle:transports:ibb:1"));
     // First player demand after cached playback may precede MUC occupant caps.
     // An explicit Jingle source must still produce session-initiate.
     queuedRanges(false, false, false, true);
