@@ -6,6 +6,7 @@
 #include <QTextDocument>
 #include <QTextFormat>
 #include <QPoint>
+#include <QRectF>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -49,8 +50,15 @@ protected:
     void       resizeEvent(QResizeEvent *event) override;
     void       changeEvent(QEvent *event) override;
     void       wheelEvent(QWheelEvent *event) override;
+    bool       viewportEvent(QEvent *event) override;
 
 private:
+    struct InlineObjectHit {
+        QTextCharFormat format;
+        QRectF rect;
+    };
+    std::optional<InlineObjectHit> objectHitAt(const QPoint &point) const;
+
     void applyDocumentFont();
     // A copy of the document for measuring other widths. Changing the width of
     // the shown document behind QTextEdit's back can leave it laid out at a

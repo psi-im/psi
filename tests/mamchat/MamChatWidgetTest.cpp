@@ -17,6 +17,7 @@
 #include "widgets/psirichtext.h"
 #include "widgets/urlobject.h"
 #include <QContextMenuEvent>
+#include <QHelpEvent>
 #include <QCursor>
 #include <QTextBrowser>
 #include <QVBoxLayout>
@@ -46,6 +47,7 @@
 #include <QTextBlock>
 #include <QTextFragment>
 #include <QTextOption>
+#include <QTextObjectInterface>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QUrlQuery>
@@ -2017,6 +2019,55 @@ private slots:
         QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, point);
         QTest::mouseClick(text.viewport(), Qt::LeftButton, Qt::NoModifier, point);
         QCOMPARE(clicked.size(), 1);
+    }
+
+    void inlineSmileyTooltipsFollowRenderedObjectsOnRepeatedHover()
+    {
+        ChatMessageText text;
+        text.resize(340, 100);
+        text.setRichText(QStringLiteral("Before "
+            "<icon name=\"test/smile\" text=\":-)\" type=\"smiley\">"
+            "<icon name=\"test/smile\" text=\":-)\" type=\"smiley\">"
+            "<icon name=\"test/smile\" text=\":(\" type=\"smiley\"> After"));
+        text.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&text));
+
+        QVector<QPoint> points;
+        QTextCursor search(text.document());
+        for (;;) {
+            search = text.document()->find(QString(QChar::ObjectReplacementCharacter), search);
+            if (search.isNull())
+                break;
+            QTextCursor cursor(text.document());
+            cursor.setPosition(search.selectionStart());
+            const QTextCharFormat format = search.charFormat();
+            auto *handler = text.document()->documentLayout()->handlerForObject(format.objectType());
+            QVERIFY(handler);
+            const QSizeF size = handler->intrinsicSize(text.document(), cursor.position(), format);
+            const QPoint point = text.cursorRect(cursor).topLeft()
+                + QPoint(qMax(1, int(size.width() / 2)), qMax(1, int(size.height() / 2)));
+            QVERIFY(text.viewport()->rect().contains(point));
+            points.append(point);
+        }
+        QCOMPARE(points.size(), 3);
+        // The first two icons may share one QTextFragment; each still owns
+        // its own hit rectangle and tooltip.
+        const QStringList expected { QStringLiteral(":-)"), QStringLiteral(":-)"), QStringLiteral(":(") };
+        for (const int index : { 0, 1, 2, 0, 2 }) {
+            const auto format = text.objectAt(points.at(index));
+            QVERIFY(format);
+            QCOMPARE(format->toolTip(), expected.at(index));
+
+            QHelpEvent help(QEvent::ToolTip, points.at(index), text.viewport()->mapToGlobal(points.at(index)));
+            help.ignore();
+            QApplication::sendEvent(text.viewport(), &help);
+            QVERIFY(help.isAccepted());
+        }
+
+        // Ordinary text must not be mistaken for the nearby icon.
+        QTextCursor ordinary = text.document()->find(QStringLiteral("Before"));
+        QVERIFY(!ordinary.isNull());
+        QVERIFY(!text.objectAt(text.cursorRect(ordinary).center()));
     }
 
     void imageHitTestUsesTheDrawnSize()
