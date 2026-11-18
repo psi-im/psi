@@ -1,4 +1,5 @@
 #include "filesharingjinglesession.h"
+#include <QDateTime>
 #include <QHash>
 #include <QPointer>
 #include <QTimer>
@@ -23,6 +24,7 @@ public:
         QPointer<FT::Application> app;
         bool                      cancelled = false, verified = false, accepted = false, closing = false;
         bool                      retireScheduled = false, retireNow = false;
+        bool                      preferredS5b = false;
     };
     struct Peer {
         XMPP::Jid                       jid;
@@ -34,6 +36,64 @@ public:
     QPointer<J::Manager>                  manager;
     QHash<QString, std::shared_ptr<Peer>> peers;
     bool                                  scheduled = false;
+    // Successful S5B cannot be multiplexed across BUNDLE contents. Remember it
+    // briefly for later bounded requests of the SAME file and full peer JID,
+    // rather than retrying ICE2 and ICE-UDP for every range.
+    QHash<QString, qint64>                successfulS5b;
+    static constexpr int                  S5bAffinityLifetimeMs = 5 * 60 * 1000;
+    static constexpr int                  MaxS5bAffinities = 64;
+    static const QString                 &s5bNamespace()
+    {
+        static const QString ns = QStringLiteral("urn:xmpp:jingle:transports:s5b:1");
+        return ns;
+    }
+
+    static QString affinityKey(const XMPP::Jid &jid, const FT::File &file)
+    {
+        if (!file.size())
+            return {};
+        // Ranged hashes vary between requests; only the immutable whole-file
+        // content identity may carry a preference into another Jingle session.
+        for (const auto &hash : file.computedHashes()) {
+            if (hash.isValid() && !hash.data().isEmpty())
+                return jid.full() + QChar(0x1f) + QString::number(*file.size()) + QChar(0x1f) + hash.toString();
+        }
+        return {};
+    }
+
+    bool preferS5b(const XMPP::Jid &jid, const FT::File &file)
+    {
+        const auto key = affinityKey(jid, file);
+        if (key.isEmpty())
+            return false;
+        const auto it = successfulS5b.find(key);
+        if (it == successfulS5b.end())
+            return false;
+        if (it.value() <= QDateTime::currentMSecsSinceEpoch()) {
+            successfulS5b.erase(it);
+            return false;
+        }
+        return true;
+    }
+
+    void rememberTransport(const XMPP::Jid &jid, const FT::File &file, const QString &transportNs)
+    {
+        const auto key = affinityKey(jid, file);
+        if (key.isEmpty())
+            return;
+        if (transportNs != s5bNamespace()) {
+            successfulS5b.remove(key);
+            return;
+        }
+        if (!successfulS5b.contains(key) && successfulS5b.size() >= MaxS5bAffinities) {
+            auto oldest = successfulS5b.begin();
+            for (auto it = successfulS5b.begin(); it != successfulS5b.end(); ++it)
+                if (it.value() < oldest.value())
+                    oldest = it;
+            successfulS5b.erase(oldest);
+        }
+        successfulS5b.insert(key, QDateTime::currentMSecsSinceEpoch() + S5bAffinityLifetimeMs);
+    }
     // Iris's Jingle FT finalize/receipt deadline is 30 seconds. Allow a
     // delayed next media range to reuse BUNDLE (including slow decode or
     // cached reads), but release the previous receipt well before that
@@ -177,6 +237,19 @@ public:
                     transport->releaseIfUnused();
                 // Let normal transport selection choose a supported alternative.
             }
+        } else if (preferS5b(peer->jid, part->file) && session->checkPeerCaps(s5bNamespace())) {
+            // This initial selection still leaves the remaining Iris transports
+            // available for normal transport-replace if S5B stops working.
+            auto transport = session->newOutgoingTransport(s5bNamespace());
+            if (transport && app->setTransport(transport)) {
+                part->preferredS5b = true;
+                qInfo("Jingle media: preferring previously successful S5B for %s",
+                      qPrintable(peer->jid.full()));
+            } else {
+                if (transport)
+                    transport->releaseIfUnused();
+                successfulS5b.remove(affinityKey(peer->jid, part->file));
+            }
         } else if (manager->client()->capsManager()->features(peer->jid).isEmpty()) {
             // A player starting in the disk cache may not need a Jingle session
             // until the first seek. In a MUC, the occupant can be online while
@@ -208,8 +281,10 @@ public:
                          qPrintable(peer->jid.full()));
             }
         }
-        QObject::connect(app, &FT::Application::payloadVerified, q, [this, part] {
+        QObject::connect(app, &FT::Application::payloadVerified, q, [this, peer, part] {
             part->verified = true;
+            if (part->app && part->app->transport())
+                rememberTransport(peer->jid, part->file, part->app->transport()->pad()->ns());
             schedule();
         });
         QObject::connect(app, &J::Application::stateChanged, q, [this, peer, part, previous](J::State state) {
@@ -232,6 +307,8 @@ public:
                     close(previous);
                 });
             } else if (state == J::State::Finished) {
+                if (part->preferredS5b && !part->verified)
+                    successfulS5b.remove(affinityKey(peer->jid, part->file));
                 // A rejected successor must not leave the old receipt stranded.
                 schedule();
                 // The next content is already accepted before its predecessor's
