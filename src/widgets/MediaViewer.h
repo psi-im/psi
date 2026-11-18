@@ -93,6 +93,7 @@ protected:
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
@@ -107,6 +108,7 @@ private:
     void    applyFilter(bool persist = false);
     void    toggleFullscreen();
     void    togglePlayback();
+    void    handleVideoDoubleClick();
     void    updateFullscreenUi();
     void    updateVideoControlsOverlay();
     void    releaseVideo();
@@ -147,6 +149,8 @@ private:
     bool                            fullscreenControlsHidden_ = false;
     bool                            videoControlsOverlay_ = false;
     bool                            playbackSurfacePressed_ = false;
+    bool                            playbackClickToggled_ = false;
+    bool                            suppressPlaybackRelease_ = false;
     QString                         currentKey_;
     quint64                         currentRevision_   = 0;
     bool                            navigationPending_ = false;

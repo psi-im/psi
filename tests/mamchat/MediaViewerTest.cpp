@@ -367,6 +367,105 @@ private slots:
         QVERIFY(borrowed.isNull());
     }
 
+    void borrowedVideoDoubleClickKeepsOnePlayer()
+    {
+        class OldQiteFilter : public QObject {
+        public:
+            int fullscreenRequests = 0;
+            bool eventFilter(QObject *, QEvent *event) override
+            {
+                if (event->type() == QEvent::MouseButtonDblClick) {
+                    ++fullscreenRequests;
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        QWidget inlineHost;
+        inlineHost.resize(320, 200);
+        inlineHost.show();
+        auto *player = new QWidget(&inlineHost);
+        auto *layout = new QVBoxLayout(player);
+        layout->setContentsMargins(0, 0, 0, 0);
+        auto *surface = new QWidget(player);
+        layout->addWidget(surface, 1);
+        auto *controls = new QWidget(player);
+        controls->setObjectName(QStringLiteral("qite-video-controls"));
+        auto *play = new QToolButton(controls);
+        play->setObjectName(QStringLiteral("qite-video-play"));
+        layout->addWidget(controls);
+
+        // The old Qite double-click filter was installed before the player
+        // was borrowed. MediaViewer's filter must intercept the event first.
+        OldQiteFilter oldQite;
+        surface->installEventFilter(&oldQite);
+        int playbackToggles = 0;
+        QObject::connect(play, &QToolButton::clicked, play, [&] { ++playbackToggles; });
+        int borrowed = 0;
+        int returned = 0;
+        {
+            MediaViewer viewer(QImage{});
+            auto *source = new TestNavigationSource;
+            viewer.setNavigationSource(source);
+            viewer.show();
+            MediaNavigationSource::View video;
+            video.key = QStringLiteral("borrowed:video");
+            video.revision = 1;
+            video.name = QStringLiteral("video.mp4");
+            video.video = [&](QWidget *parent, std::function<void()>) {
+                ++borrowed;
+                player->setParent(parent);
+                return player;
+            };
+            video.videoReturn = [&](QWidget *widget) {
+                ++returned;
+                widget->setParent(&inlineHost);
+                return true;
+            };
+            emit source->changed(video);
+            QCOMPARE(borrowed, 1);
+            QCOMPARE(player->parentWidget(), &viewer);
+            QTRY_VERIFY(surface->isVisible());
+
+            // The first click of a double-click may toggle playback already.
+            // Fullscreen must undo that toggle and reuse the existing widget.
+            QTest::mousePress(surface, Qt::LeftButton);
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 1);
+            QMouseEvent doubleClick(QEvent::MouseButtonDblClick, QPointF(surface->rect().center()),
+                                    QPointF(surface->mapToGlobal(surface->rect().center())),
+                                    Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(surface, &doubleClick);
+            QTRY_VERIFY(viewer.isFullScreen());
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 2);
+            QCOMPARE(oldQite.fullscreenRequests, 0);
+            QCOMPARE(borrowed, 1);
+            QCOMPARE(returned, 0);
+            QCOMPARE(player->parentWidget(), &viewer);
+
+            // A second double-click must restore the same window and player,
+            // without depending on focus-sensitive Escape shortcut delivery.
+            QTest::mousePress(surface, Qt::LeftButton);
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 3);
+            QMouseEvent exitDoubleClick(QEvent::MouseButtonDblClick, QPointF(surface->rect().center()),
+                                        QPointF(surface->mapToGlobal(surface->rect().center())),
+                                        Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(surface, &exitDoubleClick);
+            QTRY_VERIFY(!viewer.isFullScreen());
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 4);
+            QCOMPARE(oldQite.fullscreenRequests, 0);
+            QCOMPARE(borrowed, 1);
+            QCOMPARE(returned, 0);
+            QCOMPARE(player->parentWidget(), &viewer);
+        }
+        QCOMPARE(returned, 1);
+        QCOMPARE(player->parentWidget(), &inlineHost);
+    }
+
     void videoPlayPauseUsesSpaceAndSurfaceClick()
     {
         MediaViewer viewer(QImage{});
