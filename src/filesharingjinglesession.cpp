@@ -24,7 +24,7 @@ public:
         QPointer<FT::Application> app;
         bool                      cancelled = false, verified = false, accepted = false, closing = false;
         bool                      retireScheduled = false, retireNow = false;
-        bool                      preferredS5b = false;
+        QString                   preferredTransportNs;
     };
     struct Peer {
         XMPP::Jid                       jid;
@@ -36,17 +36,16 @@ public:
     QPointer<J::Manager>                  manager;
     QHash<QString, std::shared_ptr<Peer>> peers;
     bool                                  scheduled = false;
-    // Successful S5B cannot be multiplexed across BUNDLE contents. Remember it
-    // briefly for later bounded requests of the SAME file and full peer JID,
-    // rather than retrying ICE2 and ICE-UDP for every range.
-    QHash<QString, qint64>                successfulS5b;
-    static constexpr int                  S5bAffinityLifetimeMs = 5 * 60 * 1000;
-    static constexpr int                  MaxS5bAffinities = 64;
-    static const QString                 &s5bNamespace()
-    {
-        static const QString ns = QStringLiteral("urn:xmpp:jingle:transports:s5b:1");
-        return ns;
-    }
+    // A verified range teaches the pool which transport actually worked for
+    // this peer and file. A later independent session can try it first; Iris
+    // still owns transport negotiation and fallback for that session.
+    struct LearnedTransport {
+        QString ns;
+        qint64  expiresAt = 0;
+    };
+    QHash<QString, LearnedTransport> learnedTransports;
+    static constexpr int            LearnedTransportLifetimeMs = 5 * 60 * 1000;
+    static constexpr int            MaxLearnedTransports = 64;
 
     static QString affinityKey(const XMPP::Jid &jid, const FT::File &file)
     {
@@ -61,38 +60,43 @@ public:
         return {};
     }
 
-    bool preferS5b(const XMPP::Jid &jid, const FT::File &file)
+    QString lastSuccessfulTransport(const XMPP::Jid &jid, const FT::File &file)
     {
         const auto key = affinityKey(jid, file);
         if (key.isEmpty())
-            return false;
-        const auto it = successfulS5b.find(key);
-        if (it == successfulS5b.end())
-            return false;
-        if (it.value() <= QDateTime::currentMSecsSinceEpoch()) {
-            successfulS5b.erase(it);
-            return false;
+            return {};
+        const auto it = learnedTransports.find(key);
+        if (it == learnedTransports.end())
+            return {};
+        if (it->expiresAt <= QDateTime::currentMSecsSinceEpoch()) {
+            learnedTransports.erase(it);
+            return {};
         }
-        return true;
+        return it->ns;
+    }
+
+    void forgetTransport(const XMPP::Jid &jid, const FT::File &file, const QString &ns)
+    {
+        const auto key = affinityKey(jid, file);
+        const auto it  = learnedTransports.find(key);
+        // An older failed request must not invalidate a newer verified choice.
+        if (it != learnedTransports.end() && it->ns == ns)
+            learnedTransports.erase(it);
     }
 
     void rememberTransport(const XMPP::Jid &jid, const FT::File &file, const QString &transportNs)
     {
         const auto key = affinityKey(jid, file);
-        if (key.isEmpty())
+        if (key.isEmpty() || transportNs.isEmpty())
             return;
-        if (transportNs != s5bNamespace()) {
-            successfulS5b.remove(key);
-            return;
-        }
-        if (!successfulS5b.contains(key) && successfulS5b.size() >= MaxS5bAffinities) {
-            auto oldest = successfulS5b.begin();
-            for (auto it = successfulS5b.begin(); it != successfulS5b.end(); ++it)
-                if (it.value() < oldest.value())
+        if (!learnedTransports.contains(key) && learnedTransports.size() >= MaxLearnedTransports) {
+            auto oldest = learnedTransports.begin();
+            for (auto it = learnedTransports.begin(); it != learnedTransports.end(); ++it)
+                if (it->expiresAt < oldest->expiresAt)
                     oldest = it;
-            successfulS5b.erase(oldest);
+            learnedTransports.erase(oldest);
         }
-        successfulS5b.insert(key, QDateTime::currentMSecsSinceEpoch() + S5bAffinityLifetimeMs);
+        learnedTransports.insert(key, { transportNs, QDateTime::currentMSecsSinceEpoch() + LearnedTransportLifetimeMs });
     }
     // Iris's Jingle FT finalize/receipt deadline is 30 seconds. Allow a
     // delayed next media range to reuse BUNDLE (including slow decode or
@@ -237,49 +241,58 @@ public:
                     transport->releaseIfUnused();
                 // Let normal transport selection choose a supported alternative.
             }
-        } else if (!session->isEndToEndRequired() && preferS5b(peer->jid, part->file)
-                   && session->checkPeerCaps(s5bNamespace())) {
-            // This initial selection still leaves the remaining Iris transports
-            // available for normal transport-replace if S5B stops working.
-            auto transport = session->newOutgoingTransport(s5bNamespace());
-            if (transport && app->setTransport(transport)) {
-                part->preferredS5b = true;
-                qInfo("Jingle media: preferring previously successful S5B for %s",
-                      qPrintable(peer->jid.full()));
-            } else {
-                if (transport)
-                    transport->releaseIfUnused();
-                successfulS5b.remove(affinityKey(peer->jid, part->file));
-            }
-        } else if (manager->client()->capsManager()->features(peer->jid).isEmpty()) {
-            // A player starting in the disk cache may not need a Jingle session
-            // until the first seek. In a MUC, the occupant can be online while
-            // its entity capabilities are still unresolved. NSTransportsList
-            // otherwise permanently discards every candidate because
-            // checkPeerCaps() returns false, and no session-initiate is sent.
-            // We can safely offer IBB without advertised DTLS support. ICE/SCTP
-            // must NOT be offered blindly here: Iris enables outgoing DTLS
-            // only when the peer's fingerprint capability is known, and SCTP
-            // cannot operate without DTLS. Once verified peer caps arrive,
-            // the normal selector can prefer ICE for subsequent ranges.
-            const auto transports = manager->availableTransports(
-                J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
-            // Jingle IBB's namespace is stable; its implementation header is
-            // private to Iris and is not installed in the external SDK.
-            const auto ibbNs = QStringLiteral("urn:xmpp:jingle:transports:ibb:1");
-            if (transports.contains(ibbNs)) {
-                auto transport = session->newOutgoingTransport(ibbNs);
-                if (transport && app->setTransport(transport)) {
-                    qInfo("Jingle media peer caps unavailable; offering safe IBB fallback to %s",
-                          qPrintable(peer->jid.full()));
+        } else {
+            const auto preferredNs = session->isEndToEndRequired() ? QString() : lastSuccessfulTransport(peer->jid, part->file);
+            if (!preferredNs.isEmpty()) {
+                if (session->checkPeerCaps(preferredNs)) {
+                    // Only an initial preference: the FT selector retains all
+                    // other supported namespaces for normal transport-replace.
+                    auto transport = session->newOutgoingTransport(preferredNs);
+                    if (transport && app->setTransport(transport)) {
+                        part->preferredTransportNs = preferredNs;
+                        qInfo("Jingle media: trying last successful transport %s for %s",
+                              qPrintable(preferredNs), qPrintable(peer->jid.full()));
+                    } else {
+                        if (transport)
+                            transport->releaseIfUnused();
+                        forgetTransport(peer->jid, part->file, preferredNs);
+                    }
                 } else {
-                    if (transport)
-                        transport->releaseIfUnused();
-                    qWarning("Jingle media could not prepare IBB fallback for %s", qPrintable(peer->jid.full()));
+                    // The occupant may have changed capabilities since the
+                    // successful range; do not keep a stale preference.
+                    forgetTransport(peer->jid, part->file, preferredNs);
                 }
-            } else {
-                qWarning("Jingle media has unknown peer caps and no safe IBB fallback for %s",
-                         qPrintable(peer->jid.full()));
+            }
+            if (!app->transport() && manager->client()->capsManager()->features(peer->jid).isEmpty()) {
+                // A player starting in the disk cache may not need a Jingle session
+                // until the first seek. In a MUC, the occupant can be online while
+                // its entity capabilities are still unresolved. NSTransportsList
+                // otherwise permanently discards every candidate because
+                // checkPeerCaps() returns false, and no session-initiate is sent.
+                // We can safely offer IBB without advertised DTLS support. ICE/SCTP
+                // must NOT be offered blindly here: Iris enables outgoing DTLS
+                // only when the peer's fingerprint capability is known, and SCTP
+                // cannot operate without DTLS. Once verified peer caps arrive,
+                // the normal selector can prefer ICE for subsequent ranges.
+                const auto transports = manager->availableTransports(
+                    J::TransportFeature::Reliable | J::TransportFeature::Ordered | J::TransportFeature::DataOriented);
+                // Jingle IBB's namespace is stable; its implementation header is
+                // private to Iris and is not installed in the external SDK.
+                const auto ibbNs = QStringLiteral("urn:xmpp:jingle:transports:ibb:1");
+                if (transports.contains(ibbNs)) {
+                    auto transport = session->newOutgoingTransport(ibbNs);
+                    if (transport && app->setTransport(transport)) {
+                        qInfo("Jingle media peer caps unavailable; offering safe IBB fallback to %s",
+                              qPrintable(peer->jid.full()));
+                    } else {
+                        if (transport)
+                            transport->releaseIfUnused();
+                        qWarning("Jingle media could not prepare IBB fallback for %s", qPrintable(peer->jid.full()));
+                    }
+                } else {
+                    qWarning("Jingle media has unknown peer caps and no safe IBB fallback for %s",
+                             qPrintable(peer->jid.full()));
+                }
             }
         }
         QObject::connect(app, &FT::Application::payloadVerified, q, [this, peer, part] {
@@ -308,8 +321,8 @@ public:
                     close(previous);
                 });
             } else if (state == J::State::Finished) {
-                if (part->preferredS5b && !part->verified)
-                    successfulS5b.remove(affinityKey(peer->jid, part->file));
+                if (!part->preferredTransportNs.isEmpty() && !part->verified)
+                    forgetTransport(peer->jid, part->file, part->preferredTransportNs);
                 // A rejected successor must not leave the old receipt stranded.
                 schedule();
                 // The next content is already accepted before its predecessor's
