@@ -445,8 +445,21 @@ private slots:
             QCOMPARE(returned, 0);
             QCOMPARE(player->parentWidget(), &viewer);
 
-            QTest::keyClick(&viewer, Qt::Key_Escape);
+            // A second double-click must restore the same window and player,
+            // without depending on focus-sensitive Escape shortcut delivery.
+            QTest::mousePress(surface, Qt::LeftButton);
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 3);
+            QMouseEvent exitDoubleClick(QEvent::MouseButtonDblClick, QPointF(surface->rect().center()),
+                                        QPointF(surface->mapToGlobal(surface->rect().center())),
+                                        Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+            QApplication::sendEvent(surface, &exitDoubleClick);
             QTRY_VERIFY(!viewer.isFullScreen());
+            QTest::mouseRelease(surface, Qt::LeftButton);
+            QCOMPARE(playbackToggles, 4);
+            QCOMPARE(oldQite.fullscreenRequests, 0);
+            QCOMPARE(borrowed, 1);
+            QCOMPARE(returned, 0);
             QCOMPARE(player->parentWidget(), &viewer);
         }
         QCOMPARE(returned, 1);
