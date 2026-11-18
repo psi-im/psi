@@ -21,6 +21,7 @@
 #define MSGMLE_H
 
 #include "iris/xmpp_htmlelement.h"
+#include "widgets/EmojiSupport.h"
 
 #include <QPointer>
 #include <QTextEdit>
@@ -131,6 +132,7 @@ private:
     QAction                  *act_changeCase       = nullptr;
     QAction                  *actPasteAsQuote_     = nullptr;
     QString                   currentText;
+    EmojiSupport::ClassicSmileyConversion classicSmileyConversion_;
     HTMLTextController       *controller_  = nullptr;
     CapitalLettersController *capitalizer_ = nullptr;
     // bool                           correction   = false;
