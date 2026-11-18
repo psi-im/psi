@@ -367,7 +367,6 @@ private slots:
         QVERIFY(borrowed.isNull());
     }
 
-
     void borrowedVideoDoubleClickKeepsOnePlayer()
     {
         class OldQiteFilter : public QObject {
