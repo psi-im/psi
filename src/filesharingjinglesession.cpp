@@ -237,7 +237,8 @@ public:
                     transport->releaseIfUnused();
                 // Let normal transport selection choose a supported alternative.
             }
-        } else if (preferS5b(peer->jid, part->file) && session->checkPeerCaps(s5bNamespace())) {
+        } else if (!session->isEndToEndRequired() && preferS5b(peer->jid, part->file)
+                   && session->checkPeerCaps(s5bNamespace())) {
             // This initial selection still leaves the remaining Iris transports
             // available for normal transport-replace if S5B stops working.
             auto transport = session->newOutgoingTransport(s5bNamespace());
