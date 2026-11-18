@@ -572,9 +572,23 @@ void MediaViewer::togglePlayback()
     }
 }
 
+void MediaViewer::handleVideoDoubleClick()
+{
+    // The first release of a double-click may already have toggled playback.
+    // Restore the original state before changing this decoder's presentation.
+    if (playbackClickToggled_)
+        togglePlayback();
+    playbackClickToggled_ = false;
+    playbackSurfacePressed_ = false;
+    suppressPlaybackRelease_ = true;
+    toggleFullscreen();
+}
+
 void MediaViewer::releaseVideo()
 {
     playbackSurfacePressed_ = false;
+    playbackClickToggled_ = false;
+    suppressPlaybackRelease_ = false;
     QWidget *old = video_.data();
     if (!old) {
         videoReturn_ = {};
@@ -772,9 +786,25 @@ bool MediaViewer::eventFilter(QObject *object, QEvent *event)
         auto *widget = qobject_cast<QWidget *>(object);
         const bool onSurface = widget && (widget == video_ || video_->isAncestorOf(widget))
             && !(videoControls_ && (widget == videoControls_ || videoControls_->isAncestorOf(widget)));
-        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
+        if (event->type() == QEvent::MouseButtonDblClick) {
+            auto *mouse = static_cast<QMouseEvent *>(event);
+            const QPoint global = globalMousePoint(mouse);
+            if (onSurface && mouse->button() == Qt::LeftButton && mouse->modifiers() == Qt::NoModifier
+                && !insideVisibleWidget(videoControls_, global) && !insideVisibleWidget(controls_, global)) {
+                // Qite's earlier event filter still belongs to this borrowed
+                // surface. Do not let it open another player for fullscreen.
+                handleVideoDoubleClick();
+                return true;
+            }
+        } else if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease) {
             auto *mouse = static_cast<QMouseEvent *>(event);
             if (mouse->button() == Qt::LeftButton) {
+                if (event->type() == QEvent::MouseButtonPress) {
+                    playbackClickToggled_ = false;
+                    suppressPlaybackRelease_ = false;
+                } else if (std::exchange(suppressPlaybackRelease_, false)) {
+                    return true;
+                }
                 const QPoint global = globalMousePoint(mouse);
                 const bool onControls = insideVisibleWidget(videoControls_, global)
                     || insideVisibleWidget(controls_, global);
@@ -785,6 +815,7 @@ bool MediaViewer::eventFilter(QObject *object, QEvent *event)
                     const bool pressed = std::exchange(playbackSurfacePressed_, false);
                     if (pressed && valid) {
                         togglePlayback();
+                        playbackClickToggled_ = true;
                         return true;
                     }
                 }
@@ -1056,11 +1087,14 @@ void MediaViewer::paintEvent(QPaintEvent *)
 
 void MediaViewer::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if (event->button() == Qt::LeftButton) {
+        playbackClickToggled_ = false;
+        suppressPlaybackRelease_ = false;
         playbackSurfacePressed_ = video_ && video_->geometry().contains(event->pos())
             && !insideVisibleWidget(videoControls_, globalMousePoint(event))
             && !insideVisibleWidget(controls_, globalMousePoint(event))
             && event->modifiers() == Qt::NoModifier;
+    }
     if (event->button() == Qt::LeftButton && canPan() && displayedImageRect().contains(event->pos())) {
         dragging_         = true;
         lastDragPosition_ = event->pos();
@@ -1069,6 +1103,19 @@ void MediaViewer::mousePressEvent(QMouseEvent *event)
         return;
     }
     QWidget::mousePressEvent(event);
+}
+
+void MediaViewer::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && event->modifiers() == Qt::NoModifier && video_
+        && video_->geometry().contains(event->pos())
+        && !insideVisibleWidget(videoControls_, globalMousePoint(event))
+        && !insideVisibleWidget(controls_, globalMousePoint(event))) {
+        handleVideoDoubleClick();
+        event->accept();
+        return;
+    }
+    QWidget::mouseDoubleClickEvent(event);
 }
 
 void MediaViewer::mouseMoveEvent(QMouseEvent *event)
@@ -1100,12 +1147,17 @@ void MediaViewer::mouseReleaseEvent(QMouseEvent *event)
         return;
     }
     if (event->button() == Qt::LeftButton) {
+        if (std::exchange(suppressPlaybackRelease_, false)) {
+            event->accept();
+            return;
+        }
         const bool pressed = std::exchange(playbackSurfacePressed_, false);
         if (pressed && video_ && video_->geometry().contains(event->pos())
             && !insideVisibleWidget(videoControls_, globalMousePoint(event))
             && !insideVisibleWidget(controls_, globalMousePoint(event))
             && event->modifiers() == Qt::NoModifier) {
             togglePlayback();
+            playbackClickToggled_ = true;
             event->accept();
             return;
         }
