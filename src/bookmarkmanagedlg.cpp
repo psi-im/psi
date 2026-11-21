@@ -71,7 +71,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount *account) : QDialog(), account_(
     connect(ui_.room, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.nickname, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.password, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
-    connect(ui_.autoJoin, SIGNAL(currentIndexChanged(int)), SLOT(updateCurrentItem()));
+    connect(ui_.autoJoin, SIGNAL(activated(int)), SLOT(updateCurrentItem()));
 
     loadBookmarks();
 
@@ -150,7 +150,12 @@ void BookmarkManageDlg::addBookmark()
     ui_.listView->edit(item->index());
 }
 
-void BookmarkManageDlg::removeBookmark() { model_->removeRow(currentIndex().row()); }
+void BookmarkManageDlg::removeBookmark()
+{
+    const QModelIndex index = currentIndex();
+    if (index.isValid())
+        model_->removeRow(index.row());
+}
 
 void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
 {
@@ -200,16 +205,22 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     }
 
     removeButton_->setEnabled(current.isValid());
-    updateCurrentItem();
+    updateJoinButton();
 }
 
 XMPP::Jid BookmarkManageDlg::jid() const { return XMPP::Jid(ui_.room->text(), ui_.host->text()); }
 
+void BookmarkManageDlg::updateJoinButton()
+{
+    joinButton_->setEnabled(currentIndex().isValid() && !jid().domain().isEmpty()
+                            && !jid().node().isEmpty() && !ui_.nickname->text().isEmpty());
+}
+
 void BookmarkManageDlg::updateCurrentItem()
 {
-    joinButton_->setEnabled(!jid().domain().isEmpty() && !jid().node().isEmpty() && !ui_.nickname->text().isEmpty());
+    updateJoinButton();
 
-    QStandardItem *item = model_->item(currentIndex().row());
+    QStandardItem *item = model_->itemFromIndex(currentIndex());
     if (item) {
         item->setData(ui_.mucName->text().isEmpty() ? jid().full() : ui_.mucName->text(), Qt::DisplayRole);
         item->setData(ui_.mucName->text(), MucNameRole);
