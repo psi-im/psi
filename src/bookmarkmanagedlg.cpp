@@ -26,6 +26,7 @@
 
 #include <QAction>
 #include <QFile>
+#include <QItemSelectionModel>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStandardItemModel>
@@ -71,7 +72,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount *account) : QDialog(), account_(
     connect(ui_.room, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.nickname, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
     connect(ui_.password, SIGNAL(textEdited(const QString &)), SLOT(updateCurrentItem()));
-    connect(ui_.autoJoin, SIGNAL(currentIndexChanged(int)), SLOT(updateCurrentItem()));
+    connect(ui_.autoJoin, SIGNAL(activated(int)), SLOT(updateCurrentItem()));
 
     loadBookmarks();
 
@@ -150,7 +151,25 @@ void BookmarkManageDlg::addBookmark()
     ui_.listView->edit(item->index());
 }
 
-void BookmarkManageDlg::removeBookmark() { model_->removeRow(currentIndex().row()); }
+void BookmarkManageDlg::removeBookmark()
+{
+    const QModelIndex index = currentIndex();
+    if (!index.isValid())
+        return;
+    const int row = index.row();
+    if (!model_->removeRow(row))
+        return;
+
+    // Removing a row can shift the selection without emitting selectionChanged.
+    // Keep the next bookmark selected (or the previous one when removing the last).
+    if (model_->rowCount() > 0) {
+        const QModelIndex next = model_->index(qMin(row, model_->rowCount() - 1), 0);
+        ui_.listView->selectionModel()->setCurrentIndex(next, QItemSelectionModel::ClearAndSelect);
+    } else {
+        ui_.listView->selectionModel()->clear();
+    }
+    showCurrentBookmark();
+}
 
 void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
 {
@@ -170,17 +189,20 @@ void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndE
 
 void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
-    QModelIndex current;
-    if (!selected.indexes().isEmpty())
-        current = selected.indexes().first();
+    Q_UNUSED(selected);
 
     if (!deselected.isEmpty()) {
-        QStandardItem *item = model_->item(deselected.indexes().first().row());
-        if (item)
-            if (item->data(Qt::DisplayRole).toString().isEmpty())
-                item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+        QStandardItem *item = model_->itemFromIndex(deselected.indexes().first());
+        if (item && item->data(Qt::DisplayRole).toString().isEmpty())
+            item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
     }
 
+    showCurrentBookmark();
+}
+
+void BookmarkManageDlg::showCurrentBookmark()
+{
+    const QModelIndex current = currentIndex();
     XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());
     ui_.mucName->setText(current.data(MucNameRole).toString());
     ui_.mucName->setCursorPosition(0);
@@ -200,16 +222,22 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const Q
     }
 
     removeButton_->setEnabled(current.isValid());
-    updateCurrentItem();
+    updateJoinButton();
 }
 
 XMPP::Jid BookmarkManageDlg::jid() const { return XMPP::Jid(ui_.room->text(), ui_.host->text()); }
 
+void BookmarkManageDlg::updateJoinButton()
+{
+    joinButton_->setEnabled(currentIndex().isValid() && !jid().domain().isEmpty()
+                            && !jid().node().isEmpty() && !ui_.nickname->text().isEmpty());
+}
+
 void BookmarkManageDlg::updateCurrentItem()
 {
-    joinButton_->setEnabled(!jid().domain().isEmpty() && !jid().node().isEmpty() && !ui_.nickname->text().isEmpty());
+    updateJoinButton();
 
-    QStandardItem *item = model_->item(currentIndex().row());
+    QStandardItem *item = model_->itemFromIndex(currentIndex());
     if (item) {
         item->setData(ui_.mucName->text().isEmpty() ? jid().full() : ui_.mucName->text(), Qt::DisplayRole);
         item->setData(ui_.mucName->text(), MucNameRole);
