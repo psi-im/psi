@@ -65,6 +65,7 @@ private slots:
     void addBookmark();
     void removeBookmark();
     void updateCurrentItem();
+    void updateJoinButton();
     void joinCurrentRoom();
     void closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint);
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
