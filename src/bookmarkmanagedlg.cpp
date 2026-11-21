@@ -27,6 +27,7 @@
 #include <QAction>
 #include <QFile>
 #include <QMessageBox>
+#include <QItemSelectionModel>
 #include <QPushButton>
 #include <QStandardItemModel>
 
@@ -153,8 +154,18 @@ void BookmarkManageDlg::addBookmark()
 void BookmarkManageDlg::removeBookmark()
 {
     const QModelIndex index = currentIndex();
-    if (index.isValid())
-        model_->removeRow(index.row());
+    if (!index.isValid() || !model_->removeRow(index.row()))
+        return;
+
+    // Removing a row can shift the selection without emitting selectionChanged.
+    // Keep the next bookmark selected (or the previous one when removing the last).
+    if (model_->rowCount() > 0) {
+        const QModelIndex next = model_->index(qMin(index.row(), model_->rowCount() - 1), 0);
+        ui_.listView->selectionModel()->setCurrentIndex(next, QItemSelectionModel::ClearAndSelect);
+    } else {
+        ui_.listView->selectionModel()->clear();
+    }
+    showCurrentBookmark();
 }
 
 void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndEditHint hint)
@@ -175,17 +186,20 @@ void BookmarkManageDlg::closeEditor(QWidget *editor, QAbstractItemDelegate::EndE
 
 void BookmarkManageDlg::selectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
-    QModelIndex current;
-    if (!selected.indexes().isEmpty())
-        current = selected.indexes().first();
+    Q_UNUSED(selected);
 
     if (!deselected.isEmpty()) {
-        QStandardItem *item = model_->item(deselected.indexes().first().row());
-        if (item)
-            if (item->data(Qt::DisplayRole).toString().isEmpty())
-                item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+        QStandardItem *item = model_->itemFromIndex(deselected.indexes().first());
+        if (item && item->data(Qt::DisplayRole).toString().isEmpty())
+            item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
     }
 
+    showCurrentBookmark();
+}
+
+void BookmarkManageDlg::showCurrentBookmark()
+{
+    const QModelIndex current = currentIndex();
     XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());
     ui_.mucName->setText(current.data(MucNameRole).toString());
     ui_.mucName->setCursorPosition(0);
