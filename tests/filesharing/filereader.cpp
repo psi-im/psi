@@ -126,6 +126,35 @@ private slots:
         QVERIFY(!wholeRequested);
     }
 
+    void sharedDownloadReportsDemandWithoutStartingWhenOnlyObserved()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        MediaChunkCache cache(directory.path());
+        constexpr quint64 size = 1024;
+        MediaChunkCompletion pending;
+        FileDownload download(
+            &cache, "activity", size, "account",
+            [&](quint64, quint64, FileDownload::FullDownloadAllowed, MediaChunkCompletion done) -> MediaChunkAbort {
+                pending = std::move(done);
+                return {};
+            });
+        QSignalSpy activity(&download, &FileDownload::transferActivityChanged);
+        QVERIFY(!download.hasActiveRequests());
+        QCOMPARE(activity.size(), 0); // Observing metadata must not fetch bytes.
+        FileReader reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(download.hasActiveRequests());
+        QTRY_COMPARE(activity.size(), 1);
+        QTRY_VERIFY(bool(pending)); // The scheduler dispatches the fetch on the next event loop turn.
+        pending(pattern(0, size), {});
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QTRY_VERIFY(!download.hasActiveRequests());
+        QTRY_COMPARE(activity.size(), 2);
+        QCOMPARE(reader.read(1), pattern(0, 1));
+    }
+
     void localSeekPeekAndWindow()
     {
         QTemporaryDir directory;
