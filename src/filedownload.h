@@ -28,6 +28,7 @@ public:
     // Jingle ranges have an IQ negotiation per request, even with a shared BUNDLE transport.
     void           setSignaledRanges(bool enabled) { signaledRanges_ = enabled; }
     quint64        size() const { return size_; }
+    bool           hasActiveRequests() const { return !reads_.isEmpty() || !pending_.isEmpty(); }
     void           setPlayhead(quint64 offset);
     // Discard stale timing when the player pauses or seeks away.
     void           resetRangeTiming();
@@ -45,6 +46,7 @@ public:
 signals:
     void failed(MediaChunkError error);
     void fullDownloadChanged(bool active);
+    void transferActivityChanged();
 
 private:
     struct Goal {

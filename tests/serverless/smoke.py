@@ -64,6 +64,10 @@ with tempfile.TemporaryDirectory(prefix="psi-serverless-ui-") as temporary:
                        PSI_UI_SCREENSHOT=str(base / "settings.png"))
     persistent_id = None
     deleting = bool(environment.get("PSI_UI_DELETE_TEST"))
+    if deleting:
+        # Capture account shutdown/restart transitions only in the flaky test.
+        environment["QT_LOGGING_RULES"] = ";".join(filter(None, (
+            environment.get("QT_LOGGING_RULES", ""), "psi.serverless.lifecycle.debug=true")))
     for run in range(2):
         environment["PSI_UI_EXPECTED_NAME"] = environment.get("USER", environment.get("USERNAME", "Psi")) if run == 0 else "UI Alice"
         peer = None

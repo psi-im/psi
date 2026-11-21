@@ -28,6 +28,7 @@ public:
     QElapsedTimer     elapsed;
     int               stage   = 0;
     bool              bounced = false;
+    QString           lastRestartUiStatus;
     qint64            deletionStarted = -1;
     QPointer<QWidget> options, chat;
     explicit Driver(QObject *parent) : QObject(parent)
@@ -38,6 +39,14 @@ public:
     }
     void fail(const char *why)
     {
+        if (stage == 7) {
+            auto *status = options ? options->findChild<QLabel *>("serverlessStatus") : nullptr;
+            auto *enabled = options ? options->findChild<QCheckBox *>("serverlessEnabled") : nullptr;
+            const QString label = status ? status->text() : QStringLiteral("<missing>");
+            qCritical("UI-PROBE RESTART-DIAG: checkbox=%d status=%s elapsedMs=%lld",
+                      enabled ? int(enabled->isChecked()) : -1, qPrintable(label),
+                      static_cast<long long>(elapsed.elapsed()));
+        }
         qCritical("UI-PROBE FAIL: %s stage=%d", why, stage);
         timer.stop();
         QApplication::exit(2);
@@ -78,6 +87,7 @@ public:
             bounced = true;
             enabled->setChecked(true);
             QMetaObject::invokeMethod(options, "doApply", Qt::DirectConnection);
+            qInfo("UI-PROBE RESTART: rapid disable/enable applied; awaiting online state");
             stage = 7;
             return;
         }
@@ -272,7 +282,12 @@ public:
             disable();
         } else if (stage == 7) {
             auto *status = options->findChild<QLabel *>("serverlessStatus");
-            if (!status || status->text() != "Online on the local network")
+            const QString value = status ? status->text() : QStringLiteral("<missing>");
+            if (value != lastRestartUiStatus) {
+                lastRestartUiStatus = value;
+                qInfo("UI-PROBE RESTART: UI status=%s", qPrintable(value));
+            }
+            if (value != "Online on the local network")
                 return;
             qInfo("UI-PROBE RESTART: a quick disable/enable waits for shutdown and reconnects");
             disable();

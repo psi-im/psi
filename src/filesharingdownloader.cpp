@@ -350,7 +350,11 @@ public:
         }
         QNetworkRequest req = QNetworkRequest(encrypted ? encrypted->transport : QUrl(sourceUri));
         req.setRawHeader("Accept-Encoding", "identity");
-        if (_requestRange && !encrypted) {
+        // {0,0} denotes a shared sequential/whole-file stream. Do not
+        // send a Range header: some HTTP sources reject even "bytes=0-".
+        // Keep requestRange set so the response bypasses the legacy temporary
+        // full-download file and feeds the bounded range cache instead.
+        if (_requestRange && !encrypted && (_requestRange->start || _requestRange->size)) {
             QString range
                 = QString("bytes=%1-%2")
                       .arg(QString::number(_requestRange->start),

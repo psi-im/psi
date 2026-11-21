@@ -81,6 +81,8 @@ public:
     static QString   cacheDir();
     MediaChunkCache *mediaChunkCache();
     FileDownload    *download(FileSharingItem *item);
+    // Inspect an existing demand controller without creating or pinning one.
+    FileDownload    *currentDownload(FileSharingItem *item) const;
     ChatMedia       *chatMedia(PsiAccount *account, const HistoryArchive::Key &chat, QObject *parent);
     // Lazily resolve through the same item registry used by message views.
     FileSharingItem *chatMediaItem(const ChatMedia::Entry &, PsiAccount *account);
@@ -129,6 +131,7 @@ public:
 
 signals:
     void chatMediaChanged();
+    void downloadCreated(FileSharingItem *item);
 
 public slots:
 

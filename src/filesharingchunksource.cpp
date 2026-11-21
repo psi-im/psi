@@ -15,6 +15,8 @@
 #include <QPointer>
 #include <QTimer>
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 
 // Servers without Range support use one shared sequential transfer. Its bytes
@@ -466,101 +468,189 @@ MediaChunkAbort FileSharingChunkSource::fetch(FileSharingItem *item, quint64 off
         return {};
     }
     configure(item);
-    auto provider   = state(item);
-    auto candidates = FileSourceSelector::prioritized(item->uris());
-    std::reverse(candidates.begin(), candidates.end());
-    candidates.removeDuplicates();
-    const auto source = provider->selector_.acquire(candidates);
-    auto       timer  = std::make_shared<QElapsedTimer>();
-    timer->start();
-    const QPointer<FileSharingChunkSource> providerGuard(provider);
-    auto deliver = [done = std::move(done), providerGuard, source, timer](QByteArray bytes, MediaChunkError error) {
-        if (providerGuard) {
-            providerGuard->selector_.release(source, quint64(bytes.size()), timer->elapsed(), error.isEmpty(),
-                                             error.code() == MediaChunkError::Cancelled);
-        }
-        done(std::move(bytes), error);
-    };
-    if (AesGcmUrl::parse(QUrl(source)) && allowWhole && allowWhole()) {
-        return openWhole(item, owner, 0, [deliver, offset, length](QString path, MediaChunkError error) {
-            if (!error.isEmpty()) {
-                deliver({}, std::move(error));
-                return;
-            }
-            QFile file(path);
-            if (!file.open(QIODevice::ReadOnly) || !file.seek(qint64(offset))) {
-                deliver({}, QStringLiteral("Cannot read authenticated media"));
-                return;
-            }
-            const auto bytes = file.read(qint64(length));
-            deliver(bytes,
-                    quint64(bytes.size()) == length
-                        ? MediaChunkError()
-                        : MediaChunkError(QStringLiteral("Incomplete authenticated media")));
-        });
-    }
+    auto provider = state(item);
+
     struct Request {
-        bool            cancelled = false;
-        MediaChunkAbort fallback;
+        bool                 cancelled = false, finished = false;
+        QStringList          remaining;
+        QString              unboundedSource; // Responded with full content instead of a range.
+        MediaChunkAbort      active;
+        MediaChunkCompletion done;
+        std::function<void()> next;
     };
-    auto                            request = std::make_shared<Request>();
+
+    auto request = std::make_shared<Request>();
+    request->remaining = FileSourceSelector::prioritized(item->uris());
+    std::reverse(request->remaining.begin(), request->remaining.end());
+    request->remaining.removeDuplicates();
+    request->done = std::move(done);
+
     const QPointer<FileSharingItem> resource(item);
-    auto complete = [deliver, resource, source, offset, length, request, allowWhole](QByteArray      bytes,
-                                                                                     MediaChunkError error) mutable {
-        if (error.code() == MediaChunkError::RangeUnsupported && allowWhole && allowWhole() && resource
-            && !request->cancelled) {
-            request->fallback = sequential(resource, source, offset, length, std::move(deliver));
-        } else
-            deliver(std::move(bytes), error);
+    const QPointer<FileSharingChunkSource> providerGuard(provider);
+    const QPointer<QObject> ownerGuard(owner);
+    const std::weak_ptr<Request> weak(request);
+    const auto finish = [weak](QByteArray bytes, MediaChunkError error) {
+        auto current = weak.lock();
+        if (!current || current->finished)
+            return;
+        current->finished = true;
+        current->active = {};
+        // Keep the callback intact if completion happens from inside next().
+        // It captures only weak references and dies with this request.
+        auto callback = std::exchange(current->done, {});
+        if (callback)
+            callback(std::move(bytes), std::move(error));
     };
-    auto download = item->download(FileShareDownloader::Range { offset, length }, source);
-    download->setJingleSessionPool(item->account()->psi()->fileSharingManager()->jingleMediaSessions(item->account()));
-    // Jingle may need several complete ICE PAC windows before S5B/IBB is tried.
-    // Keep the original setup deadline for other sources.
-    const int negotiationIdleMs = FileSourceSelector::type(source) == FileSourceSelector::Type::Jingle ? 120000 : 60000;
-    auto transfer = new MediaChunkTransfer(download, *item->fileSize(), offset, length, std::move(complete),
-                                           [download] { download->abort(); }, owner, negotiationIdleMs);
-    auto checksumSpan = std::make_shared<QPair<quint64, quint64>>(offset, length);
-    QObject::connect(download, &FileShareDownloader::fileMetadataReceived, item,
-                     [item, checksumSpan](const XMPP::Jingle::FileTransfer::File &file) {
-                         addChecksums(item, file);
-                         const auto range = file.range();
-                         if (!range.hashes.isEmpty() && range.offset < *item->fileSize())
-                             *checksumSpan
-                                 = { range.offset, range.length ? range.length : *item->fileSize() - range.offset };
-                         else if (!file.computedHashes().isEmpty())
-                             *checksumSpan = { 0, *item->fileSize() };
-                     });
-    QObject::connect(item, &QObject::destroyed, transfer,
-                     [transfer] { transfer->failed(QStringLiteral("Media source removed")); });
-    QObject::connect(item->account(), &QObject::destroyed, transfer,
-                     [transfer] { transfer->failed(QStringLiteral("Media account removed")); });
-    QObject::connect(download, &FileShareDownloader::metaDataChanged, transfer, [transfer, download] {
-        std::optional<MediaChunkTransfer::Range> range;
-        if (const auto r = download->responseRange())
-            range = MediaChunkTransfer::Range { r->start, r->size };
-        transfer->metadata(download->responseSize(), range);
-    });
-    QObject::connect(download, &FileShareDownloader::activity, transfer, &MediaChunkTransfer::negotiationActivity);
-    QObject::connect(download, &FileShareDownloader::transferCompleted, transfer, &MediaChunkTransfer::succeeded);
-    QObject::connect(download, &FileShareDownloader::disconnected, transfer, &MediaChunkTransfer::disconnected);
-    QObject::connect(download, &FileShareDownloader::failed, transfer, [transfer, download, resource, checksumSpan] {
-        if (download->hasIntegrityError() && resource && resource->fileSize()) {
-            if (auto cache = configure(resource))
-                cache->invalidate(identity(resource), *resource->fileSize(), checksumSpan->first, checksumSpan->second,
-                                  download->errorString());
-            transfer->integrityFailed(download->errorString());
-        } else
-            transfer->failed(download->errorString());
-    });
-    const QPointer<MediaChunkTransfer> guard(transfer);
-    download->open();
-    return [guard, request] {
+
+    // The source list is bounded by the advertised URIs. A source which
+    // ignores HTTP Range may be followed by a ranged Jingle source without
+    // requiring a second user action. Never retry the same URI or suppress
+    // integrity failures and other transport errors.
+    request->next = [weak, resource, providerGuard, ownerGuard, offset, length, allowWhole, finish] {
+        auto current = weak.lock();
+        if (!current || current->cancelled || current->finished)
+            return;
+        if (!resource || !resource->account() || !providerGuard) {
+            finish({}, { MediaChunkError::Unavailable, QStringLiteral("Media source removed") });
+            return;
+        }
+        const QString source = providerGuard->selector_.acquireNext(current->remaining);
+        if (source.isEmpty()) {
+            // Preserve the asynchronous completion contract when no URI was
+            // advertised; callers still need to register their cancellation
+            // handle after fetch() returns.
+            QTimer::singleShot(0, ownerGuard ? ownerGuard.data() : providerGuard.data(), [finish] {
+                finish({}, { MediaChunkError::Unavailable, QStringLiteral("No media download source") });
+            });
+            return;
+        }
+
+        auto elapsed = std::make_shared<QElapsedTimer>();
+        elapsed->start();
+        const auto deliver = [current, providerGuard, resource, source, offset, length, elapsed, allowWhole,
+                              finish](QByteArray bytes, MediaChunkError error) {
+            if (providerGuard)
+                providerGuard->selector_.release(source, quint64(bytes.size()), elapsed->elapsed(),
+                                                  error.isEmpty() && !current->cancelled,
+                                                  current->cancelled || error.code() == MediaChunkError::Cancelled);
+            if (current->finished)
+                return;
+            current->active = {};
+            if (current->cancelled) {
+                finish({}, { MediaChunkError::Cancelled, QStringLiteral("Media chunk cancelled") });
+                return;
+            }
+            if (error.code() == MediaChunkError::RangeUnsupported && current->unboundedSource.isEmpty())
+                current->unboundedSource = source;
+            // Try other advertised sources on network/protocol failure. If none
+            // can serve ranges, a previously observed non-ranged source is a
+            // candidate for bounded sequential transfer. Cancellation,
+            // integrity errors, and storage failures must remain terminal.
+            const auto code = error.code();
+            const bool sourceFailure = code == MediaChunkError::RangeUnsupported
+                || code == MediaChunkError::Failed || code == MediaChunkError::Unavailable;
+            if (sourceFailure && resource && providerGuard) {
+                if (!current->remaining.isEmpty()) {
+                    // MediaChunkTransfer has already closed the previous
+                    // QIODevice before invoking this completion callback.
+                    current->next();
+                    return;
+                }
+                if (!current->unboundedSource.isEmpty() && allowWhole && allowWhole()) {
+                    current->active = FileSharingChunkSource::sequential(
+                        resource, current->unboundedSource, offset, length,
+                        [finish](QByteArray data, MediaChunkError fallbackError) {
+                            finish(std::move(data), std::move(fallbackError));
+                        });
+                    return;
+                }
+            }
+            finish(std::move(bytes), std::move(error));
+        };
+
+        if (AesGcmUrl::parse(QUrl(source)) && allowWhole && allowWhole()) {
+            current->active = FileSharingChunkSource::openWhole(
+                resource, ownerGuard ? ownerGuard.data() : providerGuard.data(), 0,
+                [deliver, offset, length](QString path, MediaChunkError error) {
+                    if (!error.isEmpty()) {
+                        deliver({}, std::move(error));
+                        return;
+                    }
+                    QFile file(path);
+                    if (!file.open(QIODevice::ReadOnly) || !file.seek(qint64(offset))) {
+                        deliver({}, QStringLiteral("Cannot read authenticated media"));
+                        return;
+                    }
+                    const auto bytes = file.read(qint64(length));
+                    deliver(bytes,
+                            quint64(bytes.size()) == length
+                                ? MediaChunkError()
+                                : MediaChunkError(QStringLiteral("Incomplete authenticated media")));
+                });
+            return;
+        }
+
+        auto download = resource->download(FileShareDownloader::Range { offset, length }, source);
+        download->setJingleSessionPool(
+            resource->account()->psi()->fileSharingManager()->jingleMediaSessions(resource->account()));
+        const int negotiationIdleMs = FileSourceSelector::type(source) == FileSourceSelector::Type::Jingle
+            ? 120000 : 60000;
+        auto transfer = new MediaChunkTransfer(download, *resource->fileSize(), offset, length, deliver,
+                                               [download] { download->abort(); }, ownerGuard.data(),
+                                               negotiationIdleMs);
+        const QPointer<MediaChunkTransfer> transferGuard(transfer);
+        current->active = [transferGuard] {
+            if (transferGuard)
+                transferGuard->cancel();
+        };
+        auto checksumSpan = std::make_shared<QPair<quint64, quint64>>(offset, length);
+        QObject::connect(download, &FileShareDownloader::fileMetadataReceived, resource,
+                         [resource, checksumSpan](const XMPP::Jingle::FileTransfer::File &file) {
+                             if (!resource || !resource->fileSize())
+                                 return;
+                             addChecksums(resource, file);
+                             const auto range = file.range();
+                             if (!range.hashes.isEmpty() && range.offset < *resource->fileSize())
+                                 *checksumSpan = { range.offset,
+                                                   range.length ? range.length : *resource->fileSize() - range.offset };
+                             else if (!file.computedHashes().isEmpty())
+                                 *checksumSpan = { 0, *resource->fileSize() };
+                         });
+        QObject::connect(resource, &QObject::destroyed, transfer,
+                         [transfer] { transfer->failed(QStringLiteral("Media source removed")); });
+        QObject::connect(resource->account(), &QObject::destroyed, transfer,
+                         [transfer] { transfer->failed(QStringLiteral("Media account removed")); });
+        QObject::connect(download, &FileShareDownloader::metaDataChanged, transfer, [transfer, download] {
+            std::optional<MediaChunkTransfer::Range> range;
+            if (const auto r = download->responseRange())
+                range = MediaChunkTransfer::Range { r->start, r->size };
+            transfer->metadata(download->responseSize(), range);
+        });
+        QObject::connect(download, &FileShareDownloader::activity, transfer, &MediaChunkTransfer::negotiationActivity);
+        QObject::connect(download, &FileShareDownloader::transferCompleted, transfer, &MediaChunkTransfer::succeeded);
+        QObject::connect(download, &FileShareDownloader::disconnected, transfer, &MediaChunkTransfer::disconnected);
+        QObject::connect(download, &FileShareDownloader::failed, transfer,
+                         [transfer, download, resource, checksumSpan] {
+                             if (download->hasIntegrityError() && resource && resource->fileSize()) {
+                                 if (auto cache = configure(resource))
+                                     cache->invalidate(identity(resource), *resource->fileSize(), checksumSpan->first,
+                                                       checksumSpan->second, download->errorString());
+                                 transfer->integrityFailed(download->errorString());
+                             } else
+                                 transfer->failed(download->errorString());
+                         });
+        download->open();
+    };
+    request->next();
+
+    return [request, finish] {
+        if (request->cancelled || request->finished)
+            return;
         request->cancelled = true;
-        if (request->fallback) {
-            auto abort = std::exchange(request->fallback, {});
-            abort();
-        } else if (guard)
-            guard->cancel();
+        auto active = std::exchange(request->active, {});
+        if (active)
+            active();
+        else
+            finish({}, { MediaChunkError::Cancelled, QStringLiteral("Media chunk cancelled") });
     };
 }
