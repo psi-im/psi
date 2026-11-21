@@ -47,6 +47,7 @@
 #include "psicontactlist.h"
 #include "psioptions.h"
 #include "qitemedia.h"
+#include "qitevideo.h"
 #include <QFile>
 
 #include "iris/jingle-session.h"
@@ -64,7 +65,12 @@
 
 #include <QDateTime>
 #include <QDir>
+#include <QAction>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QMimeData>
+#include <QPainter>
+#include <QPixmap>
 #include <QMediaPlayer>
 #include <QTimer>
 #include <QUrl>
@@ -398,6 +404,51 @@ FileCacheItem *FileSharingManager::trackExternal(const QList<XMPP::Hash> &sums, 
     if (obsoleteRangePayload(file.absoluteFilePath()))
         return nullptr;
     return d->cache->trackExternal(sums, file, metadata, maxAge);
+}
+
+void FileSharingDeviceOpener::populatePlayerActions(const QUrl &url, QWidget *player)
+{
+    if (!acc || !player)
+        return;
+    const auto *resource = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
+    if (!resource || !resource->mimeType().startsWith(QLatin1String("video/")))
+        return;
+    QUrl external;
+    for (const auto &address : resource->uris()) {
+        const QUrl candidate(address);
+        if (candidate.scheme() == QLatin1String("https") || candidate.scheme() == QLatin1String("http")) {
+            external = candidate;
+            break;
+        }
+    }
+    if (!external.isValid() || external.isEmpty())
+        return;
+    // Qite owns placement, overflow and user visibility preferences. Psi
+    // supplies only the source-specific action and copies the intact URL.
+    QIcon copyIcon = QIcon::fromTheme(QStringLiteral("edit-copy"));
+    if (copyIcon.isNull()) {
+        // Windows and minimal Qt platforms may have no icon theme at all.
+        QPixmap pixmap(24, 24);
+        pixmap.fill(Qt::transparent);
+        QPainter painter(&pixmap);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(QPen(Qt::white, 1.8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRoundedRect(QRectF(4, 2, 12, 16), 1.5, 1.5);
+        painter.drawRoundedRect(QRectF(8, 6, 12, 16), 1.5, 1.5);
+        painter.end();
+        copyIcon = QIcon(pixmap);
+    }
+    auto *action = new QAction(copyIcon, tr("Copy link"), player);
+    action->setToolTip(tr("Copy video link"));
+    const QString link = external.toString(QUrl::FullyEncoded);
+    connect(action, &QAction::triggered, player, [link] {
+        if (auto *clipboard = QGuiApplication::clipboard())
+            clipboard->setText(link);
+    });
+    ITEVideoController::addPlayerAction(player, QStringLiteral("qite-video-copy-link"), action,
+                                        QStringLiteral("qite-video-download"),
+                                        ITEVideoController::ControlVisibility::Automatic);
 }
 
 ITEMediaOpener::CancelOpen FileSharingDeviceOpener::openAsync(QUrl url, QObject *receiver, OpenDone done)

@@ -31,6 +31,7 @@
 #include "psicon.h"
 #include "textutil.h"
 #include "ui_filesharedlg.h"
+#include "videothumbnailgenerator.h"
 
 #include <QApplication>
 #include <QFileIconProvider>
@@ -132,8 +133,21 @@ void FileShareDlg::publish()
     if (!inProgressCount) {
         finish();
     }
-    for (auto &p : toPublish)
-        p->publish(myJid);
+    for (auto &p : toPublish) {
+        if (!p->mimeType().startsWith(QLatin1String("video/")) || p->localFilePath().isEmpty()) {
+            p->publish(myJid);
+            continue;
+        }
+        const QPointer<FileSharingItem> item(p);
+        // No nested event loop or UI-thread video decoding. The source can be
+        // published even when a codec is missing or poster extraction times out.
+        VideoThumbnailGenerator::start(p->localFilePath(), this, [item, jid = myJid](QByteArray jpeg) {
+            if (!item)
+                return;
+            item->setVideoThumbnailJpeg(std::move(jpeg));
+            item->publish(jid);
+        });
+    }
 }
 
 FileShareDlg::~FileShareDlg() { delete ui; }

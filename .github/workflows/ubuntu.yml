@@ -82,7 +82,7 @@ jobs:
       - name: Run native regressions
         env:
           QT_QPA_PLATFORM: offscreen
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_memory_cache|filesharing_file_store|filesharing_chunk_cache|filesharing_chunk_scheduler|filesharing_file_reader|filesharing_media_device|filesharing_media_save|filesharing_http|filesharing_chunk_transfer|filesharing_file_cache|filesharing_bob_cache|filesharing_responder|filesharing_publications|filesharing_sims_history|filesharing_download_policy|filesharing_hash_job|filesharing_message_file_shares|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R "filesharing_memory_cache|filesharing_file_store|filesharing_chunk_cache|filesharing_chunk_scheduler|filesharing_file_reader|filesharing_media_device|filesharing_media_save|filesharing_video_thumbnail|qite_video|filesharing_http|filesharing_chunk_transfer|filesharing_file_cache|filesharing_bob_cache|filesharing_responder|filesharing_publications|filesharing_sims_history|filesharing_download_policy|filesharing_hash_job|filesharing_message_file_shares|filesharing_oob_media_policy|chat_reply|discovery_items|serverless_ui|account_vcard_disk_cache|account_vcard_request_merge|account_avatar_blob_inflight|account_avatar_negative_policy|avcall(policy|audiodirection)_test"
       - name: Test media queries with SQLite 3.54.1
         env:
           QT_QPA_PLATFORM: offscreen
