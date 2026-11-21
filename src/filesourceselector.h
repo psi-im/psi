@@ -55,6 +55,15 @@ public:
             ++active_[best];
         return best;
     }
+    // Each request tries a candidate at most once. A source that rejects a
+    // byte range must not be selected again during the same chunk read.
+    QString acquireNext(QStringList &remaining)
+    {
+        const QString source = acquire(remaining);
+        if (!source.isEmpty())
+            remaining.removeAll(source);
+        return source;
+    }
     void release(const QString &uri, quint64 bytes, qint64 milliseconds, bool success, bool cancelled)
     {
         active_[uri] = std::max(0, active_.value(uri) - 1);

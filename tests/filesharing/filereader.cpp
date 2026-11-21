@@ -123,7 +123,64 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(finished.load(), 10000);
         QCOMPARE(decoded.size(), image.size());
         QVERIFY(fetches > 0);
-        QVERIFY(!wholeRequested);
+        QVERIFY(wholeRequested); // Small playback may fall back to whole-file delivery.
+    }
+
+    void sequentialPlaybackBudgetIsBoundedByFileSize()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        MediaChunkCache cache(directory.path());
+        constexpr quint64 limit = 4 * MediaChunkMaxSize;
+        for (const quint64 size : { limit, limit + 1 }) {
+            bool     allowed = false;
+            int      fetches = 0;
+            FileDownload download(
+                &cache, QStringLiteral("boundary-%1").arg(size), size, "account",
+                [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
+                    MediaChunkCompletion done) -> MediaChunkAbort {
+                    allowed = whole();
+                    ++fetches;
+                    done(pattern(offset, length), {});
+                    return {};
+                });
+            FileReader reader(&download);
+            QVERIFY(reader.open());
+            QVERIFY(reader.read(1).isEmpty());
+            QTRY_VERIFY(reader.bytesAvailable() > 0);
+            QCOMPARE(reader.read(1), pattern(0, 1));
+            QCOMPARE(fetches, 1);
+            QCOMPARE(allowed, size <= limit);
+        }
+    }
+
+    void sharedDownloadReportsDemandWithoutStartingWhenOnlyObserved()
+    {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        MediaChunkCache cache(directory.path());
+        constexpr quint64 size = 1024;
+        MediaChunkCompletion pending;
+        FileDownload download(
+            &cache, "activity", size, "account",
+            [&](quint64, quint64, FileDownload::FullDownloadAllowed, MediaChunkCompletion done) -> MediaChunkAbort {
+                pending = std::move(done);
+                return {};
+            });
+        QSignalSpy activity(&download, &FileDownload::transferActivityChanged);
+        QVERIFY(!download.hasActiveRequests());
+        QCOMPARE(activity.size(), 0); // Observing metadata must not fetch bytes.
+        FileReader reader(&download);
+        QVERIFY(reader.open());
+        QVERIFY(reader.read(1).isEmpty());
+        QTRY_VERIFY(download.hasActiveRequests());
+        QTRY_COMPARE(activity.size(), 1);
+        QTRY_VERIFY(bool(pending)); // The scheduler dispatches the fetch on the next event loop turn.
+        pending(pattern(0, size), {});
+        QTRY_VERIFY(reader.bytesAvailable() > 0);
+        QTRY_VERIFY(!download.hasActiveRequests());
+        QTRY_COMPARE(activity.size(), 2);
+        QCOMPARE(reader.read(1), pattern(0, 1));
     }
 
     void localSeekPeekAndWindow()
@@ -153,7 +210,7 @@ private slots:
         QTemporaryDir                  directory;
         MediaChunkCache                cache(directory.path());
         QList<QPair<quint64, quint64>> fetched;
-        const quint64                  size = 10 * 1024 * 1024 + 134;
+        const quint64                  size = 20 * 1024 * 1024 + 134; // Above automatic whole-file playback limit.
         FileDownload                   download(&cache, "movie", size, "account",
                                                 [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
                                   MediaChunkCompletion done) -> MediaChunkAbort {
@@ -191,7 +248,7 @@ private slots:
     {
         QTemporaryDir   directory;
         MediaChunkCache cache(directory.path());
-        const quint64   size = 6 * 1024 * 1024;
+        const quint64   size = 20 * 1024 * 1024; // Above the bounded whole-file playback budget.
         QList<QPair<quint64, quint64>> fetched;
         bool unexpectedWhole = false;
         FileDownload download(&cache, "video", size, "account",
@@ -380,7 +437,7 @@ private slots:
         MediaChunkCache                   cache(directory.path());
         FileDownload::FullDownloadAllowed allowed;
         MediaChunkCompletion              complete;
-        FileDownload                      download(&cache, "movie", 128 * 1024, "account",
+        FileDownload                      download(&cache, "movie", 20 * 1024 * 1024, "account",
                                                    [&](quint64, quint64, FileDownload::FullDownloadAllowed policy,
                                   MediaChunkCompletion done) -> MediaChunkAbort {
                                   allowed  = std::move(policy);
@@ -407,7 +464,7 @@ private slots:
         MediaChunkCache                cache(directory.path());
         const quint64                  size = 1024 * 1024, middle = size / 2;
         QList<QPair<quint64, quint64>> fetched;
-        bool                           full = false;
+        bool                           full = true; // Small playback permits sequential fallback before downloadAll.
         FileDownload                   download(&cache, "movie", size, "account",
                                                 [&](quint64 offset, quint64 length, FileDownload::FullDownloadAllowed whole,
                                   MediaChunkCompletion done) -> MediaChunkAbort {

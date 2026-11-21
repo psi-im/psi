@@ -115,7 +115,15 @@ std::function<MediaChunkAbort(quint64, quint64, FileDownload::Completion)> FileD
                 }
                 done(std::move(bytes), std::move(error));
             });
-        const auto allowed = [guard] { return guard && !guard->stopped_ && !guard->goals_.isEmpty(); };
+        // Ranged playback can transparently switch to a shared sequential
+        // download if the entire file fits a small, fixed budget. The reader
+        // keeps waiting on the same cache; QMediaPlayer need not reopen it.
+        // A user-initiated downloadAll() is not subject to this playback cap.
+        constexpr quint64 MaxPlaybackSequentialBytes = 4 * MediaChunkMaxSize; // 16 MiB
+        const auto allowed = [guard] {
+            return guard && !guard->stopped_
+                && (!guard->goals_.isEmpty() || guard->size_ <= MaxPlaybackSequentialBytes);
+        };
         return guard->fetch_(offset, length, allowed, std::move(complete));
     };
 }
@@ -136,6 +144,7 @@ quint64 FileDownload::read(quint64 offset, quint64 length, Completion done)
     if (!cache_ || stopped_ || !fetch_)
         return 0;
     setPlayhead(offset);
+    const bool previouslyActive = hasActiveRequests();
     const QPointer<FileDownload> guard(this);
     auto                         ticket = std::make_shared<quint64>(0);
     const auto                   quantumSize = quantum(false);
@@ -144,20 +153,28 @@ quint64 FileDownload::read(quint64 offset, quint64 length, Completion done)
         source_, size_, offset, length, lane_, provider(),
         [guard, ticket, done = std::move(done)](QByteArray bytes, MediaChunkError error) {
             if (guard) {
+                const bool active = guard->hasActiveRequests();
                 guard->reads_.remove(*ticket);
                 guard->schedule();
+                if (active != guard->hasActiveRequests())
+                    emit guard->transferActivityChanged();
             }
             done(std::move(bytes), std::move(error));
         },
         true, quantumSize);
     if (*ticket)
         reads_.insert(*ticket);
+    if (previouslyActive != hasActiveRequests())
+        emit transferActivityChanged();
     schedule();
     return *ticket;
 }
 bool FileDownload::cancelRead(quint64 ticket)
 {
+    const bool active = hasActiveRequests();
     reads_.remove(ticket);
+    if (active != hasActiveRequests())
+        emit transferActivityChanged();
     schedule();
     return cache_ && cache_->cancel(ticket);
 }
@@ -192,12 +209,15 @@ bool FileDownload::cancelGoal(quint64 goal)
     auto done = std::move(it->done);
     goals_.erase(it);
     if (goals_.isEmpty()) {
+        const bool wasActive = hasActiveRequests();
         const auto pending = std::exchange(pending_, {});
         if (cache_)
             for (const auto &p : pending)
                 cache_->cancel(p.ticket);
         if (std::exchange(goalPinned_, false))
             pin(false);
+        if (wasActive != hasActiveRequests())
+            emit transferActivityChanged();
     }
     if (goals_.isEmpty())
         emit fullDownloadChanged(false);
@@ -305,11 +325,15 @@ void FileDownload::pump()
             QTimer::singleShot(50, this, [this] { schedule(); });
             return;
         }
+        const bool wasActive = hasActiveRequests();
         pending_.insert(start, { ticket, length });
+        if (!wasActive)
+            emit transferActivityChanged();
     }
 }
 void FileDownload::finish(MediaChunkError error, QString localPath)
 {
+    const bool wasActive = hasActiveRequests();
     const auto pending = std::exchange(pending_, {});
     const auto goals   = std::exchange(goals_, {});
     if (cache_)
@@ -317,6 +341,8 @@ void FileDownload::finish(MediaChunkError error, QString localPath)
             cache_->cancel(p.ticket);
     if (std::exchange(goalPinned_, false))
         pin(false);
+    if (wasActive != hasActiveRequests())
+        emit transferActivityChanged();
     const auto path = error.isEmpty() ? (localPath.isEmpty() ? state().path : localPath) : QString();
     if (!goals.isEmpty())
         emit fullDownloadChanged(false);
@@ -331,8 +357,11 @@ void FileDownload::shutdown()
     if (stopped_)
         return;
     stopped_           = true;
+    const bool hadActiveReads = hasActiveRequests();
     const auto reads   = std::exchange(reads_, {});
     const auto storage = cache_;
+    if (hadActiveReads && !hasActiveRequests())
+        emit transferActivityChanged();
     finish({ MediaChunkError::Cancelled, QStringLiteral("File download closed") });
     // A completion may destroy this controller. Only local snapshots follow.
     for (const auto ticket : reads)

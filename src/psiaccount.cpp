@@ -157,6 +157,7 @@
 #include <QInputDialog>
 #include <QLayout>
 #include <QList>
+#include <QLoggingCategory>
 #include <QMap>
 #include <QMessageBox>
 #include <QNetworkProxy>
@@ -189,6 +190,8 @@ typedef int socklen_t;
 #endif*/
 
 using namespace XMPP;
+
+Q_LOGGING_CATEGORY(serverlessLifecycleLog, "psi.serverless.lifecycle", QtWarningMsg)
 
 static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid &jid)
 {
@@ -1608,6 +1611,11 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
         d->serverlessRestartStatus = d->loginStatus;
     if (!acc.opt_enabled)
         d->serverlessRestartStatus.reset();
+    if (isServerless())
+        qCDebug(serverlessLifecycleLog) << "options" << "enabled" << enabled() << "->" << acc.opt_enabled
+                                       << "service" << bool(d->serverless) << "disconnecting" << isDisconnecting
+                                       << "interfaceRestart" << restartLocal
+                                       << "pendingRestart" << d->serverlessRestartStatus.has_value();
 
     bool    renamed = false;
     QString oldfname;
@@ -1786,6 +1794,8 @@ void PsiAccount::reconnectOnce()
 
 void PsiAccount::loginServerless()
 {
+    qCDebug(serverlessLifecycleLog) << "login requested" << "enabled" << enabled()
+                                   << "disconnecting" << isDisconnecting << "service" << bool(d->serverless);
     if (!enabled() || isDisconnecting || d->serverless)
         return;
     clearCurrentConnectionError();
@@ -1804,6 +1814,8 @@ void PsiAccount::loginServerless()
         emit updatedAccount();
     });
     connect(service, &LinkLocalService::online, this, [this, service] {
+        qCDebug(serverlessLifecycleLog) << "online signal" << "currentService" << (d->serverless == service)
+                                       << "disconnecting" << isDisconnecting;
         if (d->serverless != service || isDisconnecting)
             return;
         rosterDone = true;
@@ -1814,6 +1826,7 @@ void PsiAccount::loginServerless()
         if (d->serverless != service)
             return;
         d->currentConnectionError = service->errorText();
+        qCDebug(serverlessLifecycleLog) << "service error" << d->currentConnectionError;
         emit connectionError(d->currentConnectionError);
     });
     connect(service, &LinkLocalService::peerError, this, [this](const Jid &peer, const QString &error) {
@@ -1822,6 +1835,9 @@ void PsiAccount::loginServerless()
                                        PopupManager::AlertCustom);
     });
     connect(service, &LinkLocalService::connectionClosed, this, [this, service] {
+        qCDebug(serverlessLifecycleLog) << "closed signal" << "currentService" << (d->serverless == service)
+                                       << "enabled" << enabled()
+                                       << "pendingRestart" << d->serverlessRestartStatus.has_value();
         if (d->serverless != service)
             return;
         if (d->client->hasStream())
@@ -1837,13 +1853,15 @@ void PsiAccount::loginServerless()
         if (d->serverlessRestartStatus && enabled()) {
             const auto status = *d->serverlessRestartStatus;
             d->serverlessRestartStatus.reset();
+            qCDebug(serverlessLifecycleLog) << "resuming queued status";
             setStatus(status);
         }
     });
     const auto address = Serverless::addressForInterface(d->acc.serverlessInterface);
     d->localAddress    = address;
     service->setStatus(d->loginStatus);
-    service->start(d->jid, address, d->acc.serverlessName, d->acc.serverlessPort);
+    const bool started = service->start(d->jid, address, d->acc.serverlessName, d->acc.serverlessPort);
+    qCDebug(serverlessLifecycleLog) << "service start" << "accepted" << started << "port" << d->acc.serverlessPort;
     stateChanged();
 }
 
@@ -1988,6 +2006,9 @@ void PsiAccount::fastLogout() { logout(true, loggedOutStatus()); }
 void PsiAccount::logout(bool fast, const Status &s)
 {
     if (isServerless()) {
+        qCDebug(serverlessLifecycleLog) << "logout requested" << "service" << bool(d->serverless)
+                                       << "disconnecting" << isDisconnecting
+                                       << "pendingRestart" << d->serverlessRestartStatus.has_value();
         if (!d->serverless || isDisconnecting)
             return;
         isDisconnecting = true;
@@ -3524,8 +3545,10 @@ void PsiAccount::setStatus(const Status &_s, bool withPriority, bool isManualSta
         //   the desired status will be noted in loginStatus for
         //   reconnect
         if (isDisconnecting) {
-            if (isServerless())
+            if (isServerless()) {
                 d->serverlessRestartStatus = s;
+                qCDebug(serverlessLifecycleLog) << "queued online status while disconnecting";
+            }
             return;
         }
 

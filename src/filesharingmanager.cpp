@@ -207,7 +207,13 @@ FileDownload *FileSharingManager::download(FileSharingItem *item)
     });
     connect(download, &QObject::destroyed, this, [this, item] { d->downloads.remove(item); });
     connect(item->account(), &QObject::destroyed, download, &FileDownload::shutdown);
+    emit downloadCreated(item);
     return download;
+}
+
+FileDownload *FileSharingManager::currentDownload(FileSharingItem *item) const
+{
+    return d->downloads.value(item);
 }
 
 FileReader *FileSharingManager::reader(FileSharingItem *item, QObject *parent, quint64 offset,
@@ -976,7 +982,8 @@ FileSharingDeviceOpener *FileSharingDeviceOpener::forAccount(const QString &id) 
 
 ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
 {
-    auto item = acc->psi()->fileSharingManager()->item(urlToSourceId(url), acc);
+    auto manager = acc->psi()->fileSharingManager();
+    auto item    = manager->item(urlToSourceId(url), acc);
     if (!item)
         return nullptr;
     const auto name = QStringLiteral("qite-media-state");
@@ -986,29 +993,66 @@ ITEMediaState *FileSharingDeviceOpener::mediaState(const QUrl &url)
     state->setObjectName(name);
     auto cache = FileSharingChunkSource::configure(item);
     if (!cache)
-        cache = acc->psi()->fileSharingManager()->mediaChunkCache();
+        cache = manager->mediaChunkCache();
     const auto size   = item->fileSize();
-    const auto hash   = item->sums().value(0);
     const auto source = FileSharingChunkSource::identity(item);
-    auto       update = [item, cache, state, source, size] {
+    auto       update = [item, manager, cache, state, source, size] {
         ITEMediaState::Ranges ranges;
-        if (item->isCached()) {
+        quint64 available = 0;
+        const bool complete = item->isCached();
+        if (complete) {
             ranges.append({ 0, 1 });
+            if (size)
+                available = *size;
         } else if (size && *size && !source.isEmpty()) {
-            for (const auto &range : cache->cachedRanges(source, *size))
-                ranges.append({ qreal(range.first) / *size, qreal(range.first + range.second) / *size });
+            for (const auto &range : cache->cachedRanges(source, *size)) {
+                if (range.first >= *size)
+                    continue;
+                const quint64 count = std::min(range.second, *size - range.first);
+                available += std::min<quint64>(count, quint64(*size) - available);
+                ranges.append({ qreal(range.first) / *size, qreal(range.first + count) / *size });
+            }
         }
+        QString error;
         if (size && !source.isEmpty()) {
-            const auto error = cache->fileState(source, *size).error;
+            error = cache->fileState(source, *size).error;
             state->setSourceError(error);
         }
         state->setCachedRanges(std::move(ranges));
+        if (!item->isUrlOnly() && size && *size) {
+            const auto controller = manager->currentDownload(item);
+            const auto status = !error.isEmpty() ? ITEMediaState::TransferStatus::Failed
+                : available == *size ? ITEMediaState::TransferStatus::Complete
+                : (state->downloading() || (controller && controller->hasActiveRequests()))
+                    ? ITEMediaState::TransferStatus::Transferring
+                    : ITEMediaState::TransferStatus::Waiting;
+            state->setTransfer(available, *size, status, error);
+        } else {
+            // URL-only shares do not have a verified byte-range cache.
+            // Do not present an invented downloaded-byte count.
+            state->setTransfer(0, 0, ITEMediaState::TransferStatus::Waiting);
+        }
     };
     QObject::connect(cache, &MediaChunkCache::rangesChanged, state,
                      [update, source, size](const QString &changed, quint64 changedSize) {
                          if (size && changed == source && changedSize == *size)
                              update();
                      });
+    // mediaState() must be read-only: the controller is created lazily by
+    // the first player read, not just because a media widget becomes visible.
+    const auto observe = [state, update](FileDownload *download) {
+        QObject::connect(download, &FileDownload::transferActivityChanged, state, update);
+        QObject::connect(download, &QObject::destroyed, state, update);
+        update();
+    };
+    QObject::connect(manager, &FileSharingManager::downloadCreated, state,
+                     [item, manager, observe](FileSharingItem *resource) {
+                         if (resource == item)
+                             if (auto download = manager->currentDownload(item))
+                                 observe(download);
+                     });
+    if (auto download = manager->currentDownload(item))
+        observe(download);
     QObject::connect(item, &FileSharingItem::downloadFinished, state, update);
     update();
     return state;

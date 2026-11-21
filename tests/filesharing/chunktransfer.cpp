@@ -1,4 +1,5 @@
 #include "mediachunktransfer.h"
+#include "filesourceselector.h"
 #include <QBuffer>
 #include <QPointer>
 #include <QtTest>
@@ -28,6 +29,25 @@ private:
 class ChunkTransferTest : public QObject {
     Q_OBJECT
 private slots:
+    void rangeRejectionCanAdvanceToAnotherDistinctSource()
+    {
+        FileSourceSelector selector;
+        QStringList remaining {
+            QStringLiteral("https://example.net/video.mp4"),
+            QStringLiteral("xmpp:bob@example.net?jingle-ft"),
+            QStringLiteral("https://example.net/video.mp4")
+        };
+        const auto first = selector.acquireNext(remaining);
+        QCOMPARE(first, QStringLiteral("https://example.net/video.mp4"));
+        selector.release(first, 0, 139, false, false);
+        QCOMPARE(remaining.size(), 1);
+        const auto second = selector.acquireNext(remaining);
+        QCOMPARE(second, QStringLiteral("xmpp:bob@example.net?jingle-ft"));
+        selector.release(second, 262144, 250, true, false);
+        QVERIFY(remaining.isEmpty());
+        QVERIFY(selector.acquireNext(remaining).isEmpty());
+    }
+
     void completionInsideFinalReadIsDeferred()
     {
         auto                      input = new FinalReadSource;
