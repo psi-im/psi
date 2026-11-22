@@ -35,6 +35,8 @@
 #include "psiaccount.h"
 
 #include <QObject>
+#include <QSet>
+#include <memory>
 
 using namespace XMPP;
 
@@ -245,6 +247,58 @@ void MUCManager::getItemsByAffiliation(MUCItem::Affiliation affiliation)
     connect(t, SIGNAL(finished()), SLOT(getItemsByAffiliation_finished()));
     t->getByAffiliation(affiliation);
     t->go(true);
+}
+
+void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion)
+{
+    if (!receiver || !completion)
+        return;
+
+    struct Snapshot {
+        int           pending = 3;
+        QSet<QString> jids;
+        QString       firstError;
+    };
+    const auto snapshot = std::make_shared<Snapshot>();
+
+    // Connect each response to the particular request task rather than the
+    // manager's shared affiliation signals, which other UI dialogs also use.
+    // The receiver context cancels delivery if the requesting room closes.
+    for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
+        auto *task = new MUCItemsTask(room_, client()->rootTask());
+        connect(task, &Task::finished, receiver, [snapshot, task, completion]() {
+            if (!task->success() && snapshot->firstError.isEmpty()) {
+                snapshot->firstError = task->statusString().isEmpty()
+                    ? QObject::tr("Could not retrieve the MUC membership list")
+                    : task->statusString();
+            } else if (task->success() && snapshot->firstError.isEmpty()) {
+                for (const auto &item : task->items()) {
+                    const auto real = item.jid();
+                    if (!real.isValid() || real.bare().isEmpty() || real.node().isEmpty()) {
+                        snapshot->firstError = QObject::tr("A MUC affiliation entry has no real JID");
+                        break;
+                    }
+                    snapshot->jids.insert(real.bare());
+                }
+            }
+            if (--snapshot->pending != 0)
+                return;
+            if (!snapshot->firstError.isEmpty()) {
+                completion(false, {}, snapshot->firstError);
+                return;
+            }
+            // Sort for deterministic snapshots, diagnostics and tests.
+            QStringList sorted = snapshot->jids.values();
+            sorted.sort();
+            QList<Jid> recipients;
+            recipients.reserve(sorted.size());
+            for (const auto &jid : sorted)
+                recipients.append(Jid(jid));
+            completion(true, recipients, {});
+        });
+        task->getByAffiliation(affiliation);
+        task->go(true);
+    }
 }
 
 void MUCManager::kick(const QString &nick, const QString &reason) { setRole(nick, MUCItem::NoRole, reason, Kick); }
