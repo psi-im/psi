@@ -490,6 +490,47 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
     publication->start(knownSources, serveLocally);
 }
 
+void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
+                                       EncryptedPublishCompletion finished,
+                                       std::function<void(size_t)> progress)
+{
+    // Reuse the same publication engine as publish(), but never add
+    // ciphertext URLs to this shared item's plaintext catalog. Separate
+    // recipients must get independent AES keys and independent uploads.
+    if (!receiver || !finished)
+        return;
+    if (!_acc || !_acc->client() || localFilePath().isEmpty() || !_fileSize) {
+        finished({}, tr("The file is unavailable for encrypted sharing"));
+        return;
+    }
+
+    // Build the metadata without calling fileMetadata(): that path publishes
+    // an unencrypted BoB image/video thumbnail. The name and media type here
+    // are included only in the encrypted SCE message.
+    Jingle::FileTransfer::File file;
+    file.setName(displayName());
+    file.setSize(*_fileSize);
+    file.setMediaType(_mimeType);
+
+    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid,
+                                                  _acc->client(), FileSharingPublication::Mode::Aes256Gcm);
+    const QPointer<QObject> guard(receiver);
+    connect(publication, &FileSharingPublication::progress, publication,
+            [guard, progress = std::move(progress)](qint64 bytes) {
+                if (guard && progress)
+                    progress(size_t(qMax<qint64>(0, bytes)));
+            });
+    connect(publication, &FileSharingPublication::finished, publication,
+            [publication, guard, finished = std::move(finished)]() {
+                const auto reference = publication->encryptedReference();
+                const auto error = publication->errorString();
+                publication->deleteLater();
+                if (guard)
+                    finished(reference, error);
+            });
+    publication->start({}, false);
+}
+
 PsiAccount *FileSharingItem::account() const { return _acc; }
 
 XMPP::Jingle::FileTransfer::File FileSharingItem::fileMetadata() const
