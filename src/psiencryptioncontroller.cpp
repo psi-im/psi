@@ -135,6 +135,8 @@ XMPP::EncryptionMethod::Capabilities toIrisCapabilities(EncryptionMethodProvider
         result |= XMPP::EncryptionMethod::XmppStanza;
     if (capabilities.testFlag(EncryptionMethodProvider::DataMessage))
         result |= XMPP::EncryptionMethod::DataMessage;
+    if (capabilities.testFlag(EncryptionMethodProvider::DataStream))
+        result |= XMPP::EncryptionMethod::DataStream;
     return result;
 }
 
@@ -194,6 +196,16 @@ public:
 
         XMPP::EncryptionJob *decrypt(const QByteArray &data) override { return runData(false, data); }
 
+        XMPP::EncryptionJob *encryptChunk(const QByteArray &chunk, bool final) override
+        {
+            return runData(true, chunk, true, final);
+        }
+
+        XMPP::EncryptionJob *decryptChunk(const QByteArray &chunk, bool final) override
+        {
+            return runData(false, chunk, true, final);
+        }
+
     private:
         void detachProvider()
         {
@@ -239,7 +251,8 @@ public:
             return job;
         }
 
-        XMPP::EncryptionJob *runData(bool encrypting, const QByteArray &data)
+        XMPP::EncryptionJob *runData(bool encrypting, const QByteArray &data, bool streaming = false,
+                                     bool final = false)
         {
             auto *job = new XMPP::EncryptionJob(this);
             if (!method_ || !pluginSession_) {
@@ -263,10 +276,16 @@ public:
                 weakJob->complete(result.data, toIrisMetadata(methodId, result.metadata));
             };
 
-            if (encrypting)
+            if (streaming) {
+                if (encrypting)
+                    pluginSession_->encryptChunk(data, final, guard, std::move(completion));
+                else
+                    pluginSession_->decryptChunk(data, final, guard, std::move(completion));
+            } else if (encrypting) {
                 pluginSession_->encryptData(data, guard, std::move(completion));
-            else
+            } else {
                 pluginSession_->decryptData(data, guard, std::move(completion));
+            }
             return job;
         }
 

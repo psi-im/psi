@@ -37,6 +37,7 @@ public:
     enum Capability {
         XmppStanza  = 0x01,
         DataMessage = 0x02,
+        DataStream  = 0x04,
     };
     Q_DECLARE_FLAGS(Capabilities, Capability)
 
@@ -120,6 +121,35 @@ public:
             Result result;
             result.error       = Error::Unsupported;
             result.errorString = QStringLiteral("Data decryption is not supported by this session");
+            completion(std::move(result));
+        }
+
+        /**
+         * Streaming operations are sequential and bound to a DataStream session.
+         * Submit the next chunk only after the previous completion succeeds; final=true
+         * terminates the stream and must validate authentication during decryption.
+         * Until that final success, decrypted data is unauthenticated and MUST NOT be exposed.
+         * Existing plugins can omit these optional virtual methods.
+         */
+        virtual void encryptChunk(const QByteArray &chunk, bool final, QObject *context, Completion completion)
+        {
+            Q_UNUSED(chunk);
+            Q_UNUSED(final);
+            Q_UNUSED(context);
+            Result result;
+            result.error       = Error::Unsupported;
+            result.errorString = QStringLiteral("Stream encryption is not supported by this session");
+            completion(std::move(result));
+        }
+
+        virtual void decryptChunk(const QByteArray &chunk, bool final, QObject *context, Completion completion)
+        {
+            Q_UNUSED(chunk);
+            Q_UNUSED(final);
+            Q_UNUSED(context);
+            Result result;
+            result.error       = Error::Unsupported;
+            result.errorString = QStringLiteral("Stream decryption is not supported by this session");
             completion(std::move(result));
         }
     };
