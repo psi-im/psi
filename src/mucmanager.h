@@ -165,6 +165,7 @@ private:
     QHash<QString, int> membershipAffiliations_;
     QList<Jid> membershipRecipients_;
     bool membershipSnapshotReady_ = false;
+    QString membershipSnapshotError_;
     QList<MemberRequest> membershipRequests_;
     QMetaObject::Connection membershipJoinedConnection_;
     QMetaObject::Connection membershipLeftConnection_;
