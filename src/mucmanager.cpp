@@ -405,14 +405,22 @@ void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion
     // Refresh all three affiliations as one logical snapshot. Mixing a newly
     // fetched list with two older lists can leave revoked members as recipients.
     if (!memberListsFresh()) {
-        membershipLists_.clear();
-        membershipUpdated_.clear();
-        // A Task may finish synchronously (e.g. local test stream); don't
-        // complete the snapshot before all three IQs have been started.
+        // A second encrypted message may arrive while the first three IQs
+        // are finishing. Keep results already received from the same batch;
+        // discarding them here would restart IQs for every waiting message.
+        const bool newBatch = membershipInFlight_.isEmpty();
+        if (newBatch) {
+            membershipLists_.clear();
+            membershipUpdated_.clear();
+        }
+        // A Task may finish synchronously (e.g. a local test stream); don't
+        // complete the snapshot before all required IQs have been started.
         const bool alreadyStarting = membershipBatchStarting_;
         membershipBatchStarting_ = true;
-        for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner })
-            startMemberAffiliationQuery(affiliation, false);
+        for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
+            if (newBatch || !memberListFresh(membershipUpdated_.value(int(affiliation))))
+                startMemberAffiliationQuery(affiliation, false);
+        }
         membershipBatchStarting_ = alreadyStarting;
         if (alreadyStarting)
             return;
