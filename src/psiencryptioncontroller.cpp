@@ -378,7 +378,20 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                                                       .arg(error)
                                                 : tr("Decryption failed: %1").arg(error));
                 }
-                if (errorCode == XMPP::EncryptionJob::Error::NoSession || broken)
+                // The MUC stanza's 'from' is room/nick, not an OMEMO
+                // account. Never fetch a bundle or request trust for the
+                // conference JID. Once MUC sender resolution supplies a real
+                // bare JID in the metadata, the normal repair flow applies.
+                const bool isMuc = account_->groupchats().contains(peer.bare());
+                const bool unresolvedMucSender = isMuc
+                    && (metadata.sender.bare().isEmpty() || metadata.sender.bare() == peer.bare());
+                // In a MUC a rejected/changed identity must also lead to an
+                // explicit trust or repair decision, never silent dismissal.
+                // This is only safe once Iris resolved the actual sender.
+                const bool mucUntrusted = isMuc && !unresolvedMucSender
+                    && errorCode == XMPP::EncryptionJob::Error::UntrustedIdentity;
+                if ((errorCode == XMPP::EncryptionJob::Error::NoSession || broken || mucUntrusted)
+                    && !unresolvedMucSender)
                     recoverDecryption(methodId, peer, metadata);
             });
     connect(account_, &PsiAccount::pgpKeyChanged, this, [this]() {
