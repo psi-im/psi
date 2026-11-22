@@ -574,8 +574,6 @@ public:
     }
     void doFileShare(const QList<Reference> &refs, const QString &desc)
     {
-        if (!dlg->allowFileShare())
-            return;
         Message m(dlg->jid());
         m.setType(Message::Type::Groupchat);
         m.setReferences(refs);
@@ -1126,16 +1124,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
         } else if (name == QString::fromLatin1("gchat_info")) {
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
-            connect(action, &QAction::triggered, account(), [this]() {
-                if (!allowFileShare())
-                    return;
-                FileShareDlg::shareFiles(
-                    account(), jid().withResource(d->self),
-                    [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
-                        d->doFileShare(std::move(rl), desc);
-                    },
-                    this);
-            });
+            connect(action, &QAction::triggered, this, [this]() { shareFiles(); });
         } else if (name == "gchat_pin_tab") {
             connect(action, SIGNAL(triggered()), SLOT(pinTab()));
         } else if (name == QLatin1String("gchat_templates")) {
@@ -2045,12 +2034,7 @@ void GCMainDlg::dropEvent(QDropEvent *e)
         m.setTimeStamp(QDateTime::currentDateTime());
         account()->dj_sendMessage(m);
     } else {
-        if (!allowFileShare())
-            return;
-        FileShareDlg::shareFiles(
-            account(), jid().withResource(d->self), e->mimeData(),
-            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
-            this);
+        shareFiles(e->mimeData());
     }
 }
 
@@ -3086,18 +3070,45 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 
 void GCMainDlg::contextMenuEvent(QContextMenuEvent *) { d->pm_settings->exec(QCursor::pos()); }
 
-bool GCMainDlg::allowFileShare()
+void GCMainDlg::shareFiles(const QMimeData *data)
 {
+    FileShareDlg::EncryptionOptions security;
 #ifdef IRIS_ENABLE_OMEMO
     auto *controller = account()->encryptionController();
-    if (controller && controller->explicitlySelectedMethod(jid()) == XMPP::OmemoEncryption::methodId()) {
-        appendSysMsg(tr("File sharing is unavailable in an encrypted room: HTTP Upload currently publishes "
-                        "file bytes without end-to-end encryption. No file was selected for uploading."),
-                     true);
-        return false;
+    const auto method = XMPP::OmemoEncryption::methodId();
+    security.available = controller && controller->hasMethod(method) && omemoRoomInfoKnown_
+        && omemoMembersOnly_ && omemoNonAnonymous_;
+    security.selected = controller && controller->explicitlySelectedMethod(jid()) == method;
+    if (security.selected && !security.available) {
+        appendSysMsg(tr("Cannot share files: this room no longer satisfies OMEMO requirements."), true);
+        return;
     }
 #endif
-    return true;
+    const auto finished = [this](const QList<XMPP::Reference> &&refs, const QString &description,
+                                 bool encryptedFile) {
+        if (encryptedFile) {
+#ifdef IRIS_ENABLE_OMEMO
+            auto *controller = account()->encryptionController();
+            const auto method = XMPP::OmemoEncryption::methodId();
+            if (!controller || !controller->hasMethod(method) || !omemoRoomInfoKnown_
+                || !omemoMembersOnly_ || !omemoNonAnonymous_
+                || !controller->setSelectedMethod(jid(), method)) {
+                appendSysMsg(tr("Encrypted file was uploaded, but the room is not ready for secure delivery."
+                                " Its key was not sent."), true);
+                return; // A ciphertext-only upload never falls back to plaintext.
+            }
+#else
+            appendSysMsg(tr("This build cannot send an encrypted groupchat file."), true);
+            return;
+#endif
+        }
+        d->doFileShare(std::move(refs), description);
+    };
+    if (data) {
+        FileShareDlg::shareFiles(account(), jid().withResource(d->self), data, finished, this, security);
+    } else {
+        FileShareDlg::shareFiles(account(), jid().withResource(d->self), finished, this, security);
+    }
 }
 
 void GCMainDlg::updateOmemoAction()
@@ -3288,12 +3299,7 @@ void GCMainDlg::chatEditCreated()
 
     ui_.mle->chatEdit()->installEventFilter(d);
     connect(ui_.mle->chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
-        if (!allowFileShare())
-            return;
-        FileShareDlg::shareFiles(
-            account(), jid().withResource(d->self), data,
-            [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
-            this);
+        shareFiles(data);
     });
 }
 
