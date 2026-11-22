@@ -191,6 +191,7 @@ private:
     QAction *omemoAction_ = nullptr;
 
     void updateOmemoAction();
+    bool allowFileShare();
     void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);
     void reviewGroupchatTrust(const Message &message, const QList<Jid> &members, int next, const QString &profile);
 
