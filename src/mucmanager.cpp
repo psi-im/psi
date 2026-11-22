@@ -332,6 +332,7 @@ void MUCManager::startMemberAffiliationQuery(MUCItem::Affiliation affiliation, b
     membershipInFlight_.insert(key, task);
     // A live refresh must not be mixed with older cached recipient lists.
     membershipSnapshotReady_ = false;
+    membershipSnapshotError_.clear();
     membershipAffiliations_.clear();
     membershipRecipients_.clear();
     connect(task, &Task::finished, this, &MUCManager::getItemsByAffiliation_finished);
@@ -352,6 +353,7 @@ bool MUCManager::memberListsFresh() const
 bool MUCManager::buildMemberSnapshot(QString *error)
 {
     membershipSnapshotReady_ = false;
+    membershipSnapshotError_.clear();
     membershipAffiliations_.clear();
     membershipRecipients_.clear();
     if (!memberListsFresh() || !membershipInFlight_.isEmpty())
@@ -363,14 +365,16 @@ bool MUCManager::buildMemberSnapshot(QString *error)
         for (const auto &item : membershipLists_.value(key)) {
             const Jid real = item.jid();
             if (!real.isValid() || real.node().isEmpty() || real.bare().isEmpty()) {
+                membershipSnapshotError_ = tr("A MUC affiliation entry has no real JID");
                 if (error)
-                    *error = tr("A MUC affiliation entry has no real JID");
+                    *error = membershipSnapshotError_;
                 return false;
             }
             auto previous = indexed.constFind(real.bare());
             if (previous != indexed.cend() && previous.value() != key) {
+                membershipSnapshotError_ = tr("Conflicting MUC affiliations for %1").arg(real.bare());
                 if (error)
-                    *error = tr("Conflicting MUC affiliations for %1").arg(real.bare());
+                    *error = membershipSnapshotError_;
                 return false;
             }
             indexed.insert(real.bare(), key);
@@ -398,8 +402,12 @@ void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion
     }
 
     membershipRequests_.append({ QPointer<QObject>(receiver), std::move(completion) });
-    for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
-        if (!memberListFresh(membershipUpdated_.value(int(affiliation))))
+    // Refresh all three affiliations as one logical snapshot. Mixing a newly
+    // fetched list with two older lists can leave revoked members as recipients.
+    if (!memberListsFresh()) {
+        membershipLists_.clear();
+        membershipUpdated_.clear();
+        for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner })
             startMemberAffiliationQuery(affiliation, false);
     }
     completeMemberRequests();
@@ -415,11 +423,16 @@ void MUCManager::completeMemberRequests(const QString &error)
         if (!membershipDiscoveryEnabled_) {
             failure = tr("OMEMO membership discovery was disabled");
         } else if (!membershipSnapshotReady_) {
-            if (!membershipInFlight_.isEmpty() || !memberListsFresh())
-                return; // A complete, current snapshot is still pending.
-            buildMemberSnapshot(&failure);
+            if (!membershipInFlight_.isEmpty())
+                return;
+            if (!memberListsFresh())
+                failure = tr("The MUC membership snapshot expired before all replies arrived");
+            else if (!membershipSnapshotError_.isEmpty())
+                failure = membershipSnapshotError_;
+            else
+                buildMemberSnapshot(&failure);
         } else if (!memberListsFresh()) {
-            return; // The next request schedules an explicit refresh.
+            failure = tr("The MUC membership snapshot expired");
         }
     }
     if (failure.isEmpty() && !membershipSnapshotReady_)
@@ -452,6 +465,7 @@ void MUCManager::invalidateMemberCache()
     membershipAffiliations_.clear();
     membershipRecipients_.clear();
     membershipSnapshotReady_ = false;
+    membershipSnapshotError_.clear();
     completeMemberRequests(tr("The MUC membership snapshot is no longer valid"));
 }
 
