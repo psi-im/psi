@@ -24,6 +24,7 @@
 #include "iris/xmpp_muc.h"
 
 #include <QObject>
+#include <functional>
 
 class PsiAccount;
 class QString;
@@ -65,6 +66,12 @@ public:
     void          setDefaultConfiguration();
     void          setItems(const QList<MUCItem> &);
     void          getItemsByAffiliation(MUCItem::Affiliation);
+    // XEP-0384 §5.8: take a complete non-anonymous MUC membership snapshot.
+    // Query member, admin and owner affiliations (including offline users),
+    // deduplicate real bare JIDs, and fail closed if any query is incomplete.
+    // Completion is cancelled when receiver is destroyed.
+    using MembersCallback = std::function<void(bool, const QList<Jid> &, const QString &)>;
+    void requestMemberJids(QObject *receiver, MembersCallback completion);
     void          destroy(const QString &reason = QString(), const Jid &venue = Jid());
     XMPP::Client *client() const;
     PsiAccount   *account() const;
