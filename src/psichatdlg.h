@@ -45,6 +45,7 @@ class IconAction;
 class PsiContact;
 class MamChatWidget;
 class HistorySync;
+class QMimeData;
 namespace XMPP { class MAMTask; }
 
 class PsiChatDlg : public ChatDlg {
@@ -58,6 +59,8 @@ public:
 
     XMPP::EncryptedSession *encryptionSession() const override;
     QString                 encryptionMethodId() const override;
+    // One entry point for menu, paste and drop sharing with optional AES-GCM.
+    void shareFiles(const QMimeData *data = nullptr);
 
 protected:
     // reimplemented
