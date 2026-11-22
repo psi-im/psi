@@ -345,8 +345,9 @@ void FileShareDlg::finish()
         const QUrl uri = item->simpleSource();
         const QString text = uri.isValid()
             ? uri.toString(QUrl::FullyEncoded)
-            : QStringLiteral("SIMS(%1, %2)")
-                  .arg(item->mimeType(), tr("requires compliant client"));
+            : QLatin1String("SIMS(") + item->mimeType() + ", "
+                + (item->fileSize() ? (QString::number(*item->fileSize()) + "B, ") : "stream ")
+                + tr("requires compliant client") + ")";
         appendReference(ref, text);
     }
     for (const auto &ref : std::as_const(readyEncryptedReferences))
