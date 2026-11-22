@@ -237,6 +237,47 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid 
 struct GCContact {
     Jid    jid;
     Status status;
+    // One small cache per existing MUC occupant, not an account-wide JID map.
+    QHash<QString, QPointer<EncryptedSession>> encryptionSessions;
+
+    ~GCContact() { closeEncryptionSessions(); }
+
+    void closeEncryptionSessions()
+    {
+        auto sessions = std::move(encryptionSessions);
+        encryptionSessions.clear();
+        for (auto session : std::as_const(sessions))
+            if (session)
+                session->close();
+    }
+
+    void updateStatus(const Status &next)
+    {
+        const Jid previous = status.hasMUCItem() ? status.mucItem().jid() : Jid();
+        const Jid current = next.hasMUCItem() ? next.mucItem().jid() : Jid();
+        if (!next.isAvailable() || (previous.isValid() && previous.bare() != current.bare()))
+            closeEncryptionSessions();
+        status = next;
+    }
+
+    EncryptedSession *encryptionSession(EncryptionManager *registry, const QString &methodId,
+                                        Client::EncryptionSessionPurpose purpose)
+    {
+        if (!registry || !status.isAvailable())
+            return nullptr;
+        const auto key = methodId + QLatin1Char('\n') + QString::number(int(purpose));
+        auto *session = encryptionSessions.value(key).data();
+        if (session && !session->isClosing())
+            return session;
+        EncryptionContext context;
+        context.recipients = { jid };
+        session = registry->startSession(methodId, EncryptionMethod::XmppStanza, context);
+        if (session)
+            encryptionSessions.insert(key, session);
+        else
+            encryptionSessions.remove(key);
+        return session;
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -1145,6 +1186,51 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->encryptionController
         = new PsiEncryptionController(this, d->client, acc.encryptionMethods,
                                       pathToProfile(activeProfile, ApplicationInfo::DataLocation), acc.id, this);
+    // The existing Psi contact and MUC occupant objects own conversation
+    // sessions; Iris only requests them at the stanza boundary.
+    d->client->setEncryptionSessionResolver(
+        [this](const QString &methodId, const Jid &peer,
+               Client::EncryptionSessionPurpose purpose) -> EncryptedSession * {
+            if (!peer.isValid() || methodId.isEmpty())
+                return nullptr;
+            auto *registry = d->client->encryptionManager();
+            if (purpose == Client::EncryptionSessionPurpose::Groupchat) {
+                auto *occupant = findGCContact(peer);
+                return occupant ? occupant->encryptionSession(registry, methodId, purpose) : nullptr;
+            }
+            if (auto *occupant = findGCContact(peer))
+                return occupant->encryptionSession(registry, methodId, purpose);
+
+            UserListItem *item = findFirstRelevant(peer);
+            if (!item) {
+                // Incoming direct messages may predate creation of the local
+                // non-roster entry. Never fabricate a contact for service IQs
+                // or historical MUC messages.
+                if (purpose != Client::EncryptionSessionPurpose::Message
+                    && purpose != Client::EncryptionSessionPurpose::Carbon)
+                    return nullptr;
+                if (d->groupchats.contains(peer.bare()) || peer.node().isEmpty())
+                    return nullptr;
+                item = addUserListItem(Jid(peer.bare()), peer.node());
+            }
+            auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
+            if (!contact) {
+                d->updateEntry(*item);
+                contact = d->findContact(item->jid());
+            }
+            return contact ? contact->encryptionSession(methodId, peer, registry) : nullptr;
+        });
+
+    // Connection lifetime is independent of the contact objects that remain
+    // visible offline. The application closes its own sessions on disconnect.
+    connect(d->client, &Client::disconnected, this, [this]() {
+        if (d->selfContact)
+            d->selfContact->closeEncryptionSessions();
+        for (auto *contact : std::as_const(d->contacts))
+            contact->closeEncryptionSessions();
+        for (auto *occupant : std::as_const(d->gcbank))
+            occupant->closeEncryptionSessions();
+    });
     connect(d->encryptionController, &PsiEncryptionController::methodsChanged, this, [this]() {
         updateFeatures();
         if (isConnected())
@@ -3049,6 +3135,10 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 
     const auto &items = findRelevant(j);
     for (UserListItem *u : items) {
+        // Retire a resource even when it has no prior presence entry.
+        // The stable PsiContact remains available for subsequent messages.
+        if (auto *contact = u->isSelf() ? d->selfContact : d->findContact(u->jid()))
+            contact->closeEncryptionSessionsForResource(j.resource());
         userListItemUnavailable(u, j, r, &doSound, &doPopup);
     }
     if (doSound)
@@ -6498,13 +6588,8 @@ void PsiAccount::client_groupChatLeft(const Jid &j)
             ++it;
             continue;
         }
-        UserListItem *u = find(c->jid);
-        if (!u) {
-            ++it;
-            continue;
-        }
-
-        simulateContactOffline(u);
+        if (auto *u = find(c->jid))
+            simulateContactOffline(u);
         it = d->gcbank.erase(it);
         delete c;
     }
@@ -6527,7 +6612,7 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
         c->jid = j;
         d->gcbank.append(c);
     }
-    c->status = s;
+    c->updateStatus(s);
 
     w->presence(j.resource(), s);
 
