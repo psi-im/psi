@@ -166,6 +166,8 @@ private:
     QList<Jid> membershipRecipients_;
     bool membershipSnapshotReady_ = false;
     QString membershipSnapshotError_;
+    bool membershipBatchStarting_ = false;
+    QString membershipDeferredError_;
     QList<MemberRequest> membershipRequests_;
     QMetaObject::Connection membershipJoinedConnection_;
     QMetaObject::Connection membershipLeftConnection_;
