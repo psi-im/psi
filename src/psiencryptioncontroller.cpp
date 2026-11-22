@@ -18,9 +18,6 @@
 #include "userlist.h"
 
 #ifdef IRIS_ENABLE_OMEMO
-#include "iris/jingle-jet-omemo.h"
-#include "iris/jingle-omemo-verification.h"
-#include "iris/jingle-sxe-omemo.h"
 #include "iris/xmpp_omemo.h"
 #include "psiomemostorage.h"
 #endif
@@ -495,9 +492,7 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                 [this](bool) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
         connect(omemo_, &XMPP::OmemoEncryption::warning, this,
                 [this](const QString &message) { emit encryptionError({}, message); });
-        jingleJet_          = new XMPP::Jingle::JetOmemo(client_->jingleManager(), omemo_, this);
-        jingleSxe_          = new XMPP::Jingle::SXE::SxeOmemo(client_->jingleManager(), omemo_, this);
-        jingleVerification_ = new XMPP::Jingle::OmemoDtlsVerification(client_->jingleManager(), omemo_, this);
+        omemo_->enableJingleEncryption();
     } else {
         qWarning() << "Could not open OMEMO storage:" << omemoStorage_->errorString();
     }
