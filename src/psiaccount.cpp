@@ -1274,7 +1274,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
                 // ciphertext fails. Existing contacts are never affected.
                 for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
                     if (candidate != d->selfContact && !d->contacts.contains(candidate)
-                        && candidate->jid().bare() == peer.bare())
+                        && candidate->jid().bare() == peer.bare()
+                        && !candidate->hasActiveEncryptionOperations())
                         delete candidate;
                 }
             });

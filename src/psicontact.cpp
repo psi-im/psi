@@ -225,6 +225,14 @@ void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
     }
 }
 
+bool PsiContact::hasActiveEncryptionOperations() const
+{
+    for (auto session : std::as_const(d->encryptionSessions))
+        if (session && session->hasActiveOperations())
+            return true;
+    return false;
+}
+
 void PsiContact::closeEncryptionSessions()
 {
     auto sessions = std::move(d->encryptionSessions);
