@@ -47,8 +47,9 @@ public:
             EncryptedSession(method->id(), context), method(method)
         {
         }
-        EncryptionJob *encrypt(const QDomElement &stanza) override
+        EncryptionJob *doEncrypt(const QDomElement &stanza, const EncryptionContext &operation) override
         {
+            method->lastContext = operation;
             method->plaintext = stanza.cloneNode(true).toElement();
             auto *job         = new EncryptionJob(this);
             auto  complete    = [job, stanza, fail = method->fail] {

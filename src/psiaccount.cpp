@@ -5361,8 +5361,8 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         }
         job = d->client->sendMessageEncrypted(sent, session);
     } else if (allowTransientSession) {
-        // Non-chat senders use a transient session with the current per-contact
-        // preference. Chat windows pass their own long-lived session instead.
+        // Non-chat senders use the same peer-scoped Iris session cache as chats.
+        // The message-specific recipient context is supplied independently.
         XMPP::EncryptionContext context;
         context.recipients.append(d->encryptionController->capabilityJid(message.to()));
         job = d->client->sendMessageEncrypted(sent, methodId, context);

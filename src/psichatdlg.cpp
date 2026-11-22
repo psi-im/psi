@@ -474,8 +474,8 @@ PsiChatDlg::~PsiChatDlg()
         mamTask_->safeDelete();
         mamTask_.clear();
     }
-    if (encryptionSession_)
-        encryptionSession_->close();
+    // The Iris Client owns peer encryption sessions. Closing a chat widget
+    // must not reset the session (or the device-level OMEMO ratchets).
     SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         disconnect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
@@ -555,10 +555,9 @@ void PsiChatDlg::setEncryptionMethod(const QString &methodId, bool persist)
 
 void PsiChatDlg::rebuildEncryptionSession()
 {
-    if (encryptionSession_) {
-        encryptionSession_->close();
-        encryptionSession_.clear();
-    }
+    // A chat borrows the peer session; changing the selected method or
+    // resource merely releases the old pointer, not the shared session.
+    encryptionSession_.clear();
 
     if (selectedEncryptionMethod_.isEmpty() || selectedEncryptionMethod_ == QLatin1String("openpgp"))
         return;
@@ -568,10 +567,7 @@ void PsiChatDlg::rebuildEncryptionSession()
     if (!controller || !client)
         return;
 
-    XMPP::EncryptionContext context;
-    context.recipients.append(controller->capabilityJid(jid()));
-    encryptionSession_ = client->encryptionManager()->startSession(selectedEncryptionMethod_,
-                                                                   XMPP::EncryptionMethod::XmppStanza, context);
+    encryptionSession_ = client->encryptedSession(selectedEncryptionMethod_, controller->capabilityJid(jid()));
 }
 
 void PsiChatDlg::initUi()

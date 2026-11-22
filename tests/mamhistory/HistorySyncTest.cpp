@@ -256,10 +256,10 @@ public:
     public:
         ArchiveCipher *method;
         Session(ArchiveCipher *m, const EncryptionContext &c) : EncryptedSession(m->id(), c), method(m) { }
-        EncryptionJob *decrypt(const QDomElement &stanza) override
+        EncryptionJob *doDecrypt(const QDomElement &stanza, const EncryptionContext &operation) override
         {
             ++method->decryptions;
-            method->replay = context().isArchiveReplay();
+            method->replay = operation.isArchiveReplay();
             auto *job      = new EncryptionJob(this);
             if (method->fail) {
                 job->fail(EncryptionJob::Error::NoRecipients, "Controlled missing-key error");
