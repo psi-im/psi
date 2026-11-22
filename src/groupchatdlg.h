@@ -37,6 +37,7 @@
 class GCMainDlg;
 class QAction;
 class MamChatWidget;
+class QMimeData;
 class HistorySync;
 class MessageView;
 class PsiAccount;
@@ -192,7 +193,7 @@ private:
     QAction *omemoAction_ = nullptr;
 
     void updateOmemoAction();
-    bool allowFileShare();
+    void shareFiles(const QMimeData *data = nullptr);
     void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);
     void reviewGroupchatTrust(const Message &message, const QList<Jid> &members, int next, const QString &profile);
 
