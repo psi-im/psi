@@ -23,7 +23,11 @@
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_muc.h"
 
+#include <QDateTime>
+#include <QHash>
 #include <QObject>
+#include <QPointer>
+#include <QSet>
 #include <functional>
 
 class PsiAccount;
@@ -72,6 +76,8 @@ public:
     // Completion is cancelled when receiver is destroyed.
     using MembersCallback = std::function<void(bool, const QList<Jid> &, const QString &)>;
     void requestMemberJids(QObject *receiver, MembersCallback completion);
+    // A room membership snapshot never survives reconnecting to the room.
+    void invalidateMemberCache();
     void          destroy(const QString &reason = QString(), const Jid &venue = Jid());
     XMPP::Client *client() const;
     PsiAccount   *account() const;
@@ -134,8 +140,19 @@ protected slots:
     void setItems_finished();
 
 private:
+    struct MemberRequest {
+        QPointer<QObject> receiver;
+        MembersCallback  completion;
+    };
+    void completeMemberRequests(const QString &error = {});
+
     PsiAccount *account_;
     Jid         room_;
+    QHash<int, QList<MUCItem>> membershipLists_;
+    QHash<int, QDateTime>      membershipUpdated_;
+    QSet<int>                 membershipInFlight_;
+    QList<MemberRequest>      membershipRequests_;
+    quint64                   membershipGeneration_ = 0;
 };
 
 #endif // MUCMANAGER_H
