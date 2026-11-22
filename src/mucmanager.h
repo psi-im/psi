@@ -28,6 +28,7 @@
 #include <QMetaObject>
 #include <QObject>
 #include <QPointer>
+#include <QString>
 #include <functional>
 
 class PsiAccount;
