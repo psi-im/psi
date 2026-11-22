@@ -82,7 +82,7 @@ option( USE_KEYCHAIN "Enable QtKeychain support" ON )
 option( USE_QT6 "Enable Qt6 support" OFF )
 option( ONLY_BINARY "Build and install only binary file" OFF )
 option( ONLY_PLUGINS "Build psi plugins only" OFF )
-option( INSTALL_EXTRA_FILES "Install sounds, iconsets, certs, client_icons.txt, themes" ON )
+option( INSTALL_EXTRA_FILES "Install extra runtime data: sounds, iconsets, certificates, client_icons.txt, skins, translations and documentation" ON )
 option( INSTALL_PLUGINS_SDK "Install sdk files to build plugins outside of project" OFF )
 option( PLUGINS_NO_DEBUG "Add -DPLUGINS_NO_DEBUG definition" OFF )
 # Developers options

@@ -161,8 +161,8 @@ cd psi && ./psi-plus && cd .. #For Psi+
 
 > -DINSTALL_EXTRA_FILES=ON
 
-  If `OFF` - sounds, certificates, iconsets, themes and `client_icons.txt`
-  file will not be installed.
+  If `OFF`, extra runtime data (sounds, certificates, iconsets, skins,
+  translations, documentation and `client_icons.txt`) will not be installed.
 
 > -DINSTALL_PLUGINS_SDK=ON
 
