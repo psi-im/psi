@@ -310,7 +310,7 @@ public:
     }
     XMPP::EncryptedSession *startSession(Capabilities capabilities, const XMPP::EncryptionContext &context) override
     {
-        if (!provider_ || !(capabilities & this->capabilities()))
+        if (!provider_ || (capabilities & this->capabilities()) != capabilities)
             return nullptr;
         auto *pluginSession = provider_->startSession(accountId_, toPluginContext(context));
         if (!pluginSession)
@@ -324,6 +324,20 @@ public:
     bool canDecrypt(const QDomElement &stanza) const override
     {
         return provider_ && provider_->canDecrypt(accountId_, stanza);
+    }
+    Availability availability(const XMPP::Jid &peer) const override
+    {
+        if (!provider_)
+            return Availability::Unavailable;
+        switch (provider_->availability(accountId_, peer.full())) {
+        case EncryptionMethodProvider::Availability::Available:
+            return Availability::Available;
+        case EncryptionMethodProvider::Availability::Unavailable:
+            return Availability::Unavailable;
+        case EncryptionMethodProvider::Availability::Unknown:
+            return Availability::Unknown;
+        }
+        return Availability::Unknown;
     }
 
     void detachProvider()
@@ -704,39 +718,20 @@ PsiEncryptionController::Availability PsiEncryptionController::availability(cons
     if (!hasMethod(methodId))
         return Availability::Unavailable;
 
-    const auto peer = capabilityJid(jid);
-    if (auto *provider = pluginProvider(methodId)) {
-        switch (provider->availability(pluginMethods_.value(provider)->accountId, peer.full())) {
-        case EncryptionMethodProvider::Availability::Available:
-            return Availability::Available;
-        case EncryptionMethodProvider::Availability::Unavailable:
-            return Availability::Unavailable;
-        case EncryptionMethodProvider::Availability::Unknown:
-            return Availability::Unknown;
-        }
-    }
+    // OpenPGP is a legacy Psi-only method; native and plugin methods are
+    // registered with Iris and report their own availability.
+    if (methodId == QLatin1String(OpenPgpMethodId))
+        return Availability::Available;
 
-#ifdef IRIS_ENABLE_OMEMO
-    if (methodId == XMPP::OmemoEncryption::methodId() && omemo_) {
-        if (omemo_->supportedProtocols() == XMPP::OmemoProtocols())
-            return Availability::Unavailable;
-        if (!peer.resource().isEmpty() && omemo_->preferredProtocolFor(peer))
-            return Availability::Available;
-
-        // OMEMO devices are discovered through PEP.  Missing resource caps
-        // means "unknown", not "unsupported" (offline peers and our own
-        // resources are common examples).  A cached active device is enough
-        // to make availability definite.
-        const auto supported = omemo_->supportedProtocols();
-        for (const auto &device : omemo_->devices(peer)) {
-            if (device.active && (device.protocols & supported) != XMPP::OmemoProtocols())
-                return Availability::Available;
-        }
+    switch (client_->encryptionManager()->availability(methodId, capabilityJid(jid))) {
+    case XMPP::EncryptionMethod::Availability::Available:
+        return Availability::Available;
+    case XMPP::EncryptionMethod::Availability::Unavailable:
+        return Availability::Unavailable;
+    case XMPP::EncryptionMethod::Availability::Unknown:
         return Availability::Unknown;
     }
-#endif
-
-    return Availability::Available;
+    return Availability::Unknown;
 }
 
 void PsiEncryptionController::reportError(const XMPP::Jid &jid, const QString &message)
