@@ -574,6 +574,8 @@ public:
     }
     void doFileShare(const QList<Reference> &refs, const QString &desc)
     {
+        if (!dlg->allowFileShare())
+            return;
         Message m(dlg->jid());
         m.setType(Message::Type::Groupchat);
         m.setReferences(refs);
@@ -1125,6 +1127,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
             connect(action, SIGNAL(triggered()), SLOT(doInfo()));
         } else if (name == QString::fromLatin1("gchat_share_files")) {
             connect(action, &QAction::triggered, account(), [this]() {
+                if (!allowFileShare())
+                    return;
                 FileShareDlg::shareFiles(
                     account(), jid().withResource(d->self),
                     [this](const QList<XMPP::Reference> &&rl, const QString &desc) {
@@ -2031,6 +2035,8 @@ void GCMainDlg::dropEvent(QDropEvent *e)
         m.setTimeStamp(QDateTime::currentDateTime());
         account()->dj_sendMessage(m);
     } else {
+        if (!allowFileShare())
+            return;
         FileShareDlg::shareFiles(
             account(), jid().withResource(d->self), e->mimeData(),
             [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
@@ -3070,6 +3076,20 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 
 void GCMainDlg::contextMenuEvent(QContextMenuEvent *) { d->pm_settings->exec(QCursor::pos()); }
 
+bool GCMainDlg::allowFileShare()
+{
+#ifdef IRIS_ENABLE_OMEMO
+    auto *controller = account()->encryptionController();
+    if (controller && controller->selectedMethod(jid()) == XMPP::OmemoEncryption::methodId()) {
+        appendSysMsg(tr("File sharing is unavailable in an encrypted room: HTTP Upload currently publishes "
+                        "file bytes without end-to-end encryption. No file was selected for uploading."),
+                     true);
+        return false;
+    }
+#endif
+    return true;
+}
+
 void GCMainDlg::updateOmemoAction()
 {
     if (!omemoAction_)
@@ -3244,6 +3264,8 @@ void GCMainDlg::chatEditCreated()
 
     ui_.mle->chatEdit()->installEventFilter(d);
     connect(ui_.mle->chatEdit(), &ChatEdit::fileSharingRequested, this, [this](const QMimeData *data) {
+        if (!allowFileShare())
+            return;
         FileShareDlg::shareFiles(
             account(), jid().withResource(d->self), data,
             [this](const QList<XMPP::Reference> &&rl, const QString &desc) { d->doFileShare(std::move(rl), desc); },
