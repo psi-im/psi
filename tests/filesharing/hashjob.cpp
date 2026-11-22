@@ -12,6 +12,7 @@ Q_IMPORT_PLUGIN(qca_ossl)
 #endif
 #endif
 
+#include <QBuffer>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QFile>
@@ -39,6 +40,44 @@ private slots:
         QVERIFY(!AesGcmUrl::parse(QUrl("aesgcm://files.example.org/media.png#" + material.left(87) + 'z')));
         QVERIFY(!AesGcmUrl::parse(QUrl("http://files.example.org/media.png#" + material)));
     }
+    void outgoingStreamingAesGcmMatchesReceiverAndNeverExposesKeyInHttpUrl()
+    {
+        using namespace XMPP::StatelessFileSharing;
+        const QByteArray original(1024 * 1024 + 17, 'p');
+        QByteArray sourceBytes = original;
+        QBuffer source(&sourceBytes);
+        QVERIFY(source.open(QIODevice::ReadOnly));
+        EncryptingDevice encrypted(&source, Cipher::Aes256Gcm);
+        QVERIFY(encrypted.open(QIODevice::ReadOnly));
+        const auto wireSize = encryptedSize(Cipher::Aes256Gcm, quint64(original.size()));
+        QVERIFY(wireSize);
+        QByteArray wire;
+        while (!encrypted.atEnd()) {
+            const auto chunk = encrypted.read(64 * 1024);
+            QVERIFY2(!chunk.isEmpty(), "Encrypted stream stopped before the authentication tag");
+            wire.append(chunk);
+        }
+        QVERIFY(encrypted.finished());
+        QCOMPARE(quint64(wire.size()), *wireSize);
+        QCOMPARE(encrypted.key().size(), 32);
+        QCOMPARE(encrypted.iv().size(), 12);
+
+        QUrl url(QStringLiteral("https://files.example.org/opaque.bin"));
+        url.setScheme(QStringLiteral("aesgcm"));
+        url.setFragment(QString::fromLatin1((encrypted.iv() + encrypted.key()).toHex()));
+        const auto parsed = AesGcmUrl::parse(url);
+        QVERIFY(parsed);
+        QCOMPARE(parsed->transport, QUrl("https://files.example.org/opaque.bin"));
+        QVERIFY(parsed->transport.fragment().isEmpty());
+        QCOMPARE(parsed->transport.toString().contains(QString::fromLatin1(encrypted.key().toHex())), false);
+
+        const auto recovered = decrypt(Cipher::Aes256Gcm, wire, parsed->key, parsed->iv);
+        QVERIFY(recovered);
+        QCOMPARE(*recovered, original);
+        wire[wire.size() / 2] = char(wire.at(wire.size() / 2) ^ 1);
+        QVERIFY(!decrypt(Cipher::Aes256Gcm, wire, parsed->key, parsed->iv));
+    }
+
     void wholeDownloadsVerifyAllClaims_data()
     {
         QTest::addColumn<bool>("valid");
