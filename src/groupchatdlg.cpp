@@ -3067,6 +3067,137 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 
 void GCMainDlg::contextMenuEvent(QContextMenuEvent *) { d->pm_settings->exec(QCursor::pos()); }
 
+void GCMainDlg::updateOmemoAction()
+{
+    if (!omemoAction_)
+        return;
+#ifdef IRIS_ENABLE_OMEMO
+    auto *controller = account()->encryptionController();
+    const auto method = XMPP::OmemoEncryption::methodId();
+    const bool available = controller && controller->hasMethod(method);
+    const bool selected = controller && controller->selectedMethod(jid()) == method;
+    omemoAction_->setEnabled(available);
+    omemoAction_->setChecked(selected);
+    omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
+    omemoAction_->setToolTip(!omemoRoomInfoKnown_ ? tr("Checking room encryption requirements")
+                             : !omemoMembersOnly_ || !omemoNonAnonymous_
+                                 ? tr("OMEMO requires a members-only, non-anonymous room")
+                                 : tr("Encrypt the entire groupchat message for room members, including offline members"));
+#else
+    omemoAction_->setEnabled(false);
+    omemoAction_->setChecked(false);
+#endif
+}
+
+void GCMainDlg::sendMessage(Message &message)
+{
+    auto *controller = account()->encryptionController();
+    const QString methodId = controller ? controller->selectedMethod(jid()) : QString();
+    if (methodId.isEmpty()) {
+        account()->dj_sendMessage(message);
+        return;
+    }
+#ifdef IRIS_ENABLE_OMEMO
+    if (methodId != XMPP::OmemoEncryption::methodId() || !controller->hasMethod(methodId)) {
+#else
+    if (true) {
+#endif
+        appendSysMsg(tr("The selected encryption method cannot protect a groupchat message. Nothing was sent."), true);
+        return;
+    }
+    if (d->state != Private::Connected || !omemoRoomInfoKnown_ || !omemoMembersOnly_
+        || !omemoNonAnonymous_) {
+        appendSysMsg(tr("OMEMO message was NOT sent: the room must advertise members-only and non-anonymous "
+                        "MUC features. Room discovery may still be in progress."), true);
+        return;
+    }
+
+    // The membership snapshot includes offline owners, admins and members,
+    // unlike the on-screen occupant roster. Errors never fall back to plain text.
+    d->mucManager->requestMemberJids(
+        this, [this, original = Message(message)](bool ok, const QList<Jid> &members, const QString &error) {
+            if (!ok || members.isEmpty()) {
+                appendSysMsg(tr("OMEMO message was NOT sent: %1")
+                                 .arg(ok ? tr("The room has no known member JIDs") : error),
+                             true);
+                return;
+            }
+            sendEncryptedGroupchat(original, members, true);
+        });
+}
+
+void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt)
+{
+#ifdef IRIS_ENABLE_OMEMO
+    if (d->state != Private::Connected || !omemoRoomInfoKnown_ || !omemoMembersOnly_ || !omemoNonAnonymous_) {
+        appendSysMsg(tr("OMEMO message was NOT sent: the room is no longer ready for encryption"), true);
+        return;
+    }
+    auto *controller = account()->encryptionController();
+    if (!controller || controller->selectedMethod(jid()) != XMPP::OmemoEncryption::methodId()) {
+        appendSysMsg(tr("OMEMO message was NOT sent: encryption was switched off while preparing the message"), true);
+        return;
+    }
+
+    XMPP::EncryptionContext context;
+    context.recipients = members;
+    // Legacy OMEMO encrypts only <body/> and exposes other MUC content.
+    // OMEMO 2 uses SCE to protect attachments, replies and message metadata.
+    context.options.insert(QStringLiteral("omemoProtocol"), QStringLiteral("omemo2"));
+    Message sent = message;
+    auto *job = account()->client()->sendMessageEncrypted(sent, XMPP::OmemoEncryption::methodId(), context);
+    const auto finished = [this, job, message, members, allowTrustPrompt]() {
+        if (job->success())
+            return; // The MUC service's own echo delivers the outgoing message.
+        if (allowTrustPrompt && job->error() == XMPP::EncryptionJob::Error::UntrustedIdentity) {
+            reviewGroupchatTrust(message, members, 0, QStringLiteral("omemo2"));
+            return;
+        }
+        appendSysMsg(tr("OMEMO message was NOT sent: %1").arg(job->errorString()), true);
+    };
+    if (job->isFinished())
+        finished();
+    else
+        connect(job, &XMPP::EncryptionJob::finished, this, finished);
+#else
+    Q_UNUSED(message)
+    Q_UNUSED(members)
+    Q_UNUSED(allowTrustPrompt)
+#endif
+}
+
+void GCMainDlg::reviewGroupchatTrust(const Message &message, const QList<Jid> &members, int next,
+                                     const QString &profile)
+{
+#ifdef IRIS_ENABLE_OMEMO
+    auto *controller = account()->encryptionController();
+    if (!controller)
+        return;
+    for (int i = next; i < members.size(); ++i) {
+        QPointer<GCMainDlg> guard(this);
+        const bool requested = controller->requestTrustDecision(
+            XMPP::OmemoEncryption::methodId(), members.at(i), false, this,
+            [guard, message, members, i, profile](bool retry) {
+                if (!guard)
+                    return;
+                if (retry)
+                    guard->reviewGroupchatTrust(message, members, i + 1, profile);
+                else
+                    guard->appendSysMsg(QObject::tr("OMEMO message was NOT sent: device trust was not approved"), true);
+            },
+            0, profile);
+        if (requested)
+            return; // One device confirmation at a time, and only after a failed send.
+    }
+    sendEncryptedGroupchat(message, members, false);
+#else
+    Q_UNUSED(message)
+    Q_UNUSED(members)
+    Q_UNUSED(next)
+    Q_UNUSED(profile)
+#endif
+}
+
 void GCMainDlg::buildMenu()
 {
     // Dialog menu
