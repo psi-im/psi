@@ -65,6 +65,7 @@
 #include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
+#include "psiencryptioncontroller.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -968,6 +969,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     setAcceptDrops(true);
 
     ui_.setupUi(this);
+    // Incoming encrypted MUC stanzas are processed before normal message
+    // delivery. Surface failures in their room rather than silently losing
+    // them (XEP-0384 §6); the controller suppresses duplicate notices.
+    connect(account()->encryptionController(), &PsiEncryptionController::encryptionError, this,
+            [this](const Jid &peer, const QString &message) {
+                if (peer.bare() == jid().bare())
+                    appendSysMsg(tr("Encryption error: %1").arg(message));
+            });
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     nativeTimeline_->setGroupChat(true);
     connect(nativeTimeline_, &MamChatWidget::unreadIncomingCountChanged, this,
