@@ -208,6 +208,20 @@ XMPP::EncryptedSession *PsiContact::encryptionSession(const QString &methodId, c
     return session;
 }
 
+bool PsiContact::adoptEncryptionSession(const QString &methodId, const XMPP::Jid &peer,
+                                        XMPP::EncryptedSession *session)
+{
+    if (!session || session->isClosing() || session->methodId() != methodId
+        || jid().bare() != peer.bare())
+        return false;
+    const auto key = methodId + QLatin1Char('\n') + peer.full();
+    auto *existing = d->encryptionSessions.value(key).data();
+    if (existing && !existing->isClosing() && existing != session)
+        return false;
+    d->encryptionSessions.insert(key, session);
+    return true;
+}
+
 void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
 {
     if (resource.isEmpty())
