@@ -213,36 +213,15 @@ void FileShareDlg::publish()
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
     ui->cb_encrypt->setDisabled(true); // Retry must use the same transfer security mode.
     QList<FileSharingItem *> toPublish;
-    filesModel->forEachTransfer([this, &toPublish](MultiFileTransferItem *item) {
+    QList<QPair<EncryptedHttpPublication *, MultiFileTransferItem *>> encryptedToPublish;
+    filesModel->forEachTransfer([this, &toPublish, &encryptedToPublish](MultiFileTransferItem *item) {
         auto publisher = item->property("publisher").value<FileSharingItem *>();
         if (item->property("shared").toBool())
             return;
         item->setState(MultiFileTransferModel::Active);
         if (encryptedUpload_) {
             ++inProgressCount;
-            auto *job = new EncryptedHttpPublication(account->client(), publisher, this);
-            job->start(
-                [item](qint64 bytes) {
-                    if (item->fullSize())
-                        item->setCurrentSize(qMin<quint64>(quint64(qMax<qint64>(0, bytes)), *item->fullSize()));
-                },
-                [this, item, job](const XMPP::Reference &ref, const QString &error) {
-                    if (ref.isValid() && ref.mediaSharing().isValid()) {
-                        item->setProperty("shared", true);
-                        readyEncryptedReferences.append(ref);
-                        item->setState(MultiFileTransferModel::Done);
-                        if (item->fullSize())
-                            item->setCurrentSize(*item->fullSize());
-                    } else {
-                        item->setState(MultiFileTransferModel::Failed);
-                        item->setInfo(TextUtil::plain2rich(error));
-                        hasFailures = true;
-                    }
-                    job->deleteLater();
-                    --inProgressCount;
-                    if (!inProgressCount)
-                        finish();
-                });
+            encryptedToPublish.append({ new EncryptedHttpPublication(account->client(), publisher, this), item });
             return;
         }
         QObject::disconnect(publisher, nullptr, this, nullptr);
@@ -269,6 +248,35 @@ void FileShareDlg::publish()
         inProgressCount++;
         toPublish.append(publisher);
     });
+    // Launch only after all transfer counters are registered. A failed
+    // local encryption source can complete synchronously.
+    for (const auto &entry : std::as_const(encryptedToPublish)) {
+        auto *job = entry.first;
+        auto *item = entry.second;
+        job->start(
+            [item](qint64 bytes) {
+                if (item->fullSize())
+                    item->setCurrentSize(qMin<quint64>(quint64(qMax<qint64>(0, bytes)), *item->fullSize()));
+            },
+            [this, item, job](const XMPP::Reference &ref, const QString &error) {
+                if (ref.isValid() && ref.mediaSharing().isValid()) {
+                    item->setProperty("shared", true);
+                    readyEncryptedReferences.append(ref);
+                    item->setState(MultiFileTransferModel::Done);
+                    if (item->fullSize())
+                        item->setCurrentSize(*item->fullSize());
+                } else {
+                    item->setState(MultiFileTransferModel::Failed);
+                    item->setInfo(TextUtil::plain2rich(error));
+                    hasFailures = true;
+                }
+                job->deleteLater();
+                --inProgressCount;
+                if (!inProgressCount)
+                    finish();
+            });
+
+    }
     if (!inProgressCount) {
         finish();
     }
