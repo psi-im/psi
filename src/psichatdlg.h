@@ -70,6 +70,8 @@ protected:
 
 private:
     void setContactToolTip(QString text);
+    void sendEncryptedFileShare(const QList<XMPP::Reference> &references, const QString &description,
+                                bool allowTrustPrompt);
     void setEncryptionMethod(const QString &methodId, bool persist);
     void loadOlderMamMessages();
     void loadMamRange(const MamHistorySource::Request &);
