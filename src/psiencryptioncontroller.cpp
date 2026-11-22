@@ -188,20 +188,20 @@ public:
                 method_->sessions_.remove(this);
         }
 
-        XMPP::EncryptionJob *encrypt(const QDomElement &xml) override { return runStanza(true, xml); }
+        XMPP::EncryptionJob *doEncrypt(const QDomElement &xml) override { return runStanza(true, xml); }
 
-        XMPP::EncryptionJob *decrypt(const QDomElement &xml) override { return runStanza(false, xml); }
+        XMPP::EncryptionJob *doDecrypt(const QDomElement &xml) override { return runStanza(false, xml); }
 
-        XMPP::EncryptionJob *encrypt(const QByteArray &data) override { return runData(true, data); }
+        XMPP::EncryptionJob *doEncrypt(const QByteArray &data) override { return runData(true, data); }
 
-        XMPP::EncryptionJob *decrypt(const QByteArray &data) override { return runData(false, data); }
+        XMPP::EncryptionJob *doDecrypt(const QByteArray &data) override { return runData(false, data); }
 
-        XMPP::EncryptionJob *encryptChunk(const QByteArray &chunk, bool final) override
+        XMPP::EncryptionJob *doEncryptChunk(const QByteArray &chunk, bool final) override
         {
             return runData(true, chunk, true, final);
         }
 
-        XMPP::EncryptionJob *decryptChunk(const QByteArray &chunk, bool final) override
+        XMPP::EncryptionJob *doDecryptChunk(const QByteArray &chunk, bool final) override
         {
             return runData(false, chunk, true, final);
         }
