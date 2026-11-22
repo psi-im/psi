@@ -39,6 +39,7 @@
 
 #include <QHash>
 #include <QPointer>
+#include <utility>
 
 #include <QFileDialog>
 #include <QTimer>
@@ -213,8 +214,8 @@ void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
         return;
     for (auto it = d->encryptionSessions.begin(); it != d->encryptionSessions.end();) {
         const auto session = it.value();
-        const auto &recipients = session ? session->context().recipients : QList<XMPP::Jid>();
-        if (!recipients.isEmpty() && recipients.first().resource() == resource) {
+        if (session && !session->context().recipients.isEmpty()
+            && session->context().recipients.constFirst().resource() == resource) {
             if (session)
                 session->close();
             it = d->encryptionSessions.erase(it);

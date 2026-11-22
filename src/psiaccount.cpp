@@ -152,6 +152,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
+#include <QHash>
 #include <QHostInfo>
 #include <QIcon>
 #include <QInputDialog>
@@ -180,6 +181,7 @@
 #endif
 
 #include <optional>
+#include <utility>
 
 /*#ifdef Q_OS_WIN
 #    include <windows.h>
