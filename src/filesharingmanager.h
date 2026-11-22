@@ -156,6 +156,7 @@ public:
     void              abort(QIODevice *dev) override;
     QVariant          metadata(const QUrl &url) override;
     ITEMediaState    *mediaState(const QUrl &url) override;
+    void              populatePlayerActions(const QUrl &url, QWidget *player) override;
     void              retry(const QUrl &url) override;
     using SaveCallback     = std::function<void(const QString &path, const QString &error)>;
     using ProgressCallback = std::function<void(qreal)>;

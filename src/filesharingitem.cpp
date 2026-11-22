@@ -258,17 +258,33 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
     jfile.setMediaType(_mimeType);
     jfile.setDescription(_description);
 
+    QByteArray pixData;
+    QString imageMime;
     QSize thumbSize(64, 64);
-    auto  thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
-    if (!thumbPix.isNull()) {
-        QByteArray pixData;
-        QBuffer    buf(&pixData);
-        thumbPix.save(&buf, "PNG");
-        QString png(QString::fromLatin1("image/png"));
-        auto    bob = _acc->client()->bobManager()->append(
-            pixData, png,
-            _fileType == FileType::TempFile ? TEMP_TTL : FILE_TTL); // TODO the ttl logic doesn't look valid
-        Thumbnail thumb(QByteArray(), png, quint32(thumbSize.width()), quint32(thumbSize.height()));
+    if (_mimeType.startsWith(QLatin1String("video/"))) {
+        // An OS file icon is not a video thumbnail. The outgoing poster is
+        // generated asynchronously before publishing, or omitted on failure.
+        if (!_videoThumbnailJpeg.isEmpty()) {
+            const QImage poster = QImage::fromData(_videoThumbnailJpeg, "JPEG");
+            if (!poster.isNull()) {
+                pixData = _videoThumbnailJpeg;
+                imageMime = QStringLiteral("image/jpeg");
+                thumbSize = poster.size();
+            }
+        }
+    } else {
+        const auto thumbPix = thumbnail(thumbSize).pixmap(thumbSize);
+        if (!thumbPix.isNull()) {
+            QBuffer buffer(&pixData);
+            if (buffer.open(QIODevice::WriteOnly) && thumbPix.save(&buffer, "PNG"))
+                imageMime = QStringLiteral("image/png");
+        }
+    }
+    if (!pixData.isEmpty() && !imageMime.isEmpty()) {
+        auto bob = _acc->client()->bobManager()->append(
+            pixData, imageMime,
+            _fileType == FileType::TempFile ? TEMP_TTL : FILE_TTL);
+        Thumbnail thumb(QByteArray(), imageMime, quint32(thumbSize.width()), quint32(thumbSize.height()));
         thumb.uri = QLatin1String("cid:") + bob.cid();
         jfile.setThumbnail(thumb);
     }
@@ -281,6 +297,15 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
     return jfile;
 }
 
+void FileSharingItem::setVideoThumbnailJpeg(QByteArray jpeg)
+{
+    // Never accidentally advertise an oversized or malformed payload.
+    if (!_mimeType.startsWith(QLatin1String("video/")) || jpeg.size() > 50 * 1024
+        || (!jpeg.isEmpty() && QImage::fromData(jpeg, "JPEG").isNull()))
+        return;
+    _videoThumbnailJpeg = std::move(jpeg);
+}
+
 QIcon FileSharingItem::thumbnail(const QSize &size) const
 {
     const auto *cached = cache();
@@ -289,7 +314,11 @@ QIcon FileSharingItem::thumbnail(const QSize &size) const
 
     QImage image;
     const QString path = cached ? cached->filePath() : _fileName;
-    if (_mimeType.startsWith(QLatin1String("image")) && image.load(path)) {
+    if (_mimeType.startsWith(QLatin1String("video/")) && !_videoThumbnailJpeg.isEmpty())
+        image.loadFromData(_videoThumbnailJpeg, "JPEG");
+    else if (_mimeType.startsWith(QLatin1String("image")))
+        image.load(path);
+    if (!image.isNull()) {
         auto   img = image.scaled(size, Qt::KeepAspectRatio, Qt::SmoothTransformation);
         QImage back(64, 64, QImage::Format_ARGB32_Premultiplied);
         back.fill(Qt::transparent);

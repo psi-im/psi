@@ -158,6 +158,7 @@ list(APPEND HEADERS
     mediachunkcache.h
     mediachunkscheduler.h
     filesharingitem.h
+    videothumbnailgenerator.h
     filesharingfilejob.h
     filesharingmanager.h
     oobmediapolicy.h
@@ -449,6 +450,7 @@ list(APPEND SOURCES
     filereader.h
     mediachunkscheduler.cpp
     filesharingitem.cpp
+    videothumbnailgenerator.cpp
     filesharingfilejob.cpp
     filesharingpublication.cpp
     accountincomingmessage.cpp

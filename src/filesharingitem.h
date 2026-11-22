@@ -66,6 +66,7 @@ public:
 
     QIcon                               thumbnail(const QSize &size) const;
     QImage                              preview(const QSize &maxSize) const;
+    void                                setVideoThumbnailJpeg(QByteArray jpeg);
     QString                             displayName() const;
     QString                             fileName() const;
     QString                             localFilePath() const;
@@ -149,6 +150,7 @@ private:
     HashSums                     _sums;
     QString                      _mimeType;
     QString                      _description;
+    QByteArray                   _videoThumbnailJpeg; // Tiny outgoing JPEG, also advertised via BoB.
     QVariantMap                  _metaData;
     QStringList                  _log;
     QList<XMPP::Jid>             _jids;
