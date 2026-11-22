@@ -101,8 +101,12 @@ public:
         virtual ~Session() = default;
 
         /** completion must be called exactly once while context is alive. */
-        virtual void encryptStanza(const QDomElement &stanza, QObject *context, Completion completion) = 0;
-        virtual void decryptStanza(const QDomElement &stanza, QObject *context, Completion completion) = 0;
+        // Per-stanza context is independent of the long-lived peer session.
+        // Do not cache it in the Session: multiple operations may overlap.
+        virtual void encryptStanza(const QDomElement &stanza, const Context &operation, QObject *context,
+                                   Completion completion) = 0;
+        virtual void decryptStanza(const QDomElement &stanza, const Context &operation, QObject *context,
+                                   Completion completion) = 0;
 
         virtual void encryptData(const QByteArray &data, QObject *context, Completion completion)
         {

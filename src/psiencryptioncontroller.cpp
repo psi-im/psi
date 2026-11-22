@@ -186,9 +186,15 @@ public:
                 method_->sessions_.remove(this);
         }
 
-        XMPP::EncryptionJob *doEncrypt(const QDomElement &xml) override { return runStanza(true, xml); }
+        XMPP::EncryptionJob *doEncrypt(const QDomElement &xml, const XMPP::EncryptionContext &context) override
+        {
+            return runStanza(true, xml, context);
+        }
 
-        XMPP::EncryptionJob *doDecrypt(const QDomElement &xml) override { return runStanza(false, xml); }
+        XMPP::EncryptionJob *doDecrypt(const QDomElement &xml, const XMPP::EncryptionContext &context) override
+        {
+            return runStanza(false, xml, context);
+        }
 
         XMPP::EncryptionJob *doEncrypt(const QByteArray &data) override { return runData(true, data); }
 
@@ -218,7 +224,8 @@ public:
             pluginSession_.reset();
         }
 
-        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml)
+        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml,
+                                       const XMPP::EncryptionContext &context)
         {
             auto *job = new XMPP::EncryptionJob(this);
             if (!method_ || !pluginSession_) {
@@ -243,9 +250,9 @@ public:
             };
 
             if (encrypting)
-                pluginSession_->encryptStanza(xml, guard, std::move(completion));
+                pluginSession_->encryptStanza(xml, toPluginContext(context), guard, std::move(completion));
             else
-                pluginSession_->decryptStanza(xml, guard, std::move(completion));
+                pluginSession_->decryptStanza(xml, toPluginContext(context), guard, std::move(completion));
             return job;
         }
 
