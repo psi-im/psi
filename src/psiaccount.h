@@ -325,6 +325,13 @@ public:
 
     void setClientVersionInfoMap(const QVariantMap &info);
 
+    // One-shot, fail-closed send for sensitive file references requiring OMEMO 2.
+    // Success includes normal message-history recording; no plaintext fallback.
+    using ExplicitEncryptionCompletion = std::function<void(bool success, bool untrusted, const QString &error)>;
+    void sendMessageWithEncryptionContext(Message message, const QString &methodId,
+                                          const XMPP::EncryptionContext &context,
+                                          ExplicitEncryptionCompletion completed);
+
 signals:
     void accountDestroyed();
 #ifdef GROUPCHAT
@@ -376,12 +383,6 @@ public slots:
     // dj_ originally referred to 'direct jabber', if you care
     void dj_sendMessage(Message &, bool log = true);
     void dj_sendMessage(Message &, bool log, XMPP::EncryptedSession *session, const QString &methodId);
-    // One-shot, fail-closed send for sensitive file references requiring OMEMO 2.
-    // Success includes normal message-history recording; no plaintext fallback.
-    using ExplicitEncryptionCompletion = std::function<void(bool success, bool untrusted, const QString &error)>;
-    void sendMessageWithEncryptionContext(Message message, const QString &methodId,
-                                          const XMPP::EncryptionContext &context,
-                                          ExplicitEncryptionCompletion completed);
     void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
     void dj_replyMessage(const Jid &jid, const QString &body);
     void dj_replyMessage(const XMPP::Jid &jid, const QString &body, const QString &subject, const QString &thread);
