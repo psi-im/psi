@@ -277,7 +277,7 @@ void FileShareDlg::publish()
             });
 
     }
-    if (!inProgressCount) {
+    if (!inProgressCount && encryptedToPublish.isEmpty()) {
         finish();
     }
     for (auto &p : toPublish) {
