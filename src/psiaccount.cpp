@@ -450,6 +450,9 @@ public:
     PsiCon                    *psi         = nullptr;
     PsiAccount                *account     = nullptr;
     Client                    *client      = nullptr;
+    // Only peers that have not yet acquired a normal contact owner. Bounded
+    // independently from the visible roster; never create provisional contacts.
+    QHash<QString, QPointer<EncryptedSession>> unboundEncryptionSessions;
     QPointer<LinkLocalService> serverless;
     std::optional<Status>      serverlessRestartStatus;
     PsiEncryptionController   *encryptionController = nullptr;
@@ -601,19 +604,22 @@ private slots:
     PsiContact *addContact(const UserListItem &u)
     {
         Q_ASSERT(!findContact(u.jid()));
-        // Reuse a provisional (not yet visible) contact created while
-        // decrypting its first message. Nothing enters the roster until the
-        // authenticated message is actually accepted by Psi.
-        PsiContact *contact = nullptr;
-        for (auto *candidate : account->findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
-            if (candidate != selfContact && !contacts.contains(candidate) && candidate->jid().compare(u.jid(), false)) {
-                contact = candidate;
-                contact->update(u);
-                break;
+        PsiContact *contact = new PsiContact(u, account);
+        // An unknown encrypted peer may have started a session before the
+        // normal contact creation path ran. Adopt it without creating a
+        // temporary PsiContact or re-running recipient discovery.
+        for (auto it = unboundEncryptionSessions.begin(); it != unboundEncryptionSessions.end();) {
+            const auto separator = it.key().indexOf(QLatin1Char('\n'));
+            const Jid peer(separator < 0 ? QString() : it.key().mid(separator + 1));
+            if (!it.value() || it.value()->isClosing()) {
+                it = unboundEncryptionSessions.erase(it);
+            } else if (peer.bare() == u.jid().bare()
+                       && contact->adoptEncryptionSession(it.key().left(separator), peer, it.value())) {
+                it = unboundEncryptionSessions.erase(it);
+            } else {
+                ++it;
             }
         }
-        if (!contact)
-            contact = new PsiContact(u, account);
         contacts.append(contact);
         connect(contact, &PsiContact::destroyed, this, &Private::removeContact);
         emit account->addedContact(contact);
@@ -1199,8 +1205,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->encryptionController
         = new PsiEncryptionController(this, d->client, acc.encryptionMethods,
                                       pathToProfile(activeProfile, ApplicationInfo::DataLocation), acc.id, this);
-    // The existing Psi contact and MUC occupant objects own conversation
-    // sessions; Iris only requests them at the stanza boundary.
+    // Established PsiContact/GCContact sessions are long lived. The Iris
+    // incoming fast path uses weak references; the application is consulted
+    // only when no session has been bound for this peer and method yet.
     d->client->setEncryptionSessionResolver(
         [this](const QString &methodId, const Jid &peer,
                Client::EncryptionSessionPurpose purpose) -> EncryptedSession * {
@@ -1211,41 +1218,47 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
                 auto *occupant = findGCContact(peer);
                 return occupant ? occupant->encryptionSession(registry, methodId, purpose) : nullptr;
             }
-            // Outbound groupchat is scoped to the bare room contact. It is
-            // never associated with an arbitrarily selected MUC occupant.
             if (auto *occupant = findGCContact(peer))
                 return occupant->encryptionSession(registry, methodId, purpose);
 
             UserListItem *item = findFirstRelevant(peer);
             if (!item) {
-                // Incoming direct messages may predate creation of the local
-                // non-roster entry. Never fabricate a contact for service IQs
-                // or historical MUC messages.
+                // There is no authenticated user-list entity for this JID yet.
+                // A crypto session is sufficient for the first decryption;
+                // the normal message path decides whether to create a contact.
                 if (purpose != Client::EncryptionSessionPurpose::Message
                     && purpose != Client::EncryptionSessionPurpose::Carbon)
                     return nullptr;
                 if (d->groupchats.contains(peer.bare()) || peer.node().isEmpty())
                     return nullptr;
-                // The first ciphertext is not authenticated yet. Prepare a
-                // PsiContact without publishing it to the contact list; the
-                // normal event/roster path will promote it after decryption.
-                PsiContact *pending = nullptr;
-                for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
-                    if (candidate != d->selfContact && !d->contacts.contains(candidate)
-                        && candidate->jid().bare() == peer.bare()) {
-                        pending = candidate;
-                        break;
+                const auto key = methodId + QLatin1Char('\n') + peer.full();
+                auto *session = d->unboundEncryptionSessions.value(key).data();
+                if (session && !session->isClosing())
+                    return session;
+                // Cap unauthenticated peers. Only idle sessions are evicted;
+                // a concurrently decrypting stanza must retain its session.
+                constexpr int maxUnboundSessions = 64;
+                if (d->unboundEncryptionSessions.size() >= maxUnboundSessions) {
+                    for (auto it = d->unboundEncryptionSessions.begin();
+                         it != d->unboundEncryptionSessions.end();) {
+                        auto *candidate = it.value().data();
+                        if (!candidate || !candidate->hasActiveOperations()) {
+                            if (candidate)
+                                candidate->close();
+                            it = d->unboundEncryptionSessions.erase(it);
+                            break;
+                        }
+                        ++it;
                     }
+                    if (d->unboundEncryptionSessions.size() >= maxUnboundSessions)
+                        return nullptr;
                 }
-                if (!pending) {
-                    UserListItem provisional;
-                    provisional.setJid(Jid(peer.bare()));
-                    provisional.setInList(false);
-                    provisional.setName(peer.node());
-                    provisional.setAvatarFactory(avatarFactory());
-                    pending = new PsiContact(provisional, this);
-                }
-                return pending->encryptionSession(methodId, peer, registry);
+                EncryptionContext base;
+                base.recipients = { peer };
+                session = registry->startSession(methodId, EncryptionMethod::XmppStanza, base);
+                if (session)
+                    d->unboundEncryptionSessions.insert(key, session);
+                return session;
             }
             auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
             if (!contact) {
@@ -1255,8 +1268,25 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             return contact ? contact->encryptionSession(methodId, peer, registry) : nullptr;
         });
 
-    // Connection lifetime is independent of the contact objects that remain
-    // visible offline. The application closes its own sessions on disconnect.
+    // Last-resort stanza dispatch: Psi chooses a session and immediately
+    // asks Iris to decrypt with it. This never re-enters Client::distribute().
+    d->client->setIncomingEncryptedStanzaHandler(
+        [this](const QDomElement &stanza, const QString &methodId,
+               const EncryptionContext &context, Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
+            const Jid from(stanza.attribute(QStringLiteral("from")));
+            const Jid to(stanza.attribute(QStringLiteral("to")));
+            const Jid peer = purpose == Client::EncryptionSessionPurpose::Carbon
+                    && from.bare() == d->client->jid().bare() ? to : from;
+            if (!peer.isValid())
+                return nullptr;
+            auto *session = d->client->encryptedSession(methodId, peer, purpose);
+            if (!session)
+                return nullptr;
+            if (purpose == Client::EncryptionSessionPurpose::Groupchat)
+                d->client->registerIncomingSession(methodId, peer, purpose, session);
+            return session->decrypt(stanza, context);
+        });
+
     connect(d->client, &Client::disconnected, this, [this]() {
         if (d->selfContact)
             d->selfContact->closeEncryptionSessions();
@@ -1264,22 +1294,21 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             contact->closeEncryptionSessions();
         for (auto *occupant : std::as_const(d->gcbank))
             occupant->closeEncryptionSessions();
-        // No pending, unauthenticated peer is retained across reconnects.
-        for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly))
-            if (candidate != d->selfContact && !d->contacts.contains(candidate))
-                delete candidate;
+        auto unbound = std::move(d->unboundEncryptionSessions);
+        d->unboundEncryptionSessions.clear();
+        for (auto session : std::as_const(unbound))
+            if (session)
+                session->close();
     });
     connect(d->client, &Client::stanzaDecryptionFailed, this,
-            [this](const QString &, const Jid &peer, EncryptionJob::Error,
+            [this](const QString &methodId, const Jid &peer, EncryptionJob::Error,
                    const QString &, const EncryptionMetadata &) {
-                // Reject an unverified temporary contact when its first
-                // ciphertext fails. Existing contacts are never affected.
-                for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
-                    if (candidate != d->selfContact && !d->contacts.contains(candidate)
-                        && candidate->jid().bare() == peer.bare()
-                        && !candidate->hasActiveEncryptionOperations())
-                        delete candidate;
-                }
+                // A failed first ciphertext cannot leave an unauthenticated
+                // peer session cached for subsequent attempts.
+                const auto key = methodId + QLatin1Char('\n') + peer.full();
+                auto session = d->unboundEncryptionSessions.take(key);
+                if (session)
+                    session->close();
             });
     connect(d->encryptionController, &PsiEncryptionController::methodsChanged, this, [this]() {
         updateFeatures();
