@@ -511,6 +511,17 @@ void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver
     file.setName(displayName());
     file.setSize(*_fileSize);
     file.setMediaType(_mimeType);
+    // Psi's attachment renderer identifies SIMS messages using content hashes.
+    // These are the existing plaintext file hashes (inside OMEMO 2 SCE),
+    // never ciphertext-address identities or plaintext transport URLs.
+    for (const auto &hash : _sums) {
+        if (hash.isValid())
+            file.addHash(hash);
+    }
+    if (!file.hasComputedHashes()) {
+        finished({}, tr("The file has no content hash for encrypted sharing"));
+        return;
+    }
 
     auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid,
                                                   _acc->client(), FileSharingPublication::Mode::Aes256Gcm);
