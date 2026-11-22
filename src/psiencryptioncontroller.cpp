@@ -765,7 +765,8 @@ void PsiEncryptionController::recoverDecryption(const QString &methodId, const X
     // Resolving the public bundle is deliberately separate from creating the
     // session. XEP-0384 requires explicit user interaction before a client
     // replaces a session in response to a decryption error.
-    auto *job = client_->encryptionManager()->prepareDecryptionRecovery(methodId, metadata);
+    auto *method = client_->encryptionManager()->method(methodId);
+    auto *job    = method ? method->prepareDecryptionRecovery(metadata) : nullptr;
     if (!job) {
         decryptionRecoveriesActive_.remove(recoveryKey);
         return;
@@ -809,7 +810,8 @@ void PsiEncryptionController::performDecryptionRecovery(const QString &methodId,
         return;
     decryptionRecoveriesActive_.insert(recoveryKey);
 
-    auto *job = client_->encryptionManager()->recoverDecryption(methodId, metadata);
+    auto *method = client_->encryptionManager()->method(methodId);
+    auto *job    = method ? method->recoverDecryption(metadata) : nullptr;
     if (!job) {
         decryptionRecoveriesActive_.remove(recoveryKey);
         return;
