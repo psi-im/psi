@@ -1594,26 +1594,34 @@ void GCMainDlg::updateConfiguration()
     // being rechecked after a configuration change.
     omemoRoomInfoKnown_ = false;
     updateOmemoAction();
-    JT_DiscoInfo *disco = new JT_DiscoInfo(
-        account()->client()->rootTask());
-    disco->setProperty("omemoRoomDiscoGeneration", QVariant::fromValue(++omemoRoomDiscoGeneration_)); // FIXME in fact xep says we should do this before entering.
-    connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
-    disco->get(jid());                                             // From other side we could provide the name outside.
+    // Task::iqVerify already matches the IQ response by its stanza id.
+    // Cancel the superseded task instead of associating an ad-hoc generation
+    // property with it. Only the current task may update room state.
+    if (roomDiscoTask_)
+        roomDiscoTask_->safeDelete();
+
+    auto *disco = new JT_DiscoInfo(account()->client()->rootTask());
+    roomDiscoTask_ = disco;
+    connect(disco, &XMPP::Task::finished, this, &GCMainDlg::discoInfoFinished);
+    disco->get(jid());
     disco->go(true);
 }
 
 void GCMainDlg::discoInfoFinished()
 {
-    JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
-    if (t->property("omemoRoomDiscoGeneration").toULongLong() == omemoRoomDiscoGeneration_) {
-        if (t->success()) {
-            const auto &features = t->item().features();
-            omemoMembersOnly_ = features.test("muc_membersonly");
-            omemoNonAnonymous_ = features.test("muc_nonanonymous");
-            omemoRoomInfoKnown_ = true;
-        }
-        updateOmemoAction();
+    auto *t = qobject_cast<JT_DiscoInfo *>(sender());
+    if (!t || t != roomDiscoTask_)
+        return;
+    roomDiscoTask_.clear();
+
+    if (t->success()) {
+        const auto &features = t->item().features();
+        omemoMembersOnly_ = features.test("muc_membersonly");
+        omemoNonAnonymous_ = features.test("muc_nonanonymous");
+        omemoRoomInfoKnown_ = true;
     }
+    updateOmemoAction();
+
     const DiscoItem::Identities &i = t->item().identities();
     if (i.count() > 0) {
         d->discoMucName = i.first().name;
