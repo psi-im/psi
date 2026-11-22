@@ -246,8 +246,7 @@ void MUCManager::setMemberDiscoveryEnabled(bool enabled)
         connect(client(), &Client::disconnected, this, &MUCManager::invalidateMemberCache);
     membershipPresenceConnection_ =
         connect(client(), &Client::groupChatPresence, this, [this](const Jid &occupant, const Status &status) {
-            if (!membershipSnapshotReady_ || occupant.bare() != room_.bare()
-                || !status.isAvailable() || !status.hasMUCItem())
+            if (!membershipSnapshotReady_ || occupant.bare() != room_.bare() || !status.hasMUCItem())
                 return;
             const Jid real = status.mucItem().jid();
             if (!real.isValid() || real.node().isEmpty())
@@ -697,7 +696,10 @@ void MUCManager::setConfiguration_finished()
 {
     MUCConfigurationTask *t = static_cast<MUCConfigurationTask *>(sender());
     if (t->success()) {
-        emit setConfiguration_success();
+        QPointer<MUCManager> guard(this);
+        invalidateMemberCache(); // Room policy or membership may have changed.
+        if (guard)
+            emit setConfiguration_success();
     } else {
         emit setConfiguration_error(t->statusCode(), t->statusString());
     }
@@ -707,11 +709,16 @@ void MUCManager::action_finished()
 {
     MUCItemsTask *t = static_cast<MUCItemsTask *>(sender());
     if (t->success()) {
-        if (t->action() == GrantMember || t->action() == RevokeMember || t->action() == GrantAdmin
-            || t->action() == RevokeAdmin || t->action() == GrantOwner || t->action() == RevokeOwner
-            || t->action() == SetAffiliation || t->action() == Ban)
+        const Action action = t->action();
+        if (action == GrantMember || action == RevokeMember || action == GrantAdmin
+            || action == RevokeAdmin || action == GrantOwner || action == RevokeOwner
+            || action == SetAffiliation || action == Ban) {
+            QPointer<MUCManager> guard(this);
             invalidateMemberCache();
-        emit action_success(t->action());
+            if (!guard)
+                return;
+        }
+        emit action_success(action);
     } else {
         QString text;
         Action  action = t->action();
@@ -768,8 +775,14 @@ void MUCManager::getItemsByAffiliation_finished()
         && membershipInFlight_.value(affiliation) == task;
     if (!current) {
         // The old IQ belongs to a previous connection/discovery generation.
-        if (requestedByUi)
-            emit getItemsByAffiliation_error(task->affiliation(), 0, tr("MUC membership request was cancelled"));
+        // Even if OMEMO discovery is cancelled, the administrative dialog
+        // must still get its normal IQ result. Do not cache a stale result.
+        if (requestedByUi) {
+            if (task->success())
+                emit getItemsByAffiliation_success(task->affiliation(), task->items());
+            else
+                emit getItemsByAffiliation_error(task->affiliation(), task->statusCode(), task->statusString());
+        }
         return;
     }
     membershipInFlight_.remove(affiliation);
@@ -777,17 +790,21 @@ void MUCManager::getItemsByAffiliation_finished()
         membershipLists_.insert(affiliation, task->items());
         membershipUpdated_.insert(affiliation, QDateTime::currentDateTimeUtc());
         // Updating the administrative UI remains a fresh query, not a cached reply.
+        QPointer<MUCManager> guard(this);
         if (requestedByUi)
             emit getItemsByAffiliation_success(task->affiliation(), task->items());
-        completeMemberRequests();
+        if (guard)
+            completeMemberRequests();
     } else {
         membershipLists_.remove(affiliation);
         membershipUpdated_.remove(affiliation);
+        const QString error = task->statusString().isEmpty()
+            ? tr("Could not retrieve the MUC membership list") : task->statusString();
+        QPointer<MUCManager> guard(this);
         if (requestedByUi)
             emit getItemsByAffiliation_error(task->affiliation(), task->statusCode(), task->statusString());
-        completeMemberRequests(task->statusString().isEmpty()
-                                   ? tr("Could not retrieve the MUC membership list")
-                                   : task->statusString());
+        if (guard)
+            completeMemberRequests(error);
     }
 }
 
@@ -795,8 +812,10 @@ void MUCManager::setItems_finished()
 {
     MUCItemsTask *t = static_cast<MUCItemsTask *>(sender());
     if (t->success()) {
+        QPointer<MUCManager> guard(this);
         invalidateMemberCache();
-        emit setItems_success();
+        if (guard)
+            emit setItems_success();
     } else {
         emit setItems_error(t->statusCode(), t->statusString());
     }
