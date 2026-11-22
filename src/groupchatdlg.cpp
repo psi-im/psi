@@ -3082,7 +3082,7 @@ bool GCMainDlg::allowFileShare()
 {
 #ifdef IRIS_ENABLE_OMEMO
     auto *controller = account()->encryptionController();
-    if (controller && controller->selectedMethod(jid()) == XMPP::OmemoEncryption::methodId()) {
+    if (controller && controller->explicitlySelectedMethod(jid()) == XMPP::OmemoEncryption::methodId()) {
         appendSysMsg(tr("File sharing is unavailable in an encrypted room: HTTP Upload currently publishes "
                         "file bytes without end-to-end encryption. No file was selected for uploading."),
                      true);
@@ -3100,7 +3100,7 @@ void GCMainDlg::updateOmemoAction()
     auto *controller = account()->encryptionController();
     const auto method = XMPP::OmemoEncryption::methodId();
     const bool available = controller && controller->hasMethod(method);
-    const bool selected = controller && controller->selectedMethod(jid()) == method;
+    const bool selected = controller && controller->explicitlySelectedMethod(jid()) == method;
     // This is the only opt-in for membership tracking. Plain MUCs never
     // subscribe to extra presence signals or allocate affiliation snapshots.
     d->mucManager->setMemberDiscoveryEnabled(available && selected && omemoRoomInfoKnown_
@@ -3122,7 +3122,7 @@ void GCMainDlg::updateOmemoAction()
 void GCMainDlg::sendMessage(Message &message)
 {
     auto *controller = account()->encryptionController();
-    const QString methodId = controller ? controller->selectedMethod(jid()) : QString();
+    const QString methodId = controller ? controller->explicitlySelectedMethod(jid()) : QString();
     if (methodId.isEmpty()) {
         account()->dj_sendMessage(message);
         return;
@@ -3166,7 +3166,7 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
         return;
     }
     auto *controller = account()->encryptionController();
-    if (!controller || controller->selectedMethod(jid()) != XMPP::OmemoEncryption::methodId()) {
+    if (!controller || controller->explicitlySelectedMethod(jid()) != XMPP::OmemoEncryption::methodId()) {
         appendSysMsg(tr("OMEMO message was NOT sent: encryption was switched off while preparing the message"), true);
         return;
     }
