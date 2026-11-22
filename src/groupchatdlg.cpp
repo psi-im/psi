@@ -65,7 +65,7 @@
 #include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
-#include "psiencryptioncontroller.h"
+#include "iris/xmpp_encryption.h"
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psicontactlist.h"
@@ -969,13 +969,19 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     setAcceptDrops(true);
 
     ui_.setupUi(this);
-    // Incoming encrypted MUC stanzas are processed before normal message
-    // delivery. Surface failures in their room rather than silently losing
-    // them (XEP-0384 §6); the controller suppresses duplicate notices.
-    connect(account()->encryptionController(), &PsiEncryptionController::encryptionError, this,
-            [this](const Jid &peer, const QString &message) {
-                if (peer.bare() == jid().bare())
-                    appendSysMsg(tr("Encryption error: %1").arg(message));
+    // Decryption happens before an encrypted MUC message reaches the chat.
+    // Show one placeholder per missed message, except for Signal's duplicate
+    // message error (XEP-0384 §6). Generic encryptionError notices are
+    // rate-limited per device and cannot account for every lost group message.
+    connect(account()->client(), &XMPP::Client::stanzaDecryptionFailed, this,
+            [this](const QString &methodId, const Jid &peer, XMPP::EncryptionJob::Error,
+                   const QString &error, const XMPP::EncryptionMetadata &metadata) {
+                constexpr int DuplicateMessage = -1001;
+                if (peer.bare() != jid().bare()
+                    || metadata.details.value(QStringLiteral("signalError")).toInt() == DuplicateMessage)
+                    return;
+                const QString sender = peer.resource().isEmpty() ? peer.full() : peer.resource();
+                appendSysMsg(tr("Could not decrypt %1 message from %2: %3").arg(methodId, sender, error));
             });
     nativeTimeline_ = new MamChatWidget(ui_.topFrame);
     nativeTimeline_->setGroupChat(true);
