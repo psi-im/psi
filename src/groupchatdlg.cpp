@@ -3171,13 +3171,17 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
     Message sent = message;
     auto *job = account()->client()->sendMessageEncrypted(sent, XMPP::OmemoEncryption::methodId(), context);
     const auto finished = [this, job, message, members, allowTrustPrompt]() {
-        if (job->success())
+        const auto error = job->error();
+        const auto errorText = job->errorString();
+        const bool succeeded = job->success();
+        job->deleteLater();
+        if (succeeded)
             return; // The MUC service's own echo delivers the outgoing message.
-        if (allowTrustPrompt && job->error() == XMPP::EncryptionJob::Error::UntrustedIdentity) {
+        if (allowTrustPrompt && error == XMPP::EncryptionJob::Error::UntrustedIdentity) {
             reviewGroupchatTrust(message, members, 0, QStringLiteral("omemo2"));
             return;
         }
-        appendSysMsg(tr("OMEMO message was NOT sent: %1").arg(job->errorString()), true);
+        appendSysMsg(tr("OMEMO message was NOT sent: %1").arg(errorText), true);
     };
     if (job->isFinished())
         finished();
