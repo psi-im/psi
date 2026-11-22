@@ -35,8 +35,7 @@
 #include "psiaccount.h"
 
 #include <QObject>
-#include <QSet>
-#include <memory>
+#include <utility>
 
 using namespace XMPP;
 
@@ -49,6 +48,11 @@ bool memberListFresh(const QDateTime &updated)
         return false;
     const qint64 age = updated.secsTo(QDateTime::currentDateTimeUtc());
     return age >= 0 && age < MemberSnapshotMaxAgeSeconds;
+}
+bool isRecipientAffiliation(MUCItem::Affiliation affiliation)
+{
+    return affiliation == MUCItem::Member || affiliation == MUCItem::Admin
+        || affiliation == MUCItem::Owner;
 }
 } // namespace
 
@@ -210,39 +214,52 @@ private:
 
 // -----------------------------------------------------------------------------
 
-MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account), room_(room)
+MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account), room_(room) { }
+
+// Ordinary rooms have no additional presence handler and no member cache.
+// Only explicit OMEMO selection activates the extra signal connections.
+void MUCManager::setMemberDiscoveryEnabled(bool enabled)
 {
-    connect(client(), &Client::groupChatJoined, this, [this](const Jid &joined) {
+    if (membershipDiscoveryEnabled_ == enabled)
+        return;
+
+    if (!enabled) {
+        membershipDiscoveryEnabled_ = false;
+        disconnect(membershipJoinedConnection_);
+        disconnect(membershipLeftConnection_);
+        disconnect(membershipDisconnectedConnection_);
+        disconnect(membershipPresenceConnection_);
+        invalidateMemberCache();
+        return;
+    }
+
+    membershipDiscoveryEnabled_ = true;
+    membershipJoinedConnection_ = connect(client(), &Client::groupChatJoined, this, [this](const Jid &joined) {
         if (joined.bare() == room_.bare())
             invalidateMemberCache();
     });
-    connect(client(), &Client::groupChatLeft, this, [this](const Jid &left) {
+    membershipLeftConnection_ = connect(client(), &Client::groupChatLeft, this, [this](const Jid &left) {
         if (left.bare() == room_.bare())
             invalidateMemberCache();
     });
-    connect(client(), &Client::disconnected, this, &MUCManager::invalidateMemberCache);
-
-    // Invalidate when current occupant presence reveals a changed affiliation.
-    // Offline changes are not announced; the snapshot also expires on use.
-    connect(client(), &Client::groupChatPresence, this, [this](const Jid &occupant, const Status &status) {
-        if (occupant.bare() != room_.bare() || !status.hasMUCItem() || membershipLists_.size() < 3)
-            return;
-        const Jid real = status.mucItem().jid();
-        if (!real.isValid() || real.node().isEmpty())
-            return;
-        int previous = int(MUCItem::NoAffiliation);
-        for (auto it = membershipLists_.cbegin(); it != membershipLists_.cend(); ++it) {
-            for (const auto &item : it.value()) {
-                if (item.jid().bare() == real.bare()) {
-                    previous = it.key();
-                    break;
-                }
-            }
-        }
-        if (previous != int(status.mucItem().affiliation())
-            && (previous >= int(MUCItem::Member) || status.mucItem().affiliation() >= MUCItem::Member))
-            invalidateMemberCache();
-    });
+    membershipDisconnectedConnection_ =
+        connect(client(), &Client::disconnected, this, &MUCManager::invalidateMemberCache);
+    membershipPresenceConnection_ =
+        connect(client(), &Client::groupChatPresence, this, [this](const Jid &occupant, const Status &status) {
+            if (!membershipSnapshotReady_ || occupant.bare() != room_.bare()
+                || !status.isAvailable() || !status.hasMUCItem())
+                return;
+            const Jid real = status.mucItem().jid();
+            if (!real.isValid() || real.node().isEmpty())
+                return;
+            const auto known = membershipAffiliations_.constFind(real.bare());
+            const auto previous = known == membershipAffiliations_.cend() ? MUCItem::NoAffiliation
+                                                                          : MUCItem::Affiliation(known.value());
+            const auto current = status.mucItem().affiliation();
+            if (previous != current
+                && (isRecipientAffiliation(previous) || isRecipientAffiliation(current)))
+                invalidateMemberCache();
+        });
 }
 
 const Jid &MUCManager::room() const { return room_; }
@@ -288,15 +305,87 @@ void MUCManager::setItems(const QList<MUCItem> &items)
 
 void MUCManager::getItemsByAffiliation(MUCItem::Affiliation affiliation)
 {
-    // Share an in-flight IQ between room settings and OMEMO preparation.
-    if (membershipInFlight_.contains(int(affiliation)))
+    if (membershipDiscoveryEnabled_ && isRecipientAffiliation(affiliation)) {
+        startMemberAffiliationQuery(affiliation, true);
         return;
-    auto *task = new MUCItemsTask(room_, client()->rootTask());
-    task->setProperty("membershipGeneration", QVariant::fromValue(membershipGeneration_));
-    membershipInFlight_.insert(int(affiliation));
+    }
+
+    // Original administrative UI path, unchanged for all non-OMEMO rooms.
+    MUCItemsTask *task = new MUCItemsTask(room_, client()->rootTask());
     connect(task, &Task::finished, this, &MUCManager::getItemsByAffiliation_finished);
     task->getByAffiliation(affiliation);
     task->go(true);
+}
+
+void MUCManager::startMemberAffiliationQuery(MUCItem::Affiliation affiliation, bool forUi)
+{
+    const int key = int(affiliation);
+    if (auto *pending = membershipInFlight_.value(key)) {
+        if (forUi)
+            pending->setProperty("membershipUiRequested", true);
+        return;
+    }
+
+    auto *task = new MUCItemsTask(room_, client()->rootTask());
+    task->setProperty("membershipTracked", true);
+    task->setProperty("membershipUiRequested", forUi);
+    task->setProperty("membershipGeneration", QVariant::fromValue(membershipGeneration_));
+    membershipInFlight_.insert(key, task);
+    // A live refresh must not be mixed with older cached recipient lists.
+    membershipSnapshotReady_ = false;
+    membershipAffiliations_.clear();
+    membershipRecipients_.clear();
+    connect(task, &Task::finished, this, &MUCManager::getItemsByAffiliation_finished);
+    task->getByAffiliation(affiliation);
+    task->go(true);
+}
+
+bool MUCManager::memberListsFresh() const
+{
+    for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
+        const int key = int(affiliation);
+        if (!membershipLists_.contains(key) || !memberListFresh(membershipUpdated_.value(key)))
+            return false;
+    }
+    return true;
+}
+
+bool MUCManager::buildMemberSnapshot(QString *error)
+{
+    membershipSnapshotReady_ = false;
+    membershipAffiliations_.clear();
+    membershipRecipients_.clear();
+    if (!memberListsFresh() || !membershipInFlight_.isEmpty())
+        return false;
+
+    QHash<QString, int> indexed;
+    for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
+        const int key = int(affiliation);
+        for (const auto &item : membershipLists_.value(key)) {
+            const Jid real = item.jid();
+            if (!real.isValid() || real.node().isEmpty() || real.bare().isEmpty()) {
+                if (error)
+                    *error = tr("A MUC affiliation entry has no real JID");
+                return false;
+            }
+            auto previous = indexed.constFind(real.bare());
+            if (previous != indexed.cend() && previous.value() != key) {
+                if (error)
+                    *error = tr("Conflicting MUC affiliations for %1").arg(real.bare());
+                return false;
+            }
+            indexed.insert(real.bare(), key);
+        }
+    }
+
+    QStringList sorted = indexed.keys();
+    sorted.sort();
+    membershipRecipients_.reserve(sorted.size());
+    for (const auto &jid : std::as_const(sorted))
+        membershipRecipients_.append(Jid(jid));
+    membershipAffiliations_ = std::move(indexed);
+    membershipSnapshotReady_ = true;
+    return true;
 }
 
 void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion)
@@ -304,10 +393,15 @@ void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion
     if (!receiver || !completion)
         return;
 
+    if (!membershipDiscoveryEnabled_) {
+        completion(false, {}, tr("OMEMO membership discovery is not enabled for this room"));
+        return;
+    }
+
     membershipRequests_.append({ QPointer<QObject>(receiver), std::move(completion) });
-    for (const auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
+    for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
         if (!memberListFresh(membershipUpdated_.value(int(affiliation))))
-            getItemsByAffiliation(affiliation);
+            startMemberAffiliationQuery(affiliation, false);
     }
     completeMemberRequests();
 }
@@ -318,48 +412,47 @@ void MUCManager::completeMemberRequests(const QString &error)
         return;
 
     QString failure = error;
-    QSet<QString> jids;
     if (failure.isEmpty()) {
-        for (const auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
-            if (!memberListFresh(membershipUpdated_.value(int(affiliation)))
-                || membershipInFlight_.contains(int(affiliation)))
-                return; // Still retrieving or refreshing the snapshot.
-            for (const auto &item : membershipLists_.value(int(affiliation))) {
-                const Jid real = item.jid();
-                if (!real.isValid() || real.node().isEmpty() || real.bare().isEmpty()) {
-                    failure = tr("A MUC affiliation entry has no real JID");
-                    break;
-                }
-                jids.insert(real.bare());
-            }
-            if (!failure.isEmpty())
-                break;
+        if (!membershipDiscoveryEnabled_) {
+            failure = tr("OMEMO membership discovery was disabled");
+        } else if (!membershipSnapshotReady_) {
+            if (!membershipInFlight_.isEmpty() || !memberListsFresh())
+                return; // A complete, current snapshot is still pending.
+            buildMemberSnapshot(&failure);
+        } else if (!memberListsFresh()) {
+            return; // The next request schedules an explicit refresh.
         }
     }
+    if (failure.isEmpty() && !membershipSnapshotReady_)
+        return;
 
-    QList<Jid> recipients;
-    if (failure.isEmpty()) {
-        QStringList sorted = jids.values();
-        sorted.sort();
-        recipients.reserve(sorted.size());
-        for (const auto &jid : std::as_const(sorted))
-            recipients.append(Jid(jid));
-    }
-    // A callback may reenter this manager or destroy its room.
+    const bool succeeded = failure.isEmpty();
+    const QList<Jid> recipients = succeeded ? membershipRecipients_ : QList<Jid>();
+    // Callbacks can synchronously destroy the manager or start another request.
     auto requests = std::move(membershipRequests_);
     membershipRequests_.clear();
+    QPointer<MUCManager> alive(this);
     for (auto &request : requests) {
         if (request.receiver)
-            request.completion(failure.isEmpty(), recipients, failure);
+            request.completion(succeeded, recipients, failure);
+        if (!alive)
+            return;
     }
 }
 
 void MUCManager::invalidateMemberCache()
 {
+    // Nothing is allocated, scanned or invalidated in an ordinary room.
+    if (!membershipDiscoveryEnabled_ && membershipRequests_.isEmpty()
+        && membershipLists_.isEmpty() && membershipInFlight_.isEmpty())
+        return;
     ++membershipGeneration_;
     membershipInFlight_.clear();
     membershipLists_.clear();
     membershipUpdated_.clear();
+    membershipAffiliations_.clear();
+    membershipRecipients_.clear();
+    membershipSnapshotReady_ = false;
     completeMemberRequests(tr("The MUC membership snapshot is no longer valid"));
 }
 
@@ -659,19 +752,39 @@ void MUCManager::action_finished()
 void MUCManager::getItemsByAffiliation_finished()
 {
     auto *task = static_cast<MUCItemsTask *>(sender());
-    if (task->property("membershipGeneration").toULongLong() != membershipGeneration_)
-        return; // Ignore an old MUC connection's response.
+    if (!task->property("membershipTracked").toBool()) {
+        // Same behavior as before the OMEMO membership cache was added.
+        if (task->success())
+            emit getItemsByAffiliation_success(task->affiliation(), task->items());
+        else
+            emit getItemsByAffiliation_error(task->affiliation(), task->statusCode(), task->statusString());
+        return;
+    }
+
     const int affiliation = int(task->affiliation());
+    const bool requestedByUi = task->property("membershipUiRequested").toBool();
+    const bool current = membershipDiscoveryEnabled_
+        && task->property("membershipGeneration").toULongLong() == membershipGeneration_
+        && membershipInFlight_.value(affiliation) == task;
+    if (!current) {
+        // The old IQ belongs to a previous connection/discovery generation.
+        if (requestedByUi)
+            emit getItemsByAffiliation_error(task->affiliation(), 0, tr("MUC membership request was cancelled"));
+        return;
+    }
     membershipInFlight_.remove(affiliation);
     if (task->success()) {
         membershipLists_.insert(affiliation, task->items());
         membershipUpdated_.insert(affiliation, QDateTime::currentDateTimeUtc());
-        emit getItemsByAffiliation_success(task->affiliation(), task->items());
+        // Updating the administrative UI remains a fresh query, not a cached reply.
+        if (requestedByUi)
+            emit getItemsByAffiliation_success(task->affiliation(), task->items());
         completeMemberRequests();
     } else {
         membershipLists_.remove(affiliation);
         membershipUpdated_.remove(affiliation);
-        emit getItemsByAffiliation_error(task->affiliation(), task->statusCode(), task->statusString());
+        if (requestedByUi)
+            emit getItemsByAffiliation_error(task->affiliation(), task->statusCode(), task->statusString());
         completeMemberRequests(task->statusString().isEmpty()
                                    ? tr("Could not retrieve the MUC membership list")
                                    : task->statusString());
