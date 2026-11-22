@@ -56,96 +56,118 @@
 class EncryptedHttpPublication final : public QObject {
 public:
     using Completion = std::function<void(const XMPP::Reference &, const QString &)>;
+    using Progress = std::function<void(qint64)>;
     EncryptedHttpPublication(XMPP::Client *client, FileSharingItem *item, QObject *parent) :
         QObject(parent), client_(client), item_(item), plaintext_(item ? item->localFilePath() : QString()),
-        encrypted_(&plaintext_, XMPP::StatelessFileSharing::Cipher::Aes256Gcm)
-    {
-    }
+        encrypted_(&plaintext_, XMPP::StatelessFileSharing::Cipher::Aes256Gcm) { }
 
     ~EncryptedHttpPublication() override
     {
-        // Cancel the uploader before its QIODevice source is destroyed.
+        // The upload source must outlive the network operation.
         if (uploader_)
             delete uploader_.data();
     }
 
-    void start(std::function<void(qint64)> progress, Completion completed)
+    void abandonUi()
+    {
+        // A closed dialog cannot receive progress or completion, but the
+        // HTTP upload must retain its QIODevice source until it finishes.
+        progress_ = {};
+        completed_ = {};
+        if (client_ && uploader_)
+            setParent(client_);
+        else
+            deleteLater();
+    }
+
+    void start(Progress progress, Completion completed)
     {
         using namespace XMPP::StatelessFileSharing;
-        auto fail = [&](const QString &message) {
-            completed({}, message);
-        };
+        progress_ = std::move(progress);
+        completed_ = std::move(completed);
         if (!client_ || !item_) {
-            fail(tr("File or account was closed"));
+            report({}, tr("File or account was closed"));
             return;
         }
         const auto size = item_->fileSize();
         if (!size || !cipherSupported(Cipher::Aes256Gcm)) {
-            fail(tr("AES-256-GCM is unavailable or the file size is unknown"));
+            report({}, tr("AES-256-GCM is unavailable or the file size is unknown"));
             return;
         }
         const auto wireSize = encryptedSize(Cipher::Aes256Gcm, *size);
         if (!wireSize || !plaintext_.open(QIODevice::ReadOnly) || !encrypted_.open(QIODevice::ReadOnly)) {
-            fail(tr("Cannot open the file for encrypted upload"));
+            report({}, tr("Cannot open the file for encrypted upload"));
             return;
         }
-        // Deliberately do not advertise the original name or media type to
-        // the HTTP upload service. The original metadata is in OMEMO instead.
+        // Never disclose the original filename/media type to the HTTP host.
         const auto opaqueName = QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".bin");
         uploader_ = client_->httpFileUploadManager()->upload(
             &encrypted_, *wireSize, opaqueName, QStringLiteral("application/octet-stream"));
         if (!uploader_) {
-            fail(tr("HTTP upload service is unavailable"));
+            report({}, tr("HTTP upload service is unavailable"));
             return;
         }
-        connect(uploader_, &XMPP::HttpFileUpload::progress, this,
-                [progress](qint64 bytes, qint64) { progress(bytes); });
-        connect(uploader_, &XMPP::HttpFileUpload::finished, this,
-                [this, completed = std::move(completed)]() {
-                    if (!uploader_->success() || !encrypted_.finished()) {
-                        completed({}, uploader_->statusString().isEmpty()
-                                          ? tr("Encrypted HTTP upload did not complete")
-                                          : uploader_->statusString());
-                        uploader_->deleteLater();
-                        uploader_.clear();
-                        return;
-                    }
-                    QUrl url(uploader_->getHttpSlot().get.url);
-                    // aesgcm: URLs are resolved as HTTPS by AesGcmUrl::parse().
-                    // An HTTP-only service cannot carry an interoperable link.
-                    if (!url.isValid() || url.scheme() != QLatin1String("https")
-                        || url.host().isEmpty() || !item_) {
-                        completed({}, tr("Encrypted sharing requires an HTTPS download URL"));
-                        uploader_->deleteLater();
-                        uploader_.clear();
-                        return;
-                    }
-                    url.setScheme(QStringLiteral("aesgcm"));
-                    url.setFragment(QString::fromLatin1((encrypted_.iv() + encrypted_.key()).toHex()));
-                    if (!AesGcmUrl::parse(url)) {
-                        completed({}, tr("The encrypted file URL is invalid"));
-                        uploader_->deleteLater();
-                        uploader_.clear();
-                        return;
-                    }
-                    const QString source = url.toString(QUrl::FullyEncoded);
-                    XMPP::Reference reference(XMPP::Reference::Data, source);
-                    XMPP::MediaSharing sharing;
-                    sharing.file = item_->fileMetadata(); // original metadata, only inside OMEMO
-                    sharing.sources = { source }; // never include plaintext HTTP or Jingle
-                    reference.setMediaSharing(sharing);
-                    completed(reference, {});
-                    uploader_->deleteLater();
-                    uploader_.clear();
-                });
+        connect(uploader_, &XMPP::HttpFileUpload::progress, this, [this](qint64 bytes, qint64) {
+            if (progress_)
+                progress_(bytes);
+        });
+        connect(uploader_, &XMPP::HttpFileUpload::finished, this, [this]() {
+            // Drop ownership of the uploader before delivering the callback:
+            // finish() may close/delete the entire sharing dialog.
+            auto *upload = uploader_.data();
+            if (!upload)
+                return;
+            const bool success = upload->success() && encrypted_.finished();
+            const QString error = upload->statusString();
+            const QString getUrl = success ? upload->getHttpSlot().get.url : QString();
+            uploader_.clear();
+            upload->deleteLater();
+            if (!success) {
+                report({}, error.isEmpty() ? tr("Encrypted HTTP upload did not complete") : error);
+                return;
+            }
+            QUrl url(getUrl);
+            // aesgcm: downloads use HTTPS, so never construct such a URL from
+            // an HTTP-only slot.
+            if (!url.isValid() || url.scheme() != QLatin1String("https")
+                || url.host().isEmpty() || !item_) {
+                report({}, tr("Encrypted sharing requires an HTTPS download URL"));
+                return;
+            }
+            url.setScheme(QStringLiteral("aesgcm"));
+            url.setFragment(QString::fromLatin1((encrypted_.iv() + encrypted_.key()).toHex()));
+            if (!AesGcmUrl::parse(url)) {
+                report({}, tr("The encrypted file URL is invalid"));
+                return;
+            }
+            const QString source = url.toString(QUrl::FullyEncoded);
+            XMPP::Reference reference(XMPP::Reference::Data, source);
+            XMPP::MediaSharing sharing;
+            sharing.file = item_->fileMetadata(); // plaintext metadata goes inside OMEMO 2 SCE
+            sharing.sources = { source }; // never expose a plaintext/Jingle fallback
+            reference.setMediaSharing(sharing);
+            report(reference, {});
+        });
     }
 
 private:
+    void report(const XMPP::Reference &ref, const QString &error)
+    {
+        auto done = std::move(completed_);
+        completed_ = {};
+        progress_ = {};
+        deleteLater();
+        if (done)
+            done(ref, error);
+    }
+
     QPointer<XMPP::Client> client_;
     QPointer<FileSharingItem> item_;
     QFile plaintext_;
     XMPP::StatelessFileSharing::EncryptingDevice encrypted_;
     QPointer<XMPP::HttpFileUpload> uploader_;
+    Progress progress_;
+    Completion completed_;
 };
 
 FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
@@ -297,7 +319,13 @@ void FileShareDlg::publish()
     }
 }
 
-FileShareDlg::~FileShareDlg() { delete ui; }
+FileShareDlg::~FileShareDlg()
+{
+    const auto jobs = findChildren<EncryptedHttpPublication *>(QString(), Qt::FindDirectChildrenOnly);
+    for (auto *job : jobs)
+        job->abandonUi();
+    delete ui;
+}
 
 void FileShareDlg::finish()
 {
