@@ -139,6 +139,7 @@ signals:
     void unreadTailChanged(bool pending);
     void contactMenuRequested(const QString &nick, const QPoint &globalPosition);
     void replyRequested(const ChatReply &reply);
+    void quoteTextRequested(const QString &text);
     void forwardMessageRequested(const QString &messageId, const QString &sender, const QString &text);
     void editMessageRequested(const QString &messageId, const QString &text);
     void deleteMessageLocallyRequested(qint64 historyId, const QString &clientId, bool local);

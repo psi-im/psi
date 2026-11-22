@@ -3850,6 +3850,64 @@ void MamChatWidget::openMediaViewer(const QImage &image, const QString &name, co
         MediaViewer::showImage(image, name);
 }
 
+namespace {
+// The character cell under the pointer. cursorForPosition() alone is not
+// enough: a click next to a selection maps to the nearest boundary position,
+// and a click below the last line must not quote the selection.
+template <typename TextEdit>
+bool pointInCharacterCell(const TextEdit *edit, const QPoint &point, int position)
+{
+    QTextDocument *document = edit->document();
+    if (position < 0 || position >= document->characterCount() - 1)
+        return false;
+    const QChar ch = document->characterAt(position);
+    if (ch == QChar::ParagraphSeparator || ch == QChar::LineSeparator)
+        return false;
+
+    QTextCursor cursor(document);
+    cursor.setPosition(position);
+    const QRect first = edit->cursorRect(cursor);
+    cursor.setPosition(position + 1);
+    const QRect second = edit->cursorRect(cursor);
+    const int   left   = qMin(first.left(), second.left());
+    const int   right  = qMax(first.left(), second.left());
+    const int   top    = qMin(first.top(), second.top());
+    const int   bottom = qMax(first.bottom(), second.bottom());
+    return point.x() >= left && point.x() < right && point.y() >= top && point.y() <= bottom;
+}
+
+// True when the context menu was opened over selected text. Qt keeps the
+// selection when a context menu is opened, so a right click on the padding of
+// the same text widget must not be mistaken for a click on the selection.
+template <typename TextEdit> bool contextMenuInsideSelection(const TextEdit *edit, const QPoint &globalPosition)
+{
+    const QTextCursor selection = edit->textCursor();
+    if (!selection.hasSelection())
+        return false;
+
+    const QPoint point = edit->viewport()->mapFromGlobal(globalPosition);
+    const int    at    = edit->cursorForPosition(point).position();
+    const int    start = selection.selectionStart();
+    const int    end   = selection.selectionEnd();
+    if (at < start || at > end)
+        return false;
+
+    // cursorForPosition() returns an insertion point, which may be on either
+    // side of the character under the pointer. Check both adjacent characters.
+    return (at > start && pointInCharacterCell(edit, point, at - 1))
+        || (at < end && pointInCharacterCell(edit, point, at));
+}
+
+// QTextCursor::selectedText() uses paragraph separators for line breaks.
+QString selectedPlainText(const QTextCursor &cursor)
+{
+    QString text = cursor.selectedText();
+    text.replace(QChar::ParagraphSeparator, QLatin1Char('\n'));
+    text.replace(QChar::LineSeparator, QLatin1Char('\n'));
+    return text;
+}
+}
+
 QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *target, const QPoint &globalPosition)
 {
     const int at = indexOfKey(key);
@@ -3875,7 +3933,26 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
             break;
         }
     }
-    auto *copy = menu->addAction(tr("Copy"));
+    const auto textWidgetClicked
+        = [target](const auto *widget) { return widget && (target == widget || target == widget->viewport()); };
+    // A context menu opened over a text selection quotes only that fragment.
+    QString selectedQuoteText;
+    if (messageBody) {
+        if (selectedCodeView && messageBody->isAncestorOf(selectedCodeView.data())
+            && textWidgetClicked(selectedCodeView.data())
+            && contextMenuInsideSelection(selectedCodeView.data(), globalPosition)) {
+            selectedQuoteText = selectedPlainText(selectedCodeView->textCursor());
+        } else if (selectedTextView && messageBody->isAncestorOf(selectedTextView.data())
+                   && textWidgetClicked(selectedTextView.data())
+                   && contextMenuInsideSelection(selectedTextView.data(), globalPosition)) {
+            if (auto *psiText = qobject_cast<PsiTextView *>(selectedTextView.data()))
+                selectedQuoteText = psiText->getPlainText();
+            else
+                selectedQuoteText = selectedPlainText(selectedTextView->textCursor());
+        }
+    }
+    const bool quoteSelection = !selectedQuoteText.trimmed().isEmpty();
+    auto      *copy           = menu->addAction(tr("Copy"));
     copy->setObjectName(QStringLiteral("mamCopyMessage"));
     connect(copy, &QAction::triggered, this, [this, key, selectedTextView, selectedCodeView, selectedLabel] {
         if (selectedLabel && selectedLabel->hasSelectedText())
@@ -3894,14 +3971,20 @@ QMenu *MamChatWidget::createMessageContextMenu(const QString &key, QWidget *targ
     quote->setObjectName(QStringLiteral("mamQuoteMessage"));
     // Group chats without stanza-ids still allow a plain-text quote (no reply
     // reference); see applyMessageReply().
-    quote->setEnabled((groupChat_ || !reactionTarget(items_.at(at).message).isEmpty())
+    quote->setEnabled((quoteSelection || groupChat_ || !reactionTarget(items_.at(at).message).isEmpty())
                       && !isRetracted(items_.at(at)));
     if (!quote->isEnabled())
         quote->setToolTip(tr("The message has no reply identifier assigned by its sender or room."));
-    connect(quote, &QAction::triggered, this, [this, key] {
+    connect(quote, &QAction::triggered, this, [this, key, quoteSelection, selectedQuoteText] {
         const int at = indexOfKey(key);
         if (at < 0 || isRetracted(items_.at(at)))
             return;
+        if (quoteSelection) {
+            // XEP-0461 can only reference a whole message, so a fragment is
+            // sent as plain XEP-0393 text without a reply reference.
+            emit quoteTextRequested(selectedQuoteText);
+            return;
+        }
         const auto &message = items_.at(at).message;
         emit replyRequested({reactionTarget(message), message.userId(), message.nick(), plainMessage(items_.at(at)),
                              message.dateTime()});

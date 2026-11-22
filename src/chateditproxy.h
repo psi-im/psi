@@ -43,6 +43,7 @@ public:
     void setReply(const ChatReply &);
     void clearReply();
     void applyReply(XMPP::Message &);
+    void insertAsQuote(const QString &text);
 
 signals:
     /**
