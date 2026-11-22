@@ -521,7 +521,7 @@ PsiEncryptionController::methods(XMPP::EncryptionMethod::Capabilities capabiliti
     QList<MethodInfo> result;
 
     if ((capabilities == XMPP::EncryptionMethod::Capabilities {}
-         || capabilities.testFlag(XMPP::EncryptionMethod::XmppStanza))
+         || capabilities == XMPP::EncryptionMethod::Capabilities(XMPP::EncryptionMethod::XmppStanza))
         && account_->hasPgp() && PsiOptions::instance()->getOption("plugins.auto-load.openpgp", false).toBool()) {
         MethodInfo pgp;
         pgp.id             = QString::fromLatin1(OpenPgpMethodId);
