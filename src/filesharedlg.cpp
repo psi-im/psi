@@ -152,8 +152,8 @@ void FileShareDlg::publish()
     for (const auto &entry : std::as_const(encryptedToPublish)) {
         auto *publisher = entry.first;
         auto *item = entry.second;
-        publisher->publishEncrypted(
-            myJid, this,
+        publisher->publish(
+            myJid, FileSharingItem::PublicationMode::Aes256Gcm, this,
             [this, item](const XMPP::Reference &reference, const QString &error) {
                 if (reference.isValid() && reference.mediaSharing().isValid()) {
                     item->setProperty("shared", true);
