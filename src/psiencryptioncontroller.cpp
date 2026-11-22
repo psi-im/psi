@@ -13,6 +13,7 @@
 #include "iconset.h"
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_client.h"
+#include "iris/jingle-session.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "userlist.h"
@@ -623,32 +624,34 @@ QString PsiEncryptionController::selectedMethod(const XMPP::Jid &jid) const
     return {};
 }
 
+void PsiEncryptionController::configureJingleSession(XMPP::Jingle::Session *session) const
+{
+    if (!session)
+        return;
+    const auto methodId = selectedMethod(session->peer());
+    // The choice and local preference originate in Psi's UI. Iris binds the
+    // method to an encryption session and validates every Jingle transport.
+    session->setEncryptionMethod(methodId);
+    session->setEndToEndPreferred(!methodId.isEmpty());
+    session->setEndToEndRequired(jingleEndToEndRequired(session->peer()));
+}
+
 bool PsiEncryptionController::jingleEndToEndRequired(const XMPP::Jid &jid) const
 {
-#ifdef IRIS_ENABLE_OMEMO
-    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool()
-        && selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
-#else
-    Q_UNUSED(jid)
-    return false;
-#endif
+    return !selectedMethod(jid).isEmpty()
+        && PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool();
 }
 
 bool PsiEncryptionController::jingleEndToEndPreferred(const XMPP::Jid &jid) const
 {
-#ifdef IRIS_ENABLE_OMEMO
-    return selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
-#else
-    Q_UNUSED(jid)
-    return false;
-#endif
+    return !selectedMethod(jid).isEmpty();
 }
 
 bool PsiEncryptionController::requestJingleTrustDecision(const XMPP::Jid &jid, QWidget *parent,
                                                          std::function<void()> completion)
 {
 #ifdef IRIS_ENABLE_OMEMO
-    if (!jingleEndToEndPreferred(jid))
+    if (selectedMethod(jid) != XMPP::OmemoEncryption::methodId())
         return false;
     // The call goes on whatever the answer is; the end-to-end policy decides what it may use.
     return requestTrustDecision(XMPP::OmemoEncryption::methodId(), jid.withResource(QString()), false, parent,

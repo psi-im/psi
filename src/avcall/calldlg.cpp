@@ -502,10 +502,8 @@ public:
     {
         auto jingleManager = account->client()->jingleManager();
         auto jingle        = sid.isEmpty() ? jingleManager->newSession(target) : jingleManager->newSession(target, sid);
-        if (jingle) {
-            jingle->setEndToEndRequired(endToEndRequired(target));
-            jingle->setEndToEndPreferred(endToEndPreferred(target));
-        }
+        if (jingle && account && account->encryptionController())
+            account->encryptionController()->configureJingleSession(jingle);
         auto app = jingle
             ? qobject_cast<SXE::Application *>(jingle->newContent(SXE::NS_SVG_WHITEBOARD, whiteboardSenders))
             : nullptr;
@@ -529,10 +527,8 @@ public:
     void bindWhiteboardSession(Jingle::Session *jingle)
     {
         wbSession = jingle;
-        if (jingle->role() == Jingle::Origin::Responder) {
-            jingle->setEndToEndRequired(endToEndRequired(jingle->peer()));
-            jingle->setEndToEndPreferred(endToEndPreferred(jingle->peer()));
-        }
+        if (jingle->role() == Jingle::Origin::Responder && account && account->encryptionController())
+            account->encryptionController()->configureJingleSession(jingle);
         watchSecurity(jingle);
         connect(jingle, &Jingle::Session::activated, this, [this] {
             stopRinging();
@@ -718,12 +714,6 @@ public:
     {
         return account && account->encryptionController()
             && account->encryptionController()->jingleEndToEndRequired(peer);
-    }
-
-    bool endToEndPreferred(const XMPP::Jid &peer) const
-    {
-        return account && account->encryptionController()
-            && account->encryptionController()->jingleEndToEndPreferred(peer);
     }
 
     // The protection of the session, shown under the status.

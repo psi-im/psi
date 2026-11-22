@@ -44,17 +44,14 @@ namespace ICE    = XMPP::Jingle::ICE;
 
 static MediaConfiguration *g_config = new MediaConfiguration;
 
-// The user's policy for this contact: calls only with end-to-end encryption verified by OMEMO.
-static bool endToEndRequired(PsiAccount *account, const XMPP::Jid &peer)
+static void configureEncryption(PsiAccount *account, Jingle::Session *session)
 {
-    return account && account->encryptionController() && account->encryptionController()->jingleEndToEndRequired(peer);
+    if (account && session) {
+        if (auto *controller = account->encryptionController())
+            controller->configureJingleSession(session);
+    }
 }
 
-// Whiteboards added to a call with an OMEMO contact protect their payload when possible.
-static bool endToEndPreferred(PsiAccount *account, const XMPP::Jid &peer)
-{
-    return account && account->encryptionController() && account->encryptionController()->jingleEndToEndPreferred(peer);
-}
 static QString resolvedInputDevice(const QList<PsiMedia::Device> &devices, const QString &preferred)
 {
     for (const auto &device : devices)
@@ -249,8 +246,7 @@ public:
         session  = incomingSession;
         peer     = session->peer();
         incoming = true;
-        session->setEndToEndRequired(endToEndRequired(manager ? manager->pa : nullptr, peer));
-        session->setEndToEndPreferred(endToEndPreferred(manager ? manager->pa : nullptr, peer));
+        configureEncryption(manager ? manager->pa : nullptr, session);
         setupSession();
 
         bool audio = false;
@@ -368,10 +364,7 @@ public:
         manager->applyNetworkConfiguration();
         session = jmiId.isEmpty() ? manager->jingleManager->newSession(peer)
                                   : manager->jingleManager->newSession(peer, jmiId);
-        if (session) {
-            session->setEndToEndRequired(endToEndRequired(manager->pa, peer));
-            session->setEndToEndPreferred(endToEndPreferred(manager->pa, peer));
-        }
+        configureEncryption(manager->pa, session);
         if (!session) {
             if (!jmiId.isEmpty() && jmiProceedSent)
                 sendJmiFinish(QStringLiteral("expired"), QString());
