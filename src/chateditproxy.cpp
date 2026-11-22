@@ -94,6 +94,15 @@ void ChatEditProxy::clearReply()
     replyPreview_->hide();
 }
 
+// Insert selected message text as an XEP-0393 quote. A selection quote is
+// plain body text, not an XEP-0461 reply, so drop any pending reply to keep
+// the outgoing message unambiguous.
+void ChatEditProxy::insertAsQuote(const QString &text)
+{
+    clearReply();
+    chatEdit()->insertAsQuote(text);
+}
+
 void ChatEditProxy::refreshReplyTimestamp()
 {
     replyTimestampTimer_->stop();

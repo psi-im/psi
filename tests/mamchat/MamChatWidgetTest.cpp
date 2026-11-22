@@ -887,6 +887,11 @@ private slots:
             QApplication::sendEvent(row, &event);
             return chat.findChild<QMenu *>("mamMessageContextMenu");
         };
+        const auto openMenuAt = [&](const QPoint &point) -> QMenu * {
+            QContextMenuEvent event(QContextMenuEvent::Mouse, point, body->viewport()->mapToGlobal(point));
+            QApplication::sendEvent(body->viewport(), &event);
+            return chat.findChild<QMenu *>("mamMessageContextMenu");
+        };
         chat.selectMessageRange(0, 0);
         chat.copySelectedMessages();
         const auto fullCopy = QApplication::clipboard()->text();
@@ -901,17 +906,33 @@ private slots:
         cursor.setPosition(0);
         cursor.setPosition(5, QTextCursor::KeepAnchor);
         body->setTextCursor(cursor);
-        menu = openMenu();
+        QTextCursor insideSelection = body->textCursor();
+        insideSelection.setPosition(2);
+        menu = openMenuAt(body->cursorRect(insideSelection).center());
         QVERIFY(menu);
         menu->findChild<QAction *>("mamCopyMessage")->trigger();
         QCOMPARE(QApplication::clipboard()->text(), QString("First"));
         QSignalSpy quote(&chat, &MamChatWidget::replyRequested);
+        QSignalSpy quoteText(&chat, &MamChatWidget::quoteTextRequested);
+        menu->findChild<QAction *>("mamQuoteMessage")->trigger();
+        QCOMPARE(quoteText.size(), 1);
+        QCOMPARE(quoteText.first().first().toString(), QString("First"));
+        QCOMPARE(quote.size(), 0);
+        delete menu;
+
+        // Qt keeps the selection while a context menu is opened. Right-clicking
+        // outside it still quotes the complete message.
+        QTextCursor outsideSelection = body->textCursor();
+        outsideSelection.setPosition(10);
+        menu = openMenuAt(body->cursorRect(outsideSelection).center());
+        QVERIFY(menu);
         menu->findChild<QAction *>("mamQuoteMessage")->trigger();
         QCOMPARE(quote.size(), 1);
         const auto reply = qvariant_cast<ChatReply>(quote.first().first());
         QCOMPARE(reply.id, QString("origin"));
         QCOMPARE(reply.to, QString("peer@example.org/phone"));
         QCOMPARE(reply.text, QString("First message"));
+        QCOMPARE(quoteText.size(), 1);
         QSignalSpy forwarded(&chat, &MamChatWidget::forwardMessageRequested);
         menu->findChild<QAction *>("mamForwardMessage")->trigger();
         QCOMPARE(forwarded.size(), 1);

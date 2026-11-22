@@ -1008,6 +1008,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     connect(nativeTimeline_, &MamChatWidget::editMessageRequested, ui_.mle->chatEdit(), &ChatEdit::startCorrection);
     connect(nativeTimeline_, &MamChatWidget::contactMenuRequested, this, &GCMainDlg::showContactContextMenu);
     connect(nativeTimeline_, &MamChatWidget::replyRequested, ui_.mle, &ChatEditProxy::setReply);
+    connect(nativeTimeline_, &MamChatWidget::quoteTextRequested, ui_.mle, &ChatEditProxy::insertAsQuote);
     connect(nativeTimeline_, &MamChatWidget::forwardMessageRequested, this,
             [this](const QString &id, const QString &sender, const QString &text) {
         account()->psi()->invokeForwardMessage(id, XMPP::Jid(sender), text);
