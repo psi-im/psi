@@ -225,7 +225,7 @@ MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account)
     // Invalidate when current occupant presence reveals a changed affiliation.
     // Offline changes are not announced; the snapshot also expires on use.
     connect(client(), &Client::groupChatPresence, this, [this](const Jid &occupant, const Status &status) {
-        if (occupant.bare() != room_.bare() || !status.hasMUCItem() || membershipLists_.isEmpty())
+        if (occupant.bare() != room_.bare() || !status.hasMUCItem() || membershipLists_.size() < 3)
             return;
         const Jid real = status.mucItem().jid();
         if (!real.isValid() || real.node().isEmpty())
@@ -321,8 +321,9 @@ void MUCManager::completeMemberRequests(const QString &error)
     QSet<QString> jids;
     if (failure.isEmpty()) {
         for (const auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner }) {
-            if (!memberListFresh(membershipUpdated_.value(int(affiliation))))
-                return; // Still retrieving a complete snapshot.
+            if (!memberListFresh(membershipUpdated_.value(int(affiliation)))
+                || membershipInFlight_.contains(int(affiliation)))
+                return; // Still retrieving or refreshing the snapshot.
             for (const auto &item : membershipLists_.value(int(affiliation))) {
                 const Jid real = item.jid();
                 if (!real.isValid() || real.node().isEmpty() || real.bare().isEmpty()) {
