@@ -184,6 +184,7 @@ private:
     Ui::GroupChatDlg ui_;
 
     bool lastWasEncrypted_ = false;
+    quint64 omemoRoomDiscoGeneration_ = 0;
     bool omemoRoomInfoKnown_ = false;
     bool omemoMembersOnly_ = false;
     bool omemoNonAnonymous_ = false;
