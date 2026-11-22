@@ -1590,8 +1590,10 @@ void GCMainDlg::updateMucName()
 
 void GCMainDlg::updateConfiguration()
 {
-    // No encrypted sends until the room's mandatory MUC features are known.
+    // No encrypted sends or affiliation monitoring while room policy is
+    // being rechecked after a configuration change.
     omemoRoomInfoKnown_ = false;
+    updateOmemoAction();
     JT_DiscoInfo *disco = new JT_DiscoInfo(
         account()->client()->rootTask());
     disco->setProperty("omemoRoomDiscoGeneration", QVariant::fromValue(++omemoRoomDiscoGeneration_)); // FIXME in fact xep says we should do this before entering.
