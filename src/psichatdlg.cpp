@@ -547,7 +547,7 @@ void PsiChatDlg::shareFiles(const QMimeData *data)
 #ifdef IRIS_ENABLE_OMEMO
     auto *controller = account()->encryptionController();
     const auto method = XMPP::OmemoEncryption::methodId();
-    security.available = controller && controller->hasMethod(method);
+    security.available = !roomOccupantChat_ && controller && controller->hasMethod(method);
     security.selected = security.available && selectedEncryptionMethod_ == method;
 #endif
     const auto finished = [this](const QList<XMPP::Reference> &&refs, const QString &description, bool encryptFile) {
@@ -560,14 +560,11 @@ void PsiChatDlg::shareFiles(const QMimeData *data)
                                 "Its key was not sent."));
                 return;
             }
-            if (selectedEncryptionMethod_ != method)
-                setEncryptionMethod(method, true);
-            // The selected method is not proof that a usable stanza session
-            // exists. Never release an aesgcm key without one.
-            if (selectedEncryptionMethod_ != method || !encryptionSession_) {
-                appendSysMsg(tr("Cannot send the encrypted file key: no OMEMO session is available."));
-                return;
-            }
+            // One-shot OMEMO 2 is required for SCE protection of references.
+            // Do not use the chat's long-lived session: it could negotiate
+            // legacy OMEMO and expose the aesgcm key outside the body.
+            sendEncryptedFileShare(refs, description, true);
+            return;
 #else
             appendSysMsg(tr("This build cannot send an encrypted file key."));
             return;
@@ -583,6 +580,61 @@ void PsiChatDlg::shareFiles(const QMimeData *data)
 }
 
 
+
+void PsiChatDlg::sendEncryptedFileShare(const QList<XMPP::Reference> &refs, const QString &description,
+                                           bool allowTrustPrompt)
+{
+#ifdef IRIS_ENABLE_OMEMO
+    auto *controller = account()->encryptionController();
+    auto *client = account()->client();
+    const QString method = XMPP::OmemoEncryption::methodId();
+    if (!controller || !controller->hasMethod(method) || !client || !client->hasStream()) {
+        appendSysMsg(tr("The encrypted file key was not sent: OMEMO is unavailable."));
+        return;
+    }
+
+    Message message(jid());
+    message.setType(Message::Type::Chat);
+    message.setId(client->genUniqueId());
+    message.setTimeStamp(QDateTime::currentDateTime());
+    message.setBody(description);
+    message.setReferences(refs);
+    message.setWasEncrypted(true);
+    message.setEncryptionProtocol(method);
+
+    XMPP::EncryptionContext context;
+    context.recipients.append(controller->capabilityJid(jid()));
+    context.options.insert(QStringLiteral("omemoProtocol"), QStringLiteral("omemo2"));
+    QPointer<PsiChatDlg> guard(this);
+    account()->sendMessageWithEncryptionContext(
+        message, method, context,
+        [guard, refs, description, message, allowTrustPrompt](bool success, bool untrusted, const QString &error) {
+            if (!guard)
+                return;
+            if (success) {
+                guard->appendMessage(message, true);
+                return;
+            }
+            auto *controller = guard->account()->encryptionController();
+            if (untrusted && allowTrustPrompt && controller) {
+                const bool reviewing = controller->requestTrustDecision(
+                    XMPP::OmemoEncryption::methodId(), guard->jid(), true, guard,
+                    [guard, refs, description](bool retry) {
+                        if (guard && retry)
+                            guard->sendEncryptedFileShare(refs, description, false);
+                    }, 0, QStringLiteral("omemo2"));
+                if (reviewing)
+                    return;
+            }
+            guard->appendSysMsg(guard->tr("The encrypted file key was NOT sent: %1").arg(error));
+        });
+#else
+    Q_UNUSED(refs)
+    Q_UNUSED(description)
+    Q_UNUSED(allowTrustPrompt)
+    appendSysMsg(tr("OMEMO 2 is not available for encrypted file sharing."));
+#endif
+}
 
 void PsiChatDlg::setEncryptionMethod(const QString &methodId, bool persist)
 {
