@@ -6647,11 +6647,9 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 {
 #ifdef GROUPCHAT
     GCMainDlg *w = findDialog<GCMainDlg *>(Jid(j.bare()));
-    if (!w)
-        return;
-
     if (j.resource().isEmpty()) {
-        w->gcSelfPresence(s);
+        if (w)
+            w->gcSelfPresence(s);
         return;
     }
     GCContact *c = findGCContact(j);
@@ -6662,6 +6660,10 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
     }
     c->updateStatus(s);
 
+    // Even a joined room without an open GC dialog needs an occupant identity
+    // and an owner for its encrypted groupchat session.
+    if (!w)
+        return;
     w->presence(j.resource(), s);
 
     // pass through the core presence handling also (so that roster items
