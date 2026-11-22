@@ -47,8 +47,10 @@ public:
     // plaintext messages, logs or an ordinary OOB URL.
     using Callback = std::function<void(const QList<XMPP::Reference> &&, const QString &, bool encrypted)>;
     struct EncryptionOptions {
-        bool available = false;
-        bool selected = false;
+        bool available;
+        bool selected;
+        constexpr EncryptionOptions(bool available = false, bool selected = false) :
+            available(available), selected(selected) { }
     };
 
     explicit FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
