@@ -346,9 +346,17 @@ void ChatDlg::activated()
 
 void ChatDlg::dropEvent(QDropEvent *event)
 {
+    // All regular chats are PsiChatDlg today. Route drops through the same
+    // sharing settings as the chat menu and paste action.
+    if (auto *chat = qobject_cast<PsiChatDlg *>(this)) {
+        chat->shareFiles(event->mimeData());
+        return;
+    }
     FileShareDlg::shareFiles(
         account(), account()->client()->jid(), event->mimeData(),
-        [this](const QList<XMPP::Reference> &&rl, const QString &desc) { doFileShare(std::move(rl), desc); }, this);
+        [this](const QList<XMPP::Reference> &&rl, const QString &desc, bool) {
+            doFileShare(std::move(rl), desc);
+        }, this);
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent *event)
