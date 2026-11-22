@@ -1589,7 +1589,8 @@ void GCMainDlg::updateConfiguration()
     // No encrypted sends until the room's mandatory MUC features are known.
     omemoRoomInfoKnown_ = false;
     JT_DiscoInfo *disco = new JT_DiscoInfo(
-        account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
+        account()->client()->rootTask());
+    disco->setProperty("omemoRoomDiscoGeneration", QVariant::fromValue(++omemoRoomDiscoGeneration_)); // FIXME in fact xep says we should do this before entering.
     connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
     disco->get(jid());                                             // From other side we could provide the name outside.
     disco->go(true);
@@ -1598,13 +1599,15 @@ void GCMainDlg::updateConfiguration()
 void GCMainDlg::discoInfoFinished()
 {
     JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
-    if (t->success()) {
-        const auto &features = t->item().features();
-        omemoMembersOnly_ = features.test("muc_membersonly");
-        omemoNonAnonymous_ = features.test("muc_nonanonymous");
-        omemoRoomInfoKnown_ = true;
+    if (t->property("omemoRoomDiscoGeneration").toULongLong() == omemoRoomDiscoGeneration_) {
+        if (t->success()) {
+            const auto &features = t->item().features();
+            omemoMembersOnly_ = features.test("muc_membersonly");
+            omemoNonAnonymous_ = features.test("muc_nonanonymous");
+            omemoRoomInfoKnown_ = true;
+        }
+        updateOmemoAction();
     }
-    updateOmemoAction();
     const DiscoItem::Identities &i = t->item().identities();
     if (i.count() > 0) {
         d->discoMucName = i.first().name;
@@ -3099,12 +3102,13 @@ void GCMainDlg::sendMessage(Message &message)
     }
 #ifdef IRIS_ENABLE_OMEMO
     if (methodId != XMPP::OmemoEncryption::methodId() || !controller->hasMethod(methodId)) {
-#else
-    if (true) {
-#endif
         appendSysMsg(tr("The selected encryption method cannot protect a groupchat message. Nothing was sent."), true);
         return;
     }
+#else
+    appendSysMsg(tr("OMEMO is not available in this build. Nothing was sent."), true);
+    return;
+#endif
     if (d->state != Private::Connected || !omemoRoomInfoKnown_ || !omemoMembersOnly_
         || !omemoNonAnonymous_) {
         appendSysMsg(tr("OMEMO message was NOT sent: the room must advertise members-only and non-anonymous "
