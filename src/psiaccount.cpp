@@ -6465,7 +6465,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 
     GCMainDlg *chat = new GCMainDlg(this, j, d->tabManager);
     chat->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
-    connect(chat, &GCMainDlg::aSend, this, [this](Message &msg) { dj_sendMessage(msg); });
+    connect(chat, &GCMainDlg::aSend, this, [chat](Message &msg) { chat->sendMessage(msg); });
     connect(chat, &GCMainDlg::messagesRead, this, &PsiAccount::groupChatMessagesRead);
     connect(chat, &GCMainDlg::unreadStateChanged, this, &PsiAccount::mucUnreadChanged);
     connect(chat, &QObject::destroyed, this, [this] {
