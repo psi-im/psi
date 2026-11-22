@@ -3099,6 +3099,9 @@ void GCMainDlg::updateOmemoAction()
     const auto method = XMPP::OmemoEncryption::methodId();
     const bool available = controller && controller->hasMethod(method);
     const bool selected = controller && controller->selectedMethod(jid()) == method;
+    // This is the only opt-in for membership tracking. Plain MUCs never
+    // subscribe to extra presence signals or allocate affiliation snapshots.
+    d->mucManager->setMemberDiscoveryEnabled(available && selected);
     omemoAction_->setEnabled(available);
     omemoAction_->setChecked(selected);
     omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
@@ -3107,6 +3110,7 @@ void GCMainDlg::updateOmemoAction()
                                  ? tr("OMEMO requires a members-only, non-anonymous room")
                                  : tr("Encrypt the entire groupchat message for room members, including offline members"));
 #else
+    d->mucManager->setMemberDiscoveryEnabled(false);
     omemoAction_->setEnabled(false);
     omemoAction_->setChecked(false);
 #endif
@@ -3138,6 +3142,7 @@ void GCMainDlg::sendMessage(Message &message)
 
     // The membership snapshot includes offline owners, admins and members,
     // unlike the on-screen occupant roster. Errors never fall back to plain text.
+    d->mucManager->setMemberDiscoveryEnabled(true);
     d->mucManager->requestMemberJids(
         this, [this, original = Message(message)](bool ok, const QList<Jid> &members, const QString &error) {
             if (!ok || members.isEmpty()) {
