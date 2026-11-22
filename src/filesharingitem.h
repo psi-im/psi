@@ -28,6 +28,7 @@
 #include <QDateTime>
 #include <QObject>
 #include <QPointer>
+#include <functional>
 
 class FileCacheItem;
 class FileSharingChunkSource;
@@ -88,6 +89,13 @@ public:
 
     XMPP::Reference toReference() const;
     void            publish(const XMPP::Jid &myJid);
+    // An independent, one-time encrypted publication. It never changes this
+    // item's plaintext sources, hashes or persistent Jingle/file catalog.
+    // The receiver must deliver the result exclusively using end-to-end
+    // encryption (OMEMO 2 SCE), or discard it; the reference carries a key.
+    using EncryptedPublishCompletion = std::function<void(const XMPP::Reference &, const QString &)>;
+    void publishEncrypted(const XMPP::Jid &myJid, QObject *receiver, EncryptedPublishCompletion finished,
+                          std::function<void(size_t)> progress = {});
     inline bool     isPublished() const { return _published; }
 
     /**
