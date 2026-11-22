@@ -445,8 +445,16 @@ bool FileSharingItem::savePublishedFile()
     return _manager->trackExternal(_sums, QFileInfo(path), meta, FILE_TTL) != nullptr;
 }
 
-void FileSharingItem::publish(const XMPP::Jid &myJid)
+void FileSharingItem::publish(const XMPP::Jid &myJid, PublicationMode mode, QObject *receiver,
+                              PublicationCompletion finished, std::function<void(size_t)> progress)
 {
+    if (mode == PublicationMode::Aes256Gcm) {
+        // Never turn an invalid encrypted request into a plaintext upload.
+        if (!receiver || !finished)
+            return;
+        publishEncrypted(myJid, receiver, std::move(finished), std::move(progress));
+        return;
+    }
     const auto path = localFilePath();
     if (path.isEmpty())
         return;
@@ -491,7 +499,7 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
 }
 
 void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
-                                       EncryptedPublishCompletion finished,
+                                       PublicationCompletion finished,
                                        std::function<void(size_t)> progress)
 {
     // Reuse the same publication engine as publish(), but never add
