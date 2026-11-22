@@ -3101,7 +3101,8 @@ void GCMainDlg::updateOmemoAction()
     const bool selected = controller && controller->selectedMethod(jid()) == method;
     // This is the only opt-in for membership tracking. Plain MUCs never
     // subscribe to extra presence signals or allocate affiliation snapshots.
-    d->mucManager->setMemberDiscoveryEnabled(available && selected);
+    d->mucManager->setMemberDiscoveryEnabled(available && selected && omemoRoomInfoKnown_
+                                              && omemoMembersOnly_ && omemoNonAnonymous_);
     omemoAction_->setEnabled(available);
     omemoAction_->setChecked(selected);
     omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
