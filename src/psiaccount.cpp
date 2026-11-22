@@ -3098,7 +3098,8 @@ void PsiAccount::client_messageReceived(const Message &m)
     // OMEMO identity without delaying or hiding the already authenticated
     // plaintext message. The prompt itself is queued by the controller.
     if (d->encryptionController) {
-        if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()) {
+        if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()
+            && !metadata->details.value(QStringLiteral("localMucEcho")).toBool()) {
             d->encryptionController->requestTrustDecision(
                 metadata->methodId, metadata->sender, false, findChatDialog(metadata->sender), {},
                 metadata->senderDeviceId, metadata->details.value(QStringLiteral("omemoProtocol")).toString());
