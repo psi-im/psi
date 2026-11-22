@@ -19,11 +19,14 @@
 
 #include "filesharedlg.h"
 
+#include "aesgcmurl.h"
+
 #include "filesharingmanager.h"
 #include "fileutil.h"
 #include "iris/httpfileupload.h"
 #include "iris/xmpp_client.h"
 #include "iris/xmpp_message.h"
+#include "iris/xmpp_file-sharing.h"
 #include "multifiletransferdelegate.h"
 #include "multifiletransferitem.h"
 #include "multifiletransfermodel.h"
@@ -34,6 +37,9 @@
 #include "videothumbnailgenerator.h"
 
 #include <QApplication>
+#include <QFile>
+#include <QCheckBox>
+#include <QUuid>
 #include <QFileIconProvider>
 #include <QFileInfo>
 #include <QMimeData>
@@ -43,12 +49,116 @@
 #include <QScreen>
 #include <QUrl>
 
+
+// Keep the plaintext strictly local. For encrypted publications we bypass
+// FileSharingItem::publish(): it can expose an ordinary, unencrypted Jingle
+// source in addition to HTTP. Only this one ciphertext HTTP source is shared.
+class EncryptedHttpPublication final : public QObject {
+public:
+    using Completion = std::function<void(const XMPP::Reference &, const QString &)>;
+    EncryptedHttpPublication(XMPP::Client *client, FileSharingItem *item, QObject *parent) :
+        QObject(parent), client_(client), item_(item), plaintext_(item ? item->localFilePath() : QString()),
+        encrypted_(&plaintext_, XMPP::StatelessFileSharing::Cipher::Aes256Gcm)
+    {
+    }
+
+    ~EncryptedHttpPublication() override
+    {
+        // Cancel the uploader before its QIODevice source is destroyed.
+        if (uploader_)
+            delete uploader_.data();
+    }
+
+    void start(std::function<void(qint64)> progress, Completion completed)
+    {
+        using namespace XMPP::StatelessFileSharing;
+        auto fail = [&](const QString &message) {
+            completed({}, message);
+        };
+        if (!client_ || !item_) {
+            fail(tr("File or account was closed"));
+            return;
+        }
+        const auto size = item_->fileSize();
+        if (!size || !cipherSupported(Cipher::Aes256Gcm)) {
+            fail(tr("AES-256-GCM is unavailable or the file size is unknown"));
+            return;
+        }
+        const auto wireSize = encryptedSize(Cipher::Aes256Gcm, *size);
+        if (!wireSize || !plaintext_.open(QIODevice::ReadOnly) || !encrypted_.open(QIODevice::ReadOnly)) {
+            fail(tr("Cannot open the file for encrypted upload"));
+            return;
+        }
+        // Deliberately do not advertise the original name or media type to
+        // the HTTP upload service. The original metadata is in OMEMO instead.
+        const auto opaqueName = QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".bin");
+        uploader_ = client_->httpFileUploadManager()->upload(
+            &encrypted_, *wireSize, opaqueName, QStringLiteral("application/octet-stream"));
+        if (!uploader_) {
+            fail(tr("HTTP upload service is unavailable"));
+            return;
+        }
+        connect(uploader_, &XMPP::HttpFileUpload::progress, this,
+                [progress](qint64 bytes, qint64) { progress(bytes); });
+        connect(uploader_, &XMPP::HttpFileUpload::finished, this,
+                [this, completed = std::move(completed)]() {
+                    if (!uploader_->success() || !encrypted_.finished()) {
+                        completed({}, uploader_->statusString().isEmpty()
+                                          ? tr("Encrypted HTTP upload did not complete")
+                                          : uploader_->statusString());
+                        uploader_->deleteLater();
+                        uploader_.clear();
+                        return;
+                    }
+                    QUrl url(uploader_->getHttpSlot().get.url);
+                    // aesgcm: URLs are resolved as HTTPS by AesGcmUrl::parse().
+                    // An HTTP-only service cannot carry an interoperable link.
+                    if (!url.isValid() || url.scheme() != QLatin1String("https")
+                        || url.host().isEmpty() || !item_) {
+                        completed({}, tr("Encrypted sharing requires an HTTPS download URL"));
+                        uploader_->deleteLater();
+                        uploader_.clear();
+                        return;
+                    }
+                    url.setScheme(QStringLiteral("aesgcm"));
+                    url.setFragment(QString::fromLatin1((encrypted_.iv() + encrypted_.key()).toHex()));
+                    if (!AesGcmUrl::parse(url)) {
+                        completed({}, tr("The encrypted file URL is invalid"));
+                        uploader_->deleteLater();
+                        uploader_.clear();
+                        return;
+                    }
+                    const QString source = url.toString(QUrl::FullyEncoded);
+                    XMPP::Reference reference(XMPP::Reference::Data, source);
+                    XMPP::MediaSharing sharing;
+                    sharing.file = item_->fileMetadata(); // original metadata, only inside OMEMO
+                    sharing.sources = { source }; // never include plaintext HTTP or Jingle
+                    reference.setMediaSharing(sharing);
+                    completed(reference, {});
+                    uploader_->deleteLater();
+                    uploader_.clear();
+                });
+    }
+
+private:
+    QPointer<XMPP::Client> client_;
+    QPointer<FileSharingItem> item_;
+    QFile plaintext_;
+    XMPP::StatelessFileSharing::EncryptingDevice encrypted_;
+    QPointer<XMPP::HttpFileUpload> uploader_;
+};
+
 FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
-                           const Callback &callback, QWidget *parent) :
-    QDialog(parent), ui(new Ui::FileShareDlg), account(acc), myJid(myJid), publishedCallback(callback)
+                           const Callback &callback, QWidget *parent, EncryptionOptions encryption) :
+    QDialog(parent), ui(new Ui::FileShareDlg), account(acc), myJid(myJid), publishedCallback(callback),
+    encryptionOptions_(encryption)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
+    ui->cb_encrypt->setVisible(encryptionOptions_.available
+                               && XMPP::StatelessFileSharing::cipherSupported(
+                                   XMPP::StatelessFileSharing::Cipher::Aes256Gcm));
+    ui->cb_encrypt->setChecked(ui->cb_encrypt->isVisible() && encryptionOptions_.selected);
     ui->pixmapRatioLabel->hide();
     ui->lv_files->hide();
     filesModel = new MultiFileTransferModel(this);
@@ -99,13 +209,42 @@ void FileShareDlg::showImage(const QImage &img)
 
 void FileShareDlg::publish()
 {
+    encryptedUpload_ = ui->cb_encrypt->isVisible() && ui->cb_encrypt->isChecked();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
+    ui->cb_encrypt->setDisabled(true); // Retry must use the same transfer security mode.
     QList<FileSharingItem *> toPublish;
     filesModel->forEachTransfer([this, &toPublish](MultiFileTransferItem *item) {
         auto publisher = item->property("publisher").value<FileSharingItem *>();
         if (item->property("shared").toBool())
             return;
         item->setState(MultiFileTransferModel::Active);
+        if (encryptedUpload_) {
+            ++inProgressCount;
+            auto *job = new EncryptedHttpPublication(account->client(), publisher, this);
+            job->start(
+                [item](qint64 bytes) {
+                    if (item->fullSize())
+                        item->setCurrentSize(qMin<quint64>(quint64(qMax<qint64>(0, bytes)), *item->fullSize()));
+                },
+                [this, item, job](const XMPP::Reference &ref, const QString &error) {
+                    if (ref.isValid() && ref.mediaSharing().isValid()) {
+                        item->setProperty("shared", true);
+                        readyEncryptedReferences.append(ref);
+                        item->setState(MultiFileTransferModel::Done);
+                        if (item->fullSize())
+                            item->setCurrentSize(*item->fullSize());
+                    } else {
+                        item->setState(MultiFileTransferModel::Failed);
+                        item->setInfo(TextUtil::plain2rich(error));
+                        hasFailures = true;
+                    }
+                    job->deleteLater();
+                    --inProgressCount;
+                    if (!inProgressCount)
+                        finish();
+                });
+            return;
+        }
         QObject::disconnect(publisher, nullptr, this, nullptr);
         connect(publisher, &FileSharingItem::publishProgress, this,
                 [item](size_t progress) { item->setCurrentSize(progress); });
@@ -155,32 +294,32 @@ FileShareDlg::~FileShareDlg() { delete ui; }
 void FileShareDlg::finish()
 {
     QList<Reference> references;
-    QString          desc = ui->lineEdit->text();
+    QString desc = ui->lineEdit->text();
 
-    // append reference main links to description and setup their range
-    for (auto const &i : std::as_const(readyPublishers)) {
-        auto r = i->toReference();
-        if (r.isValid()) {
-            auto    uri = i->simpleSource();
-            QString text;
-            if (uri.isValid()) {
-                text = uri.toString(QUrl::FullyEncoded);
-            } else {
-                text = QLatin1String("SIMS(") + i->mimeType() + ", "
-                    + (i->fileSize() ? (QString::number(*i->fileSize()) + "B, ") : "stream ")
-                    + tr("requires compliant client") + ")";
-            }
-            QString refText = QString(" %1").arg(text);
-            r.setRange(desc.size(), desc.size() + refText.size() - 1);
-            desc += refText;
-
-            references.append(r);
-        }
+    const auto appendReference = [this, &references, &desc](Reference r, const QString &text) {
+        if (!r.isValid())
+            return;
+        const QString refText = QStringLiteral(" ") + text;
+        r.setRange(desc.size(), desc.size() + refText.size() - 1);
+        desc += refText;
+        references.append(r);
+    };
+    for (const auto *item : std::as_const(readyPublishers)) {
+        auto ref = item->toReference();
+        const QUrl uri = item->simpleSource();
+        const QString text = uri.isValid()
+            ? uri.toString(QUrl::FullyEncoded)
+            : QStringLiteral("SIMS(%1, %2)")
+                  .arg(item->mimeType(), tr("requires compliant client"));
+        appendReference(ref, text);
     }
+    for (const auto &ref : std::as_const(readyEncryptedReferences))
+        appendReference(ref, ref.uri());
     readyPublishers.clear();
+    readyEncryptedReferences.clear();
     const QPointer<FileShareDlg> guard(this);
     if (!references.isEmpty())
-        publishedCallback(std::move(references), desc);
+        publishedCallback(std::move(references), desc, encryptedUpload_);
     if (!guard)
         return;
     if (!hasFailures)
@@ -191,23 +330,24 @@ void FileShareDlg::finish()
     }
 }
 
-void FileShareDlg::shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent)
+void FileShareDlg::shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent,
+                             EncryptionOptions encryption)
 {
     QStringList files  = FileUtil::getOpenFileNames(parent, QObject::tr("Open Files For Sharing"));
     auto        itList = acc->psi()->fileSharingManager()->fromFilesList(files, acc);
     if (!itList.count())
         return;
 
-    auto dlg = new FileShareDlg(acc, myJid, itList, callback, parent);
+    auto dlg = new FileShareDlg(acc, myJid, itList, callback, parent, encryption);
     dlg->show();
 }
 
 void FileShareDlg::shareFiles(PsiAccount *acc, const Jid &myJid, const QMimeData *data, const Callback &callback,
-                              QWidget *parent)
+                              QWidget *parent, EncryptionOptions encryption)
 {
     auto items = acc->psi()->fileSharingManager()->createFromMimeData(data, acc);
     if (items.isEmpty())
         return;
-    auto dlg = new FileShareDlg(acc, myJid, items, callback, parent);
+    auto dlg = new FileShareDlg(acc, myJid, items, callback, parent, encryption);
     dlg->show();
 }
