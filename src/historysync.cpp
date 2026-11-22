@@ -46,6 +46,9 @@ HistorySync::~HistorySync()
 {
     if (task_)
         task_->safeDelete();
+    for (auto session : std::as_const(archiveSessions_))
+        if (session)
+            session->close();
 }
 
 void HistorySync::safeDelete()
@@ -564,7 +567,37 @@ void HistorySync::decodeNext()
         }
         XMPP::EncryptionContext context;
         context.setArchiveReplay();
-        auto *job    = crypto->decrypt(stanza, context);
+        auto *method = crypto->methodForStanza(stanza);
+        const XMPP::Jid conversation(key_.peer);
+        auto *session = method
+            ? context_.client->encryptedSession(method->id(), conversation,
+                                                XMPP::Client::EncryptionSessionPurpose::ArchiveReplay)
+            : nullptr;
+        if (!session && method) {
+            // Do not create a fake contact for old messages. Retain a
+            // method-specific session for this HistorySync's lifetime.
+            session = archiveSessions_.value(method->id()).data();
+            if (!session || session->isClosing()) {
+                XMPP::EncryptionContext base;
+                base.recipients = { conversation };
+                session = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
+                if (session)
+                    archiveSessions_.insert(method->id(), session);
+            }
+        }
+        auto *job = session ? session->decrypt(stanza, context) : nullptr;
+        if (!job) {
+            // Keep the archived entry visible as undecryptable; never turn a
+            // failure to select a session into plaintext fallback.
+            XMPP::Forwarding wrapper;
+            wrapper.fromXml(results_.at(decodeIndex_ - 1).firstChildElement("forwarded"), context_.client);
+            auto plain = wrapper.message();
+            plain.setBody(tr("Unable to decrypt archived message"));
+            decoded_.insert(uid, plain);
+            decryptionFailures_.insert(uid);
+            QTimer::singleShot(0, this, &HistorySync::decodeNext);
+            return;
+        }
         auto  finish = [this, job, uid] {
             if (cancelled_) {
                 job->deleteLater();
