@@ -407,14 +407,29 @@ void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion
     if (!memberListsFresh()) {
         membershipLists_.clear();
         membershipUpdated_.clear();
+        // A Task may finish synchronously (e.g. local test stream); don't
+        // complete the snapshot before all three IQs have been started.
+        const bool alreadyStarting = membershipBatchStarting_;
+        membershipBatchStarting_ = true;
         for (auto affiliation : { MUCItem::Member, MUCItem::Admin, MUCItem::Owner })
             startMemberAffiliationQuery(affiliation, false);
+        membershipBatchStarting_ = alreadyStarting;
+        if (alreadyStarting)
+            return;
     }
-    completeMemberRequests();
+    if (!membershipBatchStarting_) {
+        const QString error = std::exchange(membershipDeferredError_, QString());
+        completeMemberRequests(error);
+    }
 }
 
 void MUCManager::completeMemberRequests(const QString &error)
 {
+    if (membershipBatchStarting_) {
+        if (!error.isEmpty() && membershipDeferredError_.isEmpty())
+            membershipDeferredError_ = error;
+        return;
+    }
     if (membershipRequests_.isEmpty())
         return;
 
@@ -466,6 +481,7 @@ void MUCManager::invalidateMemberCache()
     membershipRecipients_.clear();
     membershipSnapshotReady_ = false;
     membershipSnapshotError_.clear();
+    membershipDeferredError_.clear();
     completeMemberRequests(tr("The MUC membership snapshot is no longer valid"));
 }
 
