@@ -65,6 +65,10 @@
 #include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
 #include "psiaccount.h"
+#include "psiencryptioncontroller.h"
+#ifdef IRIS_ENABLE_OMEMO
+#include "iris/xmpp_omemo.h"
+#endif
 #include "iris/xmpp_encryption.h"
 #include "psiactionlist.h"
 #include "psicon.h"
@@ -1217,6 +1221,27 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     chatEditCreated();
 
     d->pm_settings = new QMenu(this);
+    omemoAction_ = new QAction(IconsetFactory::icon("psi/cryptoNo").icon(), tr("Encrypt with OMEMO"), this);
+    omemoAction_->setCheckable(true);
+    connect(omemoAction_, &QAction::triggered, this, [this](bool enabled) {
+#ifdef IRIS_ENABLE_OMEMO
+        auto *controller = account()->encryptionController();
+        if (controller && controller->hasMethod(XMPP::OmemoEncryption::methodId())) {
+            controller->setSelectedMethod(jid(), enabled ? XMPP::OmemoEncryption::methodId() : QString());
+        } else {
+            appendSysMsg(tr("OMEMO is not available for this account"));
+        }
+#else
+        Q_UNUSED(enabled)
+#endif
+        updateOmemoAction();
+    });
+    connect(account()->encryptionController(), &PsiEncryptionController::selectedMethodChanged, this,
+            [this](const Jid &changed, const QString &) {
+                if (changed.bare() == jid().bare())
+                    updateOmemoAction();
+            });
+    updateOmemoAction();
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
 
@@ -1561,6 +1586,8 @@ void GCMainDlg::updateMucName()
 
 void GCMainDlg::updateConfiguration()
 {
+    // No encrypted sends until the room's mandatory MUC features are known.
+    omemoRoomInfoKnown_ = false;
     JT_DiscoInfo *disco = new JT_DiscoInfo(
         account()->client()->rootTask()); // FIXME in fact xep says we should do this before entering.
     connect(disco, SIGNAL(finished()), SLOT(discoInfoFinished())); // but we need this just for name for now.
@@ -1571,6 +1598,13 @@ void GCMainDlg::updateConfiguration()
 void GCMainDlg::discoInfoFinished()
 {
     JT_DiscoInfo                *t = static_cast<JT_DiscoInfo *>(sender());
+    if (t->success()) {
+        const auto &features = t->item().features();
+        omemoMembersOnly_ = features.test("muc_membersonly");
+        omemoNonAnonymous_ = features.test("muc_nonanonymous");
+        omemoRoomInfoKnown_ = true;
+    }
+    updateOmemoAction();
     const DiscoItem::Identities &i = t->item().identities();
     if (i.count() > 0) {
         d->discoMucName = i.first().name;
@@ -2366,6 +2400,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
         d->nonAnonymous = false;
     }
     if (dm.getMUCStatuses().contains(104)) {
+        // Room configuration may have changed membership or anonymity.
+        d->mucManager->invalidateMemberCache();
         updateConfiguration();
     }
 
@@ -3036,6 +3072,9 @@ void GCMainDlg::buildMenu()
     // Dialog menu
     d->pm_settings->clear();
 
+    updateOmemoAction();
+    d->pm_settings->addAction(omemoAction_);
+    d->pm_settings->addSeparator();
     d->pm_settings->addAction(d->actions->action("gchat_info"));
     d->pm_settings->addAction(d->actions->action("gchat_clear"));
     d->pm_settings->addAction(d->actions->action("gchat_configure"));
