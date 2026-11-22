@@ -5240,6 +5240,39 @@ void PsiAccount::dj_sendMessage(Message &m, bool log, XMPP::EncryptedSession *se
     sendMessageInternal(m, log, session, methodId, false);
 }
 
+void PsiAccount::sendMessageWithEncryptionContext(Message message, const QString &methodId,
+                                                  const XMPP::EncryptionContext &context,
+                                                  ExplicitEncryptionCompletion completed)
+{
+    if (!d->client || !d->encryptionController || methodId.isEmpty() || context.recipients.isEmpty()) {
+        completed(false, false, tr("Secure file delivery is unavailable"));
+        return;
+    }
+    auto *method = d->client->encryptionManager()->method(methodId);
+    if (!method || !method->capabilities().testFlag(XMPP::EncryptionMethod::XmppStanza)) {
+        completed(false, false, tr("The selected encryption method cannot protect an XMPP message"));
+        return;
+    }
+    auto *job = d->client->sendMessageEncrypted(message, methodId, context);
+    if (!job) {
+        completed(false, false, tr("Failed to start encrypted message delivery"));
+        return;
+    }
+    const auto finished = [this, job, message = std::move(message), completed = std::move(completed)]() {
+        const bool success = job->success();
+        const auto error = job->errorString();
+        const bool untrusted = job->error() == XMPP::EncryptionJob::Error::UntrustedIdentity;
+        if (success)
+            finishSentMessage(message, true);
+        job->deleteLater();
+        completed(success, untrusted, error);
+    };
+    if (job->isFinished())
+        finished();
+    else
+        connect(job, &XMPP::EncryptionJob::finished, this, finished);
+}
+
 void PsiAccount::sendMessageInternal(Message &m, bool log, XMPP::EncryptedSession *session, const QString &methodId,
                                      bool allowTransientSession)
 {
