@@ -3,6 +3,8 @@
 
 #include <QTest>
 #include <QTimer>
+#include <QHash>
+#include <QPointer>
 #include <QtCrypto>
 #include <iris/xmpp.h>
 #include <iris/xmpp_client.h>
@@ -86,10 +88,31 @@ struct Fixture {
     NoNetworkConnector connector;
     RecordingStream    stream { &connector };
     Client             client;
+    QHash<QString, QPointer<EncryptedSession>> sessions;
     Fixture()
     {
         client.start("example.test", "alice", {}, "device");
+        client.setEncryptionSessionResolver([this](const QString &methodId, const Jid &peer,
+                                                   Client::EncryptionSessionPurpose) -> EncryptedSession * {
+            const auto key = methodId + QLatin1Char('\n') + peer.full();
+            auto *session = sessions.value(key).data();
+            if (session && !session->isClosing())
+                return session;
+            EncryptionContext context;
+            context.recipients = { peer };
+            session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
+            if (session)
+                sessions.insert(key, session);
+            return session;
+        });
         client.connectToServer(&stream, Jid("alice@example.test/device"));
+    }
+    ~Fixture()
+    {
+        client.setEncryptionSessionResolver({});
+        for (auto session : std::as_const(sessions))
+            if (session)
+                session->close();
     }
     Message request() const
     {
