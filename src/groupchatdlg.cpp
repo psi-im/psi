@@ -3174,7 +3174,6 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
         const auto error = job->error();
         const auto errorText = job->errorString();
         const bool succeeded = job->success();
-        job->deleteLater();
         if (succeeded)
             return; // The MUC service's own echo delivers the outgoing message.
         if (allowTrustPrompt && error == XMPP::EncryptionJob::Error::UntrustedIdentity) {
@@ -3183,10 +3182,15 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
         }
         appendSysMsg(tr("OMEMO message was NOT sent: %1").arg(errorText), true);
     };
-    if (job->isFinished())
+    if (job->isFinished()) {
         finished();
-    else
+        job->deleteLater();
+    } else {
         connect(job, &XMPP::EncryptionJob::finished, this, finished);
+        // The job must also be released if the groupchat window closes
+        // while encryption is still running.
+        connect(job, &XMPP::EncryptionJob::finished, job, &QObject::deleteLater);
+    }
 #else
     Q_UNUSED(message)
     Q_UNUSED(members)
