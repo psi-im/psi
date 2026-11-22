@@ -601,8 +601,19 @@ private slots:
     PsiContact *addContact(const UserListItem &u)
     {
         Q_ASSERT(!findContact(u.jid()));
-        // PsiContactGroup* parent = groupsForUserListItem(u).first();
-        PsiContact *contact = new PsiContact(u, account);
+        // Reuse a provisional (not yet visible) contact created while
+        // decrypting its first message. Nothing enters the roster until the
+        // authenticated message is actually accepted by Psi.
+        PsiContact *contact = nullptr;
+        for (auto *candidate : account->findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
+            if (candidate != selfContact && !contacts.contains(candidate) && candidate->jid().compare(u.jid(), false)) {
+                contact = candidate;
+                contact->update(u);
+                break;
+            }
+        }
+        if (!contact)
+            contact = new PsiContact(u, account);
         contacts.append(contact);
         connect(contact, &PsiContact::destroyed, this, &Private::removeContact);
         emit account->addedContact(contact);
@@ -1213,7 +1224,26 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
                     return nullptr;
                 if (d->groupchats.contains(peer.bare()) || peer.node().isEmpty())
                     return nullptr;
-                item = addUserListItem(Jid(peer.bare()), peer.node());
+                // The first ciphertext is not authenticated yet. Prepare a
+                // PsiContact without publishing it to the contact list; the
+                // normal event/roster path will promote it after decryption.
+                PsiContact *pending = nullptr;
+                for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
+                    if (candidate != d->selfContact && !d->contacts.contains(candidate)
+                        && candidate->jid().bare() == peer.bare()) {
+                        pending = candidate;
+                        break;
+                    }
+                }
+                if (!pending) {
+                    UserListItem provisional;
+                    provisional.setJid(Jid(peer.bare()));
+                    provisional.setInList(false);
+                    provisional.setName(peer.node());
+                    provisional.setAvatarFactory(avatarFactory());
+                    pending = new PsiContact(provisional, this);
+                }
+                return pending->encryptionSession(methodId, peer, registry);
             }
             auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
             if (!contact) {
@@ -1232,7 +1262,22 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             contact->closeEncryptionSessions();
         for (auto *occupant : std::as_const(d->gcbank))
             occupant->closeEncryptionSessions();
+        // No pending, unauthenticated peer is retained across reconnects.
+        for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly))
+            if (candidate != d->selfContact && !d->contacts.contains(candidate))
+                delete candidate;
     });
+    connect(d->client, &Client::stanzaDecryptionFailed, this,
+            [this](const QString &, const Jid &peer, EncryptionJob::Error,
+                   const QString &, const EncryptionMetadata &) {
+                // Reject an unverified temporary contact when its first
+                // ciphertext fails. Existing contacts are never affected.
+                for (auto *candidate : findChildren<PsiContact *>(QString(), Qt::FindDirectChildrenOnly)) {
+                    if (candidate != d->selfContact && !d->contacts.contains(candidate)
+                        && candidate->jid().bare() == peer.bare())
+                        delete candidate;
+                }
+            });
     connect(d->encryptionController, &PsiEncryptionController::methodsChanged, this, [this]() {
         updateFeatures();
         if (isConnected())
