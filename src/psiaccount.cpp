@@ -1207,10 +1207,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             if (!peer.isValid() || methodId.isEmpty())
                 return nullptr;
             auto *registry = d->client->encryptionManager();
-            if (purpose == Client::EncryptionSessionPurpose::Groupchat) {
+            if (purpose == Client::EncryptionSessionPurpose::Groupchat && !peer.resource().isEmpty()) {
                 auto *occupant = findGCContact(peer);
                 return occupant ? occupant->encryptionSession(registry, methodId, purpose) : nullptr;
             }
+            // Outbound groupchat is scoped to the bare room contact. It is
+            // never associated with an arbitrarily selected MUC occupant.
             if (auto *occupant = findGCContact(peer))
                 return occupant->encryptionSession(registry, methodId, purpose);
 
