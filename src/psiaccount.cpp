@@ -1246,8 +1246,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             if (!session)
                 return nullptr;
             auto *job = session->decrypt(stanza, context);
-            // A job is owned by Iris's EncryptionManager, not the session.
-            // Closing the session cannot invalidate the result consumed by Iris.
+            // Iris owns the job independently of the session. Closing a
+            // transient session follows both completion and cancellation.
+            connect(job, &QObject::destroyed, session, &EncryptedSession::close);
             if (job->isFinished())
                 session->close();
             else
@@ -5500,6 +5501,8 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
             return;
         }
         job = d->client->sendMessageEncrypted(sent, selected);
+        if (oneShotSession)
+            connect(job, &QObject::destroyed, oneShotSession.data(), &EncryptedSession::close);
     } else {
         d->encryptionController->reportError(message.to(), tr("The chat could not create an encryption session."));
         return;
