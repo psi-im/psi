@@ -22,7 +22,9 @@ jobs:
             sudo apt-get install -y -qq clang-format-18
           fi
           git fetch origin master
-          git clang-format-18 --binary clang-format-18 origin/master
+          # Some git-clang-format versions return 1 after applying edits.
+          # Treat that as success only when it actually modified files.
+          git clang-format-18 --binary clang-format-18 origin/master || test -n "$(git diff --name-only)"
           git diff --check
           if ! git diff --quiet; then
             git config user.name "github-actions[bot]"
