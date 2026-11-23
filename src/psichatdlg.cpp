@@ -580,9 +580,12 @@ void PsiChatDlg::rebuildEncryptionSession()
         chatOwnedEncryptionSession_ = client->encryptionManager()->startSession(
             selectedEncryptionMethod_, XMPP::EncryptionMethod::XmppStanza, context);
         encryptionSession_ = chatOwnedEncryptionSession_;
-        if (encryptionSession_)
+        if (encryptionSession_) {
+            connect(client, &XMPP::Client::disconnected, chatOwnedEncryptionSession_.data(),
+                    &XMPP::EncryptedSession::close);
             client->registerIncomingSession(selectedEncryptionMethod_, peer,
                                             XMPP::Client::EncryptionSessionPurpose::Message, encryptionSession_);
+        }
     }
 }
 
