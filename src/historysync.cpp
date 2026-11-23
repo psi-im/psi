@@ -47,6 +47,8 @@ HistorySync::~HistorySync()
 {
     if (task_)
         task_->safeDelete();
+    if (activeDecryptionJob_)
+        delete activeDecryptionJob_;
     for (auto session : std::as_const(archiveSessions_))
         if (session)
             session->close();
@@ -55,6 +57,8 @@ HistorySync::~HistorySync()
 void HistorySync::safeDelete()
 {
     cancelled_ = true;
+    if (activeDecryptionJob_)
+        delete activeDecryptionJob_;
     if (task_) {
         task_->disconnect(this);
         task_->safeDelete();
@@ -600,6 +604,7 @@ void HistorySync::decodeNext()
             return;
         }
         auto  finish = [this, job, uid] {
+            activeDecryptionJob_.clear();
             if (cancelled_) {
                 job->deleteLater();
                 return;
@@ -628,8 +633,8 @@ void HistorySync::decodeNext()
         if (job->isFinished())
             finish();
         else {
+            activeDecryptionJob_ = job;
             connect(job, &XMPP::EncryptionJob::finished, this, finish);
-            connect(job, &XMPP::EncryptionJob::finished, job, &QObject::deleteLater);
         }
         return;
     }
