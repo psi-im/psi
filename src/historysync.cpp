@@ -4,6 +4,7 @@
 
 #include "historymessageextras.h"
 #include "iris/xmpp_encryption.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_stream.h"
