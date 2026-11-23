@@ -92,29 +92,27 @@ struct Fixture {
     Fixture()
     {
         client.start("example.test", "alice", {}, "device");
-        client.setIncomingEncryptedStanzaHandler(
-            [this](const QDomElement &stanza, const QString &methodId, const EncryptionContext &operation,
-                   Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
-                const Jid from(stanza.attribute(QStringLiteral("from")));
-                const Jid to(stanza.attribute(QStringLiteral("to")));
-                const Jid peer
-                    = purpose == Client::EncryptionSessionPurpose::Carbon && from.bare() == client.jid().bare()
-                    ? to
-                    : from;
-                if (!peer.isValid())
+        client.setIncomingEncryptedStanzaHandler([this](const QDomElement &stanza, const QString &methodId,
+                                                        const EncryptionContext         &operation,
+                                                        Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
+            const Jid from(stanza.attribute(QStringLiteral("from")));
+            const Jid to(stanza.attribute(QStringLiteral("to")));
+            const Jid peer
+                = purpose == Client::EncryptionSessionPurpose::Carbon && from.bare() == client.jid().bare() ? to : from;
+            if (!peer.isValid())
+                return nullptr;
+            const auto key     = methodId + QLatin1Char('\n') + peer.full();
+            auto      *session = sessions.value(key).data();
+            if (!session || session->isClosing()) {
+                EncryptionContext context;
+                context.recipients = { peer };
+                session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
+                if (!session)
                     return nullptr;
-                const auto key     = methodId + QLatin1Char('\n') + peer.full();
-                auto      *session = sessions.value(key).data();
-                if (!session || session->isClosing()) {
-                    EncryptionContext context;
-                    context.recipients = { peer };
-                    session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
-                    if (!session)
-                        return nullptr;
-                    sessions.insert(key, session);
-                }
-                return session->decrypt(stanza, operation);
-            });
+                sessions.insert(key, session);
+            }
+            return session->decrypt(stanza, operation);
+        });
         client.connectToServer(&stream, Jid("alice@example.test/device"));
     }
     ~Fixture()
