@@ -1,0 +1,33 @@
+name: Temporary clang-format of PR changes
+on:
+  push:
+    branches: [feat/encryption-session-stream-bridge]
+    paths:
+      - .github/workflows/_temporary-diff-clang-format.yml
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Format only changed C++ lines
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v git-clang-format-18 >/dev/null || ! command -v clang-format-18 >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq clang-format-18
+          fi
+          git fetch origin master
+          git clang-format-18 --binary clang-format-18 origin/master
+          git diff --check
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "Apply clang-format to changed C++ lines"
+            git push origin HEAD:refs/heads/feat/encryption-session-stream-bridge
+          fi
