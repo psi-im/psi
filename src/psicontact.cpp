@@ -194,7 +194,7 @@ XMPP::EncryptedSession *PsiContact::encryptionSession(const QString &methodId, c
     if (!registry || methodId.isEmpty() || !peer.isValid() || jid().bare() != peer.bare())
         return nullptr;
     const auto key = methodId + QLatin1Char('\n') + peer.full();
-    auto *session = d->encryptionSessions.value(key).data();
+    auto *session = d->encryptionSessions_.value(key).data();
     if (session && !session->isClosing())
         return session;
 
@@ -202,9 +202,9 @@ XMPP::EncryptedSession *PsiContact::encryptionSession(const QString &methodId, c
     context.recipients = { peer };
     session = registry->startSession(methodId, XMPP::EncryptionMethod::XmppStanza, context);
     if (session)
-        d->encryptionSessions.insert(key, session);
+        d->encryptionSessions_.insert(key, session);
     else
-        d->encryptionSessions.remove(key);
+        d->encryptionSessions_.remove(key);
     return session;
 }
 
@@ -212,13 +212,13 @@ void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
 {
     if (resource.isEmpty())
         return;
-    for (auto it = d->encryptionSessions.begin(); it != d->encryptionSessions.end();) {
+    for (auto it = d->encryptionSessions_.begin(); it != d->encryptionSessions_.end();) {
         const auto session = it.value();
         if (session && !session->context().recipients.isEmpty()
             && session->context().recipients.constFirst().resource() == resource) {
             if (session)
                 session->close();
-            it = d->encryptionSessions.erase(it);
+            it = d->encryptionSessions_.erase(it);
         } else {
             ++it;
         }
@@ -227,7 +227,7 @@ void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
 
 bool PsiContact::hasActiveEncryptionOperations() const
 {
-    for (auto session : std::as_const(d->encryptionSessions))
+    for (auto session : std::as_const(d->encryptionSessions_))
         if (session && session->hasActiveOperations())
             return true;
     return false;
@@ -235,8 +235,8 @@ bool PsiContact::hasActiveEncryptionOperations() const
 
 void PsiContact::closeEncryptionSessions()
 {
-    auto sessions = std::move(d->encryptionSessions);
-    d->encryptionSessions.clear();
+    auto sessions = std::move(d->encryptionSessions_);
+    d->encryptionSessions_.clear();
     for (auto session : std::as_const(sessions))
         if (session)
             session->close();
