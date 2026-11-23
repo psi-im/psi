@@ -450,9 +450,6 @@ public:
     PsiCon                    *psi         = nullptr;
     PsiAccount                *account     = nullptr;
     Client                    *client      = nullptr;
-    // Only peers that have not yet acquired a normal contact owner. Bounded
-    // independently from the visible roster; never create provisional contacts.
-    QHash<QString, QPointer<EncryptedSession>> unboundEncryptionSessions;
     QPointer<LinkLocalService> serverless;
     std::optional<Status>      serverlessRestartStatus;
     PsiEncryptionController   *encryptionController = nullptr;
@@ -605,21 +602,6 @@ private slots:
     {
         Q_ASSERT(!findContact(u.jid()));
         PsiContact *contact = new PsiContact(u, account);
-        // An unknown encrypted peer may have started a session before the
-        // normal contact creation path ran. Adopt it without creating a
-        // temporary PsiContact or re-running recipient discovery.
-        for (auto it = unboundEncryptionSessions.begin(); it != unboundEncryptionSessions.end();) {
-            const auto separator = it.key().indexOf(QLatin1Char('\n'));
-            const Jid peer(separator < 0 ? QString() : it.key().mid(separator + 1));
-            if (!it.value() || it.value()->isClosing()) {
-                it = unboundEncryptionSessions.erase(it);
-            } else if (peer.bare() == u.jid().bare()
-                       && contact->adoptEncryptionSession(it.key().left(separator), peer, it.value())) {
-                it = unboundEncryptionSessions.erase(it);
-            } else {
-                ++it;
-            }
-        }
         contacts.append(contact);
         connect(contact, &PsiContact::destroyed, this, &Private::removeContact);
         emit account->addedContact(contact);
@@ -1221,45 +1203,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             if (auto *occupant = findGCContact(peer))
                 return occupant->encryptionSession(registry, methodId, purpose);
 
+            // No contact owner means no persistent session. The incoming
+            // fallback may start a one-shot session for a new sender.
             UserListItem *item = findFirstRelevant(peer);
-            if (!item) {
-                // There is no authenticated user-list entity for this JID yet.
-                // A crypto session is sufficient for the first decryption;
-                // the normal message path decides whether to create a contact.
-                if (purpose != Client::EncryptionSessionPurpose::Message
-                    && purpose != Client::EncryptionSessionPurpose::Carbon)
-                    return nullptr;
-                if (d->groupchats.contains(peer.bare()) || peer.node().isEmpty())
-                    return nullptr;
-                const auto key = methodId + QLatin1Char('\n') + peer.full();
-                auto *session = d->unboundEncryptionSessions.value(key).data();
-                if (session && !session->isClosing())
-                    return session;
-                // Cap unauthenticated peers. Only idle sessions are evicted;
-                // a concurrently decrypting stanza must retain its session.
-                constexpr int maxUnboundSessions = 64;
-                if (d->unboundEncryptionSessions.size() >= maxUnboundSessions) {
-                    for (auto it = d->unboundEncryptionSessions.begin();
-                         it != d->unboundEncryptionSessions.end();) {
-                        auto *candidate = it.value().data();
-                        if (!candidate || !candidate->hasActiveOperations()) {
-                            if (candidate)
-                                candidate->close();
-                            it = d->unboundEncryptionSessions.erase(it);
-                            break;
-                        }
-                        ++it;
-                    }
-                    if (d->unboundEncryptionSessions.size() >= maxUnboundSessions)
-                        return nullptr;
-                }
-                EncryptionContext base;
-                base.recipients = { peer };
-                session = registry->startSession(methodId, EncryptionMethod::XmppStanza, base);
-                if (session)
-                    d->unboundEncryptionSessions.insert(key, session);
-                return session;
-            }
+            if (!item)
+                return nullptr;
             auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
             if (!contact) {
                 d->updateEntry(*item);
@@ -1280,11 +1228,31 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             if (!peer.isValid())
                 return nullptr;
             auto *session = d->client->encryptedSession(methodId, peer, purpose);
+            if (session) {
+                if (purpose == Client::EncryptionSessionPurpose::Groupchat)
+                    d->client->registerIncomingSession(methodId, peer, purpose, session);
+                return session->decrypt(stanza, context);
+            }
+            // Unknown contacts have no owner for a reusable session. Create
+            // only the crypto session, for this decryption operation.
+            if ((purpose != Client::EncryptionSessionPurpose::Message
+                 && purpose != Client::EncryptionSessionPurpose::Carbon)
+                || peer.node().isEmpty() || d->groupchats.contains(peer.bare()))
+                return nullptr;
+            EncryptionContext base;
+            base.recipients = { peer };
+            session = d->client->encryptionManager()->startSession(
+                methodId, EncryptionMethod::XmppStanza, base);
             if (!session)
                 return nullptr;
-            if (purpose == Client::EncryptionSessionPurpose::Groupchat)
-                d->client->registerIncomingSession(methodId, peer, purpose, session);
-            return session->decrypt(stanza, context);
+            auto *job = session->decrypt(stanza, context);
+            // A job is owned by Iris's EncryptionManager, not the session.
+            // Closing the session cannot invalidate the result consumed by Iris.
+            if (job->isFinished())
+                session->close();
+            else
+                connect(job, &EncryptionJob::finished, session, &EncryptedSession::close);
+            return job;
         });
 
     connect(d->client, &Client::disconnected, this, [this]() {
@@ -1294,22 +1262,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
             contact->closeEncryptionSessions();
         for (auto *occupant : std::as_const(d->gcbank))
             occupant->closeEncryptionSessions();
-        auto unbound = std::move(d->unboundEncryptionSessions);
-        d->unboundEncryptionSessions.clear();
-        for (auto session : std::as_const(unbound))
-            if (session)
-                session->close();
     });
-    connect(d->client, &Client::stanzaDecryptionFailed, this,
-            [this](const QString &methodId, const Jid &peer, EncryptionJob::Error,
-                   const QString &, const EncryptionMetadata &) {
-                // A failed first ciphertext cannot leave an unauthenticated
-                // peer session cached for subsequent attempts.
-                const auto key = methodId + QLatin1Char('\n') + peer.full();
-                auto session = d->unboundEncryptionSessions.take(key);
-                if (session)
-                    session->close();
-            });
     connect(d->encryptionController, &PsiEncryptionController::methodsChanged, this, [this]() {
         updateFeatures();
         if (isConnected())
@@ -5521,6 +5474,7 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
 
     const bool                       boundToChatSession = session != nullptr;
     QPointer<XMPP::EncryptedSession> sessionGuard(session);
+    QPointer<XMPP::EncryptedSession> oneShotSession;
     Message                          sent = message;
     XMPP::EncryptionJob             *job  = nullptr;
     if (session) {
@@ -5530,17 +5484,31 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         }
         job = d->client->sendMessageEncrypted(sent, session);
     } else if (allowTransientSession) {
-        // Non-chat senders use the same peer-scoped Iris session cache as chats.
-        // The message-specific recipient context is supplied independently.
         XMPP::EncryptionContext context;
-        context.recipients.append(d->encryptionController->capabilityJid(message.to()));
-        job = d->client->sendMessageEncrypted(sent, methodId, context);
+        const auto peer = d->encryptionController->capabilityJid(message.to());
+        context.recipients = { peer };
+        // Reuse a session owned by an existing contact where possible.
+        // Otherwise request an operation-local session from Iris.
+        auto *selected = d->client->encryptedSession(methodId, peer);
+        if (!selected) {
+            selected = d->client->encryptionManager()->startSession(
+                methodId, XMPP::EncryptionMethod::XmppStanza, context);
+            oneShotSession = selected;
+        }
+        if (!selected) {
+            d->encryptionController->reportError(message.to(), tr("The encryption session could not be created."));
+            return;
+        }
+        job = d->client->sendMessageEncrypted(sent, selected);
     } else {
         d->encryptionController->reportError(message.to(), tr("The chat could not create an encryption session."));
         return;
     }
     const Jid  recipient       = sent.to();
-    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard, boundToChatSession]() {
+    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard,
+                                  oneShotSession, boundToChatSession]() {
+        if (oneShotSession)
+            oneShotSession->close();
         if (job->success()) {
             finishSentMessage(sent, log);
             return;
