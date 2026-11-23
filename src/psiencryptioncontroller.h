@@ -33,7 +33,7 @@ class QWidget;
 namespace XMPP {
 class Client;
 namespace Jingle {
-class Session;
+    class Session;
 }
 }
 

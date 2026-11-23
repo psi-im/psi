@@ -256,7 +256,7 @@ struct GCContact {
     void updateStatus(const Status &next)
     {
         const Jid previous = status.hasMUCItem() ? status.mucItem().jid() : Jid();
-        const Jid current = next.hasMUCItem() ? next.mucItem().jid() : Jid();
+        const Jid current  = next.hasMUCItem() ? next.mucItem().jid() : Jid();
         if (!next.isAvailable() || (previous.isValid() && previous.bare() != current.bare()))
             closeEncryptionSessions();
         status = next;
@@ -267,13 +267,13 @@ struct GCContact {
     {
         if (!registry || !status.isAvailable())
             return nullptr;
-        const auto key = methodId + QLatin1Char('\n') + QString::number(int(purpose));
-        auto *session = encryptionSessions.value(key).data();
+        const auto key     = methodId + QLatin1Char('\n') + QString::number(int(purpose));
+        auto      *session = encryptionSessions.value(key).data();
         if (session && !session->isClosing())
             return session;
         EncryptionContext context;
         context.recipients = { jid };
-        session = registry->startSession(methodId, EncryptionMethod::XmppStanza, context);
+        session            = registry->startSession(methodId, EncryptionMethod::XmppStanza, context);
         if (session)
             encryptionSessions.insert(key, session);
         else
@@ -1189,43 +1189,42 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
                                       pathToProfile(activeProfile, ApplicationInfo::DataLocation), acc.id, this);
     // Psi handles incoming encrypted stanzas after Iris has authenticated
     // protocol-specific constraints (e.g. MUC sender identity).
-    d->client->setIncomingEncryptedStanzaHandler(
-        [this](const QDomElement &stanza, const QString &methodId,
-               const EncryptionContext &context, Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
-            const Jid from(stanza.attribute(QStringLiteral("from")));
-            const Jid to(stanza.attribute(QStringLiteral("to")));
-            const Jid peer = purpose == Client::EncryptionSessionPurpose::Carbon
-                    && from.bare() == d->client->jid().bare() ? to : from;
-            if (!peer.isValid())
-                return nullptr;
-            if (auto *session = encryptionSession(methodId, peer,
-                                                  purpose == Client::EncryptionSessionPurpose::Groupchat))
-                return session->decrypt(stanza, context);
+    d->client->setIncomingEncryptedStanzaHandler([this](const QDomElement &stanza, const QString &methodId,
+                                                        const EncryptionContext         &context,
+                                                        Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
+        const Jid from(stanza.attribute(QStringLiteral("from")));
+        const Jid to(stanza.attribute(QStringLiteral("to")));
+        const Jid peer
+            = purpose == Client::EncryptionSessionPurpose::Carbon && from.bare() == d->client->jid().bare() ? to : from;
+        if (!peer.isValid())
+            return nullptr;
+        if (auto *session = encryptionSession(methodId, peer, purpose == Client::EncryptionSessionPurpose::Groupchat))
+            return session->decrypt(stanza, context);
 
-            // No existing owner: decrypt with an operation-scoped session.
-            // In particular, do not create a provisional PsiContact.
-            if (purpose == Client::EncryptionSessionPurpose::Groupchat
-                || peer.node().isEmpty() || d->groupchats.contains(peer.bare()))
-                return nullptr;
-            auto *registry = d->client->encryptionManager();
-            if (!registry)
-                return nullptr;
-            EncryptedSession *session = nullptr;
-            EncryptionContext base;
-            base.recipients = { peer };
-            session = registry->startSession(methodId, EncryptionMethod::XmppStanza, base);
-            if (!session)
-                return nullptr;
-            auto *job = session->decrypt(stanza, context);
-            // Iris owns the job independently of the session. Closing a
-            // transient session follows both completion and cancellation.
-            connect(job, &QObject::destroyed, session, &EncryptedSession::close);
-            if (job->isFinished())
-                session->close();
-            else
-                connect(job, &EncryptionJob::finished, session, &EncryptedSession::close);
-            return job;
-        });
+        // No existing owner: decrypt with an operation-scoped session.
+        // In particular, do not create a provisional PsiContact.
+        if (purpose == Client::EncryptionSessionPurpose::Groupchat || peer.node().isEmpty()
+            || d->groupchats.contains(peer.bare()))
+            return nullptr;
+        auto *registry = d->client->encryptionManager();
+        if (!registry)
+            return nullptr;
+        EncryptedSession *session = nullptr;
+        EncryptionContext base;
+        base.recipients = { peer };
+        session         = registry->startSession(methodId, EncryptionMethod::XmppStanza, base);
+        if (!session)
+            return nullptr;
+        auto *job = session->decrypt(stanza, context);
+        // Iris owns the job independently of the session. Closing a
+        // transient session follows both completion and cancellation.
+        connect(job, &QObject::destroyed, session, &EncryptedSession::close);
+        if (job->isFinished())
+            session->close();
+        else
+            connect(job, &EncryptionJob::finished, session, &EncryptedSession::close);
+        return job;
+    });
 
     connect(d->client, &Client::disconnected, this, [this]() {
         if (d->selfContact)
@@ -1640,8 +1639,8 @@ EncryptedSession *PsiAccount::encryptionSession(const QString &methodId, const J
         // A MUC participant is identified by the live occupant JID, not by
         // the bare room or an inferred real JID.
         auto *occupant = peer.resource().isEmpty() ? nullptr : findGCContact(peer);
-        return occupant ? occupant->encryptionSession(
-                   registry, methodId, Client::EncryptionSessionPurpose::Groupchat) : nullptr;
+        return occupant ? occupant->encryptionSession(registry, methodId, Client::EncryptionSessionPurpose::Groupchat)
+                        : nullptr;
     }
     if (auto *occupant = findGCContact(peer))
         return occupant->encryptionSession(registry, methodId, Client::EncryptionSessionPurpose::Message);
@@ -5499,14 +5498,14 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         job = d->client->sendMessageEncrypted(sent, session);
     } else if (allowTransientSession) {
         XMPP::EncryptionContext context;
-        const auto peer = d->encryptionController->capabilityJid(message.to());
-        context.recipients = { peer };
+        const auto              peer = d->encryptionController->capabilityJid(message.to());
+        context.recipients           = { peer };
         // Reuse a session owned by an existing contact where possible.
         // Otherwise request an operation-local session from Iris.
         auto *selected = encryptionSession(methodId, peer);
         if (!selected) {
-            selected = d->client->encryptionManager()->startSession(
-                methodId, XMPP::EncryptionMethod::XmppStanza, context);
+            selected
+                = d->client->encryptionManager()->startSession(methodId, XMPP::EncryptionMethod::XmppStanza, context);
             oneShotSession = selected;
         }
         if (!selected) {
@@ -5521,8 +5520,8 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         return;
     }
     const Jid  recipient       = sent.to();
-    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard,
-                                  oneShotSession, boundToChatSession]() {
+    const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard, oneShotSession,
+                                  boundToChatSession]() {
         // The client has already consumed the result for outgoing delivery.
         // Release the completed operation even if trust recovery opens a dialog.
         job->deleteLater();

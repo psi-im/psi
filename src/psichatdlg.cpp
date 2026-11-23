@@ -572,11 +572,11 @@ void PsiChatDlg::rebuildEncryptionSession()
     if (!controller || !client)
         return;
 
-    const auto peer = controller->capabilityJid(jid());
+    const auto peer    = controller->capabilityJid(jid());
     encryptionSession_ = account()->encryptionSession(selectedEncryptionMethod_, peer);
     if (!encryptionSession_) {
         XMPP::EncryptionContext context;
-        context.recipients = { peer };
+        context.recipients          = { peer };
         chatOwnedEncryptionSession_ = client->encryptionManager()->startSession(
             selectedEncryptionMethod_, XMPP::EncryptionMethod::XmppStanza, context);
         encryptionSession_ = chatOwnedEncryptionSession_;

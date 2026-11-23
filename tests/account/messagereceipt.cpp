@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "accountincomingmessage.h"
 
-#include <QTest>
-#include <QTimer>
 #include <QHash>
 #include <QPointer>
+#include <QTest>
+#include <QTimer>
 #include <QtCrypto>
 #include <iris/xmpp.h>
 #include <iris/xmpp_client.h>
@@ -92,19 +92,19 @@ struct Fixture {
     Fixture()
     {
         client.start("example.test", "alice", {}, "device");
-        client.setEncryptionSessionResolver([this](const QString &methodId, const Jid &peer,
-                                                   Client::EncryptionSessionPurpose) -> EncryptedSession * {
-            const auto key = methodId + QLatin1Char('\n') + peer.full();
-            auto *session = sessions.value(key).data();
-            if (session && !session->isClosing())
+        client.setEncryptionSessionResolver(
+            [this](const QString &methodId, const Jid &peer, Client::EncryptionSessionPurpose) -> EncryptedSession * {
+                const auto key     = methodId + QLatin1Char('\n') + peer.full();
+                auto      *session = sessions.value(key).data();
+                if (session && !session->isClosing())
+                    return session;
+                EncryptionContext context;
+                context.recipients = { peer };
+                session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
+                if (session)
+                    sessions.insert(key, session);
                 return session;
-            EncryptionContext context;
-            context.recipients = { peer };
-            session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
-            if (session)
-                sessions.insert(key, session);
-            return session;
-        });
+            });
         client.connectToServer(&stream, Jid("alice@example.test/device"));
     }
     ~Fixture()

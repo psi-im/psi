@@ -3,8 +3,8 @@
 #include "widgets/MamHistoryLog.h"
 
 #include "historymessageextras.h"
-#include "iris/xmpp_encryption.h"
 #include "iris/xmpp_client.h"
+#include "iris/xmpp_encryption.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_stream.h"
@@ -572,15 +572,15 @@ void HistorySync::decodeNext()
         }
         XMPP::EncryptionContext context;
         context.setArchiveReplay();
-        auto *method = crypto->methodForStanza(stanza);
+        auto           *method = crypto->methodForStanza(stanza);
         const XMPP::Jid conversation(key_.peer);
-        auto *session = method ? archiveSessions_.value(method->id()).data() : nullptr;
+        auto           *session = method ? archiveSessions_.value(method->id()).data() : nullptr;
         if (method && (!session || session->isClosing())) {
             // Do not create a fake contact for old messages. Retain a
             // method-specific session for this HistorySync's lifetime.
             XMPP::EncryptionContext base;
             base.recipients = { conversation };
-            session = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
+            session         = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
             if (session)
                 archiveSessions_.insert(method->id(), session);
         }
@@ -597,7 +597,7 @@ void HistorySync::decodeNext()
             QTimer::singleShot(0, this, &HistorySync::decodeNext);
             return;
         }
-        auto  finish = [this, job, uid] {
+        auto finish = [this, job, uid] {
             activeDecryptionJob_.clear();
             if (cancelled_) {
                 job->deleteLater();

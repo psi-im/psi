@@ -24,6 +24,7 @@
 #include "common.h"
 #include "desktoputil.h"
 #include "iconset.h"
+#include "iris/xmpp_encryption.h"
 #include "jidutil.h"
 #include "profiles.h"
 #include "psiaccount.h"
@@ -35,7 +36,6 @@
 #include "psiprivacymanager.h"
 #include "userlist.h"
 #include "vcardfactory.h"
-#include "iris/xmpp_encryption.h"
 
 #include <QHash>
 #include <QPointer>
@@ -189,18 +189,18 @@ void PsiContact::update(const UserListItem &u)
 }
 
 XMPP::EncryptedSession *PsiContact::encryptionSession(const QString &methodId, const XMPP::Jid &peer,
-                                                        XMPP::EncryptionManager *registry)
+                                                      XMPP::EncryptionManager *registry)
 {
     if (!registry || methodId.isEmpty() || !peer.isValid() || jid().bare() != peer.bare())
         return nullptr;
-    const auto key = methodId + QLatin1Char('\n') + peer.full();
-    auto *session = d->encryptionSessions_.value(key).data();
+    const auto key     = methodId + QLatin1Char('\n') + peer.full();
+    auto      *session = d->encryptionSessions_.value(key).data();
     if (session && !session->isClosing())
         return session;
 
     XMPP::EncryptionContext context;
     context.recipients = { peer };
-    session = registry->startSession(methodId, XMPP::EncryptionMethod::XmppStanza, context);
+    session            = registry->startSession(methodId, XMPP::EncryptionMethod::XmppStanza, context);
     if (session)
         d->encryptionSessions_.insert(key, session);
     else

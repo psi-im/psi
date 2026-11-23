@@ -144,7 +144,7 @@ private:
     bool                          networkComplete_ = false, networkStable_ = false;
     bool                          decodingSaved_ = false, replaySaved_ = false;
     QPointer<XMPP::MAMTask>       task_;
-    QPointer<XMPP::EncryptionJob> activeDecryptionJob_;
+    QPointer<XMPP::EncryptionJob>  activeDecryptionJob_;
     // Historical entries without a live PsiContact belong to this archive
     // operation, never to the current presence or an invented roster entry.
     QHash<QString, QPointer<XMPP::EncryptedSession>> archiveSessions_;

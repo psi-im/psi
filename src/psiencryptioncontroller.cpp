@@ -11,9 +11,9 @@
 #include "psiencryptioncontroller.h"
 
 #include "iconset.h"
+#include "iris/jingle-session.h"
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_client.h"
-#include "iris/jingle-session.h"
 #include "psiaccount.h"
 #include "psioptions.h"
 #include "userlist.h"
@@ -224,8 +224,7 @@ public:
             pluginSession_.reset();
         }
 
-        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml,
-                                       const XMPP::EncryptionContext &context)
+        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml, const XMPP::EncryptionContext &context)
         {
             auto *job = new XMPP::EncryptionJob(this);
             if (!method_ || !pluginSession_) {
