@@ -158,6 +158,7 @@ private:
 
     QString                          selectedEncryptionMethod_;
     QPointer<XMPP::EncryptedSession> encryptionSession_;
+    QPointer<XMPP::EncryptedSession> chatOwnedEncryptionSession_;
 
     ActionList       *actions_;
     QAction          *act_mini_cmd_;
