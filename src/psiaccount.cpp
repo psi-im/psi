@@ -5510,6 +5510,9 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
     const Jid  recipient       = sent.to();
     const auto finishEncrypted = [this, job, recipient, sent, log, methodId, sessionGuard,
                                   oneShotSession, boundToChatSession]() {
+        // The client has already consumed the result for outgoing delivery.
+        // Release the completed operation even if trust recovery opens a dialog.
+        job->deleteLater();
         if (oneShotSession)
             oneShotSession->close();
         if (job->success()) {
