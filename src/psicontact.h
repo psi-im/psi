@@ -56,8 +56,6 @@ public:
     XMPP::EncryptedSession *encryptionSession(const QString &methodId, const XMPP::Jid &peer,
                                                XMPP::EncryptionManager *registry);
     void closeEncryptionSessionsForResource(const QString &resource);
-    bool adoptEncryptionSession(const QString &methodId, const XMPP::Jid &peer,
-                                XMPP::EncryptedSession *session);
     bool hasActiveEncryptionOperations() const;
     void closeEncryptionSessions();
 
