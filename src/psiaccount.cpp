@@ -1187,37 +1187,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
     d->encryptionController
         = new PsiEncryptionController(this, d->client, acc.encryptionMethods,
                                       pathToProfile(activeProfile, ApplicationInfo::DataLocation), acc.id, this);
-    // Established PsiContact/GCContact sessions are long lived. The Iris
-    // incoming fast path uses weak references; the application is consulted
-    // only when no session has been bound for this peer and method yet.
-    d->client->setEncryptionSessionResolver(
-        [this](const QString &methodId, const Jid &peer,
-               Client::EncryptionSessionPurpose purpose) -> EncryptedSession * {
-            if (!peer.isValid() || methodId.isEmpty())
-                return nullptr;
-            auto *registry = d->client->encryptionManager();
-            if (purpose == Client::EncryptionSessionPurpose::Groupchat && !peer.resource().isEmpty()) {
-                auto *occupant = findGCContact(peer);
-                return occupant ? occupant->encryptionSession(registry, methodId, purpose) : nullptr;
-            }
-            if (auto *occupant = findGCContact(peer))
-                return occupant->encryptionSession(registry, methodId, purpose);
-
-            // No contact owner means no persistent session. The incoming
-            // fallback may start a one-shot session for a new sender.
-            UserListItem *item = findFirstRelevant(peer);
-            if (!item)
-                return nullptr;
-            auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
-            if (!contact) {
-                d->updateEntry(*item);
-                contact = d->findContact(item->jid());
-            }
-            return contact ? contact->encryptionSession(methodId, peer, registry) : nullptr;
-        });
-
-    // Last-resort stanza dispatch: Psi chooses a session and immediately
-    // asks Iris to decrypt with it. This never re-enters Client::distribute().
+    // Psi handles incoming encrypted stanzas after Iris has authenticated
+    // protocol-specific constraints (e.g. MUC sender identity).
     d->client->setIncomingEncryptedStanzaHandler(
         [this](const QDomElement &stanza, const QString &methodId,
                const EncryptionContext &context, Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
@@ -1227,22 +1198,22 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
                     && from.bare() == d->client->jid().bare() ? to : from;
             if (!peer.isValid())
                 return nullptr;
-            auto *session = d->client->encryptedSession(methodId, peer, purpose);
-            if (session) {
-                if (purpose == Client::EncryptionSessionPurpose::Groupchat)
-                    d->client->registerIncomingSession(methodId, peer, purpose, session);
+            if (auto *session = encryptionSession(methodId, peer,
+                                                  purpose == Client::EncryptionSessionPurpose::Groupchat))
                 return session->decrypt(stanza, context);
-            }
-            // Unknown contacts have no owner for a reusable session. Create
-            // only the crypto session, for this decryption operation.
-            if ((purpose != Client::EncryptionSessionPurpose::Message
-                 && purpose != Client::EncryptionSessionPurpose::Carbon)
+
+            // No existing owner: decrypt with an operation-scoped session.
+            // In particular, do not create a provisional PsiContact.
+            if (purpose == Client::EncryptionSessionPurpose::Groupchat
                 || peer.node().isEmpty() || d->groupchats.contains(peer.bare()))
                 return nullptr;
+            auto *registry = d->client->encryptionManager();
+            if (!registry)
+                return nullptr;
+            EncryptedSession *session = nullptr;
             EncryptionContext base;
             base.recipients = { peer };
-            session = d->client->encryptionManager()->startSession(
-                methodId, EncryptionMethod::XmppStanza, base);
+            session = registry->startSession(methodId, EncryptionMethod::XmppStanza, base);
             if (!session)
                 return nullptr;
             auto *job = session->decrypt(stanza, context);
@@ -1656,6 +1627,48 @@ UserList *PsiAccount::userList() const { return &d->userList; }
 Client *PsiAccount::client() const { return d->client; }
 
 PsiEncryptionController *PsiAccount::encryptionController() const { return d->encryptionController; }
+
+EncryptedSession *PsiAccount::encryptionSession(const QString &methodId, const Jid &peer, bool groupchat)
+{
+    if (!peer.isValid() || methodId.isEmpty())
+        return nullptr;
+    auto *registry = d->client->encryptionManager();
+    if (!registry)
+        return nullptr;
+
+    if (groupchat) {
+        // A MUC participant is identified by the live occupant JID, not by
+        // the bare room or an inferred real JID.
+        auto *occupant = peer.resource().isEmpty() ? nullptr : findGCContact(peer);
+        return occupant ? occupant->encryptionSession(
+                   registry, methodId, Client::EncryptionSessionPurpose::Groupchat) : nullptr;
+    }
+    if (auto *occupant = findGCContact(peer))
+        return occupant->encryptionSession(registry, methodId, Client::EncryptionSessionPurpose::Message);
+
+    if (auto *item = findFirstRelevant(peer)) {
+        auto *contact = item->isSelf() ? d->selfContact : d->findContact(item->jid());
+        if (!contact) {
+            d->updateEntry(*item);
+            contact = d->findContact(item->jid());
+        }
+        return contact ? contact->encryptionSession(methodId, peer, registry) : nullptr;
+    }
+
+    // A non-roster chat owns its encryption session while the window is open.
+    // Check the selected peer so an unrelated resource cannot borrow it.
+    if (auto *chat = findChatDialog(peer, false)) {
+        if (chat->encryptionMethodId() == methodId) {
+            auto *session = chat->encryptionSession();
+            if (session && !session->isClosing() && session->context().recipients.size() == 1) {
+                const Jid selected = session->context().recipients.constFirst();
+                if (selected == peer || (selected.resource().isEmpty() && selected.bare() == peer.bare()))
+                    return session;
+            }
+        }
+    }
+    return nullptr;
+}
 
 EventQueue *PsiAccount::eventQueue() const { return d->eventQueue; }
 
@@ -5490,7 +5503,7 @@ void PsiAccount::sendEncryptedMessage(const Message &message, bool log, const QS
         context.recipients = { peer };
         // Reuse a session owned by an existing contact where possible.
         // Otherwise request an operation-local session from Iris.
-        auto *selected = d->client->encryptedSession(methodId, peer);
+        auto *selected = encryptionSession(methodId, peer);
         if (!selected) {
             selected = d->client->encryptionManager()->startSession(
                 methodId, XMPP::EncryptionMethod::XmppStanza, context);

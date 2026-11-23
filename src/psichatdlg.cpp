@@ -573,7 +573,7 @@ void PsiChatDlg::rebuildEncryptionSession()
         return;
 
     const auto peer = controller->capabilityJid(jid());
-    encryptionSession_ = client->encryptedSession(selectedEncryptionMethod_, peer);
+    encryptionSession_ = account()->encryptionSession(selectedEncryptionMethod_, peer);
     if (!encryptionSession_) {
         XMPP::EncryptionContext context;
         context.recipients = { peer };
@@ -583,8 +583,6 @@ void PsiChatDlg::rebuildEncryptionSession()
         if (encryptionSession_) {
             connect(client, &XMPP::Client::disconnected, chatOwnedEncryptionSession_.data(),
                     &XMPP::EncryptedSession::close);
-            client->registerIncomingSession(selectedEncryptionMethod_, peer,
-                                            XMPP::Client::EncryptionSessionPurpose::Message, encryptionSession_);
         }
     }
 }

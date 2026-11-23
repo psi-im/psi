@@ -135,6 +135,8 @@ public:
     void                     updateFeatures();
     XMPP::Client            *client() const;
     PsiEncryptionController *encryptionController() const;
+    // Lookup and retain a session through Psi's own contact/MUC/chat owners.
+    XMPP::EncryptedSession *encryptionSession(const QString &methodId, const Jid &peer, bool groupchat = false);
     virtual ContactProfile  *contactProfile() const;
     EventQueue              *eventQueue() const;
     void                     forgetLocallyDeletedEvents(const QString &peer, const QStringList &incomingIds,

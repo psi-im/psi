@@ -4,7 +4,6 @@
 
 #include "historymessageextras.h"
 #include "iris/xmpp_encryption.h"
-#include "iris/xmpp_client.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_mammanager.h"
 #include "iris/xmpp_stream.h"
@@ -574,21 +573,15 @@ void HistorySync::decodeNext()
         context.setArchiveReplay();
         auto *method = crypto->methodForStanza(stanza);
         const XMPP::Jid conversation(key_.peer);
-        auto *session = method
-            ? context_.client->encryptedSession(method->id(), conversation,
-                                                XMPP::Client::EncryptionSessionPurpose::ArchiveReplay)
-            : nullptr;
-        if (!session && method) {
+        auto *session = method ? archiveSessions_.value(method->id()).data() : nullptr;
+        if (method && (!session || session->isClosing())) {
             // Do not create a fake contact for old messages. Retain a
             // method-specific session for this HistorySync's lifetime.
-            session = archiveSessions_.value(method->id()).data();
-            if (!session || session->isClosing()) {
-                XMPP::EncryptionContext base;
-                base.recipients = { conversation };
-                session = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
-                if (session)
-                    archiveSessions_.insert(method->id(), session);
-            }
+            XMPP::EncryptionContext base;
+            base.recipients = { conversation };
+            session = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
+            if (session)
+                archiveSessions_.insert(method->id(), session);
         }
         auto *job = session ? session->decrypt(stanza, context) : nullptr;
         if (!job) {
