@@ -122,6 +122,7 @@ public:
     static bool    canSetAffiliation(const XMPP::MUCItem &, const XMPP::MUCItem &, XMPP::MUCItem::Affiliation);
 
 signals:
+    void memberSnapshotInvalidated();
     void getConfiguration_success(const XData &);
     void getConfiguration_error(int, const QString &);
     void setConfiguration_success();

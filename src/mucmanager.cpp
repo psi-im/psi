@@ -490,7 +490,10 @@ void MUCManager::invalidateMemberCache()
     membershipSnapshotReady_ = false;
     membershipSnapshotError_.clear();
     membershipDeferredError_.clear();
-    completeMemberRequests(tr("The MUC membership snapshot is no longer valid"));
+    QPointer<MUCManager> guard(this);
+    emit memberSnapshotInvalidated();
+    if (guard)
+        completeMemberRequests(tr("The MUC membership snapshot is no longer valid"));
 }
 
 void MUCManager::kick(const QString &nick, const QString &reason) { setRole(nick, MUCItem::NoRole, reason, Kick); }

@@ -50,6 +50,8 @@ namespace XMPP {
 class Message;
 class MAMTask;
 class DiscoInfoTask;
+class EncryptedSession;
+class EncryptionJob;
 }
 using namespace XMPP;
 
@@ -192,6 +194,10 @@ private:
     bool omemoNonAnonymous_ = false;
     QAction *omemoAction_ = nullptr;
 
+    QPointer<XMPP::EncryptedSession> roomEncryptionSession_;
+    QSet<XMPP::EncryptionJob *> pendingEncryptedMessages_;
+    void closeRoomEncryptionSession();
+    void cancelPendingEncryptedMessages();
     void updateOmemoAction();
     void shareFiles(const QMimeData *data = nullptr);
     void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);

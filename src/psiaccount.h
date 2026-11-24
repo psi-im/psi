@@ -330,7 +330,7 @@ public:
     // One-shot, fail-closed send for sensitive file references requiring OMEMO 2.
     // Success includes normal message-history recording; no plaintext fallback.
     using ExplicitEncryptionCompletion = std::function<void(bool success, bool untrusted, const QString &error)>;
-    void sendMessageWithEncryptionContext(Message message, const QString &methodId,
+    void sendMessageWithEncryptionContext(Message message, XMPP::EncryptedSession *session,
                                           const XMPP::EncryptionContext &context,
                                           ExplicitEncryptionCompletion completed);
 

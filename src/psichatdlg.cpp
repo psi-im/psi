@@ -562,9 +562,7 @@ void PsiChatDlg::shareFiles(const QMimeData *data)
                                 "Its key was not sent."));
                 return;
             }
-            // One-shot OMEMO 2 is required for SCE protection of references.
-            // Do not use the chat's long-lived session: it could negotiate
-            // legacy OMEMO and expose the aesgcm key outside the body.
+            // The operation pins OMEMO 2 without changing the chat's ordinary wire profile.
             sendEncryptedFileShare(refs, description, true);
             return;
 #else
@@ -607,10 +605,21 @@ void PsiChatDlg::sendEncryptedFileShare(const QList<XMPP::Reference> &refs, cons
     XMPP::EncryptionContext context;
     context.recipients.append(controller->capabilityJid(jid()));
     context.options.insert(QStringLiteral("omemoProtocol"), QStringLiteral("omemo2"));
+    auto *session = account()->encryptionSession(method, context.recipients.constFirst());
+    if (!session && encryptionSession_ && encryptionSession_->methodId() == method && !encryptionSession_->isClosing())
+        session = encryptionSession_;
+    // A non-roster plaintext chat may still explicitly encrypt an attachment.
+    QPointer<XMPP::EncryptedSession> transient;
+    if (!session) {
+        session = client->encryptionManager()->startSession(method, XMPP::EncryptionMethod::XmppStanza, context);
+        transient = session;
+    }
     QPointer<PsiChatDlg> guard(this);
     account()->sendMessageWithEncryptionContext(
-        message, method, context,
-        [guard, refs, description, message, allowTrustPrompt](bool success, bool untrusted, const QString &error) {
+        message, session, context,
+        [guard, transient, refs, description, message, allowTrustPrompt](bool success, bool untrusted, const QString &error) {
+            if (transient)
+                transient->close();
             if (!guard)
                 return;
             if (success) {

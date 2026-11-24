@@ -1235,6 +1235,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
                 if (changed.bare() == jid().bare())
                     updateOmemoAction();
             });
+    connect(d->mucManager, &MUCManager::memberSnapshotInvalidated, this, &GCMainDlg::cancelPendingEncryptedMessages);
+    connect(account()->client()->encryptionManager(), &XMPP::EncryptionManager::methodUnregistered, this,
+            [this](const QString &methodId) {
+                if (roomEncryptionSession_ && roomEncryptionSession_->methodId() == methodId)
+                    closeRoomEncryptionSession();
+                updateOmemoAction();
+            });
     updateOmemoAction();
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
@@ -1295,6 +1302,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
 
 GCMainDlg::~GCMainDlg()
 {
+    for (auto *job : std::as_const(pendingEncryptedMessages_))
+        disconnect(job, nullptr, this, nullptr);
+    closeRoomEncryptionSession();
     if (mamTask_)
         mamTask_->safeDelete();
     //  Save splitters size
@@ -1973,6 +1983,7 @@ void GCMainDlg::configureRoom()
 
 void GCMainDlg::goDisc()
 {
+    closeRoomEncryptionSession();
     if (d->state != Private::Idle && d->state != Private::ForcedLeave) {
         d->state = Private::Idle;
         d->actions->action("gchat_set_topic")->setEnabled(false);
@@ -3112,6 +3123,23 @@ void GCMainDlg::shareFiles(const QMimeData *data)
     }
 }
 
+void GCMainDlg::cancelPendingEncryptedMessages()
+{
+    const auto pending = std::exchange(pendingEncryptedMessages_, {});
+    for (auto *job : pending) {
+        if (!job->isFinished())
+            job->fail(XMPP::EncryptionJob::Error::Cancelled, tr("Room membership or encryption policy changed"));
+    }
+}
+
+void GCMainDlg::closeRoomEncryptionSession()
+{
+    if (roomEncryptionSession_)
+        roomEncryptionSession_->close();
+    roomEncryptionSession_.clear();
+    cancelPendingEncryptedMessages();
+}
+
 void GCMainDlg::updateOmemoAction()
 {
     if (!omemoAction_)
@@ -3123,8 +3151,10 @@ void GCMainDlg::updateOmemoAction()
     const bool selected = controller && controller->explicitlySelectedMethod(jid()) == method;
     // This is the only opt-in for membership tracking. Plain MUCs never
     // subscribe to extra presence signals or allocate affiliation snapshots.
-    d->mucManager->setMemberDiscoveryEnabled(available && selected && omemoRoomInfoKnown_
-                                              && omemoMembersOnly_ && omemoNonAnonymous_);
+    const bool enabled = available && selected && omemoRoomInfoKnown_ && omemoMembersOnly_ && omemoNonAnonymous_;
+    if (!enabled)
+        closeRoomEncryptionSession();
+    d->mucManager->setMemberDiscoveryEnabled(enabled);
     omemoAction_->setEnabled(available);
     omemoAction_->setChecked(selected);
     omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
@@ -3196,9 +3226,25 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
     // Legacy OMEMO encrypts only <body/> and exposes other MUC content.
     // OMEMO 2 uses SCE to protect attachments, replies and message metadata.
     context.options.insert(QStringLiteral("omemoProtocol"), QStringLiteral("omemo2"));
+    auto *client = account()->client();
+    if (!client->hasStream()) {
+        appendSysMsg(tr("OMEMO message was NOT sent: no active XMPP stream"), true);
+        return;
+    }
+    if (!roomEncryptionSession_ || roomEncryptionSession_->isClosing()) {
+        roomEncryptionSession_ = client->encryptionManager()->startSession(
+            XMPP::OmemoEncryption::methodId(), XMPP::EncryptionMethod::XmppStanza);
+    }
+    if (!roomEncryptionSession_) {
+        appendSysMsg(tr("OMEMO message was NOT sent: the room encryption session is unavailable"), true);
+        return;
+    }
     Message sent = message;
-    auto *job = account()->client()->sendMessageEncrypted(sent, XMPP::OmemoEncryption::methodId(), context);
+    if (sent.id().isEmpty())
+        sent.setId(client->genUniqueId());
+    auto *job = client->sendEncrypted(sent.toStanza(&client->stream()).element(), roomEncryptionSession_.data(), context);
     const auto finished = [this, job, message, members, allowTrustPrompt]() {
+        pendingEncryptedMessages_.remove(job);
         const auto error = job->error();
         const auto errorText = job->errorString();
         const bool succeeded = job->success();
@@ -3214,6 +3260,8 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
         finished();
         job->deleteLater();
     } else {
+        pendingEncryptedMessages_.insert(job);
+        connect(job, &QObject::destroyed, this, [this, job]() { pendingEncryptedMessages_.remove(job); });
         connect(job, &XMPP::EncryptionJob::finished, this, finished);
         // The job must also be released if the groupchat window closes
         // while encryption is still running.
@@ -3249,7 +3297,14 @@ void GCMainDlg::reviewGroupchatTrust(const Message &message, const QList<Jid> &m
         if (requested)
             return; // One device confirmation at a time, and only after a failed send.
     }
-    sendEncryptedGroupchat(message, members, false);
+    // Trust review may have taken minutes. Re-read the current snapshot before retrying.
+    d->mucManager->requestMemberJids(this, [this, message](bool ok, const QList<Jid> &current, const QString &error) {
+        if (!ok || current.isEmpty()) {
+            appendSysMsg(tr("OMEMO message was NOT sent: %1").arg(ok ? tr("No known member JIDs") : error), true);
+            return;
+        }
+        sendEncryptedGroupchat(message, current, false);
+    });
 #else
     Q_UNUSED(message)
     Q_UNUSED(members)

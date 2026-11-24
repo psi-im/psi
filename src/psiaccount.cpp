@@ -5375,20 +5375,24 @@ void PsiAccount::dj_sendMessage(Message &m, bool log, XMPP::EncryptedSession *se
     sendMessageInternal(m, log, session, methodId, false);
 }
 
-void PsiAccount::sendMessageWithEncryptionContext(Message message, const QString &methodId,
+void PsiAccount::sendMessageWithEncryptionContext(Message message, XMPP::EncryptedSession *session,
                                                   const XMPP::EncryptionContext &context,
                                                   ExplicitEncryptionCompletion completed)
 {
-    if (!d->client || !d->encryptionController || methodId.isEmpty() || context.recipients.isEmpty()) {
+    if (!d->client || !d->client->hasStream() || !session || session->isClosing() || context.recipients.isEmpty()) {
         completed(false, false, tr("Secure file delivery is unavailable"));
         return;
     }
-    auto *method = d->client->encryptionManager()->method(methodId);
+    auto *method = d->client->encryptionManager()->method(session->methodId());
     if (!method || !method->capabilities().testFlag(XMPP::EncryptionMethod::XmppStanza)) {
         completed(false, false, tr("The selected encryption method cannot protect an XMPP message"));
         return;
     }
-    auto *job = d->client->sendMessageEncrypted(message, methodId, context);
+    if (message.id().isEmpty())
+        message.setId(d->client->genUniqueId());
+    message.setWasEncrypted(true);
+    message.setEncryptionProtocol(session->methodId());
+    auto *job = d->client->sendEncrypted(message.toStanza(&d->client->stream()).element(), session, context);
     if (!job) {
         completed(false, false, tr("Failed to start encrypted message delivery"));
         return;
