@@ -15,10 +15,11 @@
 #include <iris/xmpp_client.h>
 #include <iris/xmpp_pubsub.h>
 
-bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::File &file, const QString &path,
+bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::File &file,
+                       const FileSharingResponder::Lookup &lookup,
                        QObject *context, std::function<void(bool, const QString &)> announced)
 {
-    if (!client || !file.hasComputedHashes() || !QFileInfo(path).isReadable())
+    if (!client || !file.hasComputedHashes() || !lookup)
         return false;
     namespace J   = XMPP::Jingle;
     auto *manager = client->jingleManager();
@@ -33,10 +34,17 @@ bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::F
     description.appendChild(file.toXml(&doc));
     publication.addDescription(description);
     const QPointer<J::Manager> guard(manager);
-    publication = manager->registerPublishedSession(publication, [guard, file, path](const XMPP::Jid &peer) {
-        if (!guard || !QFileInfo(path).isReadable())
+    publication = manager->registerPublishedSession(publication, [guard, file, lookup](const XMPP::Jid &peer) {
+        if (!guard)
+            return static_cast<J::Session *>(nullptr);
+        const auto grant = lookup(peer, file.computedHashes());
+        if (!grant || !QFileInfo(grant->path).isReadable())
             return static_cast<J::Session *>(nullptr);
         auto *session = guard->newSession(peer);
+        if (!FileSharingResponder::applyProtectionPolicy(session, grant->encryption)) {
+            session->deleteLater();
+            return static_cast<J::Session *>(nullptr);
+        }
         auto *app
             = static_cast<J::FileTransfer::Application *>(session->newContent(J::FileTransfer::NS, session->role()));
         if (!app) {
@@ -44,18 +52,7 @@ bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::F
             return static_cast<J::Session *>(nullptr);
         }
         app->setFile(file);
-        QObject::connect(app, &J::FileTransfer::Application::deviceRequested, app,
-                         [app, path](quint64 offset, std::optional<quint64>) {
-                             auto *device = new QFile(path, app);
-                             if (!device->open(QIODevice::ReadOnly) || offset > quint64(device->size())
-                                 || !device->seek(qint64(offset))) {
-                                 const auto error = device->errorString();
-                                 delete device;
-                                 app->remove(J::Reason::FailedApplication, error);
-                                 return;
-                             }
-                             app->setDevice(device);
-                         });
+        FileSharingResponder::attachSource(app, peer, *grant, lookup);
         session->addContent(app);
         return session;
     });
@@ -106,7 +103,7 @@ FileSharingPublication::FileSharingPublication(XMPP::Client *client, const XMPP:
     connect(client, &QObject::destroyed, this, &QObject::deleteLater);
 }
 
-void FileSharingPublication::start(const QStringList &cachedSources, bool serveLocally)
+void FileSharingPublication::start(const QStringList &cachedSources, const FileSharingResponder::Lookup &lookup)
 {
     if (_started || !_client)
         return;
@@ -117,7 +114,7 @@ void FileSharingPublication::start(const QStringList &cachedSources, bool serveL
         return; // Never announce the plaintext source or reuse plaintext URLs.
     }
     const bool registered
-        = serveLocally && publishSharedFile(_client, _file, _path, this, [this](bool success, const QString &error) {
+        = lookup && publishSharedFile(_client, _file, lookup, this, [this](bool success, const QString &error) {
               emit logMessage(success ? tr("Published in the private PubSub catalog")
                                       : tr("PubSub publication failed: %1").arg(error));
               // Local hash requests still work when the private catalog is unavailable.

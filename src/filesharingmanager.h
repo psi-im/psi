@@ -22,6 +22,7 @@
 
 #include "chatmedia.h"
 #include "filesharingitem.h"
+#include "filesharingresponder.h"
 #include "mediachunktypes.h"
 #include "qite.h"
 
@@ -118,6 +119,8 @@ public:
     // Answers a remote request for a file on behalf of the account. Returns false when
     // the session is not a request, such as a file offer for the user to accept.
     bool answerFileRequest(XMPP::Jingle::Session *session, PsiAccount *account);
+    // The same account-bound lookup is used by JinglePub and direct requests.
+    FileSharingResponder::Lookup servedFileLookup(PsiAccount *account);
     // The account answers remote requests for the file from now on, or no longer does.
     bool serve(PsiAccount *account, const XMPP::MediaSharing &media, const QString &localPath);
     void stopServing(PsiAccount *account, const QList<XMPP::Hash> &hashes);

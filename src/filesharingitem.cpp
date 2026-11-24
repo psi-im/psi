@@ -495,7 +495,8 @@ void FileSharingItem::publish(const XMPP::Jid &myJid, PublicationMode mode, QObj
         emit publishFinished();
     });
     // An earlier upload of this file may still be there to reuse.
-    publication->start(knownSources, serveLocally);
+    publication->start(knownSources, serveLocally ? _manager->servedFileLookup(_acc)
+                                                   : FileSharingResponder::Lookup {});
 }
 
 void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
@@ -547,7 +548,7 @@ void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver
                 if (guard)
                     finished(reference, error);
             });
-    publication->start({}, false);
+    publication->start({});
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }

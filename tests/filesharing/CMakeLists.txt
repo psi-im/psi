@@ -204,7 +204,8 @@ if(TARGET iris)
 endif()
 
 if(TARGET iris)
-    add_executable(filesharing_publication_test publication.cpp ../../src/filesharingpublication.cpp)
+    add_executable(filesharing_publication_test publication.cpp ../../src/filesharingpublication.cpp
+        ../../src/filesharingresponder.cpp)
     set_target_properties(filesharing_publication_test PROPERTIES AUTOMOC ON)
     target_include_directories(filesharing_publication_test PRIVATE ../../src)
     target_link_libraries(filesharing_publication_test PRIVATE iris Qt${QT_DEFAULT_MAJOR_VERSION}::Test)

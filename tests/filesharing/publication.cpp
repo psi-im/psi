@@ -99,6 +99,15 @@ struct PublicationFixture {
         return true;
     }
     QString     path() const { return dir.filePath("file.txt"); }
+    FileSharingResponder::Lookup lookup() const
+    {
+        return [path = path(), hashes = file.computedHashes()](const Jid &, const QList<Hash> &requested)
+                   -> std::optional<FileSharingResponder::ServedFile> {
+            if (hashes != requested)
+                return {};
+            return FileSharingResponder::ServedFile { path, hashes };
+        };
+    }
     QDomElement request(const QString &child, const QString &ns = {}) const
     {
         for (const auto &iq : stream.written) {
@@ -204,9 +213,9 @@ private slots:
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         QSignalSpy             progress(&publication, &FileSharingPublication::progress);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         // Starting twice while publishing must not duplicate HTTP requests or completion.
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         QCOMPARE(finished.count(), 0);
         uploadSlot(f);
         QCOMPARE(finished.count(), 0);
@@ -244,7 +253,7 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         announce(f);
         uploadSlot(f);
         const auto reply = f.nam.requests.last();
@@ -291,7 +300,7 @@ private slots:
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         const QString          old = "https://download.example.test/old/file.txt";
-        publication.start({ old, old, "xmpp:alice@example.test/old-device?jingle-ft" }, true);
+        publication.start({ old, old, "xmpp:alice@example.test/old-device?jingle-ft" }, f.lookup());
         QCOMPARE(f.nam.requests.size(), 1);
         auto reply = f.nam.requests.first();
         QCOMPARE(reply->operation(), QNetworkAccessManager::HeadOperation);
@@ -324,7 +333,7 @@ private slots:
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         const QString          good = "https://download.example.test/good";
         const QString          gone = "https://download.example.test/gone";
-        publication.start({ good, gone }, true);
+        publication.start({ good, gone }, f.lookup());
         QCOMPARE(f.nam.requests.size(), 2);
         announce(f);
         f.nam.requests[0]->complete(200);
@@ -349,7 +358,7 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({ "xmpp:alice@example.test/stale?jingle-ft" }, false);
+        publication.start({ "xmpp:alice@example.test/stale?jingle-ft" });
         uploadSlot(f);
         QCOMPARE(finished.count(), 0);
         f.nam.requests.last()->complete(httpFails ? 500 : 201,
@@ -365,7 +374,7 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         uploadSlot(f, false);
         QCOMPARE(finished.count(), 0);
         announce(f);
@@ -436,7 +445,15 @@ private slots:
         file.setSize(7);
         file.addHash(Hash::from(Hash::Sha256, QByteArray("payload")));
         bool completed = false, succeeded = false;
-        QVERIFY(publishSharedFile(&client, file, source.fileName(), this, [&](bool success, const QString &) {
+        bool allowed = true;
+        const FileSharingResponder::Lookup lookup =
+            [path = source.fileName(), hashes = file.computedHashes(), &allowed](const Jid &, const QList<Hash> &requested)
+                -> std::optional<FileSharingResponder::ServedFile> {
+                if (!allowed || hashes != requested)
+                    return {};
+                return FileSharingResponder::ServedFile { path, hashes };
+            };
+        QVERIFY(publishSharedFile(&client, file, lookup, this, [&](bool success, const QString &) {
             completed = true;
             succeeded = success;
         }));
@@ -507,6 +524,18 @@ private slots:
                 starting = !stanza.firstChildElement("starting").attribute("sid").isEmpty();
         }
         QVERIFY(starting);
+
+        // Revoking the same catalog grant invalidates the existing factory.
+        // No cached path or stale PubSub announcement can authorize another start.
+        allowed = false;
+        request.setAttribute("id", "revoked-shared-file");
+        QVERIFY(client.rootTask()->take(request));
+        bool refused = false;
+        for (const auto &stanza : std::as_const(stream.written)) {
+            if (stanza.attribute("id") == QString("revoked-shared-file"))
+                refused = stanza.attribute("type") == QString("error");
+        }
+        QVERIFY(refused);
     }
 };
 int main(int argc, char **argv)

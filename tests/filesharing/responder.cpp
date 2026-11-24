@@ -133,10 +133,12 @@ struct Answer {
 FileSharingResponder::Lookup lookupFor(const FileSharingCatalog &catalog, const QString &account, const QString &path,
                                        const Hash &hash)
 {
-    return [&catalog, account, path, hash](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
-        if (!catalog.isServed(account, hashes))
+    return [&catalog, account, path, hash](const Jid &, const QList<Hash> &hashes)
+               -> std::optional<FileSharingResponder::ServedFile> {
+        const auto grant = catalog.servedRecord(account, hashes);
+        if (!grant)
             return {};
-        return FileSharingResponder::ServedFile { path, { hash } };
+        return FileSharingResponder::ServedFile { path, { hash }, grant->policy.encryption };
     };
 }
 
