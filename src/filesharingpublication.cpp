@@ -287,10 +287,10 @@ void FileSharingPublication::uploadEncrypted()
                     XMPP::MediaSharing sharing;
                     // Metadata and the key are only ever sent inside OMEMO 2 SCE.
                     sharing.file = _file;
-                    sharing.sources = { source }; // no plaintext/Jingle fallback
+                    sharing.sources = QStringList { source }; // no plaintext/Jingle fallback
                     reference.setMediaSharing(sharing);
                     _encryptedReference = reference;
-                    _sources = { source };
+                    _sources = QStringList { source };
                 }
             }
         }
