@@ -21,6 +21,6 @@ public:
     virtual void setEncryptionMethodAccessingHost(EncryptionMethodAccessingHost *host) = 0;
 };
 
-Q_DECLARE_INTERFACE(EncryptionMethodAccessor, "org.psi-im.EncryptionMethodAccessor/0.1")
+Q_DECLARE_INTERFACE(EncryptionMethodAccessor, "org.psi-im.EncryptionMethodAccessor/0.2")
 
 #endif // ENCRYPTIONMETHODACCESSOR_H
