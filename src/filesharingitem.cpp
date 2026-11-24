@@ -230,7 +230,7 @@ Reference FileSharingItem::toReference() const
 {
     // The URL identity is not an XEP-0300 checksum; don't advertise it
     // as a verified SIMS file hash when forwarding/sending files.
-    if (_urlOnly)
+    if (_urlOnly || _uris.isEmpty())
         return {};
     return fileSharingReference(fileMetadata(), _uris);
 }

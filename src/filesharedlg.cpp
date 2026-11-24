@@ -106,8 +106,7 @@ void FileShareDlg::publish()
 {
     // The checkbox requires protection; clearing it is not a request for plaintext.
     // HTTP chooses its key delivery from the chat context at publication time.
-    // Until protected Jingle publications are implemented, keep encrypted HTTP
-    // isolated from the legacy plaintext Jingle/HTTP publication path.
+    // Protected publications cannot use legacy unscoped Jingle sources yet.
     encryptedUpload_ = encryptionOptions_.selected
         || (encryptionOptions_.available && ui->cb_encrypt->isChecked());
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);

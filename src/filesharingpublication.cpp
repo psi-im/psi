@@ -4,6 +4,7 @@
 #include "filesourceselector.h"
 #include <QFile>
 #include <QFileInfo>
+#include <algorithm>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPointer>
