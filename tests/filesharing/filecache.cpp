@@ -722,6 +722,22 @@ private slots:
                                "PRIMARY KEY(file_id,position))"));
             QVERIFY(query.exec("CREATE TABLE url_content(account TEXT NOT NULL,url_key TEXT NOT NULL,"
                                "content_hash TEXT NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(account,url_key))"));
+            // Version 2 already contains the publication catalog. Keep the
+            // historical schema complete so subsequent migrations can run.
+            QVERIFY(query.exec("CREATE TABLE publications ("
+                               "id BLOB PRIMARY KEY, account TEXT NOT NULL, announcer TEXT, serving INTEGER NOT NULL, "
+                               "url_key TEXT, descriptor TEXT NOT NULL, local_path TEXT, local_size INTEGER, local_modified INTEGER)"));
+            QVERIFY(query.exec("CREATE INDEX publications_url ON publications(account, url_key) WHERE url_key IS NOT NULL"));
+            QVERIFY(query.exec("CREATE TABLE publication_hashes ("
+                               "publication_id BLOB NOT NULL REFERENCES publications(id) ON DELETE CASCADE, "
+                               "algorithm TEXT NOT NULL, digest BLOB NOT NULL, PRIMARY KEY(publication_id, algorithm, digest))"));
+            QVERIFY(query.exec("CREATE INDEX publication_hashes_digest ON publication_hashes(algorithm, digest)"));
+            QVERIFY(query.exec("CREATE TABLE publication_sources ("
+                               "publication_id BLOB NOT NULL REFERENCES publications(id) ON DELETE CASCADE, "
+                               "position INTEGER NOT NULL, uri TEXT NOT NULL, PRIMARY KEY(publication_id, position))"));
+            QVERIFY(query.exec("CREATE TABLE file_legacy_imports (partition TEXT NOT NULL PRIMARY KEY)"));
+            QVERIFY(query.exec("CREATE INDEX files_partition ON files(partition)"));
+            QVERIFY(query.exec("CREATE INDEX file_hashes_digest ON file_hashes(algorithm, digest)"));
             QVERIFY(query.exec("PRAGMA user_version=2"));
             for (int index = 1; index <= 2; ++index) {
                 QVariantMap metadata;
