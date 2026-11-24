@@ -42,15 +42,26 @@ class FileShareDlg : public QDialog {
     Q_OBJECT
 
 public:
-    using Callback = std::function<void(const QList<XMPP::Reference> &&, const QString &)>;
+    // The receiving chat must send the callback's encrypted=true result
+    // inside an end-to-end encrypted XMPP stanza. Never leak aesgcm: keys in
+    // plaintext messages, logs or an ordinary OOB URL.
+    using Callback = std::function<void(const QList<XMPP::Reference> &&, const QString &, bool encrypted)>;
+    struct EncryptionOptions {
+        bool available;
+        bool selected;
+        constexpr EncryptionOptions(bool available = false, bool selected = false) :
+            available(available), selected(selected) { }
+    };
 
     explicit FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<FileSharingItem *> &items,
-                          const Callback &callback, QWidget *parent = nullptr);
+                          const Callback &callback, QWidget *parent = nullptr,
+                          EncryptionOptions encryption = {});
     ~FileShareDlg();
 
-    static void shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent);
+    static void shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const Callback &callback, QWidget *parent,
+                           EncryptionOptions encryption = {});
     static void shareFiles(PsiAccount *acc, const XMPP::Jid &myJid, const QMimeData *data, const Callback &callback,
-                           QWidget *parent);
+                           QWidget *parent, EncryptionOptions encryption = {});
 private slots:
     void publish();
 
@@ -63,7 +74,9 @@ private:
     XMPP::Jid                myJid;
     QImage                   image;
     MultiFileTransferModel  *filesModel;
-    QList<FileSharingItem *> readyPublishers;
+    QList<XMPP::Reference> readyReferences;
+    EncryptionOptions encryptionOptions_;
+    bool encryptedUpload_ = false;
     Callback                 publishedCallback;
     int                      inProgressCount = 0;
     bool                     hasFailures     = false;

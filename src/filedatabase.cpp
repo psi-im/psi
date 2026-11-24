@@ -19,7 +19,7 @@
 #endif
 
 namespace {
-const int SchemaVersion = 7;
+const int SchemaVersion = 8;
 
 // What each schema version adds to the one before it.
 const QList<QStringList> &schemaUpgrades()
@@ -70,8 +70,12 @@ const QList<QStringList> &schemaUpgrades()
           "CREATE INDEX file_checksums_digest ON file_checksums(algorithm,digest,file_id) WHERE offset=0" },
         { "DROP INDEX file_hashes_key",
           "CREATE INDEX file_hashes_key ON file_hashes(CAST(algorithm || '+' || lower(hex(digest)) AS TEXT))" },
-        { "CREATE INDEX IF NOT EXISTS url_content_hash ON url_content(account,content_hash)" }
-        // The media type column and metadata backfill are handled together below.
+        { "CREATE INDEX IF NOT EXISTS url_content_hash ON url_content(account,content_hash)" },
+        // The media type column and metadata backfill are handled below for version 7.
+        { "ALTER TABLE publications ADD COLUMN legacy_hash INTEGER NOT NULL DEFAULT 1 CHECK(legacy_hash IN (0,1))",
+          "ALTER TABLE publications ADD COLUMN access_scope INTEGER NOT NULL DEFAULT 0 CHECK(access_scope IN (0,1,2))",
+          "ALTER TABLE publications ADD COLUMN encryption_policy INTEGER NOT NULL DEFAULT 0 "
+          "CHECK(encryption_policy IN (0,1,2))" }
     };
     return upgrades;
 }

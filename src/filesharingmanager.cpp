@@ -813,18 +813,23 @@ quint64 FileSharingManager::autoDownloadLimit(const Message &m, PsiAccount *acc)
 
 bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount *account)
 {
+    return FileSharingResponder::answer(session, servedFileLookup(account));
+}
+
+FileSharingResponder::Lookup FileSharingManager::servedFileLookup(PsiAccount *account)
+{
     const QPointer<PsiAccount> guard(account);
-    return FileSharingResponder::answer(
-        session, [this, guard](const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
-            if (!guard)
+    const QPointer<FileSharingManager> manager(this);
+    return [manager, guard](const Jid &, const QList<Hash> &hashes) -> std::optional<FileSharingResponder::ServedFile> {
+            if (!guard || !manager)
                 return {};
-            const auto publication = d->catalog->servedRecord(guard->id(), hashes);
+            const auto publication = manager->d->catalog->servedRecord(guard->id(), hashes);
             if (!publication)
                 return {};
             const auto authorized = publication->media.file.computedHashes();
             QString    path;
-            if (auto cached = cacheItem(authorized, true, &path))
-                return FileSharingResponder::ServedFile { path, cached->sums() };
+            if (manager->cacheItem(authorized, true, &path))
+                return FileSharingResponder::ServedFile { path, authorized, publication->policy.encryption };
             // Runtime items and received source unions are not authorization
             // records. Only the unchanged local copy of this own publication
             // can supply a fallback path.
@@ -832,12 +837,12 @@ bool FileSharingManager::answerFileRequest(Jingle::Session *session, PsiAccount 
             if (!path.isEmpty()) {
                 if (obsoleteRangePayload(path)
                     || (path.startsWith(cacheDir() + QStringLiteral("/ranges/"))
-                        && !mediaChunkCache()->isCompleteFile(path)))
+                        && !manager->mediaChunkCache()->isCompleteFile(path)))
                     return {};
-                return FileSharingResponder::ServedFile { path, authorized };
+                return FileSharingResponder::ServedFile { path, authorized, publication->policy.encryption };
             }
             return {};
-        });
+        };
 }
 
 bool FileSharingManager::serve(PsiAccount *account, const MediaSharing &media, const QString &localPath)

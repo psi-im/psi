@@ -9,6 +9,143 @@ Unknown-size transfers retain the ordinary downloader.
 `FileSharingChunkSource` uses Psi's existing downloader, HTTP support and Jingle
 session pool. There is no additional signaling or transport stack.
 
+## Publication and download policy
+
+The following is the design for protected Jingle publications, not a description
+of the existing HTTP-only encrypted publication path. It uses the same
+`FileSharingCatalog`, downloader and Jingle session pool, not another cache.
+
+A publication is an independent authorization record. Multiple publications of
+the same immutable file may refer to the same cached bytes without inheriting
+each other's permissions. A file hash identifies bytes; it does not authorize
+their retrieval. A received descriptor or a cached copy is not permission to
+serve it.
+
+| Access policy | Authorized requesters |
+| --- | --- |
+| LinkOnly | Holders of the publication's unguessable access capability |
+| SameServer | Valid XMPP JIDs with the same domain as the serving account |
+| Public | Any valid XMPP requester |
+
+No per-recipient JID ACL is maintained. Access and encryption are independent:
+
+| Encryption policy | Behavior |
+| --- | --- |
+| Disabled | Do not initiate E2EE; accept a compatible protected request (internal API only) |
+| Preferred | Prefer authenticated E2EE; permit plaintext only when no compatible protection is available before negotiation |
+| Required | Require authenticated E2EE before exposing bytes, regardless of the mutually supported method |
+
+The sharing dialog exposes one checkbox, "Require encrypted file transfer"
+(checked = Required, unchecked = Preferred), and an independent availability
+choice (LinkOnly, SameServer, Public). Default to Required and LinkOnly for
+encrypted chats. No transport or encryption-method selector is exposed. Public
+availability never implies a plaintext transfer.
+
+A publication stores the protection policy, not a pinned encryption method.
+For HTTP, select the file cipher and protected key-delivery mechanism at upload
+time using the chat's encryption context. An encrypted chat still prefers an
+encrypted HTTP source even when the checkbox is cleared. A Required
+publication must not publish plaintext HTTP, OOB, or BoB sources, nor reuse
+such URLs from other publications. Existing AES-GCM uploads remain ciphertext
+with their key carried in encrypted message content. Ordinary HTTP upload
+cannot enforce a SameServer requester restriction; omit that source unless
+the service actually enforces the selected scope. An unguessable HTTPS URL
+is a bearer capability, not proof of an XMPP identity.
+
+For Jingle, select a mutually supported registered encryption mechanism at the
+time of each transfer, preferring the current chat's method when compatible.
+The chat method is only a hint, never a publication restriction; a different
+trusted mechanism may protect a later transfer. Iris chooses native
+authenticated DTLS or JET as appropriate. After a mechanism has been selected,
+authentication or key-exchange failure is terminal, even under Preferred.
+Never retry in plaintext after a cryptographic failure. Capabilities report
+what the peer supports, not what a publication requires.
+
+The requirement applies to the protection of the actual bytes and the
+authentication of the peer, not merely to a TLS connection to an upload
+service. A public key or public access capability cannot by itself authenticate
+the file's origin; preserve and verify the authenticated content identity.
+
+### Identity, access capability and ranged requests
+
+Use the existing publication catalog for durable policy and keep the storage
+identity (content hashes) separate from publication identity. Migrate existing
+served records as public, non-enforced publications; do not invent restrictions
+that would break previously shared links. Create a separate random capability
+for LinkOnly instead of deriving it from a hash. The secret is not a JET key:
+JET derives fresh encryption material for each content, whereas a publication
+capability authorizes future downloads. Never log it, put it in a discoverable
+PEP item, or merge it into ordinary/public source lists.
+
+[XEP-0358](https://xmpp.org/extensions/xep-0358.html) has an opaque publication ID
+and a sender-initiated session request. It can identify a publication, but its
+plain IQ is not a confidential proof of capability possession against the
+XMPP server. [XEP-0234](https://xmpp.org/extensions/xep-0234.html) permits
+authorization checks and refusal of unavailable files, without specifying an
+access model. The current receiver-driven range requests must remain usable
+without a new session for every range. A capability-aware direct request needs
+a negotiated extension or a protected signaling exchange that binds proof to
+the publication, peer and session/content. Do not send a reusable secret as a
+plain IQ if access is intended to be secret from the server. The exact wire
+representation must be specified and tested before enabling LinkOnly serving;
+a bare hash request never grants LinkOnly access.
+
+The responder resolves a single served publication before looking up cached
+bytes, verifies the requester and its required encryption policy, and applies
+the same checks for each subsequent content-add. The JinglePub factory and
+direct file responder must enforce the same policy. BUNDLE reuse does not
+authorize another file. A session may pool ranges only when their peer,
+publication authorization, negotiated method and protection policy are
+compatible. No plaintext fallback after a failed authentication; no silent
+fallback to an unrelated public publication when resolving a restricted link.
+
+### Unified Jingle serving path
+
+Both JinglePub and receiver-initiated file requests use the same
+account-bound lookup and source-opening helper. Iris remains responsible for
+negotiating and enforcing transport protection; Psi owns publication
+authorization and local storage.
+
+```mermaid
+flowchart TD
+    PUB["JinglePub factory"] --> RESP["FileSharingResponder<br/>Shared protection policy and source opening"]
+    DIRECT["Direct Jingle request / content-add"] --> RESP
+    RESP --> LOOKUP["FileSharingManager::servedFileLookup"]
+    LOOKUP --> CAT["FileSharingCatalog<br/>Resolve and authorize one publication"]
+    CAT -->|Authorized| CACHE["Existing file cache / local file"]
+    CAT -->|Denied or unavailable| DENY["Refuse request"]
+    CACHE -->|Readable bytes| DEVICE["QIODevice"]
+    DEVICE --> IRIS["Iris Jingle<br/>Negotiated transfer protection"]
+```
+
+The same lookup is called again immediately before opening the source device.
+A cached file path or a stale JinglePub announcement grants no independent
+serving authority. No separate JinglePub file registry or cache is needed.
+
+The shared serving path and persistent policy fields are implemented; binding
+explicit publication IDs and capability proofs to incoming requests remains
+pending. Until that signaling is implemented, restricted publications must
+not be advertised as available.
+
+### Distributed serving
+
+A compatible recipient may become a source after it has verified the bytes.
+It inherits the original publication policy rather than publishing cached bytes
+under a new weaker policy. For MUC this allows members to fetch from other
+members without maintaining a mutable roster ACL. Source announcements must
+preserve the publication identity and protection requirement; a policy received
+with the original encrypted reference is retained independently of cached
+payloads. Do not advertise an unverified or incomplete cache as a full source.
+The policy can be enforced by each serving client only: after decryption a
+recipient can deliberately redistribute bytes, and this design is not DRM.
+[XEP-0448](https://xmpp.org/extensions/xep-0448.html) similarly restricts the
+sources that a compliant client adds to an encrypted file reference.
+
+Implementation order: Iris policy and authentication/transport negotiation,
+durable per-publication policy and authorized lookup, capability-aware
+signaling and direct range requests, source propagation, then publication UI.
+Do not expose a mode before every serving path enforces it.
+
 ## Payload and sidecar
 
 Files live in `shares/media-files-v2` under Psi's data directory:
@@ -123,14 +260,52 @@ multiple sources follow [XEP-0385](https://xmpp.org/extensions/xep-0385.html).
 
 `FileSharingJingleSession` owns the request queue independently of downloader
 lifetimes. Requests to the same full peer JID reuse a negotiated BUNDLE via
-`content-add`. `setKeepTransportUntilReceipt()` preserves the previous member;
-`setReceiptDeferred()` holds its receipt until the successor becomes active.
-With no successor the receipt is released promptly. Peers without BUNDLE retain
-separate sessions. The storage worker has no knowledge of Jingle sessions.
+content-add`. `setKeepTransportUntilReceipt()` preserves the previous member;
+`setReceiptDeferred()` holds its receipt until the successor's BUNDLE extension
+is accepted and committed, not until its data channel becomes active. Waiting
+for the latter can deadlock the handover. With no successor the receipt is
+released promptly. Peers without BUNDLE retain separate sessions. The storage
+worker has no knowledge of Jingle sessions.
 
-JET remains separate from storage policy. Iris authenticates JET as a whole-file
-stream and rejects ranges/streaming hooks in that mode. Plaintext local
-checkpoints do not enable arbitrary authenticated JET ranges or resume.
+### Range handover during playback
+
+```mermaid
+sequenceDiagram
+    participant S as Remote file sender
+    participant R as Psi file receiver
+    Note over S,R: Existing ICE/DTLS/SCTP association, content A
+    S->>R: Range A payload
+    opt JET protection (planned for ranged transfers)
+        S->>R: Range A GCM tag
+        Note right of R: Authenticate range A
+    end
+    Note right of R: payloadVerified()
+    Note over S,R: Receipt A deferred; keep association alive
+    R->>S: content-add (range B, same BUNDLE)
+    S->>R: content-accept (range B)
+    Note right of R: Commit BUNDLE extension
+    Note right of R: acknowledgeReceived() for A
+    R->>S: received (content A)
+    Note over S,R: Retire A, preserve association for B
+    S->>R: Range B payload (when channel is ready)
+```
+
+The receipt is a protocol-level acknowledgement, distinct from payload
+verification. The sender keeps the content alive until the receipt exchange
+(or another protocol-defined terminal outcome). If the successor is rejected
+or canceled, release the predecessor's receipt rather than strand it.
+
+The local player reads plaintext through the existing file reader/cache;
+the remote peer sees ordinary XEP-0234 range transfers. Neither endpoint's
+Jingle implementation needs to know that the request serves a player.
+
+JET remains separate from storage policy. Iris currently authenticates JET as a
+whole-file stream and rejects ranges/streaming hooks. The optional JET step in
+the diagram describes the intended extension, not a currently supported
+combination: each known-length range content gets a fresh key/IV, and its
+authentication tag must be verified before `payloadVerified()`. The deferred
+receipt and BUNDLE handover remain unchanged. Plaintext local checkpoints do
+not permit reuse of an existing GCM record or key/IV for a new range.
 
 The scheduler originates from
 [AnyKeep PR #156](https://github.com/Ri0n/AnyKeep/pull/156), reviewed at

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "filesharingpublication.h"
+#include "aesgcmurl.h"
 #include <QFile>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -99,6 +100,15 @@ struct PublicationFixture {
         return true;
     }
     QString     path() const { return dir.filePath("file.txt"); }
+    FileSharingResponder::Lookup lookup() const
+    {
+        return [path = path(), hashes = file.computedHashes()](const Jid &, const QList<Hash> &requested)
+                   -> std::optional<FileSharingResponder::ServedFile> {
+            if (hashes != requested)
+                return {};
+            return FileSharingResponder::ServedFile { path, hashes };
+        };
+    }
     QDomElement request(const QString &child, const QString &ns = {}) const
     {
         for (const auto &iq : stream.written) {
@@ -155,7 +165,7 @@ class PublicationTest : public QObject {
         QTRY_VERIFY(!f.request("pubsub").isNull());
         QVERIFY(f.answer(f.request("pubsub")));
     }
-    void uploadSlot(PublicationFixture &f, bool available = true)
+    void uploadSlot(PublicationFixture &f, bool available = true, bool encrypted = false)
     {
         const QString discoItems = "http://jabber.org/protocol/disco#items";
         QTRY_VERIFY(!f.request("query", discoItems).isNull());
@@ -172,13 +182,24 @@ class PublicationTest : public QObject {
                          "<identity category='store' type='file'/>"
                          "<feature var='urn:xmpp:http:upload:0'/></query>"));
         QTRY_VERIFY(!f.request("request").isNull());
+        if (encrypted) {
+            const auto request = f.request("request").firstChildElement("request");
+            QVERIFY(request.attribute("filename") != f.file.name());
+            QCOMPARE(request.attribute("content-type"), QString("application/octet-stream"));
+            QCOMPARE(request.attribute("size"), QString("23"));
+        }
         QVERIFY(f.answer(f.request("request"),
                          "<slot xmlns='urn:xmpp:http:upload:0'>"
                          "<put url='https://upload.example.test/new/file.txt'/>"
                          "<get url='https://download.example.test/new/file.txt'/></slot>"));
         QTRY_VERIFY(!f.nam.requests.isEmpty() && f.nam.requests.last()
                     && f.nam.requests.last()->operation() == QNetworkAccessManager::PutOperation);
-        QCOMPARE(f.nam.uploaded, QByteArray("payload"));
+        if (encrypted) {
+            QCOMPARE(f.nam.uploaded.size(), qsizetype(23));
+            QVERIFY(f.nam.uploaded != QByteArray("payload"));
+        } else {
+            QCOMPARE(f.nam.uploaded, QByteArray("payload"));
+        }
     }
 
 private slots:
@@ -204,9 +225,9 @@ private slots:
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         QSignalSpy             progress(&publication, &FileSharingPublication::progress);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         // Starting twice while publishing must not duplicate HTTP requests or completion.
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         QCOMPARE(finished.count(), 0);
         uploadSlot(f);
         QCOMPARE(finished.count(), 0);
@@ -244,7 +265,7 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         announce(f);
         uploadSlot(f);
         const auto reply = f.nam.requests.last();
@@ -291,7 +312,7 @@ private slots:
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         const QString          old = "https://download.example.test/old/file.txt";
-        publication.start({ old, old, "xmpp:alice@example.test/old-device?jingle-ft" }, true);
+        publication.start({ old, old, "xmpp:alice@example.test/old-device?jingle-ft" }, f.lookup());
         QCOMPARE(f.nam.requests.size(), 1);
         auto reply = f.nam.requests.first();
         QCOMPARE(reply->operation(), QNetworkAccessManager::HeadOperation);
@@ -324,7 +345,7 @@ private slots:
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
         const QString          good = "https://download.example.test/good";
         const QString          gone = "https://download.example.test/gone";
-        publication.start({ good, gone }, true);
+        publication.start({ good, gone }, f.lookup());
         QCOMPARE(f.nam.requests.size(), 2);
         announce(f);
         f.nam.requests[0]->complete(200);
@@ -349,7 +370,7 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({ "xmpp:alice@example.test/stale?jingle-ft" }, false);
+        publication.start({ "xmpp:alice@example.test/stale?jingle-ft" });
         uploadSlot(f);
         QCOMPARE(finished.count(), 0);
         f.nam.requests.last()->complete(httpFails ? 500 : 201,
@@ -365,12 +386,63 @@ private slots:
         QVERIFY(f.init());
         FileSharingPublication publication(&f.client, f.file, f.path(), f.jid);
         QSignalSpy             finished(&publication, &FileSharingPublication::finished);
-        publication.start({}, true);
+        publication.start({}, f.lookup());
         uploadSlot(f, false);
         QCOMPARE(finished.count(), 0);
         announce(f);
         QTRY_COMPARE(finished.count(), 1);
         QCOMPARE(publication.sources(), QStringList { "xmpp:alice@example.test/device?jingle-ft" });
+    }
+    void encryptedHttp_data()
+    {
+        QTest::addColumn<bool>("httpAvailable");
+        QTest::addColumn<bool>("httpFails");
+        QTest::newRow("success") << true << false;
+        QTest::newRow("upload-fails") << true << true;
+        QTest::newRow("no-service") << false << false;
+    }
+    void encryptedHttp()
+    {
+        namespace S = XMPP::StatelessFileSharing;
+        if (!S::cipherSupported(S::Cipher::Aes256Gcm))
+            QSKIP("AES-256-GCM provider unavailable");
+        QFETCH(bool, httpAvailable);
+        QFETCH(bool, httpFails);
+        PublicationFixture f;
+        QVERIFY(f.init());
+        FileSharingPublication publication(&f.client, f.file, f.path(), f.jid, nullptr,
+                                           FileSharingPublication::Mode::Aes256Gcm);
+        QSignalSpy finished(&publication, &FileSharingPublication::finished);
+        // Even if stale plaintext sources and a serving lookup are supplied,
+        // an encrypted attempt must not announce or probe them.
+        publication.start({ "https://download.example.test/old/file.txt" }, f.lookup());
+        QVERIFY(f.nam.requests.isEmpty());
+        QVERIFY(f.request("pubsub").isNull());
+        uploadSlot(f, httpAvailable, true);
+        if (httpAvailable) {
+            QCOMPARE(finished.count(), 0);
+            f.nam.requests.last()->complete(httpFails ? 500 : 201,
+                httpFails ? QNetworkReply::InternalServerError : QNetworkReply::NoError);
+        }
+        QTRY_COMPARE(finished.count(), 1);
+        QVERIFY(f.request("pubsub").isNull());
+        if (!httpAvailable || httpFails) {
+            QVERIFY(publication.sources().isEmpty());
+            QVERIFY(!publication.reference().isValid());
+            QVERIFY(!publication.errorString().isEmpty());
+            return;
+        }
+        QCOMPARE(publication.sources().size(), 1);
+        const auto reference = publication.reference();
+        QVERIFY(reference.isValid());
+        QCOMPARE(reference.mediaSharing().sources, publication.sources());
+        QCOMPARE(reference.mediaSharing().file.computedHashes(), f.file.computedHashes());
+        const auto encrypted = AesGcmUrl::parse(QUrl(reference.uri()));
+        QVERIFY(encrypted);
+        const auto plaintext = S::decrypt(S::Cipher::Aes256Gcm, f.nam.uploaded, encrypted->key, encrypted->iv);
+        QVERIFY(plaintext);
+        QCOMPARE(*plaintext, QByteArray("payload"));
+        QVERIFY(fileSharingHttpUrls({ reference }).isEmpty());
     }
     void oob_data()
     {
@@ -436,7 +508,15 @@ private slots:
         file.setSize(7);
         file.addHash(Hash::from(Hash::Sha256, QByteArray("payload")));
         bool completed = false, succeeded = false;
-        QVERIFY(publishSharedFile(&client, file, source.fileName(), this, [&](bool success, const QString &) {
+        bool allowed = true;
+        const FileSharingResponder::Lookup lookup =
+            [path = source.fileName(), hashes = file.computedHashes(), &allowed](const Jid &, const QList<Hash> &requested)
+                -> std::optional<FileSharingResponder::ServedFile> {
+                if (!allowed || hashes != requested)
+                    return {};
+                return FileSharingResponder::ServedFile { path, hashes };
+            };
+        QVERIFY(publishSharedFile(&client, file, lookup, this, [&](bool success, const QString &) {
             completed = true;
             succeeded = success;
         }));
@@ -507,6 +587,18 @@ private slots:
                 starting = !stanza.firstChildElement("starting").attribute("sid").isEmpty();
         }
         QVERIFY(starting);
+
+        // Revoking the same catalog grant invalidates the existing factory.
+        // No cached path or stale PubSub announcement can authorize another start.
+        allowed = false;
+        request.setAttribute("id", "revoked-shared-file");
+        QVERIFY(client.rootTask()->take(request));
+        bool refused = false;
+        for (const auto &stanza : std::as_const(stream.written)) {
+            if (stanza.attribute("id") == QString("revoked-shared-file"))
+                refused = stanza.attribute("type") == QString("error");
+        }
+        QVERIFY(refused);
     }
 };
 int main(int argc, char **argv)

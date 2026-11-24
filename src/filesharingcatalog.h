@@ -2,6 +2,7 @@
 #pragma once
 
 #include "iris/xmpp_jid.h"
+#include "iris/jingle-session.h"
 #include "iris/xmpp_reference.h"
 #include "messagefileshares.h"
 
@@ -20,6 +21,16 @@
 class FileSharingCatalog {
 public:
     using PublicationId = QByteArray;
+
+    // Persisted values: keep stable across schema upgrades.
+    enum class AccessScope { Public = 0, SameServer = 1, LinkOnly = 2 };
+    struct ServingPolicy {
+        AccessScope access;
+        XMPP::Jingle::EncryptionPolicy encryption;
+        constexpr ServingPolicy(AccessScope access = AccessScope::Public,
+                                XMPP::Jingle::EncryptionPolicy encryption = XMPP::Jingle::EncryptionPolicy::Disabled) :
+            access(access), encryption(encryption) { }
+    };
 
     // All that one account knows of one file, from all its publications together.
     struct Record {
@@ -53,16 +64,24 @@ public:
     // By a hash of the file, or by the address of a URL-only one.
     std::optional<Record> find(const QString &account, const XMPP::Hash &hash) const;
 
-    // Files this account answers remote requests for, because it published them or joined
-    // their publication. This outlives any message: a remembered descriptor or a cached
-    // copy serves nothing. Serving a file again replaces its publication.
+    // Legacy hash-addressed publications remain compatible with old links.
+    // An explicit publication ID instead identifies one independent serving decision.
+    // Only this ID may be replaced; sharing the same bytes does not alter other grants.
     bool serve(const QString &account, const XMPP::Jid &self, const XMPP::MediaSharing &media,
-               const QString &localPath);
+               const QString &localPath, const PublicationId &id = {}, ServingPolicy policy = {});
+    void stopServing(const QString &account, const PublicationId &id);
     void stopServing(const QString &account, const QList<XMPP::Hash> &hashes);
     bool isServed(const QString &account, const QList<XMPP::Hash> &hashes) const;
     // Resolve a request to the hashes of ONE explicitly served publication.
     // Never use the request's other, untrusted hashes to look up cached bytes.
-    std::optional<Record> servedRecord(const QString &account, const QList<XMPP::Hash> &requested) const;
+    struct ServedRecord : Record {
+        PublicationId id;
+        ServingPolicy policy;
+    };
+    // An explicit ID never falls back to a legacy hash grant. LinkOnly is
+    // deliberately refused until a protected capability proof is implemented.
+    std::optional<ServedRecord> servedRecord(const QString &account, const QList<XMPP::Hash> &requested,
+                                              const PublicationId &id = {}, const XMPP::Jid &peer = {}) const;
 
     // An OOB address identity is NOT a content checksum. Keep its lookup in
     // a separate table, referencing only verified downloaded content hashes.
