@@ -728,6 +728,14 @@ private slots:
             QSqlQuery q(db);
             QVERIFY(q.exec("DROP INDEX file_hashes_key"));
             QVERIFY(q.exec("CREATE INDEX file_hashes_key ON file_hashes(algorithm || '+' || lower(hex(digest)))"));
+            // This fixture starts from the current schema. Recreate the empty
+            // publications table in its version-5 form rather than applying
+            // the version-8 ALTER statements twice.
+            QVERIFY(q.exec("DROP TABLE publications"));
+            QVERIFY(q.exec("CREATE TABLE publications ("
+                           "id BLOB PRIMARY KEY, account TEXT NOT NULL, announcer TEXT, serving INTEGER NOT NULL, "
+                           "url_key TEXT, descriptor TEXT NOT NULL, local_path TEXT, local_size INTEGER, local_modified INTEGER)"));
+            QVERIFY(q.exec("CREATE INDEX publications_url ON publications(account, url_key) WHERE url_key IS NOT NULL"));
             QVERIFY(q.exec("PRAGMA user_version=5"));
             db.close();
         }
