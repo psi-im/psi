@@ -31,19 +31,40 @@ No per-recipient JID ACL is maintained. Access and encryption are independent:
 
 | Encryption policy | Behavior |
 | --- | --- |
-| Disabled | Do not initiate E2EE; accept a compatible protected request |
-| Preferred | Prefer the selected method, but permit plain requests |
-| Required | Require the selected method and authenticated E2EE before exposing bytes |
+| Disabled | Do not initiate E2EE; accept a compatible protected request (internal API only) |
+| Preferred | Prefer authenticated E2EE; permit plaintext only when no compatible protection is available before negotiation |
+| Required | Require authenticated E2EE before exposing bytes, regardless of the mutually supported method |
 
-The selected method ID is independent of the transport; Iris selects native
-authenticated DTLS or JET as appropriate. Capabilities report what the peer
-supports, not what a publication requires. For a personal chat, show the
-compatible encryption methods using peer capabilities; for an OMEMO-enabled
-MUC, offer OMEMO by default and default to Required and LinkOnly. The user can
-choose another access scope or relax encryption explicitly. A Required
+The sharing dialog exposes one checkbox, "Require encrypted file transfer"
+(checked = Required, unchecked = Preferred), and an independent availability
+choice (LinkOnly, SameServer, Public). Default to Required and LinkOnly for
+encrypted chats. No transport or encryption-method selector is exposed. Public
+availability never implies a plaintext transfer.
+
+A publication stores the protection policy, not a pinned encryption method.
+For HTTP, select the file cipher and protected key-delivery mechanism at upload
+time using the chat's encryption context. An encrypted chat still prefers an
+encrypted HTTP source even when the checkbox is cleared. A Required
 publication must not publish plaintext HTTP, OOB, or BoB sources, nor reuse
-such URLs from other publications. Existing encrypted HTTP uploads remain
-ciphertext with their key carried in encrypted message content.
+such URLs from other publications. Existing AES-GCM uploads remain ciphertext
+with their key carried in encrypted message content. Ordinary HTTP upload
+cannot enforce a SameServer requester restriction; omit that source unless
+the service actually enforces the selected scope. An unguessable HTTPS URL
+is a bearer capability, not proof of an XMPP identity.
+
+For Jingle, select a mutually supported registered encryption mechanism at the
+time of each transfer, preferring the current chat's method when compatible.
+The chat method is only a hint, never a publication restriction; a different
+trusted mechanism may protect a later transfer. Iris chooses native
+authenticated DTLS or JET as appropriate. After a mechanism has been selected,
+authentication or key-exchange failure is terminal, even under Preferred.
+Never retry in plaintext after a cryptographic failure. Capabilities report
+what the peer supports, not what a publication requires.
+
+The requirement applies to the protection of the actual bytes and the
+authentication of the peer, not merely to a TLS connection to an upload
+service. A public key or public access capability cannot by itself authenticate
+the file's origin; preserve and verify the authenticated content identity.
 
 ### Identity, access capability and ranged requests
 
@@ -74,7 +95,7 @@ bytes, verifies the requester and its required encryption policy, and applies
 the same checks for each subsequent content-add. The JinglePub factory and
 direct file responder must enforce the same policy. BUNDLE reuse does not
 authorize another file. A session may pool ranges only when their peer,
-publication authorization, selected method and protection policy are
+publication authorization, negotiated method and protection policy are
 compatible. No plaintext fallback after a failed authentication; no silent
 fallback to an unrelated public publication when resolving a restricted link.
 
