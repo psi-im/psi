@@ -195,6 +195,8 @@ private:
     QAction *omemoAction_ = nullptr;
 
     QPointer<XMPP::EncryptedSession> roomEncryptionSession_;
+    QMetaObject::Connection roomMembershipInvalidated_;
+    QMetaObject::Connection roomMethodUnregistered_;
     QSet<XMPP::EncryptionJob *> pendingEncryptedMessages_;
     void closeRoomEncryptionSession();
     void cancelPendingEncryptedMessages();

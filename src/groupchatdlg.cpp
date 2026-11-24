@@ -61,6 +61,7 @@
 #endif
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_message.h"
+#include "iris/xmpp_stanza.h"
 #include "iris/xmpp_tasks.h"
 #include "iris/xmpp_vcard4.h"
 #include "popupmanager.h"
@@ -107,6 +108,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QWidgetAction>
+#include <utility>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -1235,13 +1237,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
                 if (changed.bare() == jid().bare())
                     updateOmemoAction();
             });
-    connect(d->mucManager, &MUCManager::memberSnapshotInvalidated, this, &GCMainDlg::cancelPendingEncryptedMessages);
-    connect(account()->client()->encryptionManager(), &XMPP::EncryptionManager::methodUnregistered, this,
-            [this](const QString &methodId) {
-                if (roomEncryptionSession_ && roomEncryptionSession_->methodId() == methodId)
-                    closeRoomEncryptionSession();
-                updateOmemoAction();
-            });
     updateOmemoAction();
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
@@ -2076,6 +2071,7 @@ void GCMainDlg::leave()
 
 void GCMainDlg::error(int, const QString &str)
 {
+    closeRoomEncryptionSession();
     d->actions->action("gchat_set_topic")->setEnabled(false);
     setStatusTabIcon(STATUS_ERROR);
 
@@ -3126,14 +3122,22 @@ void GCMainDlg::shareFiles(const QMimeData *data)
 void GCMainDlg::cancelPendingEncryptedMessages()
 {
     const auto pending = std::exchange(pendingEncryptedMessages_, {});
-    for (auto *job : pending) {
-        if (!job->isFinished())
+    QList<QPointer<XMPP::EncryptionJob>> guarded;
+    for (auto *job : pending)
+        guarded.append(QPointer<XMPP::EncryptionJob>(job));
+    for (const auto &job : std::as_const(guarded)) {
+        if (job && !job->isFinished()) {
+            // Queue deletion before completion can retire the encryption session.
+            job->deleteLater();
             job->fail(XMPP::EncryptionJob::Error::Cancelled, tr("Room membership or encryption policy changed"));
+        }
     }
 }
 
 void GCMainDlg::closeRoomEncryptionSession()
 {
+    disconnect(roomMembershipInvalidated_);
+    disconnect(roomMethodUnregistered_);
     if (roomEncryptionSession_)
         roomEncryptionSession_->close();
     roomEncryptionSession_.clear();
@@ -3232,8 +3236,19 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> 
         return;
     }
     if (!roomEncryptionSession_ || roomEncryptionSession_->isClosing()) {
-        roomEncryptionSession_ = client->encryptionManager()->startSession(
-            XMPP::OmemoEncryption::methodId(), XMPP::EncryptionMethod::XmppStanza);
+        closeRoomEncryptionSession();
+        auto *registry = client->encryptionManager();
+        roomEncryptionSession_ = registry->startSession(XMPP::OmemoEncryption::methodId(),
+                                                        XMPP::EncryptionMethod::XmppStanza);
+        if (roomEncryptionSession_) {
+            roomMembershipInvalidated_ = connect(d->mucManager, &MUCManager::memberSnapshotInvalidated, this,
+                                                  &GCMainDlg::cancelPendingEncryptedMessages);
+            roomMethodUnregistered_ = connect(registry, &XMPP::EncryptionManager::methodUnregistered, this,
+                                              [this](const QString &id) {
+                if (roomEncryptionSession_ && roomEncryptionSession_->methodId() == id)
+                    closeRoomEncryptionSession();
+            });
+        }
     }
     if (!roomEncryptionSession_) {
         appendSysMsg(tr("OMEMO message was NOT sent: the room encryption session is unavailable"), true);

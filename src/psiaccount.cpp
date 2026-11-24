@@ -106,6 +106,7 @@
 #include "iris/xmpp_captcha.h"
 #include "iris/xmpp_carbons.h"
 #include "iris/xmpp_encryption.h"
+#include "iris/xmpp_stanza.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_serverinfomanager.h"
 #include "iris/xmpp_tasks.h"
@@ -5390,9 +5391,10 @@ void PsiAccount::sendMessageWithEncryptionContext(Message message, XMPP::Encrypt
     }
     if (message.id().isEmpty())
         message.setId(d->client->genUniqueId());
+    const auto stanza = message.toStanza(&d->client->stream());
     message.setWasEncrypted(true);
     message.setEncryptionProtocol(session->methodId());
-    auto *job = d->client->sendEncrypted(message.toStanza(&d->client->stream()).element(), session, context);
+    auto *job = d->client->sendEncrypted(stanza.element(), session, context);
     if (!job) {
         completed(false, false, tr("Failed to start encrypted message delivery"));
         return;

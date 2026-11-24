@@ -57,7 +57,7 @@ FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<
     ui->cb_encrypt->setVisible(encryptionOptions_.available
                                && XMPP::StatelessFileSharing::cipherSupported(
                                    XMPP::StatelessFileSharing::Cipher::Aes256Gcm));
-    ui->cb_encrypt->setChecked(ui->cb_encrypt->isVisible() && encryptionOptions_.selected);
+    ui->cb_encrypt->setChecked(!ui->cb_encrypt->isHidden() && encryptionOptions_.selected);
     ui->pixmapRatioLabel->hide();
     ui->lv_files->hide();
     filesModel = new MultiFileTransferModel(this);
@@ -108,7 +108,7 @@ void FileShareDlg::showImage(const QImage &img)
 
 void FileShareDlg::publish()
 {
-    encryptedUpload_ = ui->cb_encrypt->isVisible() && ui->cb_encrypt->isChecked();
+    encryptedUpload_ = !ui->cb_encrypt->isHidden() && ui->cb_encrypt->isChecked();
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
     ui->cb_encrypt->setDisabled(true); // Retry must use the same transfer security mode.
     QList<FileSharingItem *> toPublish;

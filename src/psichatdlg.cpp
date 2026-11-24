@@ -606,7 +606,8 @@ void PsiChatDlg::sendEncryptedFileShare(const QList<XMPP::Reference> &refs, cons
     context.recipients.append(controller->capabilityJid(jid()));
     context.options.insert(QStringLiteral("omemoProtocol"), QStringLiteral("omemo2"));
     auto *session = account()->encryptionSession(method, context.recipients.constFirst());
-    if (!session && encryptionSession_ && encryptionSession_->methodId() == method && !encryptionSession_->isClosing())
+    if (!session && encryptionSession_ && encryptionSession_->methodId() == method && !encryptionSession_->isClosing()
+        && encryptionSession_->context().recipients == context.recipients)
         session = encryptionSession_;
     // A non-roster plaintext chat may still explicitly encrypt an attachment.
     QPointer<XMPP::EncryptedSession> transient;
