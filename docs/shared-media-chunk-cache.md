@@ -9,6 +9,94 @@ Unknown-size transfers retain the ordinary downloader.
 `FileSharingChunkSource` uses Psi's existing downloader, HTTP support and Jingle
 session pool. There is no additional signaling or transport stack.
 
+## Publication and download policy
+
+The following is the design for protected Jingle publications, not a description
+of the existing HTTP-only encrypted publication path. It uses the same
+`FileSharingCatalog`, downloader and Jingle session pool, not another cache.
+
+A publication is an independent authorization record. Multiple publications of
+the same immutable file may refer to the same cached bytes without inheriting
+each other's permissions. A file hash identifies bytes; it does not authorize
+their retrieval. A received descriptor or a cached copy is not permission to
+serve it.
+
+| Access policy | Authorized requesters |
+| --- | --- |
+| LinkOnly | Holders of the publication's unguessable access capability |
+| SameServer | Valid XMPP JIDs with the same domain as the serving account |
+| Public | Any valid XMPP requester |
+
+No per-recipient JID ACL is maintained. Access and encryption are independent:
+
+| Encryption policy | Behavior |
+| --- | --- |
+| Disabled | Do not initiate E2EE; accept a compatible protected request |
+| Preferred | Prefer the selected method, but permit plain requests |
+| Required | Require the selected method and authenticated E2EE before exposing bytes |
+
+The selected method ID is independent of the transport; Iris selects native
+authenticated DTLS or JET as appropriate. Capabilities report what the peer
+supports, not what a publication requires. For a personal chat, show the
+compatible encryption methods using peer capabilities; for an OMEMO-enabled
+MUC, offer OMEMO by default and default to Required and LinkOnly. The user can
+choose another access scope or relax encryption explicitly. A Required
+publication must not publish plaintext HTTP, OOB, or BoB sources, nor reuse
+such URLs from other publications. Existing encrypted HTTP uploads remain
+ciphertext with their key carried in encrypted message content.
+
+### Identity, access capability and ranged requests
+
+Use the existing publication catalog for durable policy and keep the storage
+identity (content hashes) separate from publication identity. Migrate existing
+served records as public, non-enforced publications; do not invent restrictions
+that would break previously shared links. Create a separate random capability
+for LinkOnly instead of deriving it from a hash. The secret is not a JET key:
+JET derives fresh encryption material for each content, whereas a publication
+capability authorizes future downloads. Never log it, put it in a discoverable
+PEP item, or merge it into ordinary/public source lists.
+
+[XEP-0358](https://xmpp.org/extensions/xep-0358.html) has an opaque publication ID
+and a sender-initiated session request. It can identify a publication, but its
+plain IQ is not a confidential proof of capability possession against the
+XMPP server. [XEP-0234](https://xmpp.org/extensions/xep-0234.html) permits
+authorization checks and refusal of unavailable files, without specifying an
+access model. The current receiver-driven range requests must remain usable
+without a new session for every range. A capability-aware direct request needs
+a negotiated extension or a protected signaling exchange that binds proof to
+the publication, peer and session/content. Do not send a reusable secret as a
+plain IQ if access is intended to be secret from the server. The exact wire
+representation must be specified and tested before enabling LinkOnly serving;
+a bare hash request never grants LinkOnly access.
+
+The responder resolves a single served publication before looking up cached
+bytes, verifies the requester and its required encryption policy, and applies
+the same checks for each subsequent content-add. The JinglePub factory and
+direct file responder must enforce the same policy. BUNDLE reuse does not
+authorize another file. A session may pool ranges only when their peer,
+publication authorization, selected method and protection policy are
+compatible. No plaintext fallback after a failed authentication; no silent
+fallback to an unrelated public publication when resolving a restricted link.
+
+### Distributed serving
+
+A compatible recipient may become a source after it has verified the bytes.
+It inherits the original publication policy rather than publishing cached bytes
+under a new weaker policy. For MUC this allows members to fetch from other
+members without maintaining a mutable roster ACL. Source announcements must
+preserve the publication identity and protection requirement; a policy received
+with the original encrypted reference is retained independently of cached
+payloads. Do not advertise an unverified or incomplete cache as a full source.
+The policy can be enforced by each serving client only: after decryption a
+recipient can deliberately redistribute bytes, and this design is not DRM.
+[XEP-0448](https://xmpp.org/extensions/xep-0448.html) similarly restricts the
+sources that a compliant client adds to an encrypted file reference.
+
+Implementation order: Iris policy and authentication/transport negotiation,
+durable per-publication policy and authorized lookup, capability-aware
+signaling and direct range requests, source propagation, then publication UI.
+Do not expose a mode before every serving path enforces it.
+
 ## Payload and sidecar
 
 Files live in `shares/media-files-v2` under Psi's data directory:
