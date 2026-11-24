@@ -108,7 +108,12 @@ void FileShareDlg::showImage(const QImage &img)
 
 void FileShareDlg::publish()
 {
-    encryptedUpload_ = !ui->cb_encrypt->isHidden() && ui->cb_encrypt->isChecked();
+    // The checkbox requires protection; clearing it is not a request for plaintext.
+    // HTTP chooses its key delivery from the chat context at publication time.
+    // Until protected Jingle publications are implemented, keep encrypted HTTP
+    // isolated from the legacy plaintext Jingle/HTTP publication path.
+    encryptedUpload_ = !ui->cb_encrypt->isHidden()
+        && (ui->cb_encrypt->isChecked() || encryptionOptions_.selected);
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
     ui->cb_encrypt->setDisabled(true); // Retry must use the same transfer security mode.
     QList<FileSharingItem *> toPublish;
