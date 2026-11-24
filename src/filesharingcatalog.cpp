@@ -57,12 +57,13 @@ QString fileXml(const File &file)
 
 bool insert(QSqlDatabase db, const FileSharingCatalog::PublicationId &id, const QString &account,
             const XMPP::Jid &announcer, bool serving, const QString &urlKey, const XMPP::MediaSharing &media,
-            const LocalCopy &local)
+            const LocalCopy &local, bool legacyHash = true, FileSharingCatalog::ServingPolicy policy = {})
 {
     QSqlQuery query(db);
     query.prepare(QStringLiteral(
         "INSERT OR IGNORE INTO publications(id,account,announcer,serving,url_key,descriptor,local_path,local_size,"
-        "local_modified) VALUES(:id,:account,:announcer,:serving,:url_key,:descriptor,:path,:size,:modified)"));
+        "local_modified,legacy_hash,access_scope,encryption_policy) "
+        "VALUES(:id,:account,:announcer,:serving,:url_key,:descriptor,:path,:size,:modified,:legacy,:access,:encryption)"));
     query.bindValue(QStringLiteral(":id"), id);
     query.bindValue(QStringLiteral(":account"), account);
     query.bindValue(QStringLiteral(":announcer"), announcer.full());
@@ -72,10 +73,16 @@ bool insert(QSqlDatabase db, const FileSharingCatalog::PublicationId &id, const 
     query.bindValue(QStringLiteral(":path"), local.path);
     query.bindValue(QStringLiteral(":size"), local.size);
     query.bindValue(QStringLiteral(":modified"), local.modified);
+    query.bindValue(QStringLiteral(":legacy"), legacyHash);
+    query.bindValue(QStringLiteral(":access"), int(policy.access));
+    // Map explicitly: the Iris enum is an API, not a database format.
+    using Encryption = XMPP::Jingle::EncryptionPolicy;
+    query.bindValue(QStringLiteral(":encryption"), policy.encryption == Encryption::Required ? 2
+                                                   : policy.encryption == Encryption::Preferred ? 1 : 0);
     if (!query.exec())
         return false;
     if (query.numRowsAffected() < 1)
-        return true; // Told again, and known already.
+        return legacyHash; // Explicit grants must not collide with another record.
     query.prepare(QStringLiteral(
         "INSERT OR IGNORE INTO publication_hashes(publication_id,algorithm,digest) VALUES(:id,:algorithm,:digest)"));
     for (const auto &hash : media.file.computedHashes()) {
@@ -100,7 +107,7 @@ bool insert(QSqlDatabase db, const FileSharingCatalog::PublicationId &id, const 
 bool removeServing(QSqlDatabase db, const QString &account, const QList<XMPP::Hash> &hashes)
 {
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("DELETE FROM publications WHERE serving=1 AND account=:account AND id IN ("
+    query.prepare(QStringLiteral("DELETE FROM publications WHERE serving=1 AND legacy_hash=1 AND account=:account AND id IN ("
                                  "SELECT publication_id FROM publication_hashes "
                                  "WHERE algorithm=:algorithm AND digest=:digest)"));
     for (const auto &hash : hashes) {
@@ -417,7 +424,8 @@ std::optional<FileSharingCatalog::Record> FileSharingCatalog::find(const QString
     rows.prepare(QStringLiteral(
         "SELECT p.id,p.announcer,p.descriptor,p.local_path,p.local_size,p.local_modified FROM publication_hashes h "
         "JOIN publications p ON p.id=h.publication_id "
-        "WHERE h.algorithm=:algorithm AND h.digest=:digest AND p.account=:account ORDER BY p.serving DESC,p.rowid"));
+        "WHERE h.algorithm=:algorithm AND h.digest=:digest AND p.account=:account "
+        "AND p.legacy_hash=1 ORDER BY p.serving DESC,p.rowid"));
     rows.bindValue(QStringLiteral(":algorithm"), hash.stringType());
     rows.bindValue(QStringLiteral(":digest"), hash.data());
     rows.bindValue(QStringLiteral(":account"), account);
@@ -437,18 +445,50 @@ std::optional<FileSharingCatalog::Record> FileSharingCatalog::find(const QString
 }
 
 bool FileSharingCatalog::serve(const QString &account, const XMPP::Jid &self, const XMPP::MediaSharing &media,
-                               const QString &localPath)
+                               const QString &localPath, const PublicationId &id, ServingPolicy policy)
 {
+    using Encryption = XMPP::Jingle::EncryptionPolicy;
+    const bool legacy = id.isEmpty();
+    if (legacy && (policy.access != AccessScope::Public || policy.encryption != Encryption::Disabled))
+        return false;
+    if (!legacy && (id.size() != 16 || !self.isValid()))
+        return false;
     auto db = FileDatabase::connection();
     if (!db.isOpen() || account.isEmpty() || !media.file.hasComputedHashes() || !db.transaction())
         return false;
-    if (removeServing(db, account, media.file.computedHashes())
-        && insert(db, QUuid::createUuid().toRfc4122(), account, self, true, {}, media,
-                  localCopyOf(localPath, media.file))
+    bool removed = false;
+    if (legacy) {
+        removed = removeServing(db, account, media.file.computedHashes());
+    } else {
+        QSqlQuery query(db);
+        query.prepare(QStringLiteral("DELETE FROM publications WHERE serving=1 AND legacy_hash=0 "
+                                     "AND account=:account AND id=:id"));
+        query.bindValue(QStringLiteral(":account"), account);
+        query.bindValue(QStringLiteral(":id"), id);
+        removed = query.exec();
+    }
+    if (removed
+        && insert(db, legacy ? QUuid::createUuid().toRfc4122() : id, account, self, true, {}, media,
+                  localCopyOf(localPath, media.file), legacy, policy)
         && db.commit())
         return true;
     db.rollback();
     return false;
+}
+
+void FileSharingCatalog::stopServing(const QString &account, const PublicationId &id)
+{
+    if (account.isEmpty() || id.isEmpty())
+        return;
+    const auto db = FileDatabase::connection();
+    if (!db.isOpen())
+        return;
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("DELETE FROM publications WHERE serving=1 AND legacy_hash=0 "
+                                 "AND account=:account AND id=:id"));
+    query.bindValue(QStringLiteral(":account"), account);
+    query.bindValue(QStringLiteral(":id"), id);
+    query.exec();
 }
 
 void FileSharingCatalog::stopServing(const QString &account, const QList<XMPP::Hash> &hashes)
@@ -463,18 +503,23 @@ bool FileSharingCatalog::isServed(const QString &account, const QList<XMPP::Hash
     return bool(servedRecord(account, hashes));
 }
 
-std::optional<FileSharingCatalog::Record> FileSharingCatalog::servedRecord(const QString           &account,
-                                                                           const QList<XMPP::Hash> &requested) const
+std::optional<FileSharingCatalog::ServedRecord>
+FileSharingCatalog::servedRecord(const QString &account, const QList<XMPP::Hash> &requested,
+                                 const PublicationId &publicationId, const XMPP::Jid &peer) const
 {
     const auto db = FileDatabase::connection();
     if (!db.isOpen() || account.isEmpty() || requested.isEmpty())
         return {};
     QSqlQuery query(db);
     query.prepare(
-        QStringLiteral("SELECT p.id,p.descriptor,p.local_path,p.local_size,p.local_modified FROM publication_hashes h "
+        QStringLiteral("SELECT p.id,p.descriptor,p.local_path,p.local_size,p.local_modified,"
+                       "p.announcer,p.access_scope,p.encryption_policy FROM publication_hashes h "
                        "JOIN publications p ON p.id=h.publication_id "
                        "WHERE h.algorithm=:algorithm AND h.digest=:digest AND p.account=:account "
-                       "AND p.serving=1 ORDER BY p.rowid"));
+                       "AND p.serving=1 AND ")
+        + (publicationId.isEmpty() ? QStringLiteral("p.legacy_hash=1")
+                                   : QStringLiteral("p.legacy_hash=0 AND p.id=:publication"))
+        + QStringLiteral(" ORDER BY p.rowid"));
     QSet<PublicationId> checked;
     for (const auto &hash : requested) {
         if (!hash.isValid() || hash.data().isEmpty())
@@ -482,6 +527,8 @@ std::optional<FileSharingCatalog::Record> FileSharingCatalog::servedRecord(const
         query.bindValue(QStringLiteral(":algorithm"), hash.stringType());
         query.bindValue(QStringLiteral(":digest"), hash.data());
         query.bindValue(QStringLiteral(":account"), account);
+        if (!publicationId.isEmpty())
+            query.bindValue(QStringLiteral(":publication"), publicationId);
         if (!query.exec())
             return {};
         while (query.next()) {
@@ -489,6 +536,14 @@ std::optional<FileSharingCatalog::Record> FileSharingCatalog::servedRecord(const
             if (checked.contains(id))
                 continue;
             checked.insert(id);
+            const auto access = AccessScope(query.value(6).toInt());
+            if (!publicationId.isEmpty()) {
+                const XMPP::Jid owner(query.value(5).toString());
+                if (!peer.isValid() || !owner.isValid() || access == AccessScope::LinkOnly
+                    || (access == AccessScope::SameServer && peer.domain() != owner.domain())
+                    || (access != AccessScope::Public && access != AccessScope::SameServer))
+                    continue;
+            }
             QDomDocument doc;
             if (!parseXml(doc, query.value(1).toString()))
                 continue;
@@ -499,7 +554,15 @@ std::optional<FileSharingCatalog::Record> FileSharingCatalog::servedRecord(const
             if (std::all_of(requested.cbegin(), requested.cend(), [&known](const XMPP::Hash &value) {
                     return value.isValid() && !value.data().isEmpty() && known.contains(value);
                 })) {
-                Record record;
+                ServedRecord record;
+                record.id = id;
+                record.policy.access = access;
+                using Encryption = XMPP::Jingle::EncryptionPolicy;
+                const int encryption = query.value(7).toInt();
+                if (encryption < 0 || encryption > 2)
+                    continue;
+                record.policy.encryption = encryption == 2 ? Encryption::Required
+                    : encryption == 1 ? Encryption::Preferred : Encryption::Disabled;
                 record.media.file    = file;
                 record.localPath     = query.value(2).toString();
                 record.localSize     = query.value(3).toLongLong();

@@ -579,6 +579,47 @@ private slots:
         QVERIFY(!catalog->servedRecord(personal, { sha1, foreign }));
     }
 
+    void explicitPublicationsDoNotShareAuthorizationOrOverwriteLegacyGrants()
+    {
+        using Access = FileSharingCatalog::AccessScope;
+        using Encryption = Jingle::EncryptionPolicy;
+        const auto media = mediaOf("payload", { "https://example.org/private" });
+        const auto hashes = media.file.computedHashes();
+        const auto sameServer = newId(), publicId = newId(), linkOnly = newId();
+        const Jid outsider("other@foreign.example/device");
+        QVERIFY(catalog->serve(corporate, self, media, {}, sameServer, { Access::SameServer, Encryption::Required }));
+        QVERIFY(catalog->serve(corporate, self, media, {}, publicId, { Access::Public, Encryption::Preferred }));
+        QVERIFY(catalog->serve(corporate, self, media, {}, linkOnly, { Access::LinkOnly, Encryption::Required }));
+        QVERIFY(!catalog->servedRecord(corporate, hashes));
+        QVERIFY(!catalog->find(corporate, hashes.first())); // No restricted source union.
+        QVERIFY(!catalog->servedRecord(corporate, hashes, sameServer, outsider));
+        QVERIFY(!catalog->servedRecord(corporate, hashes, sameServer, Jid()));
+        QVERIFY(!catalog->servedRecord(corporate, hashes, linkOnly, alice));
+        QVERIFY(!catalog->servedRecord(corporate, hashes, newId(), alice));
+        QVERIFY(!catalog->servedRecord(personal, hashes, sameServer, alice));
+        const auto same = catalog->servedRecord(corporate, hashes, sameServer, alice);
+        QVERIFY(same);
+        QCOMPARE(same->id, sameServer);
+        QVERIFY(same->policy.encryption == Encryption::Required);
+        const auto publicGrant = catalog->servedRecord(corporate, hashes, publicId, outsider);
+        QVERIFY(publicGrant && publicGrant->policy.encryption == Encryption::Preferred);
+
+        QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
+        QVERIFY(catalog->servedRecord(corporate, hashes));
+        QVERIFY(!catalog->servedRecord(corporate, hashes, linkOnly, alice));
+        QVERIFY(!catalog->servedRecord(corporate, hashes, newId(), alice));
+        QVERIFY(!catalog->servedRecord(corporate, { sha256("another file") }, publicId, outsider));
+        catalog->stopServing(corporate, hashes);
+        QVERIFY(!catalog->servedRecord(corporate, hashes));
+        closeFileDatabase();
+        FileSharingCatalog reopened;
+        QVERIFY(reopened.servedRecord(corporate, hashes, sameServer, alice));
+        QVERIFY(reopened.servedRecord(corporate, hashes, publicId, outsider));
+        reopened.stopServing(corporate, sameServer);
+        QVERIFY(!reopened.servedRecord(corporate, hashes, sameServer, alice));
+        QVERIFY(reopened.servedRecord(corporate, hashes, publicId, outsider));
+    }
+
     void servingAgainReplacesThePublication()
     {
         const auto hashes = mediaOf("payload", {}).file.computedHashes();
@@ -670,7 +711,7 @@ private slots:
         QCOMPARE(query.value(0).toInt(), 1);
         QVERIFY(query.exec("PRAGMA user_version"));
         QVERIFY(query.next());
-        QCOMPARE(query.value(0).toInt(), 7);
+        QCOMPARE(query.value(0).toInt(), 8);
         QVERIFY(catalog->serve(corporate, self, mediaOf("payload", {}), {}));
     }
 
