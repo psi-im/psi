@@ -644,8 +644,9 @@ void PsiEncryptionController::configureJingleSession(XMPP::Jingle::Session *sess
     // The choice and local preference originate in Psi's UI. Iris binds the
     // method to an encryption session and validates every Jingle transport.
     session->setEncryptionMethod(methodId);
-    session->setEndToEndPreferred(!methodId.isEmpty());
-    session->setEndToEndRequired(jingleEndToEndRequired(session->peer()));
+    using Policy = XMPP::Jingle::EncryptionPolicy;
+    session->setEncryptionPolicy(jingleEndToEndRequired(session->peer()) ? Policy::Required
+                                : methodId.isEmpty() ? Policy::Disabled : Policy::Preferred);
 }
 
 bool PsiEncryptionController::jingleEndToEndRequired(const XMPP::Jid &jid) const
