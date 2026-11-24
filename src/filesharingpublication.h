@@ -20,6 +20,10 @@ bool publishSharedFile(XMPP::Client *client, const XMPP::Jingle::FileTransfer::F
                        const FileSharingResponder::Lookup &lookup,
                        QObject *context, std::function<void(bool, const QString &)> announced);
 
+// Construct a SIMS reference from an attempt's own sources, not a merged
+// file-cache entry. The caller is responsible for protected key delivery.
+XMPP::Reference fileSharingReference(const XMPP::Jingle::FileTransfer::File &file, const QStringList &sources);
+
 // One attempt gathers all usable sources before the caller sends a SIMS message.
 class FileSharingPublication : public QObject {
     Q_OBJECT
@@ -29,7 +33,7 @@ public:
                            const XMPP::Jid &selfJid, QObject *parent = nullptr, Mode mode = Mode::Plain);
     void               start(const QStringList &cachedSources, const FileSharingResponder::Lookup &lookup = {});
     const QStringList &sources() const { return _sources; }
-    XMPP::Reference encryptedReference() const { return _encryptedReference; }
+    XMPP::Reference reference() const { return fileSharingReference(_file, _sources); }
     QString errorString() const { return _errorString; }
 
 signals:
@@ -40,7 +44,6 @@ signals:
 private:
     void checkHttpSources(const QStringList &sources);
     void upload();
-    void uploadEncrypted();
     void checkFinished();
 
     QPointer<XMPP::Client>           _client;
@@ -50,10 +53,8 @@ private:
     QStringList                      _sources;
     Mode                             _mode = Mode::Plain;
     QString                          _errorString;
-    XMPP::Reference                  _encryptedReference;
     QFile                           *_plaintext = nullptr; // children of this publication
     XMPP::StatelessFileSharing::EncryptingDevice *_ciphertext = nullptr;
-    QPointer<XMPP::HttpFileUpload>   _encryptedUploader;
     int                              _pendingHeads   = 0;
     bool                             _started        = false;
     bool                             _httpFinished   = false;

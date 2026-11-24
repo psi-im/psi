@@ -74,8 +74,7 @@ private:
     XMPP::Jid                myJid;
     QImage                   image;
     MultiFileTransferModel  *filesModel;
-    QList<FileSharingItem *> readyPublishers;
-    QList<XMPP::Reference> readyEncryptedReferences;
+    QList<XMPP::Reference> readyReferences;
     EncryptionOptions encryptionOptions_;
     bool encryptedUpload_ = false;
     Callback                 publishedCallback;

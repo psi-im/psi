@@ -232,31 +232,31 @@ Reference FileSharingItem::toReference() const
     // as a verified SIMS file hash when forwarding/sending files.
     if (_urlOnly)
         return {};
-    auto uris = FileSourceSelector::prioritized(_uris);
-    uris.removeDuplicates();
-    std::reverse(uris.begin(), uris.end());
-    if (uris.isEmpty())
-        return {};
-
-    Reference r(Reference::Data, uris.first());
-    MediaSharing ms;
-    ms.file    = fileMetadata();
-    ms.sources = uris;
-    r.setMediaSharing(ms);
-    return r;
+    return fileSharingReference(fileMetadata(), _uris);
 }
 
-Jingle::FileTransfer::File FileSharingItem::fileInfo() const
+Jingle::FileTransfer::File FileSharingItem::fileInfo(bool publishThumbnail) const
 {
     Jingle::FileTransfer::File jfile;
-    QFileInfo                  fi(_fileName);
+    QFileInfo fi(localFilePath());
     jfile.setDate(fi.lastModified());
     for (int i = _urlOnly ? 1 : 0; i < _sums.size(); ++i)
-        jfile.addHash(_sums.at(i));
+        if (_sums.at(i).isValid())
+            jfile.addHash(_sums.at(i));
     jfile.setName(displayName());
-    jfile.setSize(quint64(fi.size()));
+    if (_fileSize)
+        jfile.setSize(*_fileSize);
+    else if (fi.exists())
+        jfile.setSize(quint64(fi.size()));
     jfile.setMediaType(_mimeType);
     jfile.setDescription(_description);
+    const auto amplitudes = _metaData.value(QLatin1String("amplitudes")).toByteArray();
+    if (!amplitudes.isEmpty())
+        jfile.setAmplitudes(amplitudes);
+
+    // BoB publishes bytes outside of the encrypted message.
+    if (!publishThumbnail || !_acc || !_acc->client())
+        return jfile;
 
     QByteArray pixData;
     QString imageMime;
@@ -287,11 +287,6 @@ Jingle::FileTransfer::File FileSharingItem::fileInfo() const
         Thumbnail thumb(QByteArray(), imageMime, quint32(thumbSize.width()), quint32(thumbSize.height()));
         thumb.uri = QLatin1String("cid:") + bob.cid();
         jfile.setThumbnail(thumb);
-    }
-
-    auto bhg = _metaData.value(QLatin1String("amplitudes")).toByteArray();
-    if (bhg.size()) {
-        jfile.setAmplitudes(bhg);
     }
 
     return jfile;
@@ -448,107 +443,73 @@ bool FileSharingItem::savePublishedFile()
 void FileSharingItem::publish(const XMPP::Jid &myJid, PublicationMode mode, QObject *receiver,
                               PublicationCompletion finished, std::function<void(size_t)> progress)
 {
-    if (mode == PublicationMode::Aes256Gcm) {
-        // Never turn an invalid encrypted request into a plaintext upload.
-        if (!receiver || !finished)
-            return;
-        publishEncrypted(myJid, receiver, std::move(finished), std::move(progress));
+    if (!receiver || !finished)
+        return;
+    const bool legacySourcesAllowed = mode == PublicationMode::Plain;
+    if (!_acc || !_acc->client() || localFilePath().isEmpty() || _urlOnly) {
+        finished({}, tr("The file is unavailable for sharing"));
         return;
     }
-    const auto path = localFilePath();
-    if (path.isEmpty())
+    if (legacySourcesAllowed && _legacyPublication) {
+        finished({}, tr("The file is already being published"));
         return;
-    if (_publication || !_acc)
-        return;
+    }
 
-    _published = false;
-    // Cache temporary files before registering a factory that will serve them.
-    bool serveLocally = savePublishedFile();
-    // Capture the old upload URLs before replacing the serving publication.
-    // They are no longer stored in account-independent cache metadata.
-    const auto knownSources = _uris + _manager->knownSources(_acc, _sums);
-    const auto file         = fileMetadata();
+    // A protected attempt must not reuse the plaintext catalog or publish a
+    // plaintext BoB thumbnail. This is source selection, not another workflow.
+    bool serveLocally = legacySourcesAllowed && savePublishedFile();
+    const auto knownSources = legacySourcesAllowed ? _uris + _manager->knownSources(_acc, _sums) : QStringList {};
+    const auto file = legacySourcesAllowed ? fileMetadata() : fileInfo(false);
+    if (!file.hasComputedHashes() || (!legacySourcesAllowed && !file.size())) {
+        finished({}, tr("The file has no usable content metadata"));
+        return;
+    }
     if (serveLocally)
         serveLocally = _manager->serve(_acc, { file, {} }, localFilePath());
     if (serveLocally && _fileSize) {
         auto cache = _manager->mediaChunkCache();
         if (cache->isCompleteFile(localFilePath()))
-            cache->configure(FileSharingChunkSource::identity(this), *_fileSize, { }, { { "published", true } });
-    }
-    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid, this);
-    _publication = publication;
-    connect(publication, &FileSharingPublication::progress, this,
-            [this](qint64 bytes) { emit publishProgress(size_t(bytes)); });
-    connect(publication, &FileSharingPublication::logMessage, this, [this](const QString &message) {
-        _log.append(message);
-        emit logChanged();
-    });
-    connect(publication, &FileSharingPublication::finished, this, [this, publication, file, serveLocally]() {
-        _uris = publication->sources();
-        _published = !_uris.isEmpty();
-        _publication = nullptr;
-        publication->deleteLater();
-        if (_acc && !_published)
-            _manager->stopServing(_acc, _sums);
-        else if (_acc)
-            _manager->serve(_acc, { file, _uris }, serveLocally ? localFilePath() : QString());
-        emit publishFinished();
-    });
-    // An earlier upload of this file may still be there to reuse.
-    publication->start(knownSources, serveLocally ? _manager->servedFileLookup(_acc)
-                                                   : FileSharingResponder::Lookup {});
-}
-
-void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
-                                       PublicationCompletion finished,
-                                       std::function<void(size_t)> progress)
-{
-    // Reuse the same publication engine as publish(), but never add
-    // ciphertext URLs to this shared item's plaintext catalog. Separate
-    // recipients must get independent AES keys and independent uploads.
-    if (!receiver || !finished)
-        return;
-    if (!_acc || !_acc->client() || localFilePath().isEmpty() || !_fileSize) {
-        finished({}, tr("The file is unavailable for encrypted sharing"));
-        return;
+            cache->configure(FileSharingChunkSource::identity(this), *_fileSize, {}, { { "published", true } });
     }
 
-    // Build the metadata without calling fileMetadata(): that path publishes
-    // an unencrypted BoB image/video thumbnail. The name and media type here
-    // are included only in the encrypted SCE message.
-    Jingle::FileTransfer::File file;
-    file.setName(displayName());
-    file.setSize(*_fileSize);
-    file.setMediaType(_mimeType);
-    // Psi's attachment renderer identifies SIMS messages using content hashes.
-    // These are the existing plaintext file hashes (inside OMEMO 2 SCE),
-    // never ciphertext-address identities or plaintext transport URLs.
-    for (const auto &hash : _sums) {
-        if (hash.isValid())
-            file.addHash(hash);
-    }
-    if (!file.hasComputedHashes()) {
-        finished({}, tr("The file has no content hash for encrypted sharing"));
-        return;
-    }
-
-    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid,
-                                                  _acc->client(), FileSharingPublication::Mode::Aes256Gcm);
+    // The client owns a running attempt so that closing the dialog cannot
+    // destroy the QIODevice consumed by an encrypted upload.
+    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid, _acc->client(), mode);
+    if (legacySourcesAllowed)
+        _legacyPublication = publication;
+    const QPointer<FileSharingItem> self(this);
     const QPointer<QObject> guard(receiver);
     connect(publication, &FileSharingPublication::progress, publication,
             [guard, progress = std::move(progress)](qint64 bytes) {
                 if (guard && progress)
                     progress(size_t(qMax<qint64>(0, bytes)));
             });
+    connect(publication, &FileSharingPublication::logMessage, this, [this](const QString &message) {
+        _log.append(message);
+        emit logChanged();
+    });
     connect(publication, &FileSharingPublication::finished, publication,
-            [publication, guard, finished = std::move(finished)]() {
-                const auto reference = publication->encryptedReference();
+            [self, publication, guard, file, serveLocally, legacySourcesAllowed, finished = std::move(finished)]() {
+                const auto reference = publication->reference();
                 const auto error = publication->errorString();
+                if (self && legacySourcesAllowed) {
+                    self->_uris = publication->sources();
+                    self->_legacyPublication.clear();
+                    if (self->_acc) {
+                        if (self->_uris.isEmpty())
+                            self->_manager->stopServing(self->_acc, self->_sums);
+                        else
+                            self->_manager->serve(self->_acc, { file, self->_uris },
+                                                  serveLocally ? self->localFilePath() : QString());
+                    }
+                }
                 publication->deleteLater();
                 if (guard)
-                    finished(reference, error);
+                    finished(reference, reference.isValid() || !error.isEmpty() ? error
+                                                                                : tr("No usable file source"));
             });
-    publication->start({});
+    publication->start(knownSources, serveLocally ? _manager->servedFileLookup(_acc)
+                                                 : FileSharingResponder::Lookup {});
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }

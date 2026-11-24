@@ -20,6 +20,7 @@
 #pragma once
 
 #include "filesharingdownloader.h"
+#include "filesharingpublication.h"
 #include "iris/jingle-ft.h"
 #include "iris/xmpp_hash.h"
 #include "iris/xmpp_reference.h"
@@ -33,7 +34,6 @@
 class FileCacheItem;
 class FileSharingChunkSource;
 class FileSharingManager;
-class FileSharingPublication;
 class PsiAccount;
 
 namespace XMPP {
@@ -88,16 +88,12 @@ public:
     inline const QStringList log() const { return _log; }
 
     XMPP::Reference toReference() const;
-    enum class PublicationMode { Plain, Aes256Gcm };
+    using PublicationMode = FileSharingPublication::Mode;
     using PublicationCompletion = std::function<void(const XMPP::Reference &, const QString &)>;
-    // The plain mode preserves the original cached/Jingle sources and signals.
-    // AES-GCM makes a separate one-time publication. Its completion reference
-    // contains key material and MUST only be sent inside OMEMO 2 SCE. It never
-    // changes this item's plaintext sources or its persistent catalog.
-    void publish(const XMPP::Jid &myJid, PublicationMode mode = PublicationMode::Plain,
-                 QObject *receiver = nullptr, PublicationCompletion finished = {},
-                 std::function<void(size_t)> progress = {});
-    inline bool     isPublished() const { return _published; }
+    // An encrypted attempt returns its own reference. Its key material must
+    // be delivered inside OMEMO 2 SCE, never through the legacy source cache.
+    void publish(const XMPP::Jid &myJid, PublicationMode mode, QObject *receiver,
+                 PublicationCompletion finished, std::function<void(size_t)> progress = {});
 
     /**
      * Creates a download job from the current file metadata and sources.
@@ -129,11 +125,8 @@ private:
                     const QString &description);
     void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
     bool                             savePublishedFile();
-    void publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
-                          PublicationCompletion finished, std::function<void(size_t)> progress);
-    XMPP::Jingle::FileTransfer::File fileInfo() const;
-    QPointer<FileSharingPublication> _publication;
-    bool                             _published = false;
+    XMPP::Jingle::FileTransfer::File fileInfo(bool publishThumbnail = true) const;
+    QPointer<FileSharingPublication> _legacyPublication;
     bool                             _urlOnly = false;
     enum class RemoteCheck { NotStarted, Running, Done };
     RemoteCheck                      _remoteCheck      = RemoteCheck::NotStarted;
@@ -143,8 +136,6 @@ private:
     bool                             initFromCache(FileCacheItem *cache = nullptr);
 
 signals:
-    void publishFinished();
-    void publishProgress(size_t transferredBytes);
     void downloadFinished();
     void remoteChecked();
     void logChanged();
