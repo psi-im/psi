@@ -181,11 +181,8 @@ void MultiFileTransferDlg::initOutgoing(const XMPP::Jid &jid, const QStringList 
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, [this]() {
         ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
         d->session = d->account->client()->jingleManager()->newSession(d->peer);
-        if (auto encryption = d->account->encryptionController()) {
-            // Files of an OMEMO chat travel end-to-end encrypted when the contact supports it (JET-OMEMO).
-            d->session->setEndToEndPreferred(encryption->jingleEndToEndPreferred(d->peer));
-            d->session->setEndToEndRequired(encryption->jingleEndToEndRequired(d->peer));
-        }
+        if (auto *encryption = d->account->encryptionController())
+            encryption->configureJingleSession(d->session);
         setupSessionSignals();
 
         for (int i = 0; i < d->model->rowCount() - 1; ++i) {
@@ -273,9 +270,8 @@ void MultiFileTransferDlg::setupCommonSignals(Jingle::FileTransfer::Application 
 void MultiFileTransferDlg::initIncoming(XMPP::Jingle::Session *session)
 {
     d->session = session;
-    // With the policy, an unprotected offer from an OMEMO contact is refused when it is accepted.
-    if (auto encryption = d->account->encryptionController())
-        session->setEndToEndRequired(encryption->jingleEndToEndRequired(session->peer()));
+    if (auto *encryption = d->account->encryptionController())
+        encryption->configureJingleSession(session);
     setupSessionSignals();
     d->peer = session->peer();
     updatePeerVisuals();

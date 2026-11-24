@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "accountincomingmessage.h"
 
+#include <QHash>
+#include <QPointer>
 #include <QTest>
 #include <QTimer>
 #include <QtCrypto>
@@ -47,8 +49,9 @@ public:
             EncryptedSession(method->id(), context), method(method)
         {
         }
-        EncryptionJob *encrypt(const QDomElement &stanza) override
+        EncryptionJob *doEncrypt(const QDomElement &stanza, const EncryptionContext &operation) override
         {
+            method->lastContext = operation;
             method->plaintext = stanza.cloneNode(true).toElement();
             auto *job         = new EncryptionJob(this);
             auto  complete    = [job, stanza, fail = method->fail] {
@@ -85,10 +88,39 @@ struct Fixture {
     NoNetworkConnector connector;
     RecordingStream    stream { &connector };
     Client             client;
+    QHash<QString, QPointer<EncryptedSession>> sessions;
     Fixture()
     {
         client.start("example.test", "alice", {}, "device");
+        client.setIncomingEncryptedStanzaHandler([this](const QDomElement &stanza, const QString &methodId,
+                                                        const EncryptionContext         &operation,
+                                                        Client::EncryptionSessionPurpose purpose) -> EncryptionJob * {
+            const Jid from(stanza.attribute(QStringLiteral("from")));
+            const Jid to(stanza.attribute(QStringLiteral("to")));
+            const Jid peer
+                = purpose == Client::EncryptionSessionPurpose::Carbon && from.bare() == client.jid().bare() ? to : from;
+            if (!peer.isValid())
+                return nullptr;
+            const auto key     = methodId + QLatin1Char('\n') + peer.full();
+            auto      *session = sessions.value(key).data();
+            if (!session || session->isClosing()) {
+                EncryptionContext context;
+                context.recipients = { peer };
+                session = client.encryptionManager()->startSession(methodId, EncryptionMethod::XmppStanza, context);
+                if (!session)
+                    return nullptr;
+                sessions.insert(key, session);
+            }
+            return session->decrypt(stanza, operation);
+        });
         client.connectToServer(&stream, Jid("alice@example.test/device"));
+    }
+    ~Fixture()
+    {
+        client.setIncomingEncryptedStanzaHandler({});
+        for (auto session : std::as_const(sessions))
+            if (session)
+                session->close();
     }
     Message request() const
     {

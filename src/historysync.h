@@ -13,6 +13,8 @@ class PsiAccount;
 namespace XMPP {
 class MAMTask;
 class Client;
+class EncryptedSession;
+class EncryptionJob;
 }
 
 // One bounded history page. Keeps archive policy outside Iris and presentation
@@ -142,6 +144,10 @@ private:
     bool                          networkComplete_ = false, networkStable_ = false;
     bool                          decodingSaved_ = false, replaySaved_ = false;
     QPointer<XMPP::MAMTask>       task_;
+    QPointer<XMPP::EncryptionJob>  activeDecryptionJob_;
+    // Historical entries without a live PsiContact belong to this archive
+    // operation, never to the current presence or an invented roster entry.
+    QHash<QString, QPointer<XMPP::EncryptedSession>> archiveSessions_;
     HistoryArchive::Page          page_;
     QHash<qint64, ResolvedMessage> resolved_;
     QHash<QString, CachedMessage> cachedLookups_, ownLookups_;

@@ -11,6 +11,7 @@
 #include "psiencryptioncontroller.h"
 
 #include "iconset.h"
+#include "iris/jingle-session.h"
 #include "iris/xmpp_caps.h"
 #include "iris/xmpp_client.h"
 #include "psiaccount.h"
@@ -18,9 +19,6 @@
 #include "userlist.h"
 
 #ifdef IRIS_ENABLE_OMEMO
-#include "iris/jingle-jet-omemo.h"
-#include "iris/jingle-omemo-verification.h"
-#include "iris/jingle-sxe-omemo.h"
 #include "iris/xmpp_omemo.h"
 #include "psiomemostorage.h"
 #endif
@@ -135,6 +133,8 @@ XMPP::EncryptionMethod::Capabilities toIrisCapabilities(EncryptionMethodProvider
         result |= XMPP::EncryptionMethod::XmppStanza;
     if (capabilities.testFlag(EncryptionMethodProvider::DataMessage))
         result |= XMPP::EncryptionMethod::DataMessage;
+    if (capabilities.testFlag(EncryptionMethodProvider::DataStream))
+        result |= XMPP::EncryptionMethod::DataStream;
     return result;
 }
 
@@ -186,13 +186,29 @@ public:
                 method_->sessions_.remove(this);
         }
 
-        XMPP::EncryptionJob *encrypt(const QDomElement &xml) override { return runStanza(true, xml); }
+        XMPP::EncryptionJob *doEncrypt(const QDomElement &xml, const XMPP::EncryptionContext &context) override
+        {
+            return runStanza(true, xml, context);
+        }
 
-        XMPP::EncryptionJob *decrypt(const QDomElement &xml) override { return runStanza(false, xml); }
+        XMPP::EncryptionJob *doDecrypt(const QDomElement &xml, const XMPP::EncryptionContext &context) override
+        {
+            return runStanza(false, xml, context);
+        }
 
-        XMPP::EncryptionJob *encrypt(const QByteArray &data) override { return runData(true, data); }
+        XMPP::EncryptionJob *doEncrypt(const QByteArray &data) override { return runData(true, data); }
 
-        XMPP::EncryptionJob *decrypt(const QByteArray &data) override { return runData(false, data); }
+        XMPP::EncryptionJob *doDecrypt(const QByteArray &data) override { return runData(false, data); }
+
+        XMPP::EncryptionJob *doEncryptChunk(const QByteArray &chunk, bool final) override
+        {
+            return runData(true, chunk, true, final);
+        }
+
+        XMPP::EncryptionJob *doDecryptChunk(const QByteArray &chunk, bool final) override
+        {
+            return runData(false, chunk, true, final);
+        }
 
     private:
         void detachProvider()
@@ -208,7 +224,7 @@ public:
             pluginSession_.reset();
         }
 
-        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml)
+        XMPP::EncryptionJob *runStanza(bool encrypting, const QDomElement &xml, const XMPP::EncryptionContext &context)
         {
             auto *job = new XMPP::EncryptionJob(this);
             if (!method_ || !pluginSession_) {
@@ -233,13 +249,14 @@ public:
             };
 
             if (encrypting)
-                pluginSession_->encryptStanza(xml, guard, std::move(completion));
+                pluginSession_->encryptStanza(xml, toPluginContext(context), guard, std::move(completion));
             else
-                pluginSession_->decryptStanza(xml, guard, std::move(completion));
+                pluginSession_->decryptStanza(xml, toPluginContext(context), guard, std::move(completion));
             return job;
         }
 
-        XMPP::EncryptionJob *runData(bool encrypting, const QByteArray &data)
+        XMPP::EncryptionJob *runData(bool encrypting, const QByteArray &data, bool streaming = false,
+                                     bool final = false)
         {
             auto *job = new XMPP::EncryptionJob(this);
             if (!method_ || !pluginSession_) {
@@ -263,10 +280,16 @@ public:
                 weakJob->complete(result.data, toIrisMetadata(methodId, result.metadata));
             };
 
-            if (encrypting)
+            if (streaming) {
+                if (encrypting)
+                    pluginSession_->encryptChunk(data, final, guard, std::move(completion));
+                else
+                    pluginSession_->decryptChunk(data, final, guard, std::move(completion));
+            } else if (encrypting) {
                 pluginSession_->encryptData(data, guard, std::move(completion));
-            else
+            } else {
                 pluginSession_->decryptData(data, guard, std::move(completion));
+            }
             return job;
         }
 
@@ -291,7 +314,7 @@ public:
     }
     XMPP::EncryptedSession *startSession(Capabilities capabilities, const XMPP::EncryptionContext &context) override
     {
-        if (!provider_ || !(capabilities & this->capabilities()))
+        if (!provider_ || (capabilities & this->capabilities()) != capabilities)
             return nullptr;
         auto *pluginSession = provider_->startSession(accountId_, toPluginContext(context));
         if (!pluginSession)
@@ -305,6 +328,20 @@ public:
     bool canDecrypt(const QDomElement &stanza) const override
     {
         return provider_ && provider_->canDecrypt(accountId_, stanza);
+    }
+    Availability availability(const XMPP::Jid &peer) const override
+    {
+        if (!provider_)
+            return Availability::Unavailable;
+        switch (provider_->availability(accountId_, peer.full())) {
+        case EncryptionMethodProvider::Availability::Available:
+            return Availability::Available;
+        case EncryptionMethodProvider::Availability::Unavailable:
+            return Availability::Unavailable;
+        case EncryptionMethodProvider::Availability::Unknown:
+            return Availability::Unknown;
+        }
+        return Availability::Unknown;
     }
 
     void detachProvider()
@@ -462,9 +499,6 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                 [this](bool) { emit methodStateChanged(XMPP::OmemoEncryption::methodId()); });
         connect(omemo_, &XMPP::OmemoEncryption::warning, this,
                 [this](const QString &message) { emit encryptionError({}, message); });
-        jingleJet_          = new XMPP::Jingle::JetOmemo(client_->jingleManager(), omemo_, this);
-        jingleSxe_          = new XMPP::Jingle::SXE::SxeOmemo(client_->jingleManager(), omemo_, this);
-        jingleVerification_ = new XMPP::Jingle::OmemoDtlsVerification(client_->jingleManager(), omemo_, this);
     } else {
         qWarning() << "Could not open OMEMO storage:" << omemoStorage_->errorString();
     }
@@ -502,7 +536,7 @@ PsiEncryptionController::methods(XMPP::EncryptionMethod::Capabilities capabiliti
     QList<MethodInfo> result;
 
     if ((capabilities == XMPP::EncryptionMethod::Capabilities {}
-         || capabilities.testFlag(XMPP::EncryptionMethod::XmppStanza))
+         || capabilities == XMPP::EncryptionMethod::Capabilities(XMPP::EncryptionMethod::XmppStanza))
         && account_->hasPgp() && PsiOptions::instance()->getOption("plugins.auto-load.openpgp", false).toBool()) {
         MethodInfo pgp;
         pgp.id             = QString::fromLatin1(OpenPgpMethodId);
@@ -595,32 +629,34 @@ QString PsiEncryptionController::selectedMethod(const XMPP::Jid &jid) const
     return {};
 }
 
+void PsiEncryptionController::configureJingleSession(XMPP::Jingle::Session *session) const
+{
+    if (!session)
+        return;
+    const auto methodId = selectedMethod(session->peer());
+    // The choice and local preference originate in Psi's UI. Iris binds the
+    // method to an encryption session and validates every Jingle transport.
+    session->setEncryptionMethod(methodId);
+    session->setEndToEndPreferred(!methodId.isEmpty());
+    session->setEndToEndRequired(jingleEndToEndRequired(session->peer()));
+}
+
 bool PsiEncryptionController::jingleEndToEndRequired(const XMPP::Jid &jid) const
 {
-#ifdef IRIS_ENABLE_OMEMO
-    return PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool()
-        && selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
-#else
-    Q_UNUSED(jid)
-    return false;
-#endif
+    return !selectedMethod(jid).isEmpty()
+        && PsiOptions::instance()->getOption(QStringLiteral("options.media.require-end-to-end"), false).toBool();
 }
 
 bool PsiEncryptionController::jingleEndToEndPreferred(const XMPP::Jid &jid) const
 {
-#ifdef IRIS_ENABLE_OMEMO
-    return selectedMethod(jid) == XMPP::OmemoEncryption::methodId();
-#else
-    Q_UNUSED(jid)
-    return false;
-#endif
+    return !selectedMethod(jid).isEmpty();
 }
 
 bool PsiEncryptionController::requestJingleTrustDecision(const XMPP::Jid &jid, QWidget *parent,
                                                          std::function<void()> completion)
 {
 #ifdef IRIS_ENABLE_OMEMO
-    if (!jingleEndToEndPreferred(jid))
+    if (selectedMethod(jid) != XMPP::OmemoEncryption::methodId())
         return false;
     // The call goes on whatever the answer is; the end-to-end policy decides what it may use.
     return requestTrustDecision(XMPP::OmemoEncryption::methodId(), jid.withResource(QString()), false, parent,
@@ -685,39 +721,20 @@ PsiEncryptionController::Availability PsiEncryptionController::availability(cons
     if (!hasMethod(methodId))
         return Availability::Unavailable;
 
-    const auto peer = capabilityJid(jid);
-    if (auto *provider = pluginProvider(methodId)) {
-        switch (provider->availability(pluginMethods_.value(provider)->accountId, peer.full())) {
-        case EncryptionMethodProvider::Availability::Available:
-            return Availability::Available;
-        case EncryptionMethodProvider::Availability::Unavailable:
-            return Availability::Unavailable;
-        case EncryptionMethodProvider::Availability::Unknown:
-            return Availability::Unknown;
-        }
-    }
+    // OpenPGP is a legacy Psi-only method; native and plugin methods are
+    // registered with Iris and report their own availability.
+    if (methodId == QLatin1String(OpenPgpMethodId))
+        return Availability::Available;
 
-#ifdef IRIS_ENABLE_OMEMO
-    if (methodId == XMPP::OmemoEncryption::methodId() && omemo_) {
-        if (omemo_->supportedProtocols() == XMPP::OmemoProtocols())
-            return Availability::Unavailable;
-        if (!peer.resource().isEmpty() && omemo_->preferredProtocolFor(peer))
-            return Availability::Available;
-
-        // OMEMO devices are discovered through PEP.  Missing resource caps
-        // means "unknown", not "unsupported" (offline peers and our own
-        // resources are common examples).  A cached active device is enough
-        // to make availability definite.
-        const auto supported = omemo_->supportedProtocols();
-        for (const auto &device : omemo_->devices(peer)) {
-            if (device.active && (device.protocols & supported) != XMPP::OmemoProtocols())
-                return Availability::Available;
-        }
+    switch (client_->encryptionManager()->availability(methodId, capabilityJid(jid))) {
+    case XMPP::EncryptionMethod::Availability::Available:
+        return Availability::Available;
+    case XMPP::EncryptionMethod::Availability::Unavailable:
+        return Availability::Unavailable;
+    case XMPP::EncryptionMethod::Availability::Unknown:
         return Availability::Unknown;
     }
-#endif
-
-    return Availability::Available;
+    return Availability::Unknown;
 }
 
 void PsiEncryptionController::reportError(const XMPP::Jid &jid, const QString &message)
@@ -751,7 +768,8 @@ void PsiEncryptionController::recoverDecryption(const QString &methodId, const X
     // Resolving the public bundle is deliberately separate from creating the
     // session. XEP-0384 requires explicit user interaction before a client
     // replaces a session in response to a decryption error.
-    auto *job = client_->encryptionManager()->prepareDecryptionRecovery(methodId, metadata);
+    auto *method = client_->encryptionManager()->method(methodId);
+    auto *job    = method ? method->prepareDecryptionRecovery(metadata) : nullptr;
     if (!job) {
         decryptionRecoveriesActive_.remove(recoveryKey);
         return;
@@ -795,7 +813,8 @@ void PsiEncryptionController::performDecryptionRecovery(const QString &methodId,
         return;
     decryptionRecoveriesActive_.insert(recoveryKey);
 
-    auto *job = client_->encryptionManager()->recoverDecryption(methodId, metadata);
+    auto *method = client_->encryptionManager()->method(methodId);
+    auto *job    = method ? method->recoverDecryption(metadata) : nullptr;
     if (!job) {
         decryptionRecoveriesActive_.remove(recoveryKey);
         return;

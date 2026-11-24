@@ -30,6 +30,11 @@ class PsiIcon;
 class UserListItem;
 class UserResourceList;
 
+namespace XMPP {
+class EncryptedSession;
+class EncryptionManager;
+}
+
 class PsiContact : public QObject {
     Q_OBJECT
 
@@ -48,6 +53,11 @@ public:
     const UserListItem     &userListItem() const;
     const UserResourceList &userResourceList() const;
     void                    update(const UserListItem &u);
+    XMPP::EncryptedSession *encryptionSession(const QString &methodId, const XMPP::Jid &peer,
+                                              XMPP::EncryptionManager *registry);
+    void                    closeEncryptionSessionsForResource(const QString &resource);
+    bool                    hasActiveEncryptionOperations() const;
+    void                    closeEncryptionSessions();
 
     bool isBlocked() const;
     bool isSelf() const;

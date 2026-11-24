@@ -24,6 +24,7 @@
 #include "common.h"
 #include "desktoputil.h"
 #include "iconset.h"
+#include "iris/xmpp_encryption.h"
 #include "jidutil.h"
 #include "profiles.h"
 #include "psiaccount.h"
@@ -35,6 +36,10 @@
 #include "psiprivacymanager.h"
 #include "userlist.h"
 #include "vcardfactory.h"
+
+#include <QHash>
+#include <QPointer>
+#include <utility>
 
 #include <QFileDialog>
 #include <QTimer>
@@ -61,6 +66,8 @@ public:
     QTimer      *statusTimer_;
     QTimer      *animTimer_;
     UserListItem u_;
+    // Scoped to this stable contact, not a second account-wide JID registry.
+    QHash<QString, QPointer<XMPP::EncryptedSession>> encryptionSessions_;
     QString      name_;
     Status       status_;
     Status       oldStatus_;
@@ -142,6 +149,7 @@ PsiContact::PsiContact() : QObject(nullptr)
  */
 PsiContact::~PsiContact()
 {
+    closeEncryptionSessions();
     d->isValid_ = false;
     emit destroyed(this);
     delete d;
@@ -163,6 +171,12 @@ const UserListItem &PsiContact::userListItem() const { return d->u_; }
  */
 void PsiContact::update(const UserListItem &u)
 {
+    // A resource disappearing from the actual contact list retires only its
+    // higher-level XMPP sessions. OMEMO ratchets remain in persistent storage.
+    for (const auto &old : d->u_.userResourceList()) {
+        if (u.userResourceList().find(old.name()) == u.userResourceList().end())
+            closeEncryptionSessionsForResource(old.name());
+    }
     bool isGroupsChanged = u.groups() != d->u_.groups();
     d->u_                = u;
     Status status        = d->status(d->u_);
@@ -172,6 +186,60 @@ void PsiContact::update(const UserListItem &u)
     emit updated();
     if (isGroupsChanged)
         emit groupsChanged();
+}
+
+XMPP::EncryptedSession *PsiContact::encryptionSession(const QString &methodId, const XMPP::Jid &peer,
+                                                      XMPP::EncryptionManager *registry)
+{
+    if (!registry || methodId.isEmpty() || !peer.isValid() || jid().bare() != peer.bare())
+        return nullptr;
+    const auto key     = methodId + QLatin1Char('\n') + peer.full();
+    auto      *session = d->encryptionSessions_.value(key).data();
+    if (session && !session->isClosing())
+        return session;
+
+    XMPP::EncryptionContext context;
+    context.recipients = { peer };
+    session            = registry->startSession(methodId, XMPP::EncryptionMethod::XmppStanza, context);
+    if (session)
+        d->encryptionSessions_.insert(key, session);
+    else
+        d->encryptionSessions_.remove(key);
+    return session;
+}
+
+void PsiContact::closeEncryptionSessionsForResource(const QString &resource)
+{
+    if (resource.isEmpty())
+        return;
+    for (auto it = d->encryptionSessions_.begin(); it != d->encryptionSessions_.end();) {
+        const auto session = it.value();
+        if (session && !session->context().recipients.isEmpty()
+            && session->context().recipients.constFirst().resource() == resource) {
+            if (session)
+                session->close();
+            it = d->encryptionSessions_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
+bool PsiContact::hasActiveEncryptionOperations() const
+{
+    for (auto session : std::as_const(d->encryptionSessions_))
+        if (session && session->hasActiveOperations())
+            return true;
+    return false;
+}
+
+void PsiContact::closeEncryptionSessions()
+{
+    auto sessions = std::move(d->encryptionSessions_);
+    d->encryptionSessions_.clear();
+    for (auto session : std::as_const(sessions))
+        if (session)
+            session->close();
 }
 
 /**

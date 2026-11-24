@@ -3,6 +3,7 @@
 #include "widgets/MamHistoryLog.h"
 
 #include "historymessageextras.h"
+#include "iris/xmpp_client.h"
 #include "iris/xmpp_encryption.h"
 #include "iris/xmpp_forwarding.h"
 #include "iris/xmpp_mammanager.h"
@@ -46,11 +47,18 @@ HistorySync::~HistorySync()
 {
     if (task_)
         task_->safeDelete();
+    if (activeDecryptionJob_)
+        delete activeDecryptionJob_;
+    for (auto session : std::as_const(archiveSessions_))
+        if (session)
+            session->close();
 }
 
 void HistorySync::safeDelete()
 {
     cancelled_ = true;
+    if (activeDecryptionJob_)
+        delete activeDecryptionJob_;
     if (task_) {
         task_->disconnect(this);
         task_->safeDelete();
@@ -564,8 +572,33 @@ void HistorySync::decodeNext()
         }
         XMPP::EncryptionContext context;
         context.setArchiveReplay();
-        auto *job    = crypto->decrypt(stanza, context);
-        auto  finish = [this, job, uid] {
+        auto           *method = crypto->methodForStanza(stanza);
+        const XMPP::Jid conversation(key_.peer);
+        auto           *session = method ? archiveSessions_.value(method->id()).data() : nullptr;
+        if (method && (!session || session->isClosing())) {
+            // Do not create a fake contact for old messages. Retain a
+            // method-specific session for this HistorySync's lifetime.
+            XMPP::EncryptionContext base;
+            base.recipients = { conversation };
+            session         = crypto->startSession(method->id(), XMPP::EncryptionMethod::XmppStanza, base);
+            if (session)
+                archiveSessions_.insert(method->id(), session);
+        }
+        auto *job = session ? session->decrypt(stanza, context) : nullptr;
+        if (!job) {
+            // Keep the archived entry visible as undecryptable; never turn a
+            // failure to select a session into plaintext fallback.
+            XMPP::Forwarding wrapper;
+            wrapper.fromXml(results_.at(decodeIndex_ - 1).firstChildElement("forwarded"), context_.client);
+            auto plain = wrapper.message();
+            plain.setBody(tr("Unable to decrypt archived message"));
+            decoded_.insert(uid, plain);
+            decryptionFailures_.insert(uid);
+            QTimer::singleShot(0, this, &HistorySync::decodeNext);
+            return;
+        }
+        auto finish = [this, job, uid] {
+            activeDecryptionJob_.clear();
             if (cancelled_) {
                 job->deleteLater();
                 return;
@@ -594,8 +627,8 @@ void HistorySync::decodeNext()
         if (job->isFinished())
             finish();
         else {
+            activeDecryptionJob_ = job;
             connect(job, &XMPP::EncryptionJob::finished, this, finish);
-            connect(job, &XMPP::EncryptionJob::finished, job, &QObject::deleteLater);
         }
         return;
     }

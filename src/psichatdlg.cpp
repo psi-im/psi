@@ -474,8 +474,10 @@ PsiChatDlg::~PsiChatDlg()
         mamTask_->safeDelete();
         mamTask_.clear();
     }
-    if (encryptionSession_)
-        encryptionSession_->close();
+    // Shared contact sessions survive a closed chat. An unbound peer's
+    // session belongs to this chat and must be released with the widget.
+    if (chatOwnedEncryptionSession_)
+        chatOwnedEncryptionSession_->close();
     SendButtonTemplatesMenu *menu = getTemplateMenu();
     if (menu) {
         disconnect(menu, SIGNAL(doPasteAndSend()), this, SLOT(doPasteAndSend()));
@@ -555,10 +557,12 @@ void PsiChatDlg::setEncryptionMethod(const QString &methodId, bool persist)
 
 void PsiChatDlg::rebuildEncryptionSession()
 {
-    if (encryptionSession_) {
-        encryptionSession_->close();
-        encryptionSession_.clear();
-    }
+    // Only a real contact can own a session beyond the chat's lifetime.
+    // Rebuilding releases any session we created for an unbound peer.
+    if (chatOwnedEncryptionSession_)
+        chatOwnedEncryptionSession_->close();
+    chatOwnedEncryptionSession_.clear();
+    encryptionSession_.clear();
 
     if (selectedEncryptionMethod_.isEmpty() || selectedEncryptionMethod_ == QLatin1String("openpgp"))
         return;
@@ -568,10 +572,19 @@ void PsiChatDlg::rebuildEncryptionSession()
     if (!controller || !client)
         return;
 
-    XMPP::EncryptionContext context;
-    context.recipients.append(controller->capabilityJid(jid()));
-    encryptionSession_ = client->encryptionManager()->startSession(selectedEncryptionMethod_,
-                                                                   XMPP::EncryptionMethod::XmppStanza, context);
+    const auto peer    = controller->capabilityJid(jid());
+    encryptionSession_ = account()->encryptionSession(selectedEncryptionMethod_, peer);
+    if (!encryptionSession_) {
+        XMPP::EncryptionContext context;
+        context.recipients          = { peer };
+        chatOwnedEncryptionSession_ = client->encryptionManager()->startSession(
+            selectedEncryptionMethod_, XMPP::EncryptionMethod::XmppStanza, context);
+        encryptionSession_ = chatOwnedEncryptionSession_;
+        if (encryptionSession_) {
+            connect(client, &XMPP::Client::disconnected, chatOwnedEncryptionSession_.data(),
+                    &XMPP::EncryptedSession::close);
+        }
+    }
 }
 
 void PsiChatDlg::initUi()

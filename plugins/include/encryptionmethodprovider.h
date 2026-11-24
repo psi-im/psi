@@ -37,6 +37,7 @@ public:
     enum Capability {
         XmppStanza  = 0x01,
         DataMessage = 0x02,
+        DataStream  = 0x04,
     };
     Q_DECLARE_FLAGS(Capabilities, Capability)
 
@@ -100,8 +101,14 @@ public:
         virtual ~Session() = default;
 
         /** completion must be called exactly once while context is alive. */
-        virtual void encryptStanza(const QDomElement &stanza, QObject *context, Completion completion) = 0;
-        virtual void decryptStanza(const QDomElement &stanza, QObject *context, Completion completion) = 0;
+        // Per-stanza context is independent of the long-lived peer session.
+        // Do not cache it in the Session: multiple operations may overlap.
+        virtual void encryptStanza(const QDomElement &stanza, const Context &operation, QObject *context,
+                                   Completion completion)
+            = 0;
+        virtual void decryptStanza(const QDomElement &stanza, const Context &operation, QObject *context,
+                                   Completion completion)
+            = 0;
 
         virtual void encryptData(const QByteArray &data, QObject *context, Completion completion)
         {
@@ -120,6 +127,35 @@ public:
             Result result;
             result.error       = Error::Unsupported;
             result.errorString = QStringLiteral("Data decryption is not supported by this session");
+            completion(std::move(result));
+        }
+
+        /**
+         * Streaming operations are sequential and bound to a DataStream session.
+         * Submit the next chunk only after the previous completion succeeds; final=true
+         * terminates the stream and must validate authentication during decryption.
+         * Until that final success, decrypted data is unauthenticated and MUST NOT be exposed.
+         * Existing plugins can omit these optional virtual methods.
+         */
+        virtual void encryptChunk(const QByteArray &chunk, bool final, QObject *context, Completion completion)
+        {
+            Q_UNUSED(chunk);
+            Q_UNUSED(final);
+            Q_UNUSED(context);
+            Result result;
+            result.error       = Error::Unsupported;
+            result.errorString = QStringLiteral("Stream encryption is not supported by this session");
+            completion(std::move(result));
+        }
+
+        virtual void decryptChunk(const QByteArray &chunk, bool final, QObject *context, Completion completion)
+        {
+            Q_UNUSED(chunk);
+            Q_UNUSED(final);
+            Q_UNUSED(context);
+            Result result;
+            result.error       = Error::Unsupported;
+            result.errorString = QStringLiteral("Stream decryption is not supported by this session");
             completion(std::move(result));
         }
     };

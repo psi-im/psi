@@ -32,19 +32,15 @@ class QWidget;
 
 namespace XMPP {
 class Client;
+namespace Jingle {
+    class Session;
+}
 }
 
 #ifdef IRIS_ENABLE_OMEMO
 class PsiOmemoStorage;
 namespace XMPP {
 class OmemoEncryption;
-namespace Jingle {
-    class JetOmemo;
-    class OmemoDtlsVerification;
-    namespace SXE {
-        class SxeOmemo;
-    }
-}
 }
 #endif
 
@@ -76,10 +72,10 @@ public:
     // Persistent per-contact preference. An open chat copies this value when
     // it is created and then owns an independent active method/session.
     QString selectedMethod(const XMPP::Jid &jid) const;
-    // Calls and whiteboards with @a jid must be end-to-end verified: the option is on and the chat
-    // with the contact uses OMEMO (an explicitly unencrypted chat keeps them unverified).
+    // Apply the selected UI method and end-to-end preference to an Iris Jingle session.
+    // Iris validates supported capabilities and performs all encryption operations.
+    void configureJingleSession(XMPP::Jingle::Session *session) const;
     bool jingleEndToEndRequired(const XMPP::Jid &jid) const;
-    // Files to @a jid are offered end-to-end encrypted when possible: the chat uses OMEMO.
     bool jingleEndToEndPreferred(const XMPP::Jid &jid) const;
     // Before an encrypted call or whiteboard with @a jid (jingleEndToEndPreferred()), asks about the contact's
     // undecided OMEMO devices like an encrypted chat message does. Returns false when nothing needs a decision;
@@ -156,12 +152,6 @@ private:
 #ifdef IRIS_ENABLE_OMEMO
     std::unique_ptr<PsiOmemoStorage> omemoStorage_;
     XMPP::OmemoEncryption           *omemo_ = nullptr;
-    // OMEMO-verified DTLS fingerprints for calls, whiteboards and file transfer over ICE.
-    XMPP::Jingle::OmemoDtlsVerification *jingleVerification_ = nullptr;
-    // JET-OMEMO for files; registered before jingleVerification_, which honours JET contents.
-    XMPP::Jingle::JetOmemo *jingleJet_ = nullptr;
-    // OMEMO 2 protected whiteboard payload on the SXE message transport.
-    XMPP::Jingle::SXE::SxeOmemo *jingleSxe_ = nullptr;
     QSet<QString>                    legacyOmemoEnabled_;
     QSet<QString>                    legacyOmemoDisabled_;
 #endif
