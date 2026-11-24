@@ -99,6 +99,34 @@ publication authorization, negotiated method and protection policy are
 compatible. No plaintext fallback after a failed authentication; no silent
 fallback to an unrelated public publication when resolving a restricted link.
 
+### Unified Jingle serving path
+
+Both JinglePub and receiver-initiated file requests use the same
+account-bound lookup and source-opening helper. Iris remains responsible for
+negotiating and enforcing transport protection; Psi owns publication
+authorization and local storage.
+
+```mermaid
+flowchart TD
+    PUB["JinglePub factory"] --> RESP["FileSharingResponder<br/>Shared protection policy and source opening"]
+    DIRECT["Direct Jingle request / content-add"] --> RESP
+    RESP --> LOOKUP["FileSharingManager::servedFileLookup"]
+    LOOKUP --> CAT["FileSharingCatalog<br/>Resolve and authorize one publication"]
+    CAT -->|Authorized| CACHE["Existing file cache / local file"]
+    CAT -->|Denied or unavailable| DENY["Refuse request"]
+    CACHE -->|Readable bytes| DEVICE["QIODevice"]
+    DEVICE --> IRIS["Iris Jingle<br/>Negotiated transfer protection"]
+```
+
+The same lookup is called again immediately before opening the source device.
+A cached file path or a stale JinglePub announcement grants no independent
+serving authority. No separate JinglePub file registry or cache is needed.
+
+The shared serving path and persistent policy fields are implemented; binding
+explicit publication IDs and capability proofs to incoming requests remains
+pending. Until that signaling is implemented, restricted publications must
+not be advertised as available.
+
 ### Distributed serving
 
 A compatible recipient may become a source after it has verified the bytes.
