@@ -123,14 +123,52 @@ multiple sources follow [XEP-0385](https://xmpp.org/extensions/xep-0385.html).
 
 `FileSharingJingleSession` owns the request queue independently of downloader
 lifetimes. Requests to the same full peer JID reuse a negotiated BUNDLE via
-`content-add`. `setKeepTransportUntilReceipt()` preserves the previous member;
-`setReceiptDeferred()` holds its receipt until the successor becomes active.
-With no successor the receipt is released promptly. Peers without BUNDLE retain
-separate sessions. The storage worker has no knowledge of Jingle sessions.
+content-add`. `setKeepTransportUntilReceipt()` preserves the previous member;
+`setReceiptDeferred()` holds its receipt until the successor's BUNDLE extension
+is accepted and committed, not until its data channel becomes active. Waiting
+for the latter can deadlock the handover. With no successor the receipt is
+released promptly. Peers without BUNDLE retain separate sessions. The storage
+worker has no knowledge of Jingle sessions.
 
-JET remains separate from storage policy. Iris authenticates JET as a whole-file
-stream and rejects ranges/streaming hooks in that mode. Plaintext local
-checkpoints do not enable arbitrary authenticated JET ranges or resume.
+### Range handover during playback
+
+```mermaid
+sequenceDiagram
+    participant S as Remote file sender
+    participant R as Psi file receiver
+    Note over S,R: Existing ICE/DTLS/SCTP association, content A
+    S->>R: Range A payload
+    opt JET protection (planned for ranged transfers)
+        S->>R: Range A GCM tag
+        Note right of R: Authenticate range A
+    end
+    Note right of R: payloadVerified()
+    Note over S,R: Receipt A deferred; keep association alive
+    R->>S: content-add (range B, same BUNDLE)
+    S->>R: content-accept (range B)
+    Note right of R: Commit BUNDLE extension
+    Note right of R: acknowledgeReceived() for A
+    R->>S: received (content A)
+    Note over S,R: Retire A, preserve association for B
+    S->>R: Range B payload (when channel is ready)
+```
+
+The receipt is a protocol-level acknowledgement, distinct from payload
+verification. The sender keeps the content alive until the receipt exchange
+(or another protocol-defined terminal outcome). If the successor is rejected
+or canceled, release the predecessor's receipt rather than strand it.
+
+The local player reads plaintext through the existing file reader/cache;
+the remote peer sees ordinary XEP-0234 range transfers. Neither endpoint's
+Jingle implementation needs to know that the request serves a player.
+
+JET remains separate from storage policy. Iris currently authenticates JET as a
+whole-file stream and rejects ranges/streaming hooks. The optional JET step in
+the diagram describes the intended extension, not a currently supported
+combination: each known-length range content gets a fresh key/IV, and its
+authentication tag must be verified before `payloadVerified()`. The deferred
+receipt and BUNDLE handover remain unchanged. Plaintext local checkpoints do
+not permit reuse of an existing GCM record or key/IV for a new range.
 
 The scheduler originates from
 [AnyKeep PR #156](https://github.com/Ri0n/AnyKeep/pull/156), reviewed at
