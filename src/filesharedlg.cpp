@@ -54,10 +54,10 @@ FileShareDlg::FileShareDlg(PsiAccount *acc, const XMPP::Jid &myJid, const QList<
 {
     setAttribute(Qt::WA_DeleteOnClose);
     ui->setupUi(this);
-    ui->cb_encrypt->setVisible(encryptionOptions_.available
-                               && XMPP::StatelessFileSharing::cipherSupported(
-                                   XMPP::StatelessFileSharing::Cipher::Aes256Gcm));
-    ui->cb_encrypt->setChecked(!ui->cb_encrypt->isHidden() && encryptionOptions_.selected);
+    // Missing cipher support must not hide a selected protection requirement
+    // and accidentally route the file through the plaintext publisher.
+    ui->cb_encrypt->setVisible(encryptionOptions_.available || encryptionOptions_.selected);
+    ui->cb_encrypt->setChecked(encryptionOptions_.selected);
     ui->pixmapRatioLabel->hide();
     ui->lv_files->hide();
     filesModel = new MultiFileTransferModel(this);
@@ -112,8 +112,8 @@ void FileShareDlg::publish()
     // HTTP chooses its key delivery from the chat context at publication time.
     // Until protected Jingle publications are implemented, keep encrypted HTTP
     // isolated from the legacy plaintext Jingle/HTTP publication path.
-    encryptedUpload_ = !ui->cb_encrypt->isHidden()
-        && (ui->cb_encrypt->isChecked() || encryptionOptions_.selected);
+    encryptedUpload_ = encryptionOptions_.selected
+        || (encryptionOptions_.available && ui->cb_encrypt->isChecked());
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
     ui->cb_encrypt->setDisabled(true); // Retry must use the same transfer security mode.
     QList<FileSharingItem *> toPublish;
