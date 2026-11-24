@@ -28,6 +28,7 @@
 #include <QDateTime>
 #include <QObject>
 #include <QPointer>
+#include <functional>
 
 class FileCacheItem;
 class FileSharingChunkSource;
@@ -87,7 +88,15 @@ public:
     inline const QStringList log() const { return _log; }
 
     XMPP::Reference toReference() const;
-    void            publish(const XMPP::Jid &myJid);
+    enum class PublicationMode { Plain, Aes256Gcm };
+    using PublicationCompletion = std::function<void(const XMPP::Reference &, const QString &)>;
+    // The plain mode preserves the original cached/Jingle sources and signals.
+    // AES-GCM makes a separate one-time publication. Its completion reference
+    // contains key material and MUST only be sent inside OMEMO 2 SCE. It never
+    // changes this item's plaintext sources or its persistent catalog.
+    void publish(const XMPP::Jid &myJid, PublicationMode mode = PublicationMode::Plain,
+                 QObject *receiver = nullptr, PublicationCompletion finished = {},
+                 std::function<void(size_t)> progress = {});
     inline bool     isPublished() const { return _published; }
 
     /**
@@ -120,6 +129,8 @@ private:
                     const QString &description);
     void                             mergeSources(const XMPP::MediaSharing &, const XMPP::Jid &);
     bool                             savePublishedFile();
+    void publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
+                          PublicationCompletion finished, std::function<void(size_t)> progress);
     XMPP::Jingle::FileTransfer::File fileInfo() const;
     QPointer<FileSharingPublication> _publication;
     bool                             _published = false;

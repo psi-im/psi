@@ -445,8 +445,16 @@ bool FileSharingItem::savePublishedFile()
     return _manager->trackExternal(_sums, QFileInfo(path), meta, FILE_TTL) != nullptr;
 }
 
-void FileSharingItem::publish(const XMPP::Jid &myJid)
+void FileSharingItem::publish(const XMPP::Jid &myJid, PublicationMode mode, QObject *receiver,
+                              PublicationCompletion finished, std::function<void(size_t)> progress)
 {
+    if (mode == PublicationMode::Aes256Gcm) {
+        // Never turn an invalid encrypted request into a plaintext upload.
+        if (!receiver || !finished)
+            return;
+        publishEncrypted(myJid, receiver, std::move(finished), std::move(progress));
+        return;
+    }
     const auto path = localFilePath();
     if (path.isEmpty())
         return;
@@ -488,6 +496,58 @@ void FileSharingItem::publish(const XMPP::Jid &myJid)
     });
     // An earlier upload of this file may still be there to reuse.
     publication->start(knownSources, serveLocally);
+}
+
+void FileSharingItem::publishEncrypted(const XMPP::Jid &myJid, QObject *receiver,
+                                       PublicationCompletion finished,
+                                       std::function<void(size_t)> progress)
+{
+    // Reuse the same publication engine as publish(), but never add
+    // ciphertext URLs to this shared item's plaintext catalog. Separate
+    // recipients must get independent AES keys and independent uploads.
+    if (!receiver || !finished)
+        return;
+    if (!_acc || !_acc->client() || localFilePath().isEmpty() || !_fileSize) {
+        finished({}, tr("The file is unavailable for encrypted sharing"));
+        return;
+    }
+
+    // Build the metadata without calling fileMetadata(): that path publishes
+    // an unencrypted BoB image/video thumbnail. The name and media type here
+    // are included only in the encrypted SCE message.
+    Jingle::FileTransfer::File file;
+    file.setName(displayName());
+    file.setSize(*_fileSize);
+    file.setMediaType(_mimeType);
+    // Psi's attachment renderer identifies SIMS messages using content hashes.
+    // These are the existing plaintext file hashes (inside OMEMO 2 SCE),
+    // never ciphertext-address identities or plaintext transport URLs.
+    for (const auto &hash : _sums) {
+        if (hash.isValid())
+            file.addHash(hash);
+    }
+    if (!file.hasComputedHashes()) {
+        finished({}, tr("The file has no content hash for encrypted sharing"));
+        return;
+    }
+
+    auto *publication = new FileSharingPublication(_acc->client(), file, localFilePath(), myJid,
+                                                  _acc->client(), FileSharingPublication::Mode::Aes256Gcm);
+    const QPointer<QObject> guard(receiver);
+    connect(publication, &FileSharingPublication::progress, publication,
+            [guard, progress = std::move(progress)](qint64 bytes) {
+                if (guard && progress)
+                    progress(size_t(qMax<qint64>(0, bytes)));
+            });
+    connect(publication, &FileSharingPublication::finished, publication,
+            [publication, guard, finished = std::move(finished)]() {
+                const auto reference = publication->encryptedReference();
+                const auto error = publication->errorString();
+                publication->deleteLater();
+                if (guard)
+                    finished(reference, error);
+            });
+    publication->start({}, false);
 }
 
 PsiAccount *FileSharingItem::account() const { return _acc; }

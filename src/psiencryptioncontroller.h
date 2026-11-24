@@ -72,6 +72,9 @@ public:
     // Persistent per-contact preference. An open chat copies this value when
     // it is created and then owns an independent active method/session.
     QString selectedMethod(const XMPP::Jid &jid) const;
+    // Explicit room selection only; never apply private-chat legacy defaults
+    // or global always-enabled options to a MUC.
+    QString explicitlySelectedMethod(const XMPP::Jid &jid) const;
     // Apply the selected UI method and end-to-end preference to an Iris Jingle session.
     // Iris validates supported capabilities and performs all encryption operations.
     void configureJingleSession(XMPP::Jingle::Session *session) const;

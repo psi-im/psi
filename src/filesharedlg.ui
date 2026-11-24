@@ -55,6 +55,16 @@
     <widget class="QLineEdit" name="lineEdit"/>
    </item>
    <item>
+    <widget class="QCheckBox" name="cb_encrypt">
+     <property name="text">
+      <string>Encrypt file contents (AES-256-GCM)</string>
+     </property>
+     <property name="toolTip">
+      <string>Upload encrypted bytes and protect the file key in an end-to-end encrypted message.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

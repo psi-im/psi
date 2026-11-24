@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "filesharingpublication.h"
+#include "aesgcmurl.h"
 #include <QFile>
 #include <QFileInfo>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPointer>
 #include <QTimer>
+#include <QUuid>
 #include <iris/httpfileupload.h>
 #include <iris/jingle-ft.h>
 #include <iris/jingle-pub.h>
@@ -97,8 +99,9 @@ static bool isHttpUrl(const QString &source)
 }
 
 FileSharingPublication::FileSharingPublication(XMPP::Client *client, const XMPP::Jingle::FileTransfer::File &file,
-                                               const QString &path, const XMPP::Jid &selfJid, QObject *parent) :
-    QObject(parent), _client(client), _file(file), _path(path), _selfJid(selfJid)
+                                               const QString &path, const XMPP::Jid &selfJid, QObject *parent,
+                                               Mode mode) :
+    QObject(parent), _client(client), _file(file), _path(path), _selfJid(selfJid), _mode(mode)
 {
     connect(client, &QObject::destroyed, this, &QObject::deleteLater);
 }
@@ -108,6 +111,11 @@ void FileSharingPublication::start(const QStringList &cachedSources, bool serveL
     if (_started || !_client)
         return;
     _started = true;
+    if (_mode == Mode::Aes256Gcm) {
+        _jingleFinished = true;
+        uploadEncrypted();
+        return; // Never announce the plaintext source or reuse plaintext URLs.
+    }
     const bool registered
         = serveLocally && publishSharedFile(_client, _file, _path, this, [this](bool success, const QString &error) {
               emit logMessage(success ? tr("Published in the private PubSub catalog")
@@ -210,6 +218,84 @@ void FileSharingPublication::upload()
         } else {
             emit logMessage(tr("Failed to publish on HttpUpload service: %1").arg(uploader->statusString()));
         }
+        _httpFinished = true;
+        checkFinished();
+    });
+}
+
+void FileSharingPublication::uploadEncrypted()
+{
+    namespace S = XMPP::StatelessFileSharing;
+    const auto fail = [this](const QString &error) {
+        _errorString = error;
+        emit logMessage(error);
+        _httpFinished = true;
+        checkFinished();
+    };
+
+    if (!_client || !_file.size() || !S::cipherSupported(S::Cipher::Aes256Gcm)) {
+        fail(tr("Encrypted file publication is unavailable"));
+        return;
+    }
+    const auto wireSize = S::encryptedSize(S::Cipher::Aes256Gcm, *_file.size());
+    if (!wireSize) {
+        fail(tr("The file is too large for encrypted HTTP upload"));
+        return;
+    }
+
+    _plaintext = new QFile(_path, this);
+    _ciphertext = new S::EncryptingDevice(_plaintext, S::Cipher::Aes256Gcm, this);
+    if (!_plaintext->open(QIODevice::ReadOnly) || !_ciphertext->open(QIODevice::ReadOnly)) {
+        fail(tr("Cannot read the file for encrypted upload"));
+        return;
+    }
+
+    // Do not leak original filename or MIME type through the HTTP slot request.
+    const QString name = QUuid::createUuid().toString(QUuid::WithoutBraces) + QStringLiteral(".bin");
+    auto *uploader = _client->httpFileUploadManager()->upload(
+        _ciphertext, *wireSize, name, QStringLiteral("application/octet-stream"));
+    if (!uploader) {
+        fail(tr("No encrypted HTTP upload source could be opened"));
+        return;
+    }
+    _encryptedUploader = uploader;
+    // The source is parented to the publication; the publication is owned by
+    // the account Client for encrypted attempts, so cancelling a UI dialog
+    // cannot leave HttpFileUpload holding a destroyed QIODevice.
+    connect(uploader, &XMPP::HttpFileUpload::progress, this,
+            [this](qint64 sent, qint64) { emit progress(sent); });
+    connect(uploader, &XMPP::HttpFileUpload::finished, this, [this, uploader]() {
+        const bool succeeded = uploader->success() && _ciphertext && _ciphertext->finished();
+        const QString status = uploader->statusString();
+        const QString urlString = succeeded ? uploader->getHttpSlot().get.url : QString();
+        _encryptedUploader.clear();
+        uploader->deleteLater();
+        if (!succeeded) {
+            _errorString = status.isEmpty() ? tr("Encrypted upload did not finish") : status;
+        } else {
+            QUrl url(urlString);
+            if (!url.isValid() || url.scheme() != QLatin1String("https") || url.host().isEmpty()) {
+                _errorString = tr("Encrypted file sharing requires an HTTPS download URL");
+            } else {
+                url.setScheme(QStringLiteral("aesgcm"));
+                url.setFragment(QString::fromLatin1((_ciphertext->iv() + _ciphertext->key()).toHex()));
+                if (!AesGcmUrl::parse(url)) {
+                    _errorString = tr("The encrypted HTTP URL is invalid");
+                } else {
+                    const QString source = url.toString(QUrl::FullyEncoded);
+                    XMPP::Reference reference(XMPP::Reference::Data, source);
+                    XMPP::MediaSharing sharing;
+                    // Metadata and the key are only ever sent inside OMEMO 2 SCE.
+                    sharing.file = _file;
+                    sharing.sources = { source }; // no plaintext/Jingle fallback
+                    reference.setMediaSharing(sharing);
+                    _encryptedReference = reference;
+                    _sources = { source };
+                }
+            }
+        }
+        if (!_errorString.isEmpty())
+            emit logMessage(_errorString);
         _httpFinished = true;
         checkFinished();
     });

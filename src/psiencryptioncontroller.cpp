@@ -596,6 +596,13 @@ PsiEncryptionController::MethodInfo PsiEncryptionController::methodInfo(const QS
     return {};
 }
 
+QString PsiEncryptionController::explicitlySelectedMethod(const XMPP::Jid &jid) const
+{
+    // Empty means either no explicit preference or explicitly unencrypted.
+    // Both must keep a MUC on the original plaintext path.
+    return selectedMethods_.value(jid.bare());
+}
+
 QString PsiEncryptionController::selectedMethod(const XMPP::Jid &jid) const
 {
     const QString bare = jid.bare();

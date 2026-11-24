@@ -23,7 +23,12 @@
 #include "iris/xmpp_jid.h"
 #include "iris/xmpp_muc.h"
 
+#include <QDateTime>
+#include <QHash>
+#include <QMetaObject>
 #include <QObject>
+#include <QPointer>
+#include <QString>
 #include <functional>
 
 class PsiAccount;
@@ -31,6 +36,7 @@ class QString;
 
 namespace XMPP {
 class Client;
+class Task;
 class XData;
 }
 using namespace XMPP;
@@ -72,6 +78,11 @@ public:
     // Completion is cancelled when receiver is destroyed.
     using MembersCallback = std::function<void(bool, const QList<Jid> &, const QString &)>;
     void requestMemberJids(QObject *receiver, MembersCallback completion);
+    // Lazy and opt-in: ordinary MUCs retain the original affiliation IQ path.
+    // Enabling does not fetch anything; requests begin on the first OMEMO send.
+    void setMemberDiscoveryEnabled(bool enabled);
+    // A cached membership snapshot must not survive room reconnect or edits.
+    void invalidateMemberCache();
     void          destroy(const QString &reason = QString(), const Jid &venue = Jid());
     XMPP::Client *client() const;
     PsiAccount   *account() const;
@@ -134,8 +145,35 @@ protected slots:
     void setItems_finished();
 
 private:
+    struct MemberRequest {
+        QPointer<QObject> receiver;
+        MembersCallback completion;
+    };
+    void startMemberAffiliationQuery(MUCItem::Affiliation affiliation, bool forUi);
+    void completeMemberRequests(const QString &error = {});
+    bool buildMemberSnapshot(QString *error);
+    bool memberListsFresh() const;
+
     PsiAccount *account_;
-    Jid         room_;
+    Jid room_;
+
+    // All of these are cold until OMEMO is explicitly selected for this room.
+    bool membershipDiscoveryEnabled_ = false;
+    quint64 membershipGeneration_ = 0;
+    QHash<int, QList<MUCItem>> membershipLists_;
+    QHash<int, QDateTime> membershipUpdated_;
+    QHash<int, XMPP::Task *> membershipInFlight_;
+    QHash<QString, int> membershipAffiliations_;
+    QList<Jid> membershipRecipients_;
+    bool membershipSnapshotReady_ = false;
+    QString membershipSnapshotError_;
+    bool membershipBatchStarting_ = false;
+    QString membershipDeferredError_;
+    QList<MemberRequest> membershipRequests_;
+    QMetaObject::Connection membershipJoinedConnection_;
+    QMetaObject::Connection membershipLeftConnection_;
+    QMetaObject::Connection membershipDisconnectedConnection_;
+    QMetaObject::Connection membershipPresenceConnection_;
 };
 
 #endif // MUCMANAGER_H

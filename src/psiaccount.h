@@ -86,6 +86,7 @@ namespace XMPP {
 class AdvancedConnector;
 class Client;
 class EncryptedSession;
+class EncryptionContext;
 class Jid;
 class Message;
 class PubSubItem;
@@ -325,6 +326,13 @@ public:
     void                     resolveContactName(const Jid &j);
 
     void setClientVersionInfoMap(const QVariantMap &info);
+
+    // One-shot, fail-closed send for sensitive file references requiring OMEMO 2.
+    // Success includes normal message-history recording; no plaintext fallback.
+    using ExplicitEncryptionCompletion = std::function<void(bool success, bool untrusted, const QString &error)>;
+    void sendMessageWithEncryptionContext(Message message, const QString &methodId,
+                                          const XMPP::EncryptionContext &context,
+                                          ExplicitEncryptionCompletion completed);
 
 signals:
     void accountDestroyed();

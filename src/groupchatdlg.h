@@ -35,7 +35,9 @@
 #include <QWidget>
 
 class GCMainDlg;
+class QAction;
 class MamChatWidget;
+class QMimeData;
 class HistorySync;
 class MessageView;
 class PsiAccount;
@@ -47,6 +49,7 @@ class QRect;
 namespace XMPP {
 class Message;
 class MAMTask;
+class DiscoInfoTask;
 }
 using namespace XMPP;
 
@@ -88,6 +91,8 @@ public:
     void        appendSysMsg(const QString &, bool alert = false);
     void        dispatchMessage(const MessageView &mv);
     QStringList mucRosterContent() const;
+    // Entry point for all outgoing MUC messages, including files, topics and reactions.
+    void sendMessage(Message &message);
 
     // reimplemented
     virtual TabbableWidget::State state() const;
@@ -181,6 +186,16 @@ private:
     Ui::GroupChatDlg ui_;
 
     bool lastWasEncrypted_ = false;
+    QPointer<XMPP::DiscoInfoTask> roomDiscoTask_;
+    bool omemoRoomInfoKnown_ = false;
+    bool omemoMembersOnly_ = false;
+    bool omemoNonAnonymous_ = false;
+    QAction *omemoAction_ = nullptr;
+
+    void updateOmemoAction();
+    void shareFiles(const QMimeData *data = nullptr);
+    void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);
+    void reviewGroupchatTrust(const Message &message, const QList<Jid> &members, int next, const QString &profile);
 
     void doAlert();
     void appendMessage(const Message &, bool);

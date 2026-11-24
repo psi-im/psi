@@ -3233,7 +3233,8 @@ void PsiAccount::client_messageReceived(const Message &m)
     // OMEMO identity without delaying or hiding the already authenticated
     // plaintext message. The prompt itself is queued by the controller.
     if (d->encryptionController) {
-        if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()) {
+        if (const auto *metadata = d->client->currentEncryptionMetadata(); metadata && !metadata->methodId.isEmpty()
+            && !metadata->details.value(QStringLiteral("localMucEcho")).toBool()) {
             d->encryptionController->requestTrustDecision(
                 metadata->methodId, metadata->sender, false, findChatDialog(metadata->sender), {},
                 metadata->senderDeviceId, metadata->details.value(QStringLiteral("omemoProtocol")).toString());
@@ -5374,6 +5375,39 @@ void PsiAccount::dj_sendMessage(Message &m, bool log, XMPP::EncryptedSession *se
     sendMessageInternal(m, log, session, methodId, false);
 }
 
+void PsiAccount::sendMessageWithEncryptionContext(Message message, const QString &methodId,
+                                                  const XMPP::EncryptionContext &context,
+                                                  ExplicitEncryptionCompletion completed)
+{
+    if (!d->client || !d->encryptionController || methodId.isEmpty() || context.recipients.isEmpty()) {
+        completed(false, false, tr("Secure file delivery is unavailable"));
+        return;
+    }
+    auto *method = d->client->encryptionManager()->method(methodId);
+    if (!method || !method->capabilities().testFlag(XMPP::EncryptionMethod::XmppStanza)) {
+        completed(false, false, tr("The selected encryption method cannot protect an XMPP message"));
+        return;
+    }
+    auto *job = d->client->sendMessageEncrypted(message, methodId, context);
+    if (!job) {
+        completed(false, false, tr("Failed to start encrypted message delivery"));
+        return;
+    }
+    const auto finished = [this, job, message = std::move(message), completed = std::move(completed)]() {
+        const bool success = job->success();
+        const auto error = job->errorString();
+        const bool untrusted = job->error() == XMPP::EncryptionJob::Error::UntrustedIdentity;
+        if (success)
+            finishSentMessage(message, true);
+        job->deleteLater();
+        completed(success, untrusted, error);
+    };
+    if (job->isFinished())
+        finished();
+    else
+        connect(job, &XMPP::EncryptionJob::finished, this, finished);
+}
+
 void PsiAccount::sendMessageInternal(Message &m, bool log, XMPP::EncryptedSession *session, const QString &methodId,
                                      bool allowTransientSession)
 {
@@ -6620,7 +6654,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 
     GCMainDlg *chat = new GCMainDlg(this, j, d->tabManager);
     chat->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
-    connect(chat, &GCMainDlg::aSend, this, [this](Message &msg) { dj_sendMessage(msg); });
+    connect(chat, &GCMainDlg::aSend, this, [chat](Message &msg) { chat->sendMessage(msg); });
     connect(chat, &GCMainDlg::messagesRead, this, &PsiAccount::groupChatMessagesRead);
     connect(chat, &GCMainDlg::unreadStateChanged, this, &PsiAccount::mucUnreadChanged);
     connect(chat, &QObject::destroyed, this, [this] {
