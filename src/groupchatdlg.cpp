@@ -1219,14 +1219,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     d->pm_settings = new QMenu(this);
     omemoAction_ = new QAction(IconsetFactory::icon("psi/cryptoNo").icon(), tr("Encrypt with OMEMO"), this);
     omemoAction_->setCheckable(true);
+    ui_.tb_omemo->setDefaultAction(omemoAction_);
     connect(omemoAction_, &QAction::triggered, this, [this](bool enabled) {
 #ifdef IRIS_ENABLE_OMEMO
         auto *controller = account()->encryptionController();
-        if (controller && controller->hasMethod(XMPP::OmemoEncryption::methodId())) {
+        if (controller && (!enabled || (roomAllowsOmemo()
+                                           && controller->hasMethod(XMPP::OmemoEncryption::methodId()))))
             controller->setSelectedMethod(jid(), enabled ? XMPP::OmemoEncryption::methodId() : QString());
-        } else {
-            appendSysMsg(tr("OMEMO is not available for this account"));
-        }
 #else
         Q_UNUSED(enabled)
 #endif
@@ -1237,6 +1236,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
                 if (changed.bare() == jid().bare())
                     updateOmemoAction();
             });
+    connect(account()->encryptionController(), &PsiEncryptionController::methodsChanged,
+            this, &GCMainDlg::updateOmemoAction);
     updateOmemoAction();
     connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
     ui_.tb_actions->setMenu(d->pm_settings);
@@ -1583,17 +1584,22 @@ void GCMainDlg::updateMucName()
     }
 }
 
+void GCMainDlg::invalidateRoomConfiguration()
+{
+    omemoRoomInfoKnown_ = false;
+    // Only the current disco task can establish room policy.
+    const auto previous = roomDiscoTask_;
+    roomDiscoTask_.clear();
+    if (previous)
+        previous->safeDelete();
+    updateOmemoAction();
+}
+
 void GCMainDlg::updateConfiguration()
 {
     // No encrypted sends or affiliation monitoring while room policy is
     // being rechecked after a configuration change.
-    omemoRoomInfoKnown_ = false;
-    updateOmemoAction();
-    // Task::iqVerify already matches the IQ response by its stanza id.
-    // Cancel the superseded task instead of associating an ad-hoc generation
-    // property with it. Only the current task may update room state.
-    if (roomDiscoTask_)
-        roomDiscoTask_->safeDelete();
+    invalidateRoomConfiguration();
 
     auto *disco = new JT_DiscoInfo(account()->client()->rootTask());
     roomDiscoTask_ = disco;
@@ -1978,7 +1984,7 @@ void GCMainDlg::configureRoom()
 
 void GCMainDlg::goDisc()
 {
-    closeRoomEncryptionSession();
+    invalidateRoomConfiguration();
     if (d->state != Private::Idle && d->state != Private::ForcedLeave) {
         d->state = Private::Idle;
         d->actions->action("gchat_set_topic")->setEnabled(false);
@@ -2071,7 +2077,7 @@ void GCMainDlg::leave()
 
 void GCMainDlg::error(int, const QString &str)
 {
-    closeRoomEncryptionSession();
+    invalidateRoomConfiguration();
     d->actions->action("gchat_set_topic")->setEnabled(false);
     setStatusTabIcon(STATUS_ERROR);
 
@@ -2410,7 +2416,8 @@ void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
     if (dm.getMUCStatuses().contains(174)) {
         d->nonAnonymous = false;
     }
-    if (dm.getMUCStatuses().contains(104)) {
+    if (dm.getMUCStatuses().contains(104) || dm.getMUCStatuses().contains(172)
+        || dm.getMUCStatuses().contains(173) || dm.getMUCStatuses().contains(174)) {
         // Room configuration may have changed membership or anonymity.
         d->mucManager->invalidateMemberCache();
         updateConfiguration();
@@ -2560,6 +2567,7 @@ void GCMainDlg::joined()
         ui_.mle->chatEdit()->setEnabled(true);
         setConnecting();
         appendSysMsg(tr("Connected."), true);
+        updateConfiguration();
     }
     account()->addMucItem(d->dlg->jid().bare());
     d->noteRoomActivity();
@@ -3084,8 +3092,7 @@ void GCMainDlg::shareFiles(const QMimeData *data)
 #ifdef IRIS_ENABLE_OMEMO
     auto *controller = account()->encryptionController();
     const auto method = XMPP::OmemoEncryption::methodId();
-    security.available = controller && controller->hasMethod(method) && omemoRoomInfoKnown_
-        && omemoMembersOnly_ && omemoNonAnonymous_;
+    security.available = controller && controller->hasMethod(method) && roomAllowsOmemo();
     security.selected = controller && controller->explicitlySelectedMethod(jid()) == method;
     if (security.selected && !security.available) {
         appendSysMsg(tr("Cannot share files: this room no longer satisfies OMEMO requirements."), true);
@@ -3098,8 +3105,7 @@ void GCMainDlg::shareFiles(const QMimeData *data)
 #ifdef IRIS_ENABLE_OMEMO
             auto *controller = account()->encryptionController();
             const auto method = XMPP::OmemoEncryption::methodId();
-            if (!controller || !controller->hasMethod(method) || !omemoRoomInfoKnown_
-                || !omemoMembersOnly_ || !omemoNonAnonymous_
+            if (!controller || !controller->hasMethod(method) || !roomAllowsOmemo()
                 || !controller->setSelectedMethod(jid(), method)) {
                 appendSysMsg(tr("Encrypted file was uploaded, but the room is not ready for secure delivery."
                                 " Its key was not sent."), true);
@@ -3144,6 +3150,11 @@ void GCMainDlg::closeRoomEncryptionSession()
     cancelPendingEncryptedMessages();
 }
 
+bool GCMainDlg::roomAllowsOmemo() const
+{
+    return d->state == Private::Connected && omemoRoomInfoKnown_ && omemoMembersOnly_ && omemoNonAnonymous_;
+}
+
 void GCMainDlg::updateOmemoAction()
 {
     if (!omemoAction_)
@@ -3155,14 +3166,19 @@ void GCMainDlg::updateOmemoAction()
     const bool selected = controller && controller->explicitlySelectedMethod(jid()) == method;
     // This is the only opt-in for membership tracking. Plain MUCs never
     // subscribe to extra presence signals or allocate affiliation snapshots.
-    const bool enabled = available && selected && omemoRoomInfoKnown_ && omemoMembersOnly_ && omemoNonAnonymous_;
+    const bool eligible = available && roomAllowsOmemo();
+    const bool enabled = eligible && selected;
     if (!enabled)
         closeRoomEncryptionSession();
     d->mucManager->setMemberDiscoveryEnabled(enabled);
-    omemoAction_->setEnabled(available);
+    // Keep a selected mode switchable off even if room policy changes.
+    omemoAction_->setEnabled(eligible || selected);
     omemoAction_->setChecked(selected);
+    omemoAction_->setVisible(available || selected);
+    ui_.tb_omemo->setVisible(available || selected);
     omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
-    omemoAction_->setToolTip(!omemoRoomInfoKnown_ ? tr("Checking room encryption requirements")
+    omemoAction_->setToolTip(!available ? tr("OMEMO is not available for this account")
+                             : !omemoRoomInfoKnown_ ? tr("Checking room encryption requirements")
                              : !omemoMembersOnly_ || !omemoNonAnonymous_
                                  ? tr("OMEMO requires a members-only, non-anonymous room")
                                  : tr("Encrypt the entire groupchat message for room members, including offline members"));
@@ -3170,6 +3186,8 @@ void GCMainDlg::updateOmemoAction()
     d->mucManager->setMemberDiscoveryEnabled(false);
     omemoAction_->setEnabled(false);
     omemoAction_->setChecked(false);
+    omemoAction_->setVisible(false);
+    ui_.tb_omemo->hide();
 #endif
 }
 
@@ -3190,8 +3208,7 @@ void GCMainDlg::sendMessage(Message &message)
     appendSysMsg(tr("OMEMO is not available in this build. Nothing was sent."), true);
     return;
 #endif
-    if (d->state != Private::Connected || !omemoRoomInfoKnown_ || !omemoMembersOnly_
-        || !omemoNonAnonymous_) {
+    if (!roomAllowsOmemo()) {
         appendSysMsg(tr("OMEMO message was NOT sent: the room must advertise members-only and non-anonymous "
                         "MUC features. Room discovery may still be in progress."), true);
         return;
@@ -3215,7 +3232,7 @@ void GCMainDlg::sendMessage(Message &message)
 void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt)
 {
 #ifdef IRIS_ENABLE_OMEMO
-    if (d->state != Private::Connected || !omemoRoomInfoKnown_ || !omemoMembersOnly_ || !omemoNonAnonymous_) {
+    if (!roomAllowsOmemo()) {
         appendSysMsg(tr("OMEMO message was NOT sent: the room is no longer ready for encryption"), true);
         return;
     }

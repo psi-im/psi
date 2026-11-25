@@ -200,6 +200,8 @@ private:
     QSet<XMPP::EncryptionJob *> pendingEncryptedMessages_;
     void closeRoomEncryptionSession();
     void cancelPendingEncryptedMessages();
+    bool roomAllowsOmemo() const;
+    void invalidateRoomConfiguration();
     void updateOmemoAction();
     void shareFiles(const QMimeData *data = nullptr);
     void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);
