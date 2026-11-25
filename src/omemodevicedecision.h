@@ -17,7 +17,8 @@ bool needsManualTrustDecision(XMPP::EncryptionTrustLevel level);
 // Receiving from an already verified sender must not prompt about its other
 // devices or the same numeric id in another wire profile.
 QList<XMPP::OmemoDeviceInfo> devicesForDecision(const QList<XMPP::OmemoDeviceInfo> &devices, quint32 deviceId,
-                                                std::optional<XMPP::OmemoProtocol> profile, DeviceDecision purpose);
+                                                std::optional<XMPP::OmemoProtocol> profile, DeviceDecision purpose,
+                                                const XMPP::Jid &localOwner = {}, quint32 localDeviceId = 0);
 #endif
 } // namespace PsiOmemo
 #endif

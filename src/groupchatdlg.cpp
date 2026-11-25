@@ -1217,9 +1217,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     chatEditCreated();
 
     d->pm_settings = new QMenu(this);
-    omemoAction_ = new QAction(IconsetFactory::icon("psi/cryptoNo").icon(), tr("Encrypt with OMEMO"), this);
-    omemoAction_->setCheckable(true);
-    ui_.tb_omemo->setDefaultAction(omemoAction_);
+    omemoAction_ = d->actions->action("gchat_encryption");
+    omemoAction_->setPsiIcon(nullptr);
     connect(omemoAction_, &QAction::triggered, this, [this](bool enabled) {
 #ifdef IRIS_ENABLE_OMEMO
         auto *controller = account()->encryptionController();
@@ -3175,7 +3174,6 @@ void GCMainDlg::updateOmemoAction()
     omemoAction_->setEnabled(eligible || selected);
     omemoAction_->setChecked(selected);
     omemoAction_->setVisible(available || selected);
-    ui_.tb_omemo->setVisible(available || selected);
     omemoAction_->setIcon(IconsetFactory::icon(selected ? "psi/cryptoYes" : "psi/cryptoNo").icon());
     omemoAction_->setToolTip(!available ? tr("OMEMO is not available for this account")
                              : !omemoRoomInfoKnown_ ? tr("Checking room encryption requirements")
@@ -3187,7 +3185,6 @@ void GCMainDlg::updateOmemoAction()
     omemoAction_->setEnabled(false);
     omemoAction_->setChecked(false);
     omemoAction_->setVisible(false);
-    ui_.tb_omemo->hide();
 #endif
 }
 

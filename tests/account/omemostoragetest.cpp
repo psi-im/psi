@@ -83,6 +83,35 @@ private slots:
         QCOMPARE(incoming.first().protocol, OmemoProtocol::Omemo2);
     }
 
+    void localDeviceDoesNotRequireTrustReview()
+    {
+        const Jid own("alice@example.test/device");
+        OmemoDeviceInfo local;
+        local.owner = Jid(own.bare());
+        local.id = DeviceId;
+        local.protocol = OmemoProtocol::Omemo2;
+        local.protocols = local.protocol;
+        local.active = true;
+        local.identityKey = Identity;
+        local.trust = EncryptionTrustLevel::Undecided;
+        auto otherOwn = local;
+        otherOwn.id = DeviceId + 1;
+        otherOwn.identityKey = QByteArray(32, 'o');
+        auto remote = local;
+        remote.owner = Jid("bob@example.test");
+        remote.identityKey = QByteArray(32, 'r');
+        auto legacy = local;
+        legacy.protocol = OmemoProtocol::Legacy;
+        legacy.protocols = legacy.protocol;
+        const auto pending = PsiOmemo::devicesForDecision({ local, legacy, otherOwn, remote }, 0, {},
+            PsiOmemo::DeviceDecision::VerifyIdentity, own, DeviceId);
+        QCOMPARE(pending.size(), 2);
+        QCOMPARE(pending.at(0).id, otherOwn.id);
+        QCOMPARE(pending.at(1).owner.bare(), remote.owner.bare());
+        QVERIFY(PsiOmemo::devicesForDecision({ local, legacy }, 0, {},
+            PsiOmemo::DeviceDecision::RepairSession, own, DeviceId).isEmpty());
+    }
+
     void sessionRepairIsIndependentOfIdentityVerification()
     {
         OmemoDeviceInfo sender;

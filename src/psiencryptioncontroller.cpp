@@ -971,7 +971,8 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
         auto candidates = omemo_->devices(XMPP::Jid(peerBare));
         if (includeOwnDevices && !ownBare.isEmpty() && ownBare != peerBare)
             candidates.append(omemo_->devices(XMPP::Jid(ownBare)));
-        return PsiOmemo::devicesForDecision(candidates, deviceId, profileFilter, purpose);
+        return PsiOmemo::devicesForDecision(candidates, deviceId, profileFilter, purpose,
+                                            client_->jid(), omemo_->ownDeviceId());
     };
 
     const auto initialPending = collectDevices();
