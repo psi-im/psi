@@ -1217,8 +1217,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
     chatEditCreated();
 
     d->pm_settings = new QMenu(this);
-    omemoAction_ = d->actions->action("gchat_encryption");
-    omemoAction_->setPsiIcon(nullptr);
+    auto *encryptionAction = d->actions->action("gchat_encryption");
+    encryptionAction->setPsiIcon(nullptr);
+    omemoAction_ = encryptionAction;
     connect(omemoAction_, &QAction::triggered, this, [this](bool enabled) {
 #ifdef IRIS_ENABLE_OMEMO
         auto *controller = account()->encryptionController();
