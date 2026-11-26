@@ -140,6 +140,8 @@ set( GLOBAL_DEPENDS_DEBUG_MODE ON )
 
 if(USE_QT6)
     set(QT_DEFAULT_MAJOR_VERSION 6)
+else()
+    set(QT_DEFAULT_MAJOR_VERSION 5)
 endif()
 
 message(STATUS "System name - ${CMAKE_SYSTEM_NAME}")
