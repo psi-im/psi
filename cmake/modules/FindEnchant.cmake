@@ -74,8 +74,8 @@ find_library(
     NAMES enchant enchant-2
     HINTS
     ${PC_Enchant_LIBRARY_DIRS}
-    ${Enchant_ROOT}/lib
-    ${Enchant_ROOT}/bin
+    ${ENCHANT_ROOT}/lib
+    ${ENCHANT_ROOT}/bin
     ${Enchant_DIR}/lib
     ${Enchant_DIR}/bin
 )

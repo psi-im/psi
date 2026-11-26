@@ -31,9 +31,9 @@ ChatReply messageReply(const XMPP::Message &message)
 {
     const auto reply = message.reply();
     if (!reply.isValid())
-        return {};
+        return { };
     ChatReply result {
-        reply.id, reply.to.full(), reply.to.resource().isEmpty() ? reply.to.bare() : reply.to.resource(), {}
+        reply.id, reply.to.full(), reply.to.resource().isEmpty() ? reply.to.bare() : reply.to.resource(), { }
     };
     QStringList lines;
     for (const auto &range : fallbackRanges(message))
@@ -84,8 +84,7 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
         }
     }
     if (!message.fallbacks().isEmpty()
-        || (!message.references().isEmpty()
-            && (!message.body().isEmpty() || hasPositionedReferences)))
+        || (!message.references().isEmpty() && (!message.body().isEmpty() || hasPositionedReferences)))
         return;
     QString fallback;
     if (!reply.author.isEmpty())
@@ -97,7 +96,7 @@ void applyMessageReply(XMPP::Message &message, const ChatReply &reply)
         return;
     }
     auto fallbacks = message.fallbacks();
-    fallbacks.append({ replyNamespace, { { 0, int(fallback.toUcs4().size()) } }, {} });
+    fallbacks.append(XMPP::Message::Fallback { replyNamespace, { { 0, int(fallback.toUcs4().size()) } }, { } });
     message.setFallbacks(fallbacks);
     message.setBody(fallback + message.body());
 }
@@ -129,6 +128,6 @@ int plainQuotePrefix(const QString &body, ChatReply *reply, bool hasMediaPayload
     if (text.isEmpty())
         return 0;
     if (reply)
-        *reply = ChatReply { {}, {}, author, text };
+        *reply = ChatReply { { }, { }, author, text };
     return end;
 }

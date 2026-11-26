@@ -63,8 +63,8 @@ find_library(
     Qca_LIBRARY
     NAMES qca-qt${QT_DEFAULT_MAJOR_VERSION}${D}
     HINTS
-    ${Qca_ROOT}/lib
-    ${Qca_ROOT}/bin
+    ${QCA_ROOT}/lib
+    ${QCA_ROOT}/bin
     ${Qca_DIR}/lib
     ${Qca_DIR}/bin
 )
