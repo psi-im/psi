@@ -534,7 +534,7 @@ void OptionsMigration::lateMigration()
         groupchatToolbar.keys << "gchat_info" << "gchat_clear" << "gchat_find" << "gchat_html_text" << "gchat_configure"
                               << "gchat_share_files" << "gchat_templates";
         groupchatToolbar.keys += pluginsKeys;
-        groupchatToolbar.keys << "spacer" << "gchat_icon";
+        groupchatToolbar.keys << "spacer" << "gchat_encryption" << "gchat_icon";
 
         if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
             groupchatToolbar.keys.removeAt(groupchatToolbar.keys.indexOf("gchat_ps"));

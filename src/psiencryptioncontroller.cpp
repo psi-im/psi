@@ -978,7 +978,8 @@ bool PsiEncryptionController::requestTrustDecision(const QString &methodId, cons
     const auto initialPending = collectDevices();
     qCDebug(omemoTrustLog) << "decision account=" << ownBare << "peer=" << peerBare
                            << "reason=" << (isRecovery ? "session-repair" : "identity-verification")
-                           << "device=" << deviceId << "profile=" << profile << "own-devices=" << includeOwnDevices
+                           << "device=" << deviceId << "local-device=" << omemo_->ownDeviceId()
+                           << "profile=" << profile << "own-devices=" << includeOwnDevices
                            << "pending=" << initialPending.size();
     for (const auto &device : initialPending) {
         qCDebug(omemoTrustLog)

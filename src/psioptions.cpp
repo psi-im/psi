@@ -174,7 +174,7 @@ bool PsiOptions::newProfile()
         groupchatToolbar.keys << "gchat_info" << "gchat_clear" << "gchat_find" << "gchat_html_text" << "gchat_configure"
                               << "gchat_set_topic" << "gchat_templates" << "gchat_share_files";
         groupchatToolbar.keys += pluginsKeys;
-        groupchatToolbar.keys << "spacer" << "gchat_icon";
+        groupchatToolbar.keys << "spacer" << "gchat_encryption" << "gchat_icon";
 
         ToolbarPrefs buttons;
         buttons.name = tr("Buttons");
