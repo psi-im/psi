@@ -10,6 +10,8 @@
 
 #include "psiencryptioncontroller.h"
 
+#include "applicationinfo.h"
+
 #include "iconset.h"
 #include "iris/jingle-session.h"
 #include "iris/xmpp_caps.h"
@@ -1174,7 +1176,10 @@ void PsiEncryptionController::setUpOmemo(const QString &deviceLabel)
 {
     if (!omemo_)
         return;
-    auto      *job    = omemo_->setUp(deviceLabel);
+    // A null label on reconnect preserves the existing device name. Only a
+    // new identity needs a default; a non-null label is an explicit UI edit.
+    const auto label = deviceLabel.isNull() && !omemo_->ownDeviceId() ? ApplicationInfo::name() : deviceLabel;
+    auto      *job   = omemo_->setUp(label);
     const auto report = [this, job]() {
         if (!job->success()) {
             emit encryptionError({}, tr("OMEMO setup failed: %1").arg(job->errorString()));

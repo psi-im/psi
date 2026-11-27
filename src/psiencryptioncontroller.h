@@ -120,7 +120,7 @@ public:
 
 #ifdef IRIS_ENABLE_OMEMO
     XMPP::OmemoEncryption *omemoEncryption() const;
-    void                   setUpOmemo(const QString &deviceLabel);
+    void                   setUpOmemo(const QString &deviceLabel = {});
 #endif
 
 signals:

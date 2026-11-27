@@ -2421,7 +2421,7 @@ void PsiAccount::sessionStarted()
 {
 #ifdef IRIS_ENABLE_OMEMO
     if (d->encryptionController)
-        d->encryptionController->setUpOmemo(ApplicationInfo::name());
+        d->encryptionController->setUpOmemo();
 #endif
     if (d->voiceCaller)
         d->voiceCaller->initialize();
