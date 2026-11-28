@@ -571,7 +571,7 @@ public:
         trackBar = false;
         dlg->nativeTimeline_->markUnreadBoundary();
     }
-    void doFileShare(const QList<Reference> &refs, const QString &desc)
+    void doFileShare(const QList<Reference> &refs, const QString &desc, const QString &encryptionMethod = {})
     {
         Message m(dlg->jid());
         m.setType(Message::Type::Groupchat);
@@ -579,7 +579,10 @@ public:
         m.setUrlList(fileSharingHttpUrls(refs));
         m.setBody(desc);
         dlg->ui_.mle->applyReply(m);
-        emit dlg->aSend(m);
+        if (encryptionMethod.isEmpty())
+            emit dlg->aSend(m);
+        else
+            dlg->prepareEncryptedGroupchat(m, encryptionMethod, true);
         dlg->ui_.mle->clearReply();
     }
 
@@ -3111,7 +3114,8 @@ void GCMainDlg::shareFiles(const QMimeData *data)
                 return;
             }
             if (method.isEmpty()) {
-                QMenu choices(this);
+                QPointer<GCMainDlg> guard(this);
+                QMenu choices;
                 const auto methods = controller->methods(Method::XmppStanza | Method::Groupchat);
                 for (const auto &info : methods) {
                     if (roomEncryptionError(info.id).isEmpty())
@@ -3124,6 +3128,8 @@ void GCMainDlg::shareFiles(const QMimeData *data)
                     choices.setTitle(tr("Select encryption method"));
                     if (auto *choice = choices.exec(QCursor::pos()))
                         method = choice->data().toString();
+                    if (!guard)
+                        return;
                 }
             }
             if (method.isEmpty() || !roomEncryptionError(method).isEmpty()
@@ -3133,6 +3139,8 @@ void GCMainDlg::shareFiles(const QMimeData *data)
                                 " Its key was not sent."), true);
                 return;
             }
+            d->doFileShare(std::move(refs), description, method);
+            return;
         }
         d->doFileShare(std::move(refs), description);
     };
@@ -3287,7 +3295,11 @@ void GCMainDlg::sendEncryptedGroupchat(const Message &message, const QString &me
         disconnect(roomMembershipInvalidated_);
         disconnect(roomMethodUnregistered_);
         auto *registry = client->encryptionManager();
-        roomEncryptionSession_ = registry->startSession(methodId, Method::XmppStanza | Method::Groupchat);
+        XMPP::EncryptionContext sessionContext;
+        // Bind the session to the room; the current member list is supplied per operation.
+        sessionContext.recipients = { jid() };
+        roomEncryptionSession_ = registry->startSession(methodId, Method::XmppStanza | Method::Groupchat,
+                                                         sessionContext);
         if (roomEncryptionSession_) {
             if (controller->groupchatRequirements(methodId).testFlag(Method::MemberJids))
                 roomMembershipInvalidated_ = connect(d->mucManager, &MUCManager::memberSnapshotInvalidated, this,
