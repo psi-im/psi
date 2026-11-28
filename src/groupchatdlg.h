@@ -36,6 +36,7 @@
 
 class GCMainDlg;
 class QAction;
+class QMenu;
 class MamChatWidget;
 class QMimeData;
 class HistorySync;
@@ -189,10 +190,13 @@ private:
 
     bool lastWasEncrypted_ = false;
     QPointer<XMPP::DiscoInfoTask> roomDiscoTask_;
-    bool omemoRoomInfoKnown_ = false;
-    bool omemoMembersOnly_ = false;
-    bool omemoNonAnonymous_ = false;
-    QAction *omemoAction_ = nullptr;
+    bool roomInfoKnown_ = false;
+    bool roomMembersOnly_ = false;
+    bool roomNonAnonymous_ = false;
+    QAction *encryptionAction_ = nullptr;
+    QMenu *encryptionMenu_ = nullptr;
+    QPointer<QObject> roomEncryptionScope_;
+    QString activeRoomMethod_;
 
     QPointer<XMPP::EncryptedSession> roomEncryptionSession_;
     QMetaObject::Connection roomMembershipInvalidated_;
@@ -200,10 +204,14 @@ private:
     QSet<XMPP::EncryptionJob *> pendingEncryptedMessages_;
     void closeRoomEncryptionSession();
     void cancelPendingEncryptedMessages();
-    void updateOmemoAction();
+    QString roomEncryptionError(const QString &methodId) const;
+    void buildEncryptionMenu();
+    void invalidateRoomConfiguration();
+    void updateEncryptionAction();
     void shareFiles(const QMimeData *data = nullptr);
-    void sendEncryptedGroupchat(const Message &message, const QList<Jid> &members, bool allowTrustPrompt);
-    void reviewGroupchatTrust(const Message &message, const QList<Jid> &members, int next, const QString &profile);
+    void prepareEncryptedGroupchat(const Message &message, const QString &methodId, bool allowTrustPrompt);
+    void sendEncryptedGroupchat(const Message &message, const QString &methodId, const QList<Jid> &members,
+                                bool allowTrustPrompt);
 
     void doAlert();
     void appendMessage(const Message &, bool);

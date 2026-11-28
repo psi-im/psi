@@ -14,6 +14,9 @@
 #include <iris/xmpp_clientstream.h>
 #include <iris/xmpp_encryption.h>
 #include <iris/xmpp_tasks.h>
+#ifdef PSI_TEST_REAL_OMEMO
+#include "../../iris/tests/omemo/fixture.h"
+#endif
 using namespace XMPP;
 
 class ConnectorStub final : public Connector {
@@ -210,8 +213,9 @@ struct Fixture {
             && HistoryArchive::recordMessageStates(db, { id });
     }
     bool reply(const QDomElement &request, const QList<QDomElement> &results, bool complete = true, int firstIndex = -1,
-               int count = -1)
+               int count = -1, Client *receiver = nullptr)
     {
+        auto &target = receiver ? *receiver : client;
         QString    first, last;
         const auto qid = request.firstChildElement("query").attribute("queryid");
         for (const auto &raw : results) {
@@ -226,10 +230,10 @@ struct Fixture {
             result.setAttribute("queryid", qid);
             message.appendChild(result);
             documents.append(doc);
-            if (!client.rootTask()->take(message))
+            if (!target.rootTask()->take(message))
                 return false;
         }
-        return client.rootTask()->take(xml(
+        return target.rootTask()->take(xml(
             QString("<iq from='%1' type='result' id='%2'><fin xmlns='urn:xmpp:mam:2' complete='%3'>"
                     "<set xmlns='http://jabber.org/protocol/rsm'><first%6>%4</first><last>%5</last>%7</set></fin></iq>")
                 .arg(key.archive, request.attribute("id"), complete ? "true" : "false", first, last,
@@ -244,6 +248,7 @@ public:
     bool         replay      = false;
     bool         fail        = false;
     QString      correctionTarget;
+    QString      mucRealSender;
     QString      id() const override { return "test-archive"; }
     QString      name() const override { return id(); }
     Capabilities capabilities() const override { return XmppStanza; }
@@ -260,6 +265,7 @@ public:
         {
             ++method->decryptions;
             method->replay = operation.isArchiveReplay();
+            method->mucRealSender = operation.options.value(QStringLiteral("mucRealSender")).toString();
             auto *job      = new EncryptionJob(this);
             if (method->fail) {
                 job->fail(EncryptionJob::Error::NoRecipients, "Controlled missing-key error");
@@ -914,6 +920,62 @@ private slots:
         QCOMPARE(q.value(0).toInt(), 0);
     }
 
+    void archivedMucUsesHistoricalSenderOrCachedPlaintext_data()
+    {
+        QTest::addColumn<bool>("cached");
+        QTest::newRow("historical-sender") << false;
+        QTest::newRow("own-echo-cache") << true;
+    }
+
+    void archivedMucUsesHistoricalSenderOrCachedPlaintext()
+    {
+        QFETCH(bool, cached);
+        Fixture f;
+        f.key.peer = f.key.archive = QStringLiteral("room@conference.example.test");
+        f.key.room = true;
+        auto *cipher = new ArchiveCipher;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        const QString uid = QStringLiteral("room-uid");
+        const Jid occupant(f.key.peer + QStringLiteral("/old-nick"));
+        const auto stamp = QDateTime::fromString("2026-10-18T10:00:01Z", Qt::ISODate);
+        auto context = f.context();
+        context.lookup = [=](const HistoryArchive::Key &key, const QString &id, const QDateTime &) {
+            HistorySync::CachedMessage value;
+            if (cached && key.room && key.peer == occupant.bare() && id == uid) {
+                value.message.setType(Message::Type::Groupchat);
+                value.message.setFrom(occupant);
+                value.message.setId(QStringLiteral("client-id"));
+                value.message.setBody(QStringLiteral("sent before rejoin"));
+                value.message.setTimeStamp(stamp);
+                value.message.setWasEncrypted(true);
+                value.message.addStanzaId({Jid(key.peer), uid});
+            }
+            return value;
+        };
+        HistorySync sync(context, f.key.peer, true, {});
+        QSignalSpy done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        auto raw = f.result(uid, 1,
+            "<encrypted xmlns='urn:psi:test:cipher'/>"
+            "<x xmlns='http://jabber.org/protocol/muc#user'><item jid='bob@example.test/old-device'/></x>",
+            QStringLiteral("client-id"));
+        auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+        stanza.setAttribute("type", "groupchat");
+        stanza.setAttribute("from", occupant.full());
+        stanza.removeAttribute("to");
+        QVERIFY(f.reply(f.wire.sent.last(), {raw}));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+        QCOMPARE(cipher->decryptions, cached ? 0 : 1);
+        QCOMPARE(sync.message(uid).body(), cached ? QStringLiteral("sent before rejoin") : QStringLiteral("decrypted"));
+        if (!cached) {
+            QVERIFY(cipher->replay);
+            QCOMPARE(cipher->mucRealSender, QStringLiteral("bob@example.test"));
+        }
+    }
+
     void archiveDecryptionUsesReplayAndCachedPlaintext()
     {
         Fixture f;
@@ -1015,6 +1077,133 @@ private slots:
                      int(MessageState::Displayed | MessageState::Edited | MessageState::Retracted));
         }
     }
+
+#ifdef PSI_TEST_REAL_OMEMO
+    void realOmemoHistorySurvivesDatabaseAndClientRestart_data()
+    {
+        QTest::addColumn<QString>("profile");
+        QTest::newRow("omemo2") << QStringLiteral("omemo2");
+        QTest::newRow("legacy") << QStringLiteral("legacy");
+    }
+
+    void realOmemoHistorySurvivesDatabaseAndClientRestart()
+    {
+        QFETCH(QString, profile);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto path = dir.filePath("history.db");
+        const QString incoming = QStringLiteral("real incoming OMEMO text");
+        const QString outgoing = QStringLiteral("sent before restart");
+        {
+            Fixture f(path);
+            Endpoint alice(QStringLiteral("alice"));
+            Endpoint bob(QStringLiteral("bob"));
+            const auto protocol = profile == QLatin1String("omemo2") ? OmemoProtocol::Omemo2
+                                                                      : OmemoProtocol::Legacy;
+            if (!alice.omemo->supportedProtocols().testFlag(protocol)
+                || !bob.omemo->supportedProtocols().testFlag(protocol))
+                QSKIP("OMEMO wire profile unavailable");
+            pep.clear();
+            for (auto *endpoint : { &alice, &bob })
+                QVERIFY(wait(endpoint->omemo->setUp(), alice, bob)->success());
+
+            const auto encryptForArchive = [&](Endpoint &sender, Endpoint &recipient, const QString &uid,
+                                                const QString &id, const QString &body, int second) {
+                QDomDocument doc;
+                auto stanza = doc.createElementNS(QStringLiteral("jabber:client"), QStringLiteral("message"));
+                doc.appendChild(stanza);
+                stanza.setAttribute(QStringLiteral("from"), sender.jid.full());
+                stanza.setAttribute(QStringLiteral("to"), recipient.jid.full());
+                stanza.setAttribute(QStringLiteral("type"), QStringLiteral("chat"));
+                stanza.setAttribute(QStringLiteral("id"), id);
+                auto text = doc.createElementNS(QStringLiteral("jabber:client"), QStringLiteral("body"));
+                text.appendChild(doc.createTextNode(body));
+                stanza.appendChild(text);
+                EncryptionContext encryption;
+                encryption.recipients = { recipient.jid.bare() };
+                encryption.options.insert(QStringLiteral("omemoProtocol"), profile);
+                auto *session = sender.client.encryptionManager()->startSession(
+                    OmemoEncryption::methodId(), EncryptionMethod::XmppStanza, encryption);
+                check(session != nullptr, "Cannot create real OMEMO session");
+                auto *job = wait(session->encrypt(stanza), alice, bob);
+                check(job->success(), "Cannot encrypt MAM test message");
+                auto raw = f.result(uid, second, QStringLiteral("<body/>"), id);
+                auto forwarded = raw.firstChildElement(QStringLiteral("forwarded"));
+                auto old = forwarded.firstChildElement(QStringLiteral("message"));
+                auto cipher = forwarded.ownerDocument().importNode(job->stanza(), true).toElement();
+                forwarded.replaceChild(cipher, old);
+                check(!cipher.firstChildElement(QStringLiteral("encrypted")).isNull(),
+                      "Test fixture lost OMEMO ciphertext");
+                session->close();
+                QDomDocument wire;
+                wire.appendChild(wire.importNode(raw, true));
+                return f.xml(wire.toString(-1));
+            };
+
+            // The incoming message was never delivered live. The outgoing
+            // message has no key for the sending device: log its plaintext.
+            const auto received = encryptForArchive(bob, alice, QStringLiteral("real-in"), QStringLiteral("remote-id"),
+                                                    incoming, 0);
+            const auto sent = encryptForArchive(alice, bob, QStringLiteral("real-out"), QStringLiteral("own-id"),
+                                                outgoing, 1);
+            QVERIFY(f.logOwnMessage(false));
+            pump(alice, bob);
+            alice.stream.written.clear();
+
+            auto context = f.context();
+            context.client = &alice.client;
+            context.owner = Jid(alice.jid.bare());
+            HistorySync sync(context, f.key.peer, false, {});
+            QSignalSpy done(&sync, &HistorySync::finished);
+            sync.go();
+            QTRY_VERIFY(!alice.stream.written.isEmpty());
+            const auto request = alice.stream.written.takeLast();
+            QVERIFY(f.reply(request, { received, sent }, true, -1, -1, &alice.client));
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+            QCOMPARE(sync.message(QStringLiteral("real-in")).body(), incoming);
+            QCOMPARE(sync.message(QStringLiteral("real-out")).body(), outgoing);
+            QVERIFY(sync.message(QStringLiteral("real-in")).wasEncrypted());
+            QVERIFY(sync.message(QStringLiteral("real-out")).wasEncrypted());
+
+            QSqlQuery q(f.db);
+            QVERIFY(q.exec("SELECT i.uid,e.m_text,e.extra_data FROM archive_items i JOIN events e ON e.id=i.event_id "
+                           "ORDER BY i.uid"));
+            for (const auto &body : { incoming, outgoing }) {
+                QVERIFY(q.next());
+                QCOMPARE(q.value(1).toString(), body);
+                const auto extra = QJsonDocument::fromJson(q.value(2).toString().toUtf8()).object();
+                QVERIFY(extra.value("psi:decoded").toBool());
+                QVERIFY(extra.value("psi:encrypted").toBool());
+                QVERIFY(!extra.value("psi:decryption-error").toBool());
+            }
+            QVERIFY(!q.next());
+            pep.clear();
+        }
+        {
+            // Fresh Client and freshly opened on-disk SQLite, with no OMEMO
+            // method or session at all. Recovery must use the saved plaintext,
+            // not try to decrypt the old ciphertext or fetch it again.
+            Fixture f(path);
+            f.online = false;
+            HistorySync sync(f.context(), f.key.peer, false, {});
+            QSignalSpy done(&sync, &HistorySync::finished);
+            sync.go();
+            QTRY_COMPARE(done.size(), 1);
+            QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+            QVERIFY(sync.fromCache());
+            QVERIFY(f.wire.sent.isEmpty());
+            QCOMPARE(sync.message(QStringLiteral("real-in")).body(), incoming);
+            QCOMPARE(sync.message(QStringLiteral("real-out")).body(), outgoing);
+            QVERIFY(sync.message(QStringLiteral("real-in")).wasEncrypted());
+            QVERIFY(sync.message(QStringLiteral("real-out")).wasEncrypted());
+            const auto rows = HistoryArchive::localRecords(f.db, f.key.account, f.key.peer, 0, 40);
+            QCOMPARE(rows.size(), 2);
+            QCOMPARE(rows.at(0).value("m_text").toString(), incoming);
+            QCOMPARE(rows.at(1).value("m_text").toString(), outgoing);
+        }
+    }
+#endif
 
     void receivedPlaintextSurvivesDatabaseAndClientRestart()
     {

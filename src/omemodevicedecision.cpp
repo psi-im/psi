@@ -11,10 +11,15 @@ bool needsManualTrustDecision(XMPP::EncryptionTrustLevel level)
 }
 
 QList<XMPP::OmemoDeviceInfo> devicesForDecision(const QList<XMPP::OmemoDeviceInfo> &devices, quint32 deviceId,
-                                                std::optional<XMPP::OmemoProtocol> profile, DeviceDecision purpose)
+                                                std::optional<XMPP::OmemoProtocol> profile, DeviceDecision purpose,
+                                                const XMPP::Jid &localOwner, quint32 localDeviceId)
 {
     QList<XMPP::OmemoDeviceInfo> result;
     for (const auto &device : devices) {
+        // The current local device never needs a ratchet or a trust decision
+        // with itself. Other devices of the same account remain independent.
+        if (localDeviceId && device.id == localDeviceId && device.owner.bare() == localOwner.bare())
+            continue;
         if ((deviceId && device.id != deviceId) || (profile && device.protocol != *profile)
             || device.identityKey.isEmpty() || !device.active)
             continue;

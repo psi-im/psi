@@ -527,7 +527,10 @@ void PsiActionList::Private::createGroupchat()
 
         IconAction *actSetTopic = new IconAction(tr("Set Topic"), QLatin1String("psi/topic"), tr("Set Topic"), 0, this);
 
-        ActionNames actions[] = { { "gchat_info", actInfo },
+        IconAction *actEncryption = new IconAction(tr("Encryption"), "psi/cryptoNo", tr("Encryption"), 0,
+                                                    this, nullptr, true);
+        ActionNames actions[] = { { "gchat_encryption", actEncryption },
+                                  { "gchat_info", actInfo },
                                   { "gchat_clear", actClear },
                                   { "gchat_find", actFind },
                                   { "gchat_html_text", actHtmlText },

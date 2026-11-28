@@ -29,6 +29,7 @@
 
 class PsiAccount;
 class QWidget;
+class QMenu;
 
 namespace XMPP {
 class Client;
@@ -68,6 +69,16 @@ public:
                               = XMPP::EncryptionMethod::XmppStanza) const;
     bool              hasMethod(const QString &methodId) const;
     MethodInfo        methodInfo(const QString &methodId) const;
+    XMPP::EncryptionMethod::GroupchatRequirements groupchatRequirements(const QString &methodId) const;
+    QString groupchatAvailabilityError(const QString &methodId, bool roomInfoKnown, bool membersOnly,
+                                       bool nonAnonymous) const;
+    void populateMethodMenu(QMenu *menu, XMPP::EncryptionMethod::Capabilities capabilities,
+                            const QString &current, const std::function<QString(const QString &)> &unavailableReason,
+                            const std::function<void(const QString &)> &select) const;
+    // Retry only after at least one trust decision was requested and approved.
+    void requestGroupchatTrustDecision(const QString &methodId, const QList<XMPP::Jid> &members,
+                                       QWidget *parent, QObject *scope, std::function<void(bool)> completion);
+    bool isDuplicateDecryptionFailure(const QString &methodId, const XMPP::EncryptionMetadata &metadata) const;
 
     // Persistent per-contact preference. An open chat copies this value when
     // it is created and then owns an independent active method/session.
@@ -120,7 +131,7 @@ public:
 
 #ifdef IRIS_ENABLE_OMEMO
     XMPP::OmemoEncryption *omemoEncryption() const;
-    void                   setUpOmemo(const QString &deviceLabel);
+    void                   setUpOmemo(const QString &deviceLabel = {});
 #endif
 
 signals:
@@ -131,6 +142,9 @@ signals:
     void encryptionError(const XMPP::Jid &jid, const QString &message);
 
 private:
+    void reviewGroupchatTrust(const QString &methodId, const QList<XMPP::Jid> &members, int next,
+                              bool reviewed, const QPointer<QWidget> &parent, const QPointer<QObject> &scope,
+                              const std::function<void(bool)> &completion);
     class PluginMethodAdapter;
     struct PluginRegistration;
 

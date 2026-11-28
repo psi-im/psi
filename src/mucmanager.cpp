@@ -217,7 +217,7 @@ private:
 MUCManager::MUCManager(PsiAccount *account, const Jid &room) : account_(account), room_(room) { }
 
 // Ordinary rooms have no additional presence handler and no member cache.
-// Only explicit OMEMO selection activates the extra signal connections.
+// Only methods requiring member discovery activate the extra signal connections.
 void MUCManager::setMemberDiscoveryEnabled(bool enabled)
 {
     if (membershipDiscoveryEnabled_ == enabled)
@@ -397,7 +397,7 @@ void MUCManager::requestMemberJids(QObject *receiver, MembersCallback completion
         return;
 
     if (!membershipDiscoveryEnabled_) {
-        completion(false, {}, tr("OMEMO membership discovery is not enabled for this room"));
+        completion(false, {}, tr("Room membership discovery is not enabled for this room"));
         return;
     }
 
@@ -444,7 +444,7 @@ void MUCManager::completeMemberRequests(const QString &error)
     QString failure = error;
     if (failure.isEmpty()) {
         if (!membershipDiscoveryEnabled_) {
-            failure = tr("OMEMO membership discovery was disabled");
+            failure = tr("Room membership discovery was disabled");
         } else if (!membershipSnapshotReady_) {
             if (!membershipInFlight_.isEmpty())
                 return;
