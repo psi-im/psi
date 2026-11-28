@@ -72,14 +72,14 @@ public:
     void          setDefaultConfiguration();
     void          setItems(const QList<MUCItem> &);
     void          getItemsByAffiliation(MUCItem::Affiliation);
-    // XEP-0384 §5.8: take a complete non-anonymous MUC membership snapshot.
+    // Take a complete non-anonymous MUC membership snapshot.
     // Query member, admin and owner affiliations (including offline users),
     // deduplicate real bare JIDs, and fail closed if any query is incomplete.
     // Completion is cancelled when receiver is destroyed.
     using MembersCallback = std::function<void(bool, const QList<Jid> &, const QString &)>;
     void requestMemberJids(QObject *receiver, MembersCallback completion);
     // Lazy and opt-in: ordinary MUCs retain the original affiliation IQ path.
-    // Enabling does not fetch anything; requests begin on the first OMEMO send.
+    // Enabling does not fetch anything; requests begin on the first encrypted send.
     void setMemberDiscoveryEnabled(bool enabled);
     // A cached membership snapshot must not survive room reconnect or edits.
     void invalidateMemberCache();
@@ -158,7 +158,7 @@ private:
     PsiAccount *account_;
     Jid room_;
 
-    // All of these are cold until OMEMO is explicitly selected for this room.
+    // All of these are cold until a method requiring member discovery is selected.
     bool membershipDiscoveryEnabled_ = false;
     quint64 membershipGeneration_ = 0;
     QHash<int, QList<MUCItem>> membershipLists_;

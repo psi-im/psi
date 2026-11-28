@@ -38,8 +38,16 @@ public:
         XmppStanza  = 0x01,
         DataMessage = 0x02,
         DataStream  = 0x04,
+        Groupchat   = 0x08, // Protect the entire groupchat message, including references.
     };
     Q_DECLARE_FLAGS(Capabilities, Capability)
+
+    enum GroupchatRequirement {
+        MembersOnly = 0x01,
+        NonAnonymous = 0x02,
+        MemberJids = 0x04,
+    };
+    Q_DECLARE_FLAGS(GroupchatRequirements, GroupchatRequirement)
 
     enum UiCapability {
         Settings         = 0x01,
@@ -227,9 +235,13 @@ public:
         Q_UNUSED(parent);
         return nullptr;
     }
+
+    // Only queried for providers advertising Groupchat.
+    virtual GroupchatRequirements groupchatRequirements() const { return {}; }
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(EncryptionMethodProvider::Capabilities)
+Q_DECLARE_OPERATORS_FOR_FLAGS(EncryptionMethodProvider::GroupchatRequirements)
 Q_DECLARE_OPERATORS_FOR_FLAGS(EncryptionMethodProvider::UiCapabilities)
 
 #endif // ENCRYPTIONMETHODPROVIDER_H

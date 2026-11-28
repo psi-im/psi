@@ -1590,25 +1590,12 @@ void PsiChatDlg::buildEncryptionMenu()
     const QString current = selectedEncryptionMethod_;
     actions_->action("chat_pgp")->setChecked(!current.isEmpty());
 
-    auto *plain = encryptionMenu_->addAction(tr("No encryption"));
-    plain->setCheckable(true);
-    plain->setChecked(current.isEmpty());
-    connect(plain, &QAction::triggered, this, [this]() { setEncryptionMethod({}, true); });
-
-    const auto methods = controller->methods(XMPP::EncryptionMethod::XmppStanza);
-    for (const auto &info : methods) {
-        auto *methodAction = encryptionMenu_->addAction(info.icon, info.name);
-
-        methodAction->setCheckable(true);
-        methodAction->setData(info.id);
-        methodAction->setChecked(current == info.id);
-        if (controller->availability(info.id, jid()) == PsiEncryptionController::Availability::Unavailable) {
-            methodAction->setEnabled(false);
-            methodAction->setToolTip(tr("This encryption method is not available for the selected resource."));
-        }
-        connect(methodAction, &QAction::triggered, this,
-                [this, methodId = info.id]() { setEncryptionMethod(methodId, true); });
-    }
+    controller->populateMethodMenu(encryptionMenu_, XMPP::EncryptionMethod::XmppStanza, current,
+        [this, controller](const QString &id) {
+            return controller->availability(id, jid()) == PsiEncryptionController::Availability::Unavailable
+                ? tr("This encryption method is not available for the selected resource.") : QString();
+        },
+        [this](const QString &id) { setEncryptionMethod(id, true); });
 
 #ifdef HAVE_PGPUTIL
     if (controller->hasMethod(QStringLiteral("openpgp")) && account()->hasPgp() && PGPUtil::instance().pgpAvailable()) {

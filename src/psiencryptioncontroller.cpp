@@ -34,6 +34,7 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QLoggingCategory>
+#include <QMenu>
 #include <QPointer>
 #include <QPushButton>
 #include <QTimer>
@@ -137,6 +138,8 @@ XMPP::EncryptionMethod::Capabilities toIrisCapabilities(EncryptionMethodProvider
         result |= XMPP::EncryptionMethod::DataMessage;
     if (capabilities.testFlag(EncryptionMethodProvider::DataStream))
         result |= XMPP::EncryptionMethod::DataStream;
+    if (capabilities.testFlag(EncryptionMethodProvider::Groupchat))
+        result |= XMPP::EncryptionMethod::Groupchat;
     return result;
 }
 
@@ -314,6 +317,20 @@ public:
     {
         return provider_ ? toIrisCapabilities(provider_->capabilities()) : Capabilities {};
     }
+    GroupchatRequirements groupchatRequirements() const override
+    {
+        GroupchatRequirements result;
+        if (!provider_ || !capabilities().testFlag(Groupchat))
+            return result;
+        const auto requirements = provider_->groupchatRequirements();
+        if (requirements.testFlag(EncryptionMethodProvider::MembersOnly))
+            result |= MembersOnly;
+        if (requirements.testFlag(EncryptionMethodProvider::NonAnonymous))
+            result |= NonAnonymous;
+        if (requirements.testFlag(EncryptionMethodProvider::MemberJids))
+            result |= MemberJids;
+        return result;
+    }
     XMPP::EncryptedSession *startSession(Capabilities capabilities, const XMPP::EncryptionContext &context) override
     {
         if (!provider_ || (capabilities & this->capabilities()) != capabilities)
@@ -397,11 +414,12 @@ PsiEncryptionController::PsiEncryptionController(PsiAccount *account, XMPP::Clie
                 qWarning().noquote() << QStringLiteral("%1 stanza decryption failed: %2").arg(methodId, error);
                 // libomemo-c codes: a message received twice is ignored silently (XEP-0384 section 6); a message
                 // no ratchet state accepts comes from a broken session, which the user may repair.
-                constexpr int DuplicateMessage = -1001, InvalidMac = -1004, InvalidMessage = -1005;
-                const int     signalError = metadata.details.value(QStringLiteral("signalError")).toInt();
-                if (signalError == DuplicateMessage)
+                constexpr int InvalidMac = -1004, InvalidMessage = -1005;
+                const int signalError = metadata.details.value(QStringLiteral("signalError")).toInt();
+                if (isDuplicateDecryptionFailure(methodId, metadata))
                     return;
-                const bool broken = signalError == InvalidMac || signalError == InvalidMessage;
+                const bool broken = methodId == QLatin1String("omemo")
+                    && (signalError == InvalidMac || signalError == InvalidMessage);
                 // One notice per sending device and kind of failure, not one per message.
                 const QString key = QStringLiteral("%1|%2|%3|%4")
                                         .arg(methodId, metadata.sender.bare())
@@ -596,6 +614,111 @@ PsiEncryptionController::MethodInfo PsiEncryptionController::methodInfo(const QS
             return info;
     }
     return {};
+}
+
+XMPP::EncryptionMethod::GroupchatRequirements
+PsiEncryptionController::groupchatRequirements(const QString &methodId) const
+{
+    auto *method = client_->encryptionManager()->method(methodId);
+    return method && method->capabilities().testFlag(XMPP::EncryptionMethod::Groupchat)
+        ? method->groupchatRequirements() : XMPP::EncryptionMethod::GroupchatRequirements {};
+}
+
+QString PsiEncryptionController::groupchatAvailabilityError(const QString &methodId, bool roomInfoKnown,
+                                                             bool membersOnly, bool nonAnonymous) const
+{
+    using Method = XMPP::EncryptionMethod;
+    auto *method = client_->encryptionManager()->method(methodId);
+    const auto caps = Method::XmppStanza | Method::Groupchat;
+    if (!method || (method->capabilities() & caps) != caps)
+        return tr("The selected encryption method does not support groupchat");
+    const auto requirements = method->groupchatRequirements();
+    if (!roomInfoKnown && requirements != Method::GroupchatRequirements {})
+        return tr("Checking room encryption requirements");
+    if (requirements.testFlag(Method::MembersOnly) && !membersOnly)
+        return tr("This encryption method requires a members-only room");
+    if (requirements.testFlag(Method::NonAnonymous) && !nonAnonymous)
+        return tr("This encryption method requires a non-anonymous room");
+    return {};
+}
+
+void PsiEncryptionController::populateMethodMenu(
+    QMenu *menu, XMPP::EncryptionMethod::Capabilities capabilities, const QString &current,
+    const std::function<QString(const QString &)> &unavailableReason,
+    const std::function<void(const QString &)> &select) const
+{
+    auto *plain = menu->addAction(tr("No encryption"));
+    plain->setCheckable(true);
+    plain->setChecked(current.isEmpty());
+    connect(plain, &QAction::triggered, menu, [select]() { select({}); });
+
+    bool found = current.isEmpty();
+    for (const auto &info : methods(capabilities)) {
+        auto *action = menu->addAction(info.icon, info.name);
+        action->setCheckable(true);
+        action->setData(info.id);
+        action->setChecked(current == info.id);
+        found = found || current == info.id;
+        const auto reason = unavailableReason(info.id);
+        action->setEnabled(reason.isEmpty());
+        action->setToolTip(reason);
+        connect(action, &QAction::triggered, menu, [select, id = info.id]() { select(id); });
+    }
+    if (!found) {
+        const auto info = methodInfo(current);
+        auto *action = menu->addAction(tr("%1 (unavailable)").arg(info.name.isEmpty() ? current : info.name));
+        action->setCheckable(true);
+        action->setChecked(true);
+        action->setEnabled(false);
+    }
+}
+
+bool PsiEncryptionController::isDuplicateDecryptionFailure(const QString &methodId,
+                                                          const XMPP::EncryptionMetadata &metadata) const
+{
+    return methodId == QLatin1String("omemo")
+        && metadata.details.value(QStringLiteral("signalError")).toInt() == -1001;
+}
+
+void PsiEncryptionController::requestGroupchatTrustDecision(const QString &methodId, const QList<XMPP::Jid> &members,
+                                                            QWidget *parent, QObject *scope,
+                                                            std::function<void(bool)> completion)
+{
+    reviewGroupchatTrust(methodId, members, 0, false, QPointer<QWidget>(parent), QPointer<QObject>(scope), completion);
+}
+
+void PsiEncryptionController::reviewGroupchatTrust(const QString &methodId, const QList<XMPP::Jid> &members, int next,
+                                                   bool reviewed, const QPointer<QWidget> &parent,
+                                                   const QPointer<QObject> &scope,
+                                                   const std::function<void(bool)> &completion)
+{
+    if (!scope)
+        return;
+#ifdef IRIS_ENABLE_OMEMO
+    if (methodId == XMPP::OmemoEncryption::methodId()) {
+        for (int i = next; i < members.size(); ++i) {
+            const bool requested = requestTrustDecision(
+                methodId, members.at(i), false, parent.data(),
+                [this, methodId, members, i, parent, scope, completion](bool approved) {
+                    if (!scope)
+                        return;
+                    if (approved)
+                        reviewGroupchatTrust(methodId, members, i + 1, true, parent, scope, completion);
+                    else if (completion)
+                        completion(false);
+                }, 0, QStringLiteral("omemo2"));
+            if (requested)
+                return;
+        }
+    }
+#else
+    Q_UNUSED(methodId)
+    Q_UNUSED(members)
+    Q_UNUSED(next)
+    Q_UNUSED(parent)
+#endif
+    if (completion)
+        completion(reviewed);
 }
 
 QString PsiEncryptionController::explicitlySelectedMethod(const XMPP::Jid &jid) const
