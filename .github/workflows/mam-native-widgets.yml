@@ -2,6 +2,7 @@ name: MAM native widget regressions
 
 on:
   push:
+    branches: [master]
     paths:
       - 'src/widgets/LongListWidget.*'
       - 'src/widgets/OverlayScrollBarManager.*'
