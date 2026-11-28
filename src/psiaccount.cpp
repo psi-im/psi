@@ -5886,6 +5886,17 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
                     Jid chatJid = e->from();
                     int type    = findGCContact(chatJid) ? EDB::GroupChatContact : EDB::Contact;
                     logEvent(chatJid, e, type);
+                } else {
+                    // OMEMO ratchets cannot decrypt the same delivery again,
+                    // and the sending device has no recipient key in its own
+                    // MUC echo. Cache the authenticated plaintext under the
+                    // room's stanza ID for the existing MAM lookup path.
+                    const auto message = me->message().displayMessage();
+                    const auto room = message.from().withResource({});
+                    if (message.wasEncrypted() && !message.stanzaId(room).id.isEmpty()
+                        && !(message.processingHints() & (Message::NoStore | Message::NoPermanentStore))
+                        && (edb()->features() & EDB::ArchiveCache))
+                        logEvent(room, e, EDB::GroupChat);
                 }
             }
         }

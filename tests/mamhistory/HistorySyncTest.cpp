@@ -244,6 +244,7 @@ public:
     bool         replay      = false;
     bool         fail        = false;
     QString      correctionTarget;
+    QString      mucRealSender;
     QString      id() const override { return "test-archive"; }
     QString      name() const override { return id(); }
     Capabilities capabilities() const override { return XmppStanza; }
@@ -260,6 +261,7 @@ public:
         {
             ++method->decryptions;
             method->replay = operation.isArchiveReplay();
+            method->mucRealSender = operation.options.value(QStringLiteral("mucRealSender")).toString();
             auto *job      = new EncryptionJob(this);
             if (method->fail) {
                 job->fail(EncryptionJob::Error::NoRecipients, "Controlled missing-key error");
@@ -912,6 +914,62 @@ private slots:
         QVERIFY(q.exec("SELECT count(*) FROM archive_items"));
         QVERIFY(q.next());
         QCOMPARE(q.value(0).toInt(), 0);
+    }
+
+    void archivedMucUsesHistoricalSenderOrCachedPlaintext_data()
+    {
+        QTest::addColumn<bool>("cached");
+        QTest::newRow("historical-sender") << false;
+        QTest::newRow("own-echo-cache") << true;
+    }
+
+    void archivedMucUsesHistoricalSenderOrCachedPlaintext()
+    {
+        QFETCH(bool, cached);
+        Fixture f;
+        f.key.peer = f.key.archive = QStringLiteral("room@conference.example.test");
+        f.key.room = true;
+        auto *cipher = new ArchiveCipher;
+        cipher->setParent(&f.client);
+        QVERIFY(f.client.encryptionManager()->registerMethod(cipher));
+        const QString uid = QStringLiteral("room-uid");
+        const Jid occupant(f.key.peer + QStringLiteral("/old-nick"));
+        const auto stamp = QDateTime::fromString("2026-10-18T10:00:01Z", Qt::ISODate);
+        auto context = f.context();
+        context.lookup = [=](const HistoryArchive::Key &key, const QString &id, const QDateTime &) {
+            HistorySync::CachedMessage value;
+            if (cached && key.room && key.peer == occupant.bare() && id == uid) {
+                value.message.setType(Message::Type::Groupchat);
+                value.message.setFrom(occupant);
+                value.message.setId(QStringLiteral("client-id"));
+                value.message.setBody(QStringLiteral("sent before rejoin"));
+                value.message.setTimeStamp(stamp);
+                value.message.setWasEncrypted(true);
+                value.message.addStanzaId({Jid(key.peer), uid});
+            }
+            return value;
+        };
+        HistorySync sync(context, f.key.peer, true, {});
+        QSignalSpy done(&sync, &HistorySync::finished);
+        sync.go();
+        QTRY_COMPARE(f.wire.sent.size(), 1);
+        auto raw = f.result(uid, 1,
+            "<encrypted xmlns='urn:psi:test:cipher'/>"
+            "<x xmlns='http://jabber.org/protocol/muc#user'><item jid='bob@example.test/old-device'/></x>",
+            QStringLiteral("client-id"));
+        auto stanza = raw.firstChildElement("forwarded").firstChildElement("message");
+        stanza.setAttribute("type", "groupchat");
+        stanza.setAttribute("from", occupant.full());
+        stanza.removeAttribute("to");
+        QVERIFY(f.reply(f.wire.sent.last(), {raw}));
+        QTRY_COMPARE(done.size(), 1);
+        QVERIFY2(sync.success(), qPrintable(sync.statusString()));
+        QCOMPARE(cipher->decryptions, cached ? 0 : 1);
+        QCOMPARE(sync.message(uid).body(), cached ? QStringLiteral("sent before rejoin") : QStringLiteral("decrypted"));
+        if (!cached) {
+            QVERIFY(cipher->replay);
+            QCOMPARE(cipher->mucRealSender, QStringLiteral("bob@example.test"));
+        }
     }
 
     void archiveDecryptionUsesReplayAndCachedPlaintext()

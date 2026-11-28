@@ -572,6 +572,23 @@ void HistorySync::decodeNext()
         }
         XMPP::EncryptionContext context;
         context.setArchiveReplay();
+        if (key_.room) {
+            // XEP-0313 §6.1.2: a non-anonymous room's archive supplies
+            // the historical sender in muc#user/item@jid. Never use the
+            // current occupant roster to resolve an archived nickname.
+            const XMPP::Jid occupant(stanza.attribute("from"));
+            if (occupant.bare() != key_.peer || occupant.resource().isEmpty()
+                || stanza.attribute("type") != QLatin1String("groupchat")) {
+                finishError(tr("Invalid archive conversation"));
+                return;
+            }
+            const auto ns = QStringLiteral("http://jabber.org/protocol/muc#user");
+            const auto item = stanza.firstChildElement(QStringLiteral("x"), ns)
+                                  .firstChildElement(QStringLiteral("item"), ns);
+            const XMPP::Jid sender(item.attribute(QStringLiteral("jid")));
+            if (sender.isValid() && !sender.node().isEmpty())
+                context.options.insert(QStringLiteral("mucRealSender"), sender.bare());
+        }
         auto           *method = crypto->methodForStanza(stanza);
         const XMPP::Jid conversation(key_.peer);
         auto           *session = method ? archiveSessions_.value(method->id()).data() : nullptr;
