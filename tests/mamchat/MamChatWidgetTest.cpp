@@ -6890,6 +6890,32 @@ private slots:
         QCOMPARE(requests.count(), 0); // No resize-triggered archive sweep.
     }
 
+    void localRoomPageCanSatisfyInitialDemandWithoutMam()
+    {
+        MamChatWidget room;
+        room.resize(420, 300);
+        room.setGroupChat(true);
+        room.show();
+        QSignalSpy requests(&room, &MamChatWidget::olderMessagesRequested);
+        room.maybeContinueInitialHistoryFill();
+        QTRY_COMPARE(requests.count(), 1);
+
+        room.setHistoryLoading(true);
+        QList<QPair<QString, MessageView>> local;
+        for (int i = 0; i < 30; ++i) {
+            const auto id = QStringLiteral("local-%1").arg(i);
+            local.append(qMakePair(id, message(id, QStringLiteral("Cached room message"), i)));
+        }
+        room.prependArchivePage(local);
+        room.setHistoryLoading(false);
+        // Local storage is exhausted but a remote archive is available.
+        room.setHistoryExhausted(false);
+        room.maybeContinueInitialHistoryFill();
+        QTRY_COMPARE(room.messageCount(), 30);
+        QTest::qWait(70);
+        QCOMPARE(requests.count(), 1);
+    }
+
     void scrollBarOutwardActionAtOldestBoundaryFetchesHistory()
     {
         MamChatWidget room;

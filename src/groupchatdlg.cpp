@@ -1069,7 +1069,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager) :
         nativeTimeline_->setHistoryExhausted(localExhausted_);
         nativeTimeline_->setHistoryLoading(false);
     });
-    QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
+    nativeTimeline_->maybeContinueInitialHistoryFill();
     d->tabmode = PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool();
 
     connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
@@ -2579,7 +2579,6 @@ void GCMainDlg::joined()
     }
     qCDebug(PsiMam::historyLog) << "room-joined account=" << account()->id() << "peer=" << jid().bare()
                                 << "widget=" << nativeTimeline_ << "archiveReady=" << mamArchiveReady_;
-    QTimer::singleShot(0, this, &GCMainDlg::loadOlderMamMessages);
 }
 
 void GCMainDlg::setPassword(const QString &p) { d->password = p; }
@@ -2632,9 +2631,10 @@ void GCMainDlg::loadOlderMamMessages()
     localHistoryLoading_ = true;
     const quint64 generation = localHistoryGeneration_;
     const QString localPeer = jid().bare();
+    const bool readLocal = !localExhausted_;
     prependLocalChatHistoryAsync(
         nativeTimeline_, account(), localPeer, true, nick(), localBeforeId_, localExhausted_,
-        [this, generation, localPeer, initialAtEnd](qint64 before, bool exhausted, bool success) {
+        [this, generation, localPeer, initialAtEnd, readLocal](qint64 before, bool exhausted, bool success) {
             if (generation != localHistoryGeneration_)
                 return;
             localHistoryLoading_ = false;
@@ -2649,6 +2649,16 @@ void GCMainDlg::loadOlderMamMessages()
                 return;
             if (initialAtEnd)
                 nativeTimeline_->scrollToEnd();
+            // A local page may have satisfied the widget's outstanding demand.
+            // Only another widget request may advance from SQLite to MAM.
+            if (readLocal) {
+                nativeTimeline_->setHistoryLoading(false);
+                const bool archiveAvailable = mamArchiveReady_ && account()->isConnected()
+                    && d->state == Private::Connected && (!mamExhausted_ || mamRefreshTail_);
+                nativeTimeline_->setHistoryExhausted(localExhausted_ && !archiveAvailable);
+                nativeTimeline_->maybeContinueInitialHistoryFill();
+                return;
+            }
             if ((mamExhausted_ && !mamRefreshTail_) || !mamArchiveReady_ || !account()->isConnected() || d->state != Private::Connected) {
                 nativeTimeline_->setHistoryLoading(false);
                 nativeTimeline_->setHistoryExhausted(localExhausted_);
